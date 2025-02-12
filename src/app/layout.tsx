@@ -1,6 +1,7 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import "./globals.css";
+import { dark } from "@clerk/themes";
 
 export const metadata: Metadata = {
   title: "Please Wait - App",
@@ -13,9 +14,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      appearance={{
+        baseTheme: dark,
+        variables: {},
+      }}
+    >
       <html lang="en">
-        <body>{children}</body>
+        <head>
+          <link rel="icon" href="/favicon.ico" sizes="any" />
+        </head>
+        <body className="bg-[#121111]">{children}</body>
       </html>
     </ClerkProvider>
   );

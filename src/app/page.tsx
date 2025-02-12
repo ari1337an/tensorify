@@ -1,4 +1,3 @@
-import { getRootDomain } from "@/lib/helpers";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
@@ -7,6 +6,6 @@ export default async function Home() {
   redirect(
     !userId
       ? (process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL as string)
-      : (getRootDomain() as string)
+      : (process.env.REDIRECT_AFTER_SIGNIN_URL as string)
   );
 }
