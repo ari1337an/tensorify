@@ -2,7 +2,7 @@ import { Button } from "@/app/_components/ui/button";
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center">
+    <div className="absolute inset-0 flex flex-col items-center justify-center">
       <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-500">
         Tensorify
       </h1>
