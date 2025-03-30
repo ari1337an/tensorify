@@ -1,54 +1,52 @@
 "use client";
-import { useEffect, useState } from "react";
-import { ClerkProvider, SignedIn, UserButton } from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Gauge } from "lucide-react";
-import { Skeleton } from "@/app/_components/ui/skeleton";
+import { motion } from "framer-motion";
+import { Navbar } from "./Navbar";
+import { Sidebar, SidebarProvider, useSidebar } from "./Sidebar";
+import { WorkflowCanvas } from "./WorkflowCanvas";
 
 const queryClient = new QueryClient();
 
-const HeaderAuth = () => {
-  const [isLoading, setIsLoading] = useState(true);
+// Main app content with navbar and workflow canvas
+function MainContent() {
+  return (
+    <div className="min-h-screen flex flex-col overflow-hidden">
+      <Navbar />
+      <main className="flex-1 overflow-auto">
+        <WorkflowCanvas />
+      </main>
+    </div>
+  );
+}
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 700);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading) {
-    return (
-      <>
-        <Skeleton className="h-8 w-8 rounded-full" />
-      </>
-    );
-  }
+// Layout component that handles the sidebar and main content arrangement
+function AppLayout() {
+  const { isOpen, sidebarWidth } = useSidebar();
 
   return (
-    <>
-      <SignedIn>
-        <UserButton
-          appearance={{
-            elements: {
-              avatarBox:
-                "h-8 w-8 hover:ring-primary/30 transition-colors duration-200",
-            },
-          }}
-        >
-          <UserButton.MenuItems>
-            <UserButton.Action
-              label="Dashboard"
-              labelIcon={<Gauge className="h-4 w-4" />}
-              onClick={() => (window.location.href = "/dashboard")}
-            />
-          </UserButton.MenuItems>
-        </UserButton>
-      </SignedIn>
-    </>
+    <div className="flex h-screen">
+      {/* Sidebar */}
+      <Sidebar className="absolute h-screen z-10" />
+
+      {/* Main content that gets pushed right */}
+      <motion.div
+        className="flex-1 w-full h-screen overflow-hidden"
+        animate={{
+          marginLeft: isOpen ? sidebarWidth : "0",
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 400,
+          damping: 40,
+        }}
+      >
+        <MainContent />
+      </motion.div>
+    </div>
   );
-};
+}
 
 export default function AppWrapper({
   children,
@@ -62,11 +60,9 @@ export default function AppWrapper({
       }}
     >
       <QueryClientProvider client={queryClient}>
-        <>
-          <HeaderAuth />
-
-          {children}
-        </>
+        <SidebarProvider>
+          <AppLayout />
+        </SidebarProvider>
       </QueryClientProvider>
     </ClerkProvider>
   );

@@ -1,3 +1,3 @@
 export default function Home() {
-  return <>Hello</>;
+  return null; // Content is managed by AppWrapper
 }
