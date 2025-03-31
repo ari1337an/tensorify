@@ -1,3 +1,6 @@
+"use client";
+import { WorkflowCanvas } from "./_components/canvas";
+
 export default function Home() {
-  return null; // Content is managed by AppWrapper
+  return <WorkflowCanvas />;
 }
