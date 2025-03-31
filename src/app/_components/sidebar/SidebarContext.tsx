@@ -9,7 +9,7 @@ export type SidebarContextProps = {
   sidebarWidth: string;
 };
 
-export const SIDEBAR_WIDTH = "16rem";
+export const SIDEBAR_WIDTH = "20rem";
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
 
