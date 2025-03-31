@@ -22,7 +22,7 @@ export function Sidebar({ className, ...props }: SidebarProps) {
   return (
     <div
       className={cn(
-        "flex-shrink-0 flex flex-col border-r border-border/50 bg-background/95 backdrop-blur-sm overflow-hidden transition-all duration-300",
+        "flex-shrink-0 flex flex-col border-r border-border/50 bg-sidebar backdrop-blur-lg overflow-hidden transition-all duration-300",
         !isOpen && "w-0",
         className
       )}
@@ -34,16 +34,16 @@ export function Sidebar({ className, ...props }: SidebarProps) {
       {isOpen && (
         <>
           {/* Header with organization selector and close button */}
-          <div className="flex items-center justify-between p-3 border-b border-border/30">
+          <div className="flex items-center justify-between px-2 py-1 border-b border-border/30">
             <OrganizationSelector name="AlphaWolf Ventures, Inc." icon="A" />
             <div className="hover:rotate-90 transition-transform duration-200">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsOpen(false)}
-                className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive"
+                className="h-7 w-7 rounded-full hover:bg-destructive/10 hover:text-destructive"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3.5 w-3.5" />
               </Button>
             </div>
           </div>
