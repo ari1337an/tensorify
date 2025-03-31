@@ -15,9 +15,29 @@ import { InviteFooter } from "./InviteFooter";
 
 type SidebarProps = React.HTMLAttributes<HTMLDivElement>;
 
+// Define the Organization type
+type Organization = {
+  id: string;
+  name: string;
+  icon: string;
+};
+
+// Mock data for organizations
+const mockOrganizations: Organization[] = [
+  { id: "alphawolf", name: "AlphaWolf Ventures, Inc.", icon: "A" },
+  { id: "university", name: "University", icon: "U" },
+  { id: "md-notion", name: "Md Sahadul Hasan's Notion", icon: "M" },
+];
+
 export function Sidebar({ className, ...props }: SidebarProps) {
   const { isOpen, setIsOpen } = useSidebar();
   const [activeItem, setActiveItem] = React.useState("Projects");
+  const [currentOrg, setCurrentOrg] = React.useState(mockOrganizations[0]);
+
+  const handleChangeOrganization = (org: Organization) => {
+    setCurrentOrg(org);
+    // Additional logic when changing organization could go here
+  };
 
   return (
     <div
@@ -35,7 +55,13 @@ export function Sidebar({ className, ...props }: SidebarProps) {
         <>
           {/* Header with organization selector and close button */}
           <div className="flex items-center justify-between px-2 py-1 border-b border-border/30">
-            <OrganizationSelector name="AlphaWolf Ventures, Inc." icon="A" />
+            <OrganizationSelector
+              name="AlphaWolf Ventures, Inc."
+              icon="A"
+              currentOrg={currentOrg}
+              organizations={mockOrganizations}
+              onChangeOrganization={handleChangeOrganization}
+            />
             <div className="hover:rotate-90 transition-transform duration-200">
               <Button
                 variant="ghost"
