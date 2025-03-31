@@ -2,7 +2,6 @@ import { Menu, History, MessageSquare, Share } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { Button } from "./ui/button";
 import { useSidebar } from "./Sidebar";
-import { motion } from "framer-motion";
 
 export function Navbar() {
   const { toggleSidebar } = useSidebar();
