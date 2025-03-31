@@ -23,9 +23,10 @@ export function Sidebar({ className, ...props }: SidebarProps) {
     <div
       className={cn(
         "flex-shrink-0 flex flex-col border-r border-border/50 bg-background/95 backdrop-blur-sm overflow-hidden transition-all duration-300",
-        isOpen ? `w-[${SIDEBAR_WIDTH}]` : "w-0",
+        !isOpen && "w-0",
         className
       )}
+      style={{ width: isOpen ? SIDEBAR_WIDTH : undefined }}
       role="complementary"
       {...props}
     >
