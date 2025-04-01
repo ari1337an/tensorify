@@ -27,7 +27,7 @@ type Organization = {
 const mockOrganizations: Organization[] = [
   { id: "alphawolf", name: "AlphaWolf Ventures, Inc.", icon: "A" },
   { id: "university", name: "University", icon: "U" },
-  { id: "md-notion", name: "Md Sahadul Hasan's Notion", icon: "M" },
+  { id: "md-tensorify", name: "Md Sahadul Hasan's tensorify", icon: "M" },
 ];
 
 export function Sidebar({ className, ...props }: SidebarProps) {

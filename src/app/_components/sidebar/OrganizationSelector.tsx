@@ -50,7 +50,7 @@ export function OrganizationSelector({
     organizations.length > 0
       ? organizations
       : [
-          { id: "user-notion", name: "Md Sahadul Hasan's", icon: "M" },
+          { id: "user-tensorify", name: "Md Sahadul Hasan's", icon: "M" },
           { id: "university", name: "University", icon: "U", isGuest: true },
           { id: "alphawolf", name: "AlphaWolf Ventures, Inc.", icon: "A" },
         ];
