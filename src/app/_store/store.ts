@@ -3,12 +3,12 @@ import { create } from "zustand";
 
 interface StoreState {
   currentUser: User | null;
-  setCurrentUser: (user: User) => void;
+  setCurrentUser: (user: Partial<User>) => void;
 }
 
 const useStore = create<StoreState>((set) => ({
   currentUser: null,
-  setCurrentUser: (user: User) => set({ currentUser: user }),
+  setCurrentUser: (user: Partial<User>) => set({ currentUser: user as User }),
 }));
 
 export default useStore;

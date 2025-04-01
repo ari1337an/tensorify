@@ -5,14 +5,14 @@ import { MainContent } from "./MainContent";
 import { useUser } from "@clerk/nextjs";
 import useStore from "@/app/_store/store";
 import { useEffect } from "react";
-
+import { User } from "@clerk/nextjs/server";
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { isOpen, sidebarWidth } = useSidebar();
   const { isSignedIn, user, isLoaded } = useUser();
 
   useEffect(() => {
     if (isSignedIn && user && isLoaded) {
-      useStore.setState({ currentUser: user });
+      useStore.setState({ currentUser: user as unknown as User });
     } else {
       useStore.setState({ currentUser: null });
     }
