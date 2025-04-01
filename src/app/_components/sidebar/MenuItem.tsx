@@ -32,7 +32,7 @@ export function MenuItem({
         <TooltipTrigger asChild>
           <button
             className={cn(
-              "w-full flex items-center rounded-md px-3 py-2 text-sm transition-all duration-200 relative overflow-hidden hover:scale-[1.02] active:scale-[0.98]",
+              "w-full flex items-center rounded-md px-3 py-2 text-sm transition-all duration-200 relative overflow-hidden",
               active
                 ? "bg-primary text-primary-foreground font-medium"
                 : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -45,7 +45,7 @@ export function MenuItem({
             )}
 
             <span className="text-lg flex-shrink-0">{icon}</span>
-            <span className="truncate ml-1">{label}</span>
+            <span className="truncate ml-2">{label}</span>
 
             {/* Notification dot */}
             {notification && (

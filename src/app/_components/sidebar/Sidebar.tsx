@@ -12,6 +12,7 @@ import { TeamspacesSection } from "./TeamspacesSection";
 import { ProjectsSection } from "./ProjectsSection";
 import { SettingsSection } from "./SettingsSection";
 import { InviteFooter } from "./InviteFooter";
+import useStore from "@/app/_store/store";
 
 type SidebarProps = React.HTMLAttributes<HTMLDivElement>;
 
@@ -30,6 +31,7 @@ const mockOrganizations: Organization[] = [
 ];
 
 export function Sidebar({ className, ...props }: SidebarProps) {
+  const currentUser = useStore((state) => state.currentUser);
   const { isOpen, setIsOpen } = useSidebar();
   const [activeItem, setActiveItem] = React.useState("Projects");
   const [currentOrg, setCurrentOrg] = React.useState(mockOrganizations[0]);
@@ -56,8 +58,7 @@ export function Sidebar({ className, ...props }: SidebarProps) {
           {/* Header with organization selector and close button */}
           <div className="flex items-center justify-between px-2 py-1 border-b border-border/30">
             <OrganizationSelector
-              name="AlphaWolf Ventures, Inc."
-              icon="A"
+              email={currentUser?.emailAddresses[0].emailAddress}
               currentOrg={currentOrg}
               organizations={mockOrganizations}
               onChangeOrganization={handleChangeOrganization}

@@ -8,10 +8,8 @@ import {
   LogOut,
   Settings,
   Globe,
-  Download,
   MoreHorizontal,
 } from "lucide-react";
-import { Button } from "../ui/button";
 import { Avatar } from "../ui/avatar";
 import {
   DropdownMenu,
@@ -38,7 +36,7 @@ type OrganizationProps = {
 };
 
 export function OrganizationSelector({
-  email = "ari1337an@gmail.com",
+  email = "loading...",
   currentOrg,
   organizations = [],
   onChangeOrganization = () => {},
@@ -52,7 +50,7 @@ export function OrganizationSelector({
     organizations.length > 0
       ? organizations
       : [
-          { id: "user-notion", name: "Md Sahadul Hasan's Notion", icon: "M" },
+          { id: "user-notion", name: "Md Sahadul Hasan's", icon: "M" },
           { id: "university", name: "University", icon: "U", isGuest: true },
           { id: "alphawolf", name: "AlphaWolf Ventures, Inc.", icon: "A" },
         ];
@@ -91,25 +89,16 @@ export function OrganizationSelector({
           </div>
         </DropdownMenuLabel>
 
-        <DropdownMenuItem className="px-3 py-1.5 hover:bg-zinc-800">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start text-zinc-400 hover:text-zinc-300"
-          >
-            <Settings className="mr-2 h-4 w-4" /> Settings
-          </Button>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem className="px-3 py-1.5 hover:bg-zinc-800">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start text-zinc-400 hover:text-zinc-300"
-          >
-            <Plus className="mr-2 h-4 w-4" /> Invite members
-          </Button>
-        </DropdownMenuItem>
+        <div className="flex gap-2 px-3 py-2">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 rounded-md border border-zinc-800 text-zinc-400 hover:text-zinc-300 cursor-pointer">
+            <Settings className="h-4 w-4" />
+            <span className="text-sm">Settings</span>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 rounded-md border border-zinc-800 text-zinc-400 hover:text-zinc-300 cursor-pointer">
+            <User className="h-4 w-4" />
+            <span className="text-sm">Invite members</span>
+          </div>
+        </div>
 
         <DropdownMenuSeparator className="my-1 bg-zinc-800" />
 
@@ -142,35 +131,19 @@ export function OrganizationSelector({
           </DropdownMenuItem>
         ))}
 
-        <DropdownMenuItem className="px-3 py-1.5 hover:bg-zinc-800">
+        <DropdownMenuItem className="px-3 py-1.5 hover:bg-zinc-800 hover:cursor-pointer">
           <div className="flex items-center text-zinc-400">
             <Plus className="h-4 w-4 mr-2" />
-            <span className="text-sm">New workspace</span>
+            <span className="text-sm">New Organization</span>
           </div>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator className="my-1 bg-zinc-800" />
 
-        <DropdownMenuItem className="px-3 py-1.5 hover:bg-zinc-800">
-          <div className="flex items-center text-zinc-400">
-            <User className="h-4 w-4 mr-2" />
-            <span className="text-sm">Add another account</span>
-          </div>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem className="px-3 py-1.5 hover:bg-zinc-800">
+        <DropdownMenuItem className="px-3 py-1.5 hover:bg-zinc-800 hover:cursor-pointer">
           <div className="flex items-center text-zinc-400">
             <LogOut className="h-4 w-4 mr-2" />
             <span className="text-sm">Log out</span>
-          </div>
-        </DropdownMenuItem>
-
-        <DropdownMenuSeparator className="my-1 bg-zinc-800" />
-
-        <DropdownMenuItem className="px-3 py-1.5 hover:bg-zinc-800">
-          <div className="flex items-center text-zinc-400">
-            <Download className="h-4 w-4 mr-2" />
-            <span className="text-sm">Get Mac app</span>
           </div>
         </DropdownMenuItem>
       </DropdownMenuContent>

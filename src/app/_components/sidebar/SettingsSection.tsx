@@ -24,9 +24,9 @@ export function SettingsSection({
         />
         <MenuItem
           icon={<FileText className="h-4 w-4" />}
-          label="Templates"
-          active={activeItem === "Templates"}
-          onClick={() => setActiveItem("Templates")}
+          label="Archive"
+          active={activeItem === "Archive"}
+          onClick={() => setActiveItem("Archive")}
         />
         <MenuItem
           icon={<Trash2 className="h-4 w-4" />}

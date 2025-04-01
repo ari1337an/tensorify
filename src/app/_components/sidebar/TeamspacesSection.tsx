@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, Users } from "lucide-react";
 import { Avatar } from "../ui/avatar";
 import { TeamDialog } from "../dialog";
 import {
@@ -23,16 +22,9 @@ export function TeamspacesSection() {
         <div className="flex items-center justify-between px-2 mb-1">
           <CollapsibleTrigger asChild>
             <button className="flex items-center text-xs font-medium text-muted-foreground hover:text-foreground hover:scale-[1.02] transition-transform duration-200">
-              <div
-                className={`transition-transform duration-200 ${
-                  teamspacesOpen ? "rotate-0" : "-rotate-90"
-                }`}
-              >
-                <ChevronDown className="h-3 w-3 mr-1" />
-              </div>
+             
               <span className="flex items-center gap-1.5">
-                <Users className="h-3 w-3" />
-                TEAMSPACES
+                TEAMS
               </span>
             </button>
           </CollapsibleTrigger>
