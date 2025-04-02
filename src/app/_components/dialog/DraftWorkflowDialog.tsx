@@ -12,7 +12,6 @@ import {
 } from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Textarea } from "../ui/textarea";
 
 export function DraftWorkflowDialog() {
   const [isOpen, setIsOpen] = React.useState(false);
