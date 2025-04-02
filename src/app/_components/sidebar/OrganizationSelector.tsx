@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { useSidebar } from "./SidebarContext";
+import { useAuth } from "@clerk/nextjs";
 
 type Organization = {
   id: string;
@@ -41,6 +42,7 @@ export function OrganizationSelector({
   organizations = [],
   onChangeOrganization = () => {},
 }: OrganizationProps) {
+  const { signOut } = useAuth();
   const [isOpen, setIsOpen] = React.useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { setIsOpen: setSidebarOpen } = useSidebar();
@@ -140,7 +142,10 @@ export function OrganizationSelector({
 
         <DropdownMenuSeparator className="my-1 bg-zinc-800" />
 
-        <DropdownMenuItem className="px-3 py-1.5 hover:bg-zinc-800 hover:cursor-pointer">
+        <DropdownMenuItem
+          onClick={() => signOut()}
+          className="px-3 py-1.5 hover:bg-zinc-800 hover:cursor-pointer"
+        >
           <div className="flex items-center text-zinc-400">
             <LogOut className="h-4 w-4 mr-2" />
             <span className="text-sm">Log out</span>

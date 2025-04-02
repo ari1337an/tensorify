@@ -4,6 +4,18 @@ import * as React from "react";
 import { FileText } from "lucide-react";
 import { Avatar } from "../ui/avatar";
 import { MenuItem } from "./MenuItem";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "../ui/collapsible";
+import { ChevronDown } from "lucide-react";
+
+type Project = {
+  id: string;
+  name: string;
+  workflows: string[];
+};
 
 type ProjectsSectionProps = {
   activeItem: string;
@@ -14,6 +26,33 @@ export function ProjectsSection({
   activeItem,
   setActiveItem,
 }: ProjectsSectionProps) {
+  const [openProjects, setOpenProjects] = React.useState<string[]>([]);
+  const [hoveredProject, setHoveredProject] = React.useState<string | null>(
+    null
+  );
+
+  // Example projects - in a real app, this would come from your data source
+  const projects: Project[] = [
+    {
+      id: "alphawolf",
+      name: "AlphaWolf Ventures",
+      workflows: ["Projects", "Meetings", "Docs", "Tasks Tracker"],
+    },
+    {
+      id: "test",
+      name: "test",
+      workflows: ["Teamspace Home"],
+    },
+  ];
+
+  const toggleProject = (projectId: string) => {
+    setOpenProjects((prev) =>
+      prev.includes(projectId)
+        ? prev.filter((id) => id !== projectId)
+        : [...prev, projectId]
+    );
+  };
+
   return (
     <div className="py-3">
       <div className="text-xs font-medium text-muted-foreground mb-2 px-2 flex items-center gap-1.5">
@@ -21,31 +60,57 @@ export function ProjectsSection({
         <span>PROJECTS</span>
       </div>
 
-      <MenuItem
-        icon={
-          <div className="relative">
-            <Avatar className="h-5 w-5 bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white text-xs">
-              P
-            </Avatar>
-            {activeItem === "Projects" && (
-              <div className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-blue-500" />
-            )}
-          </div>
-        }
-        label="Projects"
-        active={activeItem === "Projects"}
-        onClick={() => setActiveItem("Projects")}
-      />
+      <div className="space-y-1">
+        {projects.map((project) => (
+          <Collapsible
+            key={project.id}
+            open={openProjects.includes(project.id)}
+            onOpenChange={() => toggleProject(project.id)}
+          >
+            <CollapsibleTrigger asChild>
+              <div
+                onMouseEnter={() => setHoveredProject(project.id)}
+                onMouseLeave={() => setHoveredProject(null)}
+              >
+                <MenuItem
+                  icon={
+                    <div className="relative flex items-center">
+                      {hoveredProject === project.id ? (
+                        <ChevronDown
+                          className={`h-5 w-5 transition-transform duration-200 ${
+                            openProjects.includes(project.id)
+                              ? "rotate-180"
+                              : ""
+                          }`}
+                        />
+                      ) : (
+                        <Avatar className="h-5 w-5 bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white text-xs">
+                          {project.name[0]}
+                        </Avatar>
+                      )}
+                    </div>
+                  }
+                  label={project.name}
+                  active={activeItem === project.id}
+                  onClick={() => setActiveItem(project.id)}
+                />
+              </div>
+            </CollapsibleTrigger>
 
-      <div className="space-y-1 mt-1 ml-7">
-        {["Wiki", "Meetings", "Docs", "Tasks Tracker"].map((item) => (
-          <MenuItem
-            key={item}
-            icon={<div className="w-5" />} // Empty space for alignment
-            label={item}
-            active={activeItem === item}
-            onClick={() => setActiveItem(item)}
-          />
+            <CollapsibleContent>
+              <div className="space-y-1 mt-1">
+                {project.workflows.map((workflow) => (
+                  <MenuItem
+                    key={`${project.id}-${workflow}`}
+                    icon={<div className="w-5" />}
+                    label={workflow}
+                    active={activeItem === workflow}
+                    onClick={() => setActiveItem(workflow)}
+                  />
+                ))}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         ))}
       </div>
     </div>
