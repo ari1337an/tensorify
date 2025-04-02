@@ -1,13 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { Plus, Workflow } from "lucide-react";
+import { Workflow } from "lucide-react";
 import { MenuItem } from "./MenuItem";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "../ui/collapsible";
+import { DraftWorkflowDialog } from "../dialog";
 
 export function DraftWorkflowsSection() {
   const [draftWorkflowsOpen, setDraftWorkflowsOpen] = React.useState(true);
@@ -25,6 +26,8 @@ export function DraftWorkflowsSection() {
               <span className="flex items-center gap-1.5">DRAFT WORKFLOWS</span>
             </button>
           </CollapsibleTrigger>
+
+          <DraftWorkflowDialog />
         </div>
 
         <CollapsibleContent className="mt-1 space-y-1 transition-all duration-300">
@@ -34,7 +37,6 @@ export function DraftWorkflowsSection() {
               label="Draft 1"
               notification
             />
-            <MenuItem icon={<Plus className="h-4 w-4" />} label="Add new" />
           </div>
         </CollapsibleContent>
       </Collapsible>

@@ -14,7 +14,7 @@ export function SettingsSection({
   setActiveItem,
 }: SettingsSectionProps) {
   return (
-    <div className="py-2 mt-2">
+    <div>
       <div className="space-y-1">
         <MenuItem
           icon={<Settings className="h-4 w-4" />}

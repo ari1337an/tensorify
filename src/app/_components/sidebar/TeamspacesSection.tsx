@@ -7,7 +7,8 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "../ui/collapsible";
+} from "@/app/_components/ui/collapsible";
+import { MenuItem } from "./MenuItem";
 
 export function TeamspacesSection() {
   const [teamspacesOpen, setTeamspacesOpen] = React.useState(true);
@@ -32,27 +33,25 @@ export function TeamspacesSection() {
 
         <CollapsibleContent className="mt-1 space-y-1 transition-all duration-300">
           <div className="transition-all duration-300">
-            <div className="w-full justify-start text-left relative pl-9 text-sm py-2 px-3 rounded-md cursor-pointer flex items-center hover:bg-accent group hover:scale-[1.02] active:scale-[0.98] transition-transform duration-200">
-              <div className="absolute left-2 top-1/2 transform -translate-y-1/2 hover:scale-110 transition-transform duration-200">
-                <Avatar className="h-5 w-5 bg-gradient-to-br from-amber-600 to-amber-800 flex items-center justify-center text-white text-xs shadow-sm group-hover:shadow-md transition-shadow">
+            <MenuItem
+              icon={
+                <Avatar className="h-5 w-5 bg-gradient-to-br from-amber-600 to-amber-800 flex items-center justify-center text-white text-xs">
                   A
                 </Avatar>
-              </div>
-              <span className="text-muted-foreground group-hover:text-foreground transition-colors">
-                AlphaWolf Ventures, Inc.
-              </span>
-            </div>
+              }
+              label="AlphaWolf Ventures, Inc."
+              onClick={() => {}}
+            />
 
-            <div className="w-full justify-start text-left relative pl-9 text-sm py-2 px-3 rounded-md cursor-pointer flex items-center hover:bg-accent group hover:scale-[1.02] active:scale-[0.98] transition-transform duration-200">
-              <div className="absolute left-2 top-1/2 transform -translate-y-1/2 hover:scale-110 transition-transform duration-200">
-                <Avatar className="h-5 w-5 bg-gradient-to-br from-lime-400 to-lime-600 flex items-center justify-center text-white text-xs shadow-sm group-hover:shadow-md transition-shadow">
+            <MenuItem
+              icon={
+                <Avatar className="h-5 w-5 bg-gradient-to-br from-lime-400 to-lime-600 flex items-center justify-center text-white text-xs">
                   α
                 </Avatar>
-              </div>
-              <span className="text-muted-foreground group-hover:text-foreground transition-colors">
-                alphawolfventures
-              </span>
-            </div>
+              }
+              label="alphawolfventures"
+              onClick={() => {}}
+            />
           </div>
         </CollapsibleContent>
       </Collapsible>

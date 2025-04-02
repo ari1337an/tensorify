@@ -1,15 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { FileText } from "lucide-react";
-import { Avatar } from "../ui/avatar";
-import { MenuItem } from "./MenuItem";
+import { Avatar } from "@/app/_components/ui/avatar";
+import { MenuItem } from "@/app/_components/sidebar/MenuItem";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "../ui/collapsible";
+} from "@/app/_components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
+import { ProjectDialog } from "@/app/_components/dialog";
 
 type Project = {
   id: string;
@@ -64,14 +64,15 @@ export function ProjectsSection({
         <CollapsibleTrigger asChild>
           <button className="flex items-center text-xs font-medium text-muted-foreground hover:text-foreground hover:scale-[1.02] transition-transform duration-200">
             <span className="flex items-center gap-1.5">
-              <FileText className="h-3 w-3" />
               <span>PROJECTS</span>
             </span>
           </button>
         </CollapsibleTrigger>
+
+        <ProjectDialog />
       </div>
 
-      <CollapsibleContent className="mt-1 space-y-1 transition-all duration-300">
+      <CollapsibleContent className="mt-1 mb-2 space-y-1 transition-all duration-300">
         <div className="space-y-1">
           {projects.map((project) => (
             <Collapsible
