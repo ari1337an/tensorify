@@ -30,7 +30,7 @@ const mockOrganizations: Organization[] = [
 
 export function Sidebar({ className, ...props }: SidebarProps) {
   const currentUser = useStore((state) => state.currentUser);
-  const { isOpen, setIsOpen } = useSidebar();
+  const { isOpen } = useSidebar();
   const [activeItem, setActiveItem] = React.useState("Projects");
   const [currentOrg, setCurrentOrg] = React.useState(mockOrganizations[0]);
 

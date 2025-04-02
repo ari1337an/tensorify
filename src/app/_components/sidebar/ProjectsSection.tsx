@@ -26,6 +26,7 @@ export function ProjectsSection({
   activeItem,
   setActiveItem,
 }: ProjectsSectionProps) {
+  const [projectsSectionOpen, setProjectsSectionOpen] = React.useState(true);
   const [openProjects, setOpenProjects] = React.useState<string[]>([]);
   const [hoveredProject, setHoveredProject] = React.useState<string | null>(
     null
@@ -54,65 +55,77 @@ export function ProjectsSection({
   };
 
   return (
-    <div className="py-3">
-      <div className="text-xs font-medium text-muted-foreground mb-2 px-2 flex items-center gap-1.5">
-        <FileText className="h-3 w-3" />
-        <span>PROJECTS</span>
+    <Collapsible
+      open={projectsSectionOpen}
+      onOpenChange={setProjectsSectionOpen}
+      className="py-3"
+    >
+      <div className="flex items-center justify-between px-2 mb-1">
+        <CollapsibleTrigger asChild>
+          <button className="flex items-center text-xs font-medium text-muted-foreground hover:text-foreground hover:scale-[1.02] transition-transform duration-200">
+            <span className="flex items-center gap-1.5">
+              <FileText className="h-3 w-3" />
+              <span>PROJECTS</span>
+            </span>
+          </button>
+        </CollapsibleTrigger>
       </div>
 
-      <div className="space-y-1">
-        {projects.map((project) => (
-          <Collapsible
-            key={project.id}
-            open={openProjects.includes(project.id)}
-            onOpenChange={() => toggleProject(project.id)}
-          >
-            <CollapsibleTrigger asChild>
-              <div
-                onMouseEnter={() => setHoveredProject(project.id)}
-                onMouseLeave={() => setHoveredProject(null)}
-              >
-                <MenuItem
-                  icon={
-                    <div className="relative flex items-center">
-                      {hoveredProject === project.id ? (
-                        <ChevronDown
-                          className={`h-5 w-5 transition-transform duration-200 ${
-                            openProjects.includes(project.id)
-                              ? "rotate-180"
-                              : ""
-                          }`}
-                        />
-                      ) : (
-                        <Avatar className="h-5 w-5 bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white text-xs">
-                          {project.name[0]}
-                        </Avatar>
-                      )}
-                    </div>
-                  }
-                  label={project.name}
-                  active={activeItem === project.id}
-                  onClick={() => setActiveItem(project.id)}
-                />
-              </div>
-            </CollapsibleTrigger>
-
-            <CollapsibleContent>
-              <div className="space-y-1 mt-1">
-                {project.workflows.map((workflow) => (
+      <CollapsibleContent className="mt-1 space-y-1 transition-all duration-300">
+        <div className="space-y-1">
+          {projects.map((project) => (
+            <Collapsible
+              key={project.id}
+              open={openProjects.includes(project.id)}
+              onOpenChange={() => toggleProject(project.id)}
+            >
+              <CollapsibleTrigger asChild>
+                <div
+                  onMouseEnter={() => setHoveredProject(project.id)}
+                  onMouseLeave={() => setHoveredProject(null)}
+                >
                   <MenuItem
-                    key={`${project.id}-${workflow}`}
-                    icon={<div className="w-5" />}
-                    label={workflow}
-                    active={activeItem === workflow}
-                    onClick={() => setActiveItem(workflow)}
+                    icon={
+                      <div className="relative flex items-center">
+                        {hoveredProject === project.id ? (
+                          <ChevronDown
+                            className={`h-5 w-5 transition-transform duration-200 ${
+                              openProjects.includes(project.id)
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          />
+                        ) : (
+                          <Avatar className="h-5 w-5 bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white text-xs">
+                            {project.name[0]}
+                          </Avatar>
+                        )}
+                      </div>
+                    }
+                    label={project.name}
+                    active={activeItem === project.id}
+                    onClick={() => setActiveItem(project.id)}
                   />
-                ))}
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-        ))}
-      </div>
-    </div>
+                </div>
+              </CollapsibleTrigger>
+
+              <CollapsibleContent>
+                <div className="space-y-1 mt-1">
+                  {project.workflows.map((workflow) => (
+                    <MenuItem
+                      key={`${project.id}-${workflow}`}
+                      icon={<div className="w-5" />}
+                      label={workflow}
+                      active={activeItem === workflow}
+                      onClick={() => setActiveItem(workflow)}
+                    />
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          ))}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
