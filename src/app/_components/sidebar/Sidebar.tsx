@@ -1,8 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { X } from "lucide-react";
-import { Button } from "../ui/button";
 import { ScrollArea } from "../ui/scroll-area";
 import { cn } from "@/app/_lib/utils";
 import { useSidebar, SIDEBAR_WIDTH } from "./SidebarContext";
@@ -63,16 +61,6 @@ export function Sidebar({ className, ...props }: SidebarProps) {
               organizations={mockOrganizations}
               onChangeOrganization={handleChangeOrganization}
             />
-            <div className="hover:rotate-90 transition-transform duration-200">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsOpen(false)}
-                className="h-7 w-7 rounded-full hover:bg-destructive/10 hover:text-destructive"
-              >
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </div>
           </div>
 
           <ScrollArea className="flex-1 px-3 py-3 overflow-y-auto">

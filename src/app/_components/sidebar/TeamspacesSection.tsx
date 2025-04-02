@@ -22,17 +22,12 @@ export function TeamspacesSection() {
         <div className="flex items-center justify-between px-2 mb-1">
           <CollapsibleTrigger asChild>
             <button className="flex items-center text-xs font-medium text-muted-foreground hover:text-foreground hover:scale-[1.02] transition-transform duration-200">
-             
-              <span className="flex items-center gap-1.5">
-                TEAMS
-              </span>
+              <span className="flex items-center gap-1.5">TEAMS</span>
             </button>
           </CollapsibleTrigger>
 
           {/* Team dialog trigger */}
-          <div className="hover:scale-110 hover:rotate-90 active:scale-90 transition-transform duration-200">
-            <TeamDialog />
-          </div>
+          <TeamDialog />
         </div>
 
         <CollapsibleContent className="mt-1 space-y-1 transition-all duration-300">
