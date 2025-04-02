@@ -44,7 +44,7 @@ export function Sidebar({ className, ...props }: SidebarProps) {
   return (
     <div
       className={cn(
-        "flex-shrink-0 flex flex-col border-r border-border/50 bg-sidebar backdrop-blur-lg overflow-hidden transition-all duration-300",
+        "flex-shrink-0 flex flex-col border-r border-border/50 bg-sidebar backdrop-blur-lg h-screen transition-all duration-300",
         !isOpen && "w-0",
         className
       )}
@@ -75,7 +75,7 @@ export function Sidebar({ className, ...props }: SidebarProps) {
             </div>
           </div>
 
-          <ScrollArea className="flex-1 px-3 py-3">
+          <ScrollArea className="flex-1 px-3 py-3 overflow-y-auto">
             {/* Draft Workflows Section */}
             <DraftWorkflowsSection />
 

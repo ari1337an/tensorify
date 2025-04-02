@@ -41,7 +41,7 @@ export function ProjectsSection({
     {
       id: "test",
       name: "test",
-      workflows: ["Teamspace Home"],
+      workflows: ["Teamspace Home", "Wiki", "Docs", "Tasks Tracker"],
     },
   ];
 
