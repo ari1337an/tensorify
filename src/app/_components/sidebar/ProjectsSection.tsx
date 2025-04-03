@@ -121,6 +121,75 @@ const SortableProject = ({
   );
 };
 
+// Regular project item for server-side rendering
+const StaticProject = ({
+  project,
+  active,
+  isOpen,
+  hoveredProject,
+  setHoveredProject,
+  toggleProject,
+  onItemClick,
+  setActiveItem,
+}: {
+  project: Project;
+  active: boolean;
+  isOpen: boolean;
+  hoveredProject: string | null;
+  setHoveredProject: (id: string | null) => void;
+  toggleProject: () => void;
+  onItemClick: () => void;
+  setActiveItem: (item: string) => void;
+}) => {
+  return (
+    <Collapsible open={isOpen} onOpenChange={toggleProject}>
+      <CollapsibleTrigger asChild>
+        <div
+          onMouseEnter={() => setHoveredProject(project.id)}
+          onMouseLeave={() => setHoveredProject(null)}
+        >
+          <MenuItem
+            icon={
+              <div className="relative flex items-center">
+                {hoveredProject === project.id ? (
+                  <ChevronDown
+                    className={`h-5 w-5 transition-transform duration-200 ${
+                      isOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                ) : (
+                  <Avatar className="h-5 w-5 bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white text-xs">
+                    {project.name[0]}
+                  </Avatar>
+                )}
+              </div>
+            }
+            label={project.name}
+            active={active}
+            onClick={onItemClick}
+          />
+        </div>
+      </CollapsibleTrigger>
+
+      <CollapsibleContent>
+        {isOpen && (
+          <div className="space-y-1 mt-1">
+            {project.workflows.map((workflow) => (
+              <MenuItem
+                key={`${project.id}-${workflow}`}
+                icon={<div className="w-5" />}
+                label={workflow}
+                active={active && workflow === ""}
+                onClick={() => setActiveItem(workflow)}
+              />
+            ))}
+          </div>
+        )}
+      </CollapsibleContent>
+    </Collapsible>
+  );
+};
+
 // Sortable Workflow Item component
 const SortableWorkflow = ({
   id,
@@ -277,6 +346,11 @@ export function ProjectsSection({
   ]);
 
   const [activeProject, setActiveProject] = React.useState<string | null>(null);
+  const [isClient, setIsClient] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -337,48 +411,68 @@ export function ProjectsSection({
       </div>
 
       <CollapsibleContent className="mt-1 mb-2 space-y-1">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="space-y-1">
-            <SortableContext
-              items={projects.map((project) => project.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              {projects.map((project) => (
-                <SortableProject
-                  key={project.id}
-                  project={project}
-                  active={activeItem === project.id}
-                  isOpen={openProjects.has(project.id)}
-                  hoveredProject={hoveredProject}
-                  setHoveredProject={setHoveredProject}
-                  toggleProject={() => toggleProject(project.id)}
-                  onItemClick={() => setActiveItem(project.id)}
-                  setActiveItem={setActiveItem}
-                />
-              ))}
-            </SortableContext>
-          </div>
+        {isClient ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="space-y-1">
+              <SortableContext
+                items={projects.map((project) => project.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {projects.map((project) => (
+                  <SortableProject
+                    key={project.id}
+                    project={project}
+                    active={activeItem === project.id}
+                    isOpen={openProjects.has(project.id)}
+                    hoveredProject={hoveredProject}
+                    setHoveredProject={setHoveredProject}
+                    toggleProject={() => toggleProject(project.id)}
+                    onItemClick={() => setActiveItem(project.id)}
+                    setActiveItem={setActiveItem}
+                  />
+                ))}
+              </SortableContext>
+            </div>
 
-          <DragOverlay>
-            {activeProject ? (
-              <MenuItem
-                icon={
-                  <Avatar className="h-5 w-5 bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white text-xs">
-                    {projects.find((p) => p.id === activeProject)?.name[0]}
-                  </Avatar>
-                }
-                label={projects.find((p) => p.id === activeProject)?.name || ""}
-                active={activeItem === activeProject}
-                onClick={() => {}}
+            <DragOverlay>
+              {activeProject ? (
+                <MenuItem
+                  icon={
+                    <Avatar className="h-5 w-5 bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white text-xs">
+                      {projects.find((p) => p.id === activeProject)?.name[0]}
+                    </Avatar>
+                  }
+                  label={
+                    projects.find((p) => p.id === activeProject)?.name || ""
+                  }
+                  active={activeItem === activeProject}
+                  onClick={() => {}}
+                />
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+        ) : (
+          <div className="space-y-1">
+            {projects.map((project) => (
+              <StaticProject
+                key={project.id}
+                project={project}
+                active={activeItem === project.id}
+                isOpen={openProjects.has(project.id)}
+                hoveredProject={hoveredProject}
+                setHoveredProject={setHoveredProject}
+                toggleProject={() => toggleProject(project.id)}
+                onItemClick={() => setActiveItem(project.id)}
+                setActiveItem={setActiveItem}
               />
-            ) : null}
-          </DragOverlay>
-        </DndContext>
+            ))}
+          </div>
+        )}
       </CollapsibleContent>
     </Collapsible>
   );
