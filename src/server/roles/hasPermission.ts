@@ -49,6 +49,7 @@ const ROLES = {
     "workflow:read",
     "workflow:update",
     "workflow:delete",
+    "workflow:export",
   ],
 } as const;
 

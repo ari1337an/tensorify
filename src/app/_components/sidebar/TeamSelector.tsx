@@ -21,43 +21,44 @@ import {
 } from "../ui/dropdown-menu";
 import { useSidebar } from "./SidebarContext";
 import { useAuth } from "@clerk/nextjs";
+import { TeamDialog } from "../dialog";
 
-type Organization = {
+type Team = {
   id: string;
   name: string;
   icon: string;
   isGuest?: boolean;
 };
 
-type OrganizationProps = {
+type TeamSelectorProps = {
   email?: string;
-  currentOrg?: Organization;
-  organizations?: Organization[];
-  onChangeOrganization?: (org: Organization) => void;
+  currentTeam?: Team;
+  teams?: Team[];
+  onChangeTeam?: (team: Team) => void;
 };
 
-export function OrganizationSelector({
+export function TeamSelector({
   email = "loading...",
-  currentOrg,
-  organizations = [],
-  onChangeOrganization = () => {},
-}: OrganizationProps) {
+  currentTeam,
+  teams = [],
+  onChangeTeam = () => {},
+}: TeamSelectorProps) {
   const { signOut } = useAuth();
   const [isOpen, setIsOpen] = React.useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { setIsOpen: setSidebarOpen } = useSidebar();
 
-  // If no organizations provided, create some example ones
-  const defaultOrgs =
-    organizations.length > 0
-      ? organizations
+  // If no teams provided, create some example ones
+  const defaultTeams =
+    teams.length > 0
+      ? teams
       : [
           { id: "user-tensorify", name: "Md Sahadul Hasan's", icon: "M" },
           { id: "university", name: "University", icon: "U", isGuest: true },
           { id: "alphawolf", name: "AlphaWolf Ventures, Inc.", icon: "A" },
         ];
 
-  const activeOrg = currentOrg || defaultOrgs[2]; // Default to AlphaWolf
+  const activeTeam = currentTeam || defaultTeams[2]; // Default to AlphaWolf
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -65,10 +66,10 @@ export function OrganizationSelector({
         <div className="flex items-center justify-between w-full px-2 py-1.5 hover:bg-zinc-800/50 rounded-md cursor-pointer">
           <div className="flex items-center min-w-0">
             <Avatar className="h-6 w-6 mr-2 bg-zinc-800 flex items-center justify-center text-white text-xs">
-              {activeOrg.icon}
+              {activeTeam.icon}
             </Avatar>
             <span className="text-sm font-medium truncate">
-              {activeOrg.name}
+              {activeTeam.name}
             </span>
           </div>
           <ChevronDown className="h-4 w-4 text-zinc-400" />
@@ -82,11 +83,13 @@ export function OrganizationSelector({
         <DropdownMenuLabel className="px-3 py-1.5">
           <div className="flex items-center justify-between">
             <Avatar className="h-8 w-8 mr-2 bg-zinc-800 flex items-center justify-center text-white text-sm">
-              {activeOrg.icon}
+              {activeTeam.icon}
             </Avatar>
             <div className="flex-1 min-w-0">
-              <div className="font-medium text-sm">{activeOrg.name}</div>
-              <div className="text-xs text-zinc-400">Free Plan · 2 members</div>
+              <div className="font-medium text-sm">{activeTeam.name}</div>
+              <div className="text-xs text-zinc-400">
+                Organization Name · 2 members
+              </div>
             </div>
           </div>
         </DropdownMenuLabel>
@@ -109,24 +112,24 @@ export function OrganizationSelector({
           <MoreHorizontal className="h-4 w-4" />
         </div>
 
-        {defaultOrgs.map((org) => (
+        {defaultTeams.map((team) => (
           <DropdownMenuItem
-            key={org.id}
+            key={team.id}
             className="px-3 py-1.5 hover:bg-zinc-800"
-            onSelect={() => onChangeOrganization(org)}
+            onSelect={() => onChangeTeam(team)}
           >
             <div className="flex items-center w-full">
               <Avatar className="h-6 w-6 mr-2 bg-zinc-800 flex items-center justify-center text-white text-xs">
-                {org.icon}
+                {team.icon}
               </Avatar>
-              <span className="flex-1 text-sm">{org.name}</span>
-              {org.isGuest && (
+              <span className="flex-1 text-sm">{team.name}</span>
+              {team.isGuest && (
                 <span className="flex items-center text-amber-500/90 text-xs font-medium">
                   <Globe className="h-3.5 w-3.5 mr-1" />
                   Guest
                 </span>
               )}
-              {org.id === activeOrg.id && (
+              {team.id === activeTeam.id && (
                 <span className="text-zinc-400 ml-2">✓</span>
               )}
             </div>
@@ -136,7 +139,9 @@ export function OrganizationSelector({
         <DropdownMenuItem className="px-3 py-1.5 hover:bg-zinc-800 hover:cursor-pointer">
           <div className="flex items-center text-zinc-400">
             <Plus className="h-4 w-4 mr-2" />
-            <span className="text-sm">New Organization</span>
+            <TeamDialog>
+              <span className="text-sm">New Team</span>
+            </TeamDialog>
           </div>
         </DropdownMenuItem>
 

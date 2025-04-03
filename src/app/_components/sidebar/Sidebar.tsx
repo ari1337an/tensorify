@@ -4,9 +4,8 @@ import * as React from "react";
 import { ScrollArea } from "../ui/scroll-area";
 import { cn } from "@/app/_lib/utils";
 import { useSidebar, SIDEBAR_WIDTH } from "./SidebarContext";
-import { OrganizationSelector } from "./OrganizationSelector";
+import { TeamSelector } from "./TeamSelector";
 import { DraftWorkflowsSection } from "./DraftWorkflowsSection";
-import { TeamspacesSection } from "./TeamspacesSection";
 import { ProjectsSection } from "./ProjectsSection";
 import { SettingsSection } from "./SettingsSection";
 import { InviteFooter } from "./InviteFooter";
@@ -14,29 +13,29 @@ import useStore from "@/app/_store/store";
 
 type SidebarProps = React.HTMLAttributes<HTMLDivElement>;
 
-// Define the Organization type
-type Organization = {
+// Define the Team type
+type Team = {
   id: string;
   name: string;
   icon: string;
 };
 
-// Mock data for organizations
-const mockOrganizations: Organization[] = [
-  { id: "alphawolf", name: "AlphaWolf Ventures, Inc.", icon: "A" },
-  { id: "university", name: "University", icon: "U" },
-  { id: "md-tensorify", name: "Md Sahadul Hasan's tensorify", icon: "M" },
+// Mock data for teams
+const mockTeams: Team[] = [
+  { id: "team1", name: "Alpha team", icon: "A" },
+  { id: "team2", name: "Beta team", icon: "B" },
+  { id: "team3", name: "Gamma team", icon: "C" },
 ];
 
 export function Sidebar({ className, ...props }: SidebarProps) {
   const currentUser = useStore((state) => state.currentUser);
   const { isOpen } = useSidebar();
   const [activeItem, setActiveItem] = React.useState("Projects");
-  const [currentOrg, setCurrentOrg] = React.useState(mockOrganizations[0]);
+  const [currentTeam, setCurrentTeam] = React.useState(mockTeams[0]);
 
-  const handleChangeOrganization = (org: Organization) => {
-    setCurrentOrg(org);
-    // Additional logic when changing organization could go here
+  const handleChangeTeam = (team: Team) => {
+    setCurrentTeam(team);
+    // Additional logic when changing team could go here
   };
 
   return (
@@ -55,20 +54,17 @@ export function Sidebar({ className, ...props }: SidebarProps) {
         <>
           {/* Header with organization selector and close button */}
           <div className="flex items-center justify-between px-2 py-1 border-b border-border/30">
-            <OrganizationSelector
+            <TeamSelector
               email={currentUser?.emailAddresses[0].emailAddress}
-              currentOrg={currentOrg}
-              organizations={mockOrganizations}
-              onChangeOrganization={handleChangeOrganization}
+              currentTeam={currentTeam}
+              teams={mockTeams}
+              onChangeTeam={handleChangeTeam}
             />
           </div>
 
           <ScrollArea className="flex-1 px-3 py-3 overflow-y-auto">
             {/* Draft Workflows Section */}
             <DraftWorkflowsSection />
-
-            {/* Teamspaces Section */}
-            <TeamspacesSection />
 
             {/* Projects Section */}
             <ProjectsSection

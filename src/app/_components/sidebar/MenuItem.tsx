@@ -32,7 +32,7 @@ export function MenuItem({
         <TooltipTrigger asChild>
           <button
             className={cn(
-              "w-full flex items-center rounded-md px-3 py-2 text-sm transition-all duration-200 relative overflow-hidden",
+              "hover:cursor-pointer w-full flex items-center rounded-md px-3 py-2 text-sm transition-all duration-200 relative overflow-hidden",
               active
                 ? "bg-primary text-primary-foreground font-medium"
                 : "text-muted-foreground hover:text-foreground hover:bg-accent"

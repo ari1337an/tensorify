@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Plus, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "../ui/button";
 import {
   Dialog,
@@ -18,7 +18,11 @@ type InvitedMember = {
   email: string;
 };
 
-export function TeamDialog() {
+interface TeamDialogProps {
+  children: React.ReactNode;
+}
+
+export function TeamDialog({ children }: TeamDialogProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [teamName, setTeamName] = React.useState("");
   const [emailInput, setEmailInput] = React.useState("");
@@ -65,18 +69,17 @@ export function TeamDialog() {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-5 w-5">
-          <Plus className="h-3 w-3" />
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger asChild>{children}</DialogTrigger>
 
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        className="sm:max-w-md"
+        onClick={(e) => e.stopPropagation()}
+      >
         <DialogHeader>
           <DialogTitle>Create a team</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4" onClick={(e) => e.stopPropagation()}>
           <div className="space-y-2">
             <label htmlFor="team-name" className="text-sm font-medium">
               Team name
@@ -107,7 +110,10 @@ export function TeamDialog() {
                     variant="ghost"
                     size="icon"
                     className="h-4 w-4 rounded-full"
-                    onClick={() => handleRemoveMember(member.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveMember(member.id);
+                    }}
                   >
                     <X className="h-3 w-3" />
                   </Button>
@@ -128,7 +134,10 @@ export function TeamDialog() {
         <div className="flex justify-end">
           <Button
             variant="default"
-            onClick={handleCreateTeam}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCreateTeam();
+            }}
             disabled={!teamName.trim()}
           >
             Create Team
