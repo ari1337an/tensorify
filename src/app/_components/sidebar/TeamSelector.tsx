@@ -7,8 +7,7 @@ import {
   User,
   LogOut,
   Settings,
-  Globe,
-  MoreHorizontal,
+  Globe
 } from "lucide-react";
 import { Avatar } from "../ui/avatar";
 import {
@@ -109,13 +108,13 @@ export function TeamSelector({
 
         <div className="px-3 py-1.5 flex items-center justify-between text-zinc-400">
           <span className="text-sm">{email}</span>
-          <MoreHorizontal className="h-4 w-4" />
+          {/* <MoreHorizontal className="h-4 w-4 hover:cursor-pointer" /> */}
         </div>
 
         {defaultTeams.map((team) => (
           <DropdownMenuItem
             key={team.id}
-            className="px-3 py-1.5 hover:bg-zinc-800"
+            className="px-3 py-1.5 hover:bg-zinc-800 hover:cursor-pointer"
             onSelect={() => onChangeTeam(team)}
           >
             <div className="flex items-center w-full">

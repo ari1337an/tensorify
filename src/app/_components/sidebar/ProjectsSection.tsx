@@ -27,7 +27,9 @@ export function ProjectsSection({
   setActiveItem,
 }: ProjectsSectionProps) {
   const [projectsSectionOpen, setProjectsSectionOpen] = React.useState(true);
-  const [openProject, setOpenProject] = React.useState<string | null>(null);
+  const [openProjects, setOpenProjects] = React.useState<Set<string>>(
+    new Set()
+  );
   const [hoveredProject, setHoveredProject] = React.useState<string | null>(
     null
   );
@@ -35,19 +37,27 @@ export function ProjectsSection({
   // Example projects - in a real app, this would come from your data source
   const projects: Project[] = [
     {
-      id: "alphawolf",
-      name: "AlphaWolf Ventures",
+      id: "project-1",
+      name: "Project 1",
       workflows: ["Workflow 1", "Workflow 2", "Workflow 3"],
     },
     {
-      id: "test",
-      name: "test",
+      id: "project-2",
+      name: "Project 2",
       workflows: ["Workflow 1", "Workflow 2", "Workflow 3", "Workflow 4"],
     },
   ];
 
   const toggleProject = (projectId: string) => {
-    setOpenProject((prev) => (prev === projectId ? null : projectId));
+    setOpenProjects((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(projectId)) {
+        newSet.delete(projectId);
+      } else {
+        newSet.add(projectId);
+      }
+      return newSet;
+    });
   };
 
   return (
@@ -73,7 +83,7 @@ export function ProjectsSection({
           {projects.map((project) => (
             <Collapsible
               key={project.id}
-              open={openProject === project.id}
+              open={openProjects.has(project.id)}
               onOpenChange={() => toggleProject(project.id)}
             >
               <CollapsibleTrigger asChild>
@@ -87,7 +97,7 @@ export function ProjectsSection({
                         {hoveredProject === project.id ? (
                           <ChevronDown
                             className={`h-5 w-5 transition-transform duration-200 ${
-                              openProject === project.id ? "rotate-180" : ""
+                              openProjects.has(project.id) ? "rotate-180" : ""
                             }`}
                           />
                         ) : (

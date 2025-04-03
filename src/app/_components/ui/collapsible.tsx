@@ -26,7 +26,7 @@ function CollapsibleContent({
 }: React.ComponentProps<typeof CollapsiblePrimitive.CollapsibleContent>) {
   return (
     <CollapsiblePrimitive.CollapsibleContent
-      className={`overflow-hidden data-[state=open]:animate-[accordion-down_1s] data-[state=closed]:animate-[accordion-up_1s] ${
+      className={`overflow-hidden ${
         className || ""
       }`}
       {...props}
