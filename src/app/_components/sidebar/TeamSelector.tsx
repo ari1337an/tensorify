@@ -1,14 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  ChevronDown,
-  Plus,
-  User,
-  LogOut,
-  Settings,
-  Globe
-} from "lucide-react";
+import { ChevronDown, Plus, User, LogOut, Settings, Globe } from "lucide-react";
 import { Avatar } from "../ui/avatar";
 import {
   DropdownMenu,
@@ -44,6 +37,7 @@ export function TeamSelector({
 }: TeamSelectorProps) {
   const { signOut } = useAuth();
   const [isOpen, setIsOpen] = React.useState(false);
+  const [isTeamDialogOpen, setIsTeamDialogOpen] = React.useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { setIsOpen: setSidebarOpen } = useSidebar();
 
@@ -60,102 +54,113 @@ export function TeamSelector({
   const activeTeam = currentTeam || defaultTeams[2]; // Default to AlphaWolf
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger asChild>
-        <div className="flex items-center justify-between w-full px-2 py-1.5 hover:bg-zinc-800/50 rounded-md cursor-pointer">
-          <div className="flex items-center min-w-0">
-            <Avatar className="h-6 w-6 mr-2 bg-zinc-800 flex items-center justify-center text-white text-xs">
-              {activeTeam.icon}
-            </Avatar>
-            <span className="text-sm font-medium truncate">
-              {activeTeam.name}
-            </span>
+    <>
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+        <DropdownMenuTrigger asChild>
+          <div className="flex items-center justify-between w-full px-2 py-1.5 hover:bg-zinc-800/50 rounded-md cursor-pointer">
+            <div className="flex items-center min-w-0">
+              <Avatar className="h-6 w-6 mr-2 bg-zinc-800 flex items-center justify-center text-white text-xs">
+                {activeTeam.icon}
+              </Avatar>
+              <span className="text-sm font-medium truncate">
+                {activeTeam.name}
+              </span>
+            </div>
+            <ChevronDown className="h-4 w-4 text-zinc-400" />
           </div>
-          <ChevronDown className="h-4 w-4 text-zinc-400" />
-        </div>
-      </DropdownMenuTrigger>
+        </DropdownMenuTrigger>
 
-      <DropdownMenuContent
-        align="start"
-        className="w-[300px] bg-[#1a1a1a] border-zinc-800 shadow-xl rounded-lg py-1"
-      >
-        <DropdownMenuLabel className="px-3 py-1.5">
-          <div className="flex items-center justify-between">
-            <Avatar className="h-8 w-8 mr-2 bg-zinc-800 flex items-center justify-center text-white text-sm">
-              {activeTeam.icon}
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <div className="font-medium text-sm">{activeTeam.name}</div>
-              <div className="text-xs text-zinc-400">
-                Organization Name · 2 members
+        <DropdownMenuContent
+          align="start"
+          className="w-[300px] bg-[#1a1a1a] border-zinc-800 shadow-xl rounded-lg py-1"
+        >
+          <DropdownMenuLabel className="px-3 py-1.5">
+            <div className="flex items-center justify-between">
+              <Avatar className="h-8 w-8 mr-2 bg-zinc-800 flex items-center justify-center text-white text-sm">
+                {activeTeam.icon}
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-sm">{activeTeam.name}</div>
+                <div className="text-xs text-zinc-400">
+                  Organization Name · 2 members
+                </div>
               </div>
             </div>
+          </DropdownMenuLabel>
+
+          <div className="flex gap-2 px-3 py-2">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 rounded-md border border-zinc-800 text-zinc-400 hover:text-zinc-300 cursor-pointer">
+              <Settings className="h-4 w-4" />
+              <span className="text-sm">Settings</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 rounded-md border border-zinc-800 text-zinc-400 hover:text-zinc-300 cursor-pointer">
+              <User className="h-4 w-4" />
+              <span className="text-sm">Invite members</span>
+            </div>
           </div>
-        </DropdownMenuLabel>
 
-        <div className="flex gap-2 px-3 py-2">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 rounded-md border border-zinc-800 text-zinc-400 hover:text-zinc-300 cursor-pointer">
-            <Settings className="h-4 w-4" />
-            <span className="text-sm">Settings</span>
+          <DropdownMenuSeparator className="my-1 bg-zinc-800" />
+
+          <div className="px-3 py-1.5 flex items-center justify-between text-zinc-400">
+            <span className="text-sm">{email}</span>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 rounded-md border border-zinc-800 text-zinc-400 hover:text-zinc-300 cursor-pointer">
-            <User className="h-4 w-4" />
-            <span className="text-sm">Invite members</span>
-          </div>
-        </div>
 
-        <DropdownMenuSeparator className="my-1 bg-zinc-800" />
+          {defaultTeams.map((team) => (
+            <DropdownMenuItem
+              key={team.id}
+              className="px-3 py-1.5 hover:bg-zinc-800 hover:cursor-pointer"
+              onSelect={() => onChangeTeam(team)}
+            >
+              <div className="flex items-center w-full">
+                <Avatar className="h-6 w-6 mr-2 bg-zinc-800 flex items-center justify-center text-white text-xs">
+                  {team.icon}
+                </Avatar>
+                <span className="flex-1 text-sm">{team.name}</span>
+                {team.isGuest && (
+                  <span className="flex items-center text-amber-500/90 text-xs font-medium">
+                    <Globe className="h-3.5 w-3.5 mr-1" />
+                    Guest
+                  </span>
+                )}
+                {team.id === activeTeam.id && (
+                  <span className="text-zinc-400 ml-2">✓</span>
+                )}
+              </div>
+            </DropdownMenuItem>
+          ))}
 
-        <div className="px-3 py-1.5 flex items-center justify-between text-zinc-400">
-          <span className="text-sm">{email}</span>
-          {/* <MoreHorizontal className="h-4 w-4 hover:cursor-pointer" /> */}
-        </div>
-
-        {defaultTeams.map((team) => (
-          <DropdownMenuItem
-            key={team.id}
-            className="px-3 py-1.5 hover:bg-zinc-800 hover:cursor-pointer"
-            onSelect={() => onChangeTeam(team)}
-          >
-            <div className="flex items-center w-full">
-              <Avatar className="h-6 w-6 mr-2 bg-zinc-800 flex items-center justify-center text-white text-xs">
-                {team.icon}
-              </Avatar>
-              <span className="flex-1 text-sm">{team.name}</span>
-              {team.isGuest && (
-                <span className="flex items-center text-amber-500/90 text-xs font-medium">
-                  <Globe className="h-3.5 w-3.5 mr-1" />
-                  Guest
-                </span>
-              )}
-              {team.id === activeTeam.id && (
-                <span className="text-zinc-400 ml-2">✓</span>
-              )}
+          <DropdownMenuItem asChild>
+            <div
+              className="flex items-center text-zinc-400 w-full px-3 py-1.5 hover:bg-zinc-800 hover:cursor-pointer"
+              onClick={(e) => {
+                e.preventDefault();
+                setIsTeamDialogOpen(true);
+                setIsOpen(false);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              <span className="text-sm">New Team</span>
             </div>
           </DropdownMenuItem>
-        ))}
 
-        <DropdownMenuItem className="px-3 py-1.5 hover:bg-zinc-800 hover:cursor-pointer">
-          <div className="flex items-center text-zinc-400">
-            <Plus className="h-4 w-4 mr-2" />
-            <TeamDialog>
-              <span className="text-sm">New Team</span>
-            </TeamDialog>
-          </div>
-        </DropdownMenuItem>
+          <DropdownMenuSeparator className="my-1 bg-zinc-800" />
 
-        <DropdownMenuSeparator className="my-1 bg-zinc-800" />
+          <DropdownMenuItem
+            onClick={() => signOut()}
+            className="px-3 py-1.5 hover:bg-zinc-800 hover:cursor-pointer"
+          >
+            <div className="flex items-center text-zinc-400">
+              <LogOut className="h-4 w-4 mr-2" />
+              <span className="text-sm">Log out</span>
+            </div>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-        <DropdownMenuItem
-          onClick={() => signOut()}
-          className="px-3 py-1.5 hover:bg-zinc-800 hover:cursor-pointer"
-        >
-          <div className="flex items-center text-zinc-400">
-            <LogOut className="h-4 w-4 mr-2" />
-            <span className="text-sm">Log out</span>
-          </div>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      {/* Render TeamDialog outside the dropdown to avoid nesting issues */}
+      <TeamDialog open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen}>
+        <span className="hidden">New Team</span>
+      </TeamDialog>
+    </>
   );
 }

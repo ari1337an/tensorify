@@ -20,10 +20,15 @@ type InvitedMember = {
 
 interface TeamDialogProps {
   children: React.ReactNode;
+  onOpenChange?: (open: boolean) => void;
+  open?: boolean;
 }
 
-export function TeamDialog({ children }: TeamDialogProps) {
-  const [isOpen, setIsOpen] = React.useState(false);
+export function TeamDialog({
+  children,
+  onOpenChange,
+  open = false,
+}: TeamDialogProps) {
   const [teamName, setTeamName] = React.useState("");
   const [emailInput, setEmailInput] = React.useState("");
   const [invitedMembers, setInvitedMembers] = React.useState<InvitedMember[]>(
@@ -60,16 +65,24 @@ export function TeamDialog({ children }: TeamDialogProps) {
     // Here you would handle team creation with the invited members
     console.log("Creating team:", teamName, invitedMembers);
 
-    // Reset and close dialog
+    // Reset form and close dialog
     setTeamName("");
     setEmailInput("");
     setInvitedMembers([]);
-    setIsOpen(false);
+    if (onOpenChange) onOpenChange(false);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTrigger
+        asChild
+        onClick={(e) => {
+          e.stopPropagation();
+          if (onOpenChange) onOpenChange(true);
+        }}
+      >
+        {children}
+      </DialogTrigger>
 
       <DialogContent
         className="sm:max-w-md"
