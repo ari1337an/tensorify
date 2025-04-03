@@ -27,7 +27,7 @@ export function ProjectsSection({
   setActiveItem,
 }: ProjectsSectionProps) {
   const [projectsSectionOpen, setProjectsSectionOpen] = React.useState(true);
-  const [openProjects, setOpenProjects] = React.useState<string[]>([]);
+  const [openProject, setOpenProject] = React.useState<string | null>(null);
   const [hoveredProject, setHoveredProject] = React.useState<string | null>(
     null
   );
@@ -37,21 +37,17 @@ export function ProjectsSection({
     {
       id: "alphawolf",
       name: "AlphaWolf Ventures",
-      workflows: ["Projects", "Meetings", "Docs", "Tasks Tracker"],
+      workflows: ["Workflow 1", "Workflow 2", "Workflow 3"],
     },
     {
       id: "test",
       name: "test",
-      workflows: ["Teamspace Home", "Wiki", "Docs", "Tasks Tracker"],
+      workflows: ["Workflow 1", "Workflow 2", "Workflow 3", "Workflow 4"],
     },
   ];
 
   const toggleProject = (projectId: string) => {
-    setOpenProjects((prev) =>
-      prev.includes(projectId)
-        ? prev.filter((id) => id !== projectId)
-        : [...prev, projectId]
-    );
+    setOpenProject((prev) => (prev === projectId ? null : projectId));
   };
 
   return (
@@ -72,12 +68,12 @@ export function ProjectsSection({
         <ProjectDialog />
       </div>
 
-      <CollapsibleContent className="mt-1 mb-2 space-y-1 transition-all duration-300">
+      <CollapsibleContent className="mt-1 mb-2 space-y-1">
         <div className="space-y-1">
           {projects.map((project) => (
             <Collapsible
               key={project.id}
-              open={openProjects.includes(project.id)}
+              open={openProject === project.id}
               onOpenChange={() => toggleProject(project.id)}
             >
               <CollapsibleTrigger asChild>
@@ -91,9 +87,7 @@ export function ProjectsSection({
                         {hoveredProject === project.id ? (
                           <ChevronDown
                             className={`h-5 w-5 transition-transform duration-200 ${
-                              openProjects.includes(project.id)
-                                ? "rotate-180"
-                                : ""
+                              openProject === project.id ? "rotate-180" : ""
                             }`}
                           />
                         ) : (
