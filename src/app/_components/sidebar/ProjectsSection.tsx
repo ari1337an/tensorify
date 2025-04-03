@@ -28,7 +28,7 @@ export function ProjectsSection({
 }: ProjectsSectionProps) {
   const [projectsSectionOpen, setProjectsSectionOpen] = React.useState(true);
   const [openProjects, setOpenProjects] = React.useState<Set<string>>(
-    new Set()
+    new Set(["project-1"])
   );
   const [hoveredProject, setHoveredProject] = React.useState<string | null>(
     null
