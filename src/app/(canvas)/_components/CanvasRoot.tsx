@@ -24,7 +24,7 @@ export async function CanvasRoot() {
   }
 
   return (
-    <div className="flex items-center justify-center w-full h-[calc(100vh-2.75rem)] bg-muted/10">
+    <div className="flex items-center justify-center w-full h-[calc(100vh-2.75rem)] bg-background">
       <div className="text-center max-w-md p-6 rounded-lg border border-dashed">
         <h3 className="text-lg font-medium mb-2">
           {orgSlug ? `Organization: ${orgSlug}` : "Cannot found, onboard first"}
