@@ -1,1 +1,1 @@
-export { WorkflowCanvas } from "./WorkflowCanvas";
+export { CanvasRoot } from "./CanvasRoot";

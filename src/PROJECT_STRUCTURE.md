@@ -55,8 +55,8 @@ The application is structured using route groups for logical code organization w
 
 - `src/app/(canvas)/` - Route group for canvas features focused on the workflow editor.
   - `_components/` - React components specific to the canvas/workflow editor.
-    - `WorkflowCanvas.tsx` - Main canvas component for workflow editing (placeholder).
-    - `index.ts` - Export file for canvas components.
+    - `CanvasRoot.tsx` - Main server component canvas root that extracts organization slug from URL (port-agnostic in development mode) and displays workflow canvas.
+    - `index.ts` - Export file for canvas components, exports the CanvasRoot component.
   - `_hooks/` - Custom React hooks for canvas specific functionality.
     - `use-canvas.ts` - Hook for canvas initialization and core functionality.
     - `index.ts` - Export file for canvas hooks.
@@ -153,7 +153,7 @@ The application uses a nested layout structure to compose the UI:
    - Contains the main content area for the page
 
 5. **Root Page (`src/app/page.tsx`)**
-   - Renders the WorkflowCanvas component inside the enterprise shell
+   - Renders the CanvasRoot component inside the enterprise shell
 
 This nested structure allows the canvas component to be rendered within the enterprise UI shell while keeping the code organized in separate directories. The parentheses in folder names (e.g., `(enterprise)`, `(canvas)`) create route groups that don't affect the URL path, enabling logical separation of code without changing the routing.
 

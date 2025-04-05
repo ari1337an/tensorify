@@ -1,6 +1,5 @@
-"use client";
-import { WorkflowCanvas } from "@/app/(canvas)/_components/WorkflowCanvas";
+import { CanvasRoot } from "@/app/(canvas)/_components/CanvasRoot";
 
 export default function Home() {
-  return <WorkflowCanvas />;
+  return <CanvasRoot />;
 }

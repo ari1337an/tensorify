@@ -1,7 +1,7 @@
 ---
 description: 
-globs: *.tsx,*.css,*.ts,src/PROJECT_STRUCTURE.md
-alwaysApply: false
+globs: 
+alwaysApply: true
 ---
 
 # Project Structure and Its Mandatory Maintainance Before Doing All the Changes & After All the changes
