@@ -7,8 +7,8 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "../ui/collapsible";
-import { DraftWorkflowDialog } from "../dialog";
+} from "@/app/_components/ui/collapsible";
+import { DraftWorkflowDialog } from "@/app/(enterprise)/_components/dialog";
 
 export function DraftWorkflowsSection() {
   const [draftWorkflowsOpen, setDraftWorkflowsOpen] = React.useState(true);

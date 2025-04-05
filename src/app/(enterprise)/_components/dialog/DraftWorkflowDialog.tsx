@@ -2,16 +2,16 @@
 
 import * as React from "react";
 import { Plus } from "lucide-react";
-import { Button } from "../ui/button";
+import { Button } from "@/app/_components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../ui/dialog";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
+} from "@/app/_components/ui/dialog";
+import { Input } from "@/app/_components/ui/input";
+import { Label } from "@/app/_components/ui/label";
 
 export function DraftWorkflowDialog() {
   const [isOpen, setIsOpen] = React.useState(false);

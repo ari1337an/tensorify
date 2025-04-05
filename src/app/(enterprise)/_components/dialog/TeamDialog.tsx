@@ -2,16 +2,16 @@
 
 import * as React from "react";
 import { X } from "lucide-react";
-import { Button } from "../ui/button";
+import { Button } from "@/app/_components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../ui/dialog";
-import { Input } from "../ui/input";
-import { Avatar } from "../ui/avatar";
+} from "@/app/_components/ui/dialog";
+import { Input } from "@/app/_components/ui/input";
+import { Avatar } from "@/app/_components/ui/avatar";
 
 type InvitedMember = {
   id: string;

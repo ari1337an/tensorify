@@ -1,8 +1,8 @@
 "use client";
 import { Download, History, MessageSquare, Share } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
-import { Button } from "../ui/button";
-import { CollaboratorAvatars } from "../CollaboratorAvatars";
+import { Button } from "@/app/_components/ui/button";
+import { CollaboratorAvatars } from "@/app/(enterprise)/_components/navbar/CollaboratorAvatars";
 
 // Example collaborators data - in a real app, this would come from your collaboration system
 const collaborators = [

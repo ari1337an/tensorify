@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ScrollArea } from "../ui/scroll-area";
+import { ScrollArea } from "@/app/_components/ui/scroll-area";
 import { cn } from "@/app/_lib/utils";
 import { useSidebar, SIDEBAR_WIDTH } from "./SidebarContext";
 import { TeamSelector } from "./TeamSelector";

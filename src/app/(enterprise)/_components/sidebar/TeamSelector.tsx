@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { ChevronDown, Plus, User, LogOut, Settings, Globe } from "lucide-react";
-import { Avatar } from "../ui/avatar";
+import { Avatar } from "@/app/_components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,10 +10,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
+} from "@/app/_components/ui/dropdown-menu";
 import { useSidebar } from "./SidebarContext";
 import { useAuth } from "@clerk/nextjs";
-import { TeamDialog } from "../dialog";
+import { TeamDialog } from "@/app/(enterprise)/_components/dialog";
 
 type Team = {
   id: string;

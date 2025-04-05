@@ -6,7 +6,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "../ui/tooltip";
+} from "@/app/_components/ui/tooltip";
 import { cn } from "@/app/_lib/utils";
 
 type MenuItemProps = {
