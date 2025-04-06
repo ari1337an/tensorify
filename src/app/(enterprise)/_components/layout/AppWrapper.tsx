@@ -16,6 +16,11 @@ export default function AppWrapper({
     <ClerkProvider
       appearance={{
         baseTheme: dark,
+        elements: {
+          profileSectionPrimaryButton__username: {
+            display: "none",
+          },
+        },
       }}
     >
       <QueryClientProvider client={queryClient}>
