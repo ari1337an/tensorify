@@ -1,7 +1,16 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, Plus, User, LogOut, Settings, Globe } from "lucide-react";
+import {
+  ChevronDown,
+  Plus,
+  User,
+  LogOut,
+  Settings,
+  Globe,
+  Blocks,
+  Telescope,
+} from "lucide-react";
 import { Avatar } from "@/app/_components/ui/avatar";
 import {
   DropdownMenu,
@@ -14,6 +23,7 @@ import {
 import { useSidebar } from "./SidebarContext";
 import { useAuth } from "@clerk/nextjs";
 import { TeamDialog } from "@/app/(enterprise)/_components/dialog";
+import { Badge } from "@/app/_components/ui/badge";
 
 type Team = {
   id: string;
@@ -57,7 +67,7 @@ export function TeamSelector({
     <>
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
-          <div className="flex items-center justify-between w-full px-2 py-1.5 hover:bg-zinc-800/50 rounded-md cursor-pointer">
+          <div className="flex items-center justify-between w-full px-2 py-1.5 hover:bg-accent rounded-md cursor-pointer">
             <div className="flex items-center min-w-0">
               <Avatar className="h-6 w-6 mr-2 bg-zinc-800 flex items-center justify-center text-white text-xs">
                 {activeTeam.icon}
@@ -66,13 +76,13 @@ export function TeamSelector({
                 {activeTeam.name}
               </span>
             </div>
-            <ChevronDown className="h-4 w-4 text-zinc-400" />
+            <ChevronDown className="h-4 w-4 text-zinc-800 dark:text-zinc-400" />
           </div>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
           align="start"
-          className="w-[300px] bg-[#1a1a1a] border-zinc-800 shadow-xl rounded-lg py-1"
+          className="w-[300px] rounded-lg py-1 shadow-[0_0_12px_rgba(0,0,0,0.12)]"
         >
           <DropdownMenuLabel className="px-3 py-1.5">
             <div className="flex items-center justify-between">
@@ -81,7 +91,7 @@ export function TeamSelector({
               </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-sm">{activeTeam.name}</div>
-                <div className="text-xs text-zinc-400">
+                <div className="text-xs text-muted-foreground">
                   Organization Name · 2 members
                 </div>
               </div>
@@ -89,17 +99,17 @@ export function TeamSelector({
           </DropdownMenuLabel>
 
           <div className="flex gap-2 px-3 py-2">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 rounded-md border border-zinc-800 text-zinc-400 hover:text-zinc-300 cursor-pointer">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-md border border-border text-accent-foreground hover:border-primary hover:ring-1 hover:ring-primary cursor-pointer">
               <Settings className="h-4 w-4" />
               <span className="text-sm">Settings</span>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 rounded-md border border-zinc-800 text-zinc-400 hover:text-zinc-300 cursor-pointer">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-md border border-border text-accent-foreground hover:border-primary hover:ring-1 hover:ring-primary cursor-pointer">
               <User className="h-4 w-4" />
               <span className="text-sm">Invite members</span>
             </div>
           </div>
 
-          <DropdownMenuSeparator className="my-1 bg-zinc-800" />
+          <DropdownMenuSeparator className="my-1" />
 
           <div className="px-3 py-1.5 flex items-center justify-between text-zinc-400">
             <span className="text-sm">{email}</span>
@@ -131,27 +141,57 @@ export function TeamSelector({
 
           <DropdownMenuItem asChild>
             <div
-              className="flex items-center text-zinc-400 w-full px-3 py-1.5 hover:bg-zinc-800 hover:cursor-pointer"
+              className="flex items-center text-muted-foreground w-full px-3 py-1.5 hover:cursor-pointer"
               onClick={(e) => {
                 e.preventDefault();
                 setIsTeamDialogOpen(true);
                 setIsOpen(false);
               }}
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="" />
               <span className="text-sm">New Team</span>
             </div>
           </DropdownMenuItem>
 
-          <DropdownMenuSeparator className="my-1 bg-zinc-800" />
+          <DropdownMenuSeparator className="my-1" />
 
           <DropdownMenuItem
             onClick={() => signOut()}
             className="px-3 py-1.5 hover:bg-zinc-800 hover:cursor-pointer"
           >
-            <div className="flex items-center text-zinc-400">
+            <div className="flex items-center text-muted-foreground hover:text-accent-foreground">
               <LogOut className="h-4 w-4 mr-2" />
               <span className="text-sm">Log out</span>
+            </div>
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator className="my-1" />
+
+          <DropdownMenuItem
+            onClick={() => {
+              // redirect to https://plugins.tensorify.io/dashboard in new tab
+              window.open("https://plugins.tensorify.io/dashboard", "_blank");
+            }}
+            className="px-3 py-1.5 hover:bg-zinc-800 hover:cursor-pointer"
+          >
+            <div className="flex items-center text-muted-foreground hover:text-accent-foreground">
+              <Blocks className="h-4 w-4 mr-2" />
+              <span className="text-sm">My Plugins</span>
+            </div>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              // redirect to https://plugins.tensorify.io/search in new tab
+              window.open("https://plugins.tensorify.io/search", "_blank");
+            }}
+            className="px-3 py-1.5 hover:bg-zinc-800 hover:cursor-pointer"
+          >
+            <div className="flex items-center text-muted-foreground hover:text-accent-foreground">
+              <Telescope className="h-4 w-4 mr-2" />
+              <span className="text-sm">Explore Plugins</span>
+              <Badge variant="default" className="ml-2">
+                New
+              </Badge>
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

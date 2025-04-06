@@ -86,7 +86,7 @@ export function CollaboratorAvatars({
         </div>
       ))}
       {remainingCount > 0 && (
-        <div className="relative z-[1] h-6 w-6 rounded-full bg-zinc-900 flex items-center justify-center ring-[2px] ring-zinc-800">
+        <div className="relative z-[1] h-6 w-6 rounded-full bg-muted flex items-center justify-center ring-[2px] ring-zinc-800">
           <span className="text-[10px] text-zinc-400">+{remainingCount}</span>
         </div>
       )}

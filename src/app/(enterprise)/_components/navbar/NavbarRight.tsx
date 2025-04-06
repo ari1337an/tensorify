@@ -3,7 +3,7 @@ import { Download, History, MessageSquare, Share } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { Button } from "@/app/_components/ui/button";
 import { CollaboratorAvatars } from "@/app/(enterprise)/_components/navbar/CollaboratorAvatars";
-
+import { ThemeToggle } from "@/app/_components/ui/theme-toggle";
 // Example collaborators data - in a real app, this would come from your collaboration system
 const collaborators = [
   {
@@ -43,6 +43,8 @@ export function NavbarRight() {
         <CollaboratorAvatars collaborators={collaborators} maxVisible={2} />
       </div>
 
+      <ThemeToggle />
+
       <Button variant="ghost" size="icon" className="h-8 w-8" title="History">
         <History className="h-4 w-4" />
       </Button>
@@ -58,7 +60,7 @@ export function NavbarRight() {
       <Button
         variant="default"
         size="sm"
-        className="h-8 px-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+        className="h-8 px-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white inest-shadow-lg hover:inset-shadow-xl shadow-black/20 transition-all duration-200"
       >
         <Download className="h-4 w-4 mr-1" />
         Export
