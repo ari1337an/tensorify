@@ -16,8 +16,7 @@ interface ShareDialogProps {
 }
 
 export function ShareDialog({ isOpen, onClose }: ShareDialogProps) {
-  const shareLink =
-    "https://app.tensorify.io/share/1234";
+  const shareLink = "https://app.tensorify.io/share/1234";
   const [isCopied, setIsCopied] = useState(false);
 
   const handleCopy = async () => {
