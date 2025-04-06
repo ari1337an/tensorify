@@ -1,9 +1,18 @@
 "use client";
-import { Download, History, MessageSquare, Share } from "lucide-react";
+import {
+  Download,
+  History,
+  Lock,
+  MessageSquare,
+  Share,
+  Unlock,
+} from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { Button } from "@/app/_components/ui/button";
 import { CollaboratorAvatars } from "@/app/(enterprise)/_components/navbar/CollaboratorAvatars";
 import { ThemeToggle } from "@/app/_components/ui/theme-toggle";
+import { useState } from "react";
+import { cn } from "@/app/_lib/utils";
 // Example collaborators data - in a real app, this would come from your collaboration system
 const collaborators = [
   {
@@ -37,6 +46,12 @@ const collaborators = [
 ];
 
 export function NavbarRight() {
+  const [isLocked, setIsLocked] = useState(false);
+
+  const toggleLock = () => {
+    setIsLocked((prev) => !prev);
+  };
+
   return (
     <div className="flex items-center gap-2 px-3 shrink-0">
       <div className="mr-2">
@@ -44,6 +59,20 @@ export function NavbarRight() {
       </div>
 
       <ThemeToggle />
+
+      <Button
+        variant={isLocked ? "destructive" : "ghost"}
+        size="icon"
+        className={cn("h-8 w-8 transition-all duration-300")}
+        title={isLocked ? "Workflow is locked" : "Unlock workflow"}
+        onClick={toggleLock}
+      >
+        {isLocked ? (
+          <Lock className="h-4 w-4" />
+        ) : (
+          <Unlock className="h-4 w-4" />
+        )}
+      </Button>
 
       <Button variant="ghost" size="icon" className="h-8 w-8" title="History">
         <History className="h-4 w-4" />
