@@ -23,7 +23,7 @@ const loadingSteps = [
   "Calculating Node Branches of Workflow",
   "Checking for variable scope mismatches",
   "Preparing & Executing Plugins",
-  "Fetching final results",
+  "Fetching final results from Server",
 ];
 
 export function ExportDialog({ isOpen, onClose }: ExportDialogProps) {
@@ -336,7 +336,7 @@ if __name__ == "__main__":
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-8 w-8 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+                  className="h-8 w-8"
                   onClick={handleCopy}
                 >
                   {isCopied ? (
@@ -346,7 +346,7 @@ if __name__ == "__main__":
                   )}
                 </Button>
               </div>
-              <div className="relative rounded-lg border bg-muted overflow-hidden">
+              <div className="relative rounded-lg border bg-[#1a1a1a] overflow-hidden">
                 <div
                   className={cn(
                     "px-4 py-4 max-h-[60vh] overflow-auto",
