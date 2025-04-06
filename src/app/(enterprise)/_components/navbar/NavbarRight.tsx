@@ -14,6 +14,7 @@ import { ThemeToggle } from "@/app/_components/ui/theme-toggle";
 import { useState } from "react";
 import { cn } from "@/app/_lib/utils";
 import { ExportDialog } from "@/app/(enterprise)/_components/dialog/ExportDialog";
+import { ShareDialog } from "@/app/(enterprise)/_components/dialog/ShareDialog";
 // Example collaborators data - in a real app, this would come from your collaboration system
 const collaborators = [
   {
@@ -49,6 +50,7 @@ const collaborators = [
 export function NavbarRight() {
   const [isLocked, setIsLocked] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
 
   const toggleLock = () => {
     setIsLocked((prev) => !prev);
@@ -83,7 +85,12 @@ export function NavbarRight() {
       <Button variant="ghost" size="icon" className="h-8 w-8" title="Comments">
         <MessageSquare className="h-4 w-4" />
       </Button>
-      <Button variant="secondary" size="sm" className="h-8 px-3">
+      <Button
+        variant="secondary"
+        size="sm"
+        className="h-8 px-3"
+        onClick={() => setIsShareDialogOpen(true)}
+      >
         <Share className="h-4 w-4 mr-1" />
         Share
       </Button>
@@ -110,6 +117,11 @@ export function NavbarRight() {
       <ExportDialog
         isOpen={isExportDialogOpen}
         onClose={() => setIsExportDialogOpen(false)}
+      />
+
+      <ShareDialog
+        isOpen={isShareDialogOpen}
+        onClose={() => setIsShareDialogOpen(false)}
       />
     </div>
   );
