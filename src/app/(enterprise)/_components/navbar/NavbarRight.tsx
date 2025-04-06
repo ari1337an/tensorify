@@ -13,6 +13,7 @@ import { CollaboratorAvatars } from "@/app/(enterprise)/_components/navbar/Colla
 import { ThemeToggle } from "@/app/_components/ui/theme-toggle";
 import { useState } from "react";
 import { cn } from "@/app/_lib/utils";
+import { ExportDialog } from "@/app/(enterprise)/_components/dialog/ExportDialog";
 // Example collaborators data - in a real app, this would come from your collaboration system
 const collaborators = [
   {
@@ -47,6 +48,7 @@ const collaborators = [
 
 export function NavbarRight() {
   const [isLocked, setIsLocked] = useState(false);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
   const toggleLock = () => {
     setIsLocked((prev) => !prev);
@@ -90,6 +92,7 @@ export function NavbarRight() {
         variant="default"
         size="sm"
         className="h-8 px-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white inest-shadow-lg hover:inset-shadow-xl shadow-black/20 transition-all duration-200"
+        onClick={() => setIsExportDialogOpen(true)}
       >
         <Download className="h-4 w-4 mr-1" />
         Export
@@ -102,6 +105,11 @@ export function NavbarRight() {
               "h-8 w-8 hover:ring-primary/30 transition-colors duration-200",
           },
         }}
+      />
+
+      <ExportDialog
+        isOpen={isExportDialogOpen}
+        onClose={() => setIsExportDialogOpen(false)}
       />
     </div>
   );

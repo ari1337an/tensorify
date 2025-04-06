@@ -42,6 +42,7 @@ The application is structured using route groups for logical code organization w
       - `ProjectDialog.tsx` - Dialog for creating and editing projects with form validation.
       - `TeamDialog.tsx` - Dialog for team/organization management with member controls.
       - `DraftWorkflowDialog.tsx` - Dialog for creating and managing draft workflows.
+      - `ExportDialog.tsx` - Dialog for displaying generated code with copy functionality.
       - `index.ts` - Export file for dialog components.
   - `_hooks/` - Custom React hooks for enterprise feature functionality.
     - `use-mobile.ts` - Hook for detecting mobile viewport and responsive behavior.

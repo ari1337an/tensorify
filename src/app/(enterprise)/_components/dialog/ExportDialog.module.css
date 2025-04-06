@@ -1,0 +1,24 @@
+.codeContainer {
+  position: relative;
+}
+
+.codeContainer pre {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  /* font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace; */
+}
+
+.code {
+  display: block;
+  line-height: 1.5rem;
+  font-size: 0.875rem;
+  padding: 0.5em;
+  overflow-x: auto;
+}
+
+.codeContainer code {
+  display: block;
+  margin-left: 0;
+}
