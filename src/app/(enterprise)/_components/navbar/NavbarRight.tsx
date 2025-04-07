@@ -118,7 +118,7 @@ export function NavbarRight() {
             }}
           />
         ) : (
-          <Skeleton className="h-8 w-8 rounded-full bg-muted" />
+          <Skeleton className="h-8 w-8 rounded-full bg-secondary" />
         )}
       </div>
 
