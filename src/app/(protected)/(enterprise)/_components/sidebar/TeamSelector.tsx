@@ -22,7 +22,7 @@ import {
 } from "@/app/_components/ui/dropdown-menu";
 import { useSidebar } from "./SidebarContext";
 import { useAuth } from "@clerk/nextjs";
-import { TeamDialog } from "@/app/(enterprise)/_components/dialog";
+import { TeamDialog } from "@/app/(protected)/(enterprise)/_components/dialog";
 import { Badge } from "@/app/_components/ui/badge";
 
 type Team = {

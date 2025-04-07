@@ -9,12 +9,12 @@ import {
 } from "lucide-react";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { Button } from "@/app/_components/ui/button";
-import { CollaboratorAvatars } from "@/app/(enterprise)/_components/navbar/CollaboratorAvatars";
+import { CollaboratorAvatars } from "@/app/(protected)/(enterprise)/_components/navbar/CollaboratorAvatars";
 import { ThemeToggle } from "@/app/_components/ui/theme-toggle";
 import { useState } from "react";
 import { cn } from "@/app/_lib/utils";
-import { ExportDialog } from "@/app/(enterprise)/_components/dialog/ExportDialog";
-import { ShareDialog } from "@/app/(enterprise)/_components/dialog/ShareDialog";
+import { ExportDialog } from "@/app/(protected)/(enterprise)/_components/dialog/ExportDialog";
+import { ShareDialog } from "@/app/(protected)/(enterprise)/_components/dialog/ShareDialog";
 import { Skeleton } from "@/app/_components/ui/skeleton";
 // Example collaborators data - in a real app, this would come from your collaboration system
 const collaborators = [

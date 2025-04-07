@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import "./globals.css";
-import { AppWrapper } from "@/app/(enterprise)/_components/layout";
 import { ThemeProvider } from "@/app/_providers/theme-provider";
+import "./globals.css";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -16,11 +15,11 @@ export const metadata: Metadata = {
     "Tensorify Studio is a platform for writing AI pipelines visually.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -32,7 +31,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AppWrapper>{children}</AppWrapper>
+          {children}
         </ThemeProvider>
       </body>
     </html>

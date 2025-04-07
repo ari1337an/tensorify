@@ -1,20 +1,27 @@
 # Tensorify App Architecture
 
-The application is structured using route groups for logical code organization without affecting URL paths. This architecture separates concerns between enterprise features and canvas functionality while maintaining a cohesive UI.
+The application is structured using route groups for logical code organization without affecting URL paths. This architecture separates concerns between enterprise features, canvas functionality, and onboarding flows while maintaining a cohesive UI.
 
 ## Directory Structure
 
 ### Root Structure
 
 - `src/app/` - Root app directory containing all app code and routing structure.
-  - `layout.tsx` - Main layout that defines page structure, fonts, and wraps content with the enterprise AppWrapper.
-  - `page.tsx` - Main page component that renders the canvas as the home page of the application.
+  - `layout.tsx` - Main layout that defines page structure, fonts, and theme provider.
   - `globals.css` - Global CSS styles including Tailwind directives and custom variables.
   - `middleware.ts` - Auth middleware for protected routes, handling authentication with Clerk.
 
+### Protected Routes
+
+- `src/app/(protected)/` - Route group for authenticated and protected features.
+  - `layout.tsx` - Protected layout that wraps content with the enterprise AppWrapper.
+  - `page.tsx` - Main page component that renders the canvas as the home page of the application.
+  - `(enterprise)/` - Route group for enterprise features separated for code organization.
+  - `(canvas)/` - Route group for canvas features focused on the workflow editor.
+
 ### Enterprise Features
 
-- `src/app/(enterprise)/` - Route group for enterprise features separated for code organization.
+- `src/app/(protected)/(enterprise)/` - Route group for enterprise features separated for code organization.
   - `_components/` - Contains all enterprise-specific components organized by feature area.
     - `layout/` - Components defining the application layout structure and shell.
       - `AppWrapper.tsx` - Top-level component that wraps the app with providers (Auth, Query, etc).
@@ -36,6 +43,7 @@ The application is structured using route groups for logical code organization w
       - `DraftWorkflowsSection.tsx` - Displays draft workflows section with create button.
       - `SettingsSection.tsx` - Settings and admin links section of the sidebar.
       - `TeamSelector.tsx` - Team/organization selection dropdown in the sidebar header.
+      - `SidebarFooter.tsx` - Footer component for the sidebar with additional functionality.
       - `InviteFooter.tsx` - Footer component with team invitation functionality.
       - `index.ts` - Export file for sidebar components.
     - `dialog/` - Modal dialog components for various enterprise functions.
@@ -43,6 +51,8 @@ The application is structured using route groups for logical code organization w
       - `TeamDialog.tsx` - Dialog for team/organization management with member controls.
       - `DraftWorkflowDialog.tsx` - Dialog for creating and managing draft workflows.
       - `ExportDialog.tsx` - Dialog for displaying generated code with copy functionality.
+      - `ExportDialog.module.css` - CSS module for the export dialog styling.
+      - `ShareDialog.tsx` - Dialog for sharing projects and workflows with other users.
       - `index.ts` - Export file for dialog components.
   - `_hooks/` - Custom React hooks for enterprise feature functionality.
     - `use-mobile.ts` - Hook for detecting mobile viewport and responsive behavior.
@@ -51,10 +61,12 @@ The application is structured using route groups for logical code organization w
     - `utils.ts` - General utility functions including class name merging with cn function.
   - `_store/` - State management for enterprise data and UI state.
     - `store.ts` - Zustand store for enterprise global state management including user data.
+  - `sign-in/` - Authentication related pages and components.
+    - `page.tsx` - Sign-in page with authentication UI handled by Clerk.
 
 ### Canvas Features
 
-- `src/app/(canvas)/` - Route group for canvas features focused on the workflow editor.
+- `src/app/(protected)/(canvas)/` - Route group for canvas features focused on the workflow editor.
   - `_components/` - React components specific to the canvas/workflow editor.
     - `CanvasRoot.tsx` - Main server component canvas root that extracts organization slug from URL (port-agnostic in development mode) and displays workflow canvas.
     - `index.ts` - Export file for canvas components, exports the CanvasRoot component.
@@ -65,6 +77,14 @@ The application is structured using route groups for logical code organization w
     - `utils.ts` - Canvas-specific utility functions for rendering and data handling.
   - `_store/` - State management for canvas data and UI state.
     - `store.ts` - Zustand store for canvas state including nodes, edges, and selection.
+
+### Onboarding Routes
+
+- `src/app/(onboarding)/` - Route group for user onboarding flows.
+  - `layout.tsx` - Layout for onboarding pages.
+  - `onboarding/` - Components and pages for the onboarding process.
+    - `layout.tsx` - Layout specific to the onboarding process.
+    - `page.tsx` - Main onboarding page.
 
 ### UI Components
 
@@ -100,6 +120,7 @@ The application is structured using route groups for logical code organization w
   - `tabs.tsx` - Tabs component for switching between content views.
   - `textarea.tsx` - Multi-line text input component.
   - `toast.tsx` - Toast notification component for transient messages.
+  - `theme-toggle.tsx` - Toggles the theme in the UI using a button
   - `toggle-group.tsx` - Group of toggleable buttons for multi-selection.
   - `toggle.tsx` - Toggle button component for pressed/unpressed state.
   - `tooltip.tsx` - Tooltip component for showing additional information on hover.
@@ -117,11 +138,6 @@ The application is structured using route groups for logical code organization w
   - `roles/` - Authorization and permission management.
     - `hasPermission.ts` - Permission checking logic for user actions and resources.
 
-### Authentication
-
-- `src/app/sign-in/` - Authentication related pages and components.
-  - `page.tsx` - Sign-in page with authentication UI handled by Clerk.
-
 ## Architecture Notes
 
 ### Layout Structure
@@ -131,41 +147,58 @@ The application uses a nested layout structure to compose the UI:
 1. **Root Layout (`src/app/layout.tsx`)**
 
    - Sets up fonts, metadata, and global styles
-   - Wraps the entire application in the enterprise `AppWrapper`
-   - Provides the HTML and body structure
+   - Provides the HTML and body structure with theme provider
 
-2. **Enterprise AppWrapper (`src/app/(enterprise)/_components/layout/AppWrapper.tsx`)**
+2. **Protected Layout (`src/app/(protected)/layout.tsx`)**
+
+   - Wraps the entire protected application in the enterprise `AppWrapper`
+   - Provides authentication context with ClerkProvider
+   - Sets up React Query client
+   - Provides sidebar context
+
+3. **Enterprise AppWrapper (`src/app/(protected)/(enterprise)/_components/layout/AppWrapper.tsx`)**
 
    - Provides authentication context with ClerkProvider
    - Sets up React Query client
    - Provides sidebar context
    - Wraps content in AppLayout
 
-3. **Enterprise AppLayout (`src/app/(enterprise)/_components/layout/AppLayout.tsx`)**
+4. **Enterprise AppLayout (`src/app/(protected)/(enterprise)/_components/layout/AppLayout.tsx`)**
 
    - Handles the two-column layout (sidebar + content)
    - Manages sidebar state (open/closed)
    - Animates sidebar opening and closing
    - Syncs user data with global store
 
-4. **MainContent (`src/app/(enterprise)/_components/layout/MainContent.tsx`)**
+5. **MainContent (`src/app/(protected)/(enterprise)/_components/layout/MainContent.tsx`)**
 
    - Renders the navbar
    - Contains the main content area for the page
 
-5. **Root Page (`src/app/page.tsx`)**
-   - Renders the CanvasRoot component inside the enterprise shell
+6. **Onboarding Layout (`src/app/(onboarding)/layout.tsx`)**
+   - Provides a simple layout for onboarding flows
 
-This nested structure allows the canvas component to be rendered within the enterprise UI shell while keeping the code organized in separate directories. The parentheses in folder names (e.g., `(enterprise)`, `(canvas)`) create route groups that don't affect the URL path, enabling logical separation of code without changing the routing.
+This nested structure allows the canvas component to be rendered within the enterprise UI shell while keeping the code organized in separate directories. The parentheses in folder names (e.g., `(protected)`, `(enterprise)`, `(canvas)`, `(onboarding)`) create route groups that don't affect the URL path, enabling logical separation of code without changing the routing.
 
 Key design features:
 
+- Root layout provides only basic HTML structure and theme
+- Protected layout ensures authentication for all protected routes
 - Enterprise components provide the application shell (sidebar, navbar, etc.)
 - Canvas components focus solely on the workflow editor functionality
+- Onboarding components handle the user onboarding process
 - All components are connected through the layout hierarchy
-- UI components from shadcn/ui are shared across both domains
+- UI components from shadcn/ui are shared across all domains
 
 ## Responsibility Separation
+
+### Protected Routes
+
+Handles all authenticated and protected features:
+
+- User authentication and access control
+- Enterprise features
+- Canvas functionality
 
 ### Enterprise Section
 
@@ -186,17 +219,30 @@ Focused on the visual workflow editor:
 - Workflow execution
 - Canvas-specific state management
 
+### Onboarding Section
+
+Handles the user onboarding process:
+
+- User registration
+- Initial setup
+- Tutorials and guides
+
 ## Development Guidelines
 
-1. Enterprise features should be developed within the `(enterprise)` folder
-2. Canvas features should be developed within the `(canvas)` folder
-3. Shared utilities and types can be placed in the root directories
-4. Maintain separation of concerns between enterprise and canvas
-5. UI components should be in `components/ui/`
+1. Protected features should be developed within the `(protected)` folder
+2. Enterprise features should be developed within the `(protected)/(enterprise)` folder
+3. Canvas features should be developed within the `(protected)/(canvas)` folder
+4. Onboarding features should be developed within the `(onboarding)` folder
+5. Shared utilities and types can be placed in the root directories
+6. Maintain separation of concerns between protected, enterprise, canvas, and onboarding
+7. UI components should be in `components/ui/`
 
 ## Team Organization
 
-This architecture is designed to allow two developers to work independently:
+This architecture is designed to allow multiple developers to work independently:
 
 - One developer focusing on enterprise features
 - One developer focusing on canvas features
+- One developer focusing on onboarding flows
+
+PROJECT STRUCTURE RULE IS MAINTAINED
