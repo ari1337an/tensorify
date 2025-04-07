@@ -8,7 +8,7 @@ import { TeamSelector } from "./TeamSelector";
 import { DraftWorkflowsSection } from "./DraftWorkflowsSection";
 import { ProjectsSection } from "./ProjectsSection";
 import { SettingsSection } from "./SettingsSection";
-import { InviteFooter } from "./InviteFooter";
+import { SidebarFooter } from "./SidebarFooter";
 import useStore from "@/app/_store/store";
 
 type SidebarProps = React.HTMLAttributes<HTMLDivElement>;
@@ -79,8 +79,8 @@ export function Sidebar({ className, ...props }: SidebarProps) {
             />
           </ScrollArea>
 
-          {/* Invite members footer */}
-          <InviteFooter />
+          {/* Sidebar footer */}
+          <SidebarFooter />
         </>
       )}
     </div>

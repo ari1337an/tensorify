@@ -5,4 +5,4 @@ export { TeamSelector } from "./TeamSelector";
 export { DraftWorkflowsSection } from "./DraftWorkflowsSection";
 export { ProjectsSection } from "./ProjectsSection";
 export { SettingsSection } from "./SettingsSection";
-export { InviteFooter } from "./InviteFooter";
+export { SidebarFooter } from "./SidebarFooter";
