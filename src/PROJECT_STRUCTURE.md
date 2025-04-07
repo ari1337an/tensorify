@@ -84,7 +84,11 @@ The application is structured using route groups for logical code organization w
   - `layout.tsx` - Layout for onboarding pages.
   - `onboarding/` - Components and pages for the onboarding process.
     - `layout.tsx` - Layout specific to the onboarding process.
-    - `page.tsx` - Main onboarding page.
+    - `page.tsx` - Main onboarding page with multi-step form.
+    - `_components/` - Components specific to the onboarding flow.
+      - `OnboardingSource.tsx` - Component for collecting how users discovered Tensorify.
+      - `OnboardingOrg.tsx` - Component for organization name and slug setup.
+      - `OnboardingSetup.tsx` - Loading component for workspace setup process.
 
 ### UI Components
 

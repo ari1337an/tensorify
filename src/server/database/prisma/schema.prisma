@@ -14,28 +14,19 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  Team         Team[]
-  Organization Organization[]
-}
-
-model Team {
-  id           String         @id @default(uuid())
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  name         String
-  users        User[]
-  Organization Organization[]
+  id             String        @id @unique
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  organization   Organization? @relation(fields: [organizationSlug], references: [slug])
+  organizationSlug String?
 }
 
 model Organization {
-  id        String   @id @default(uuid())
+  slug   String @id @unique @default(uuid())
+  name String
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  name      String
-  teams     Team[]
-  users     User[]
+
+  users User[]
 }
