@@ -14,7 +14,7 @@ export function FAQ() {
     {
       question: "What exactly is Tensorify?",
       answer:
-        "Tensorify is a node-based AI code generator that lets you visually design your AI architecture by connecting nodes representing different components. You can then automatically generate production-ready code for TensorFlow, PyTorch, or JAX with a single click."
+        "Tensorify is a node-based AI code generator that lets you visually design your AI architecture by connecting nodes representing different components. You can then automatically generate production-ready code for PyTorch with a single click."
     },
     {
       question: "How is this different from existing AI frameworks?",

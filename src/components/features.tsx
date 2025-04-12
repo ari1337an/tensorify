@@ -203,7 +203,7 @@ export function Features() {
     {
       icon: CodeIcon,
       title: "Production-Ready Code",
-      description: "Generate optimized code for TensorFlow, PyTorch, or JAX with a single click. Eliminate boilerplate and reduce implementation time by 80%.",
+      description: "Generate optimized code for PyTorch with a single click. Eliminate boilerplate and reduce implementation time by 80%.",
       perfect: "MLOps specialists",
       persona: "Engineer",
       position: { x: 50, y: 20 },
@@ -286,11 +286,11 @@ export function Features() {
       {/* Interactive node flow diagram */}
       <div
         ref={containerRef}
-        className="relative w-full h-[600px] mb-16 animate-fade-in opacity-0 overflow-hidden"
+        className="relative w-full h-[400px] sm:h-[500px] md:h-[600px] mb-16 animate-fade-in opacity-0 overflow-hidden"
         style={{ animationDelay: '0.8s' }}
       >
         {/* Flow visualization */}
-        {isClient && (
+        {isClient && containerRef.current && (
           <>
             {/* Draw connections first so they appear behind nodes */}
             {connections.map((connection, connectionIdx) => {
@@ -298,14 +298,19 @@ export function Features() {
                 activeFeature === features.indexOf(connection.start) ||
                 activeFeature === features.indexOf(connection.end);
 
+              // Calculate start and end positions based on container dimensions
+              const containerWidth = containerRef.current?.clientWidth || 0;
+              const containerHeight = containerRef.current?.clientHeight || 0;
+              
+              // Get node center positions based on percentages
               const startPosition = {
-                x: connection.start.position.x * containerRef.current!.clientWidth / 100,
-                y: connection.start.position.y * containerRef.current!.clientHeight / 100
+                x: connection.start.position.x * containerWidth / 100,
+                y: connection.start.position.y * containerHeight / 100
               };
 
               const endPosition = {
-                x: connection.end.position.x * containerRef.current!.clientWidth / 100,
-                y: connection.end.position.y * containerRef.current!.clientHeight / 100
+                x: connection.end.position.x * containerWidth / 100,
+                y: connection.end.position.y * containerHeight / 100
               };
 
               return (
