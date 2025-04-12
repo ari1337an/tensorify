@@ -125,7 +125,8 @@ export function Hero() {
             <Button 
               size="lg"
               onClick={openNewsletterSignup}
-              className="bg-gradient-to-r from-[#A371D3] to-[#5E48BF] hover:opacity-90 text-white shadow-lg group min-w-[200px]"
+              variant="default"
+              className="group min-w-[200px] bg-gradient-to-r from-[#A371D3] to-[#5E48BF] text-white hover:opacity-90 shadow-lg"
             >
               Get Early Access
               <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />

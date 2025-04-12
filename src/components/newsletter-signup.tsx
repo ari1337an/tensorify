@@ -34,7 +34,7 @@ export function NewsletterSignup() {
         <DialogHeader className="relative">
           <button 
             onClick={() => closeNewsletterSignup()}
-            className="absolute -right-2 -top-2 rounded-full p-2 text-muted-foreground hover:bg-muted transition-colors"
+            className="absolute -right-2 -top-2 rounded-full p-2 text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
           >
             <XIcon className="h-4 w-4" />
           </button>

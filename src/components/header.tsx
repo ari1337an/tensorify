@@ -61,14 +61,15 @@ export function Header() {
           <div className="flex items-center gap-4">
             <Button
               onClick={openNewsletterSignup}
-              className="hidden md:flex"
-              variant="outline"
+              className="hidden md:flex bg-gradient-to-r from-[#A371D3] to-[#5E48BF] text-white hover:opacity-90 shadow-lg"
+              variant="default"
+              size="sm"
             >
               Get Early Access
             </Button>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden"
+              className="md:hidden cursor-pointer"
               aria-label="Toggle Menu"
             >
               <Menu className="h-6 w-6" />
@@ -108,8 +109,9 @@ export function Header() {
                   openNewsletterSignup();
                   setIsMobileMenuOpen(false);
                 }}
-                variant="outline"
-                className="mt-2"
+                variant="default"
+                size="sm"
+                className="mt-2 w-full bg-gradient-to-r from-[#A371D3] to-[#5E48BF] text-white hover:opacity-90 shadow-lg"
               >
                 Get Early Access
               </Button>

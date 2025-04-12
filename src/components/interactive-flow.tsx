@@ -13,6 +13,7 @@ import ReactFlow, {
   Handle,
   useReactFlow,
   ReactFlowProvider,
+  BackgroundVariant,
 } from 'reactflow';
 import { 
   Brain, 
@@ -21,10 +22,10 @@ import {
   GitBranch, 
   Workflow,
   ServerCog,
-  ZoomIn,
-  ZoomOut,
-  Maximize,
-  Minimize
+  Plus,
+  Minus,
+  Minimize2,
+  Maximize2
 } from 'lucide-react';
 import 'reactflow/dist/style.css';
 
@@ -433,24 +434,26 @@ const CustomControls = () => {
     <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-10">
       <button
         onClick={() => zoomIn()}
-        className="flex items-center justify-center w-10 h-10 rounded-lg backdrop-blur-md bg-indigo-500/20 border border-indigo-500/40 text-white hover:bg-indigo-500/30 transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-indigo-500/20"
-        aria-label="Zoom in"
+        className="bg-black/30 rounded-lg p-2 text-white backdrop-blur-sm border border-white/10 hover:bg-black/50 transition-colors cursor-pointer"
+        aria-label="Zoom In"
       >
-        <ZoomIn size={18} />
+        <Plus className="h-4 w-4" />
       </button>
+      
       <button
         onClick={() => zoomOut()}
-        className="flex items-center justify-center w-10 h-10 rounded-lg backdrop-blur-md bg-indigo-500/20 border border-indigo-500/40 text-white hover:bg-indigo-500/30 transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-indigo-500/20"
-        aria-label="Zoom out"
+        className="bg-black/30 rounded-lg p-2 text-white backdrop-blur-sm border border-white/10 hover:bg-black/50 transition-colors cursor-pointer"
+        aria-label="Zoom Out"
       >
-        <ZoomOut size={18} />
+        <Minus className="h-4 w-4" />
       </button>
+      
       <button
         onClick={toggleFullscreen}
-        className="flex items-center justify-center w-10 h-10 rounded-lg backdrop-blur-md bg-indigo-500/20 border border-indigo-500/40 text-white hover:bg-indigo-500/30 transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-indigo-500/20"
-        aria-label="Toggle fullscreen"
+        className="bg-black/30 rounded-lg p-2 text-white backdrop-blur-sm border border-white/10 hover:bg-black/50 transition-colors cursor-pointer"
+        aria-label="Toggle Fullscreen"
       >
-        {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+        {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
       </button>
     </div>
   );
@@ -458,7 +461,7 @@ const CustomControls = () => {
 
 const InteractiveFlowInner = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [edges, /* setEdges */, onEdgesChange] = useEdgesState(initialEdges);
   const [isClient, setIsClient] = useState(false);
   
   // Handle node click for interactive effect
@@ -519,7 +522,7 @@ const InteractiveFlowInner = () => {
       <Background 
         color="rgba(255, 255, 255, 0.05)" 
         gap={25} 
-        variant={"dots" as any} 
+        variant={"dots" as BackgroundVariant}
       />
       <CustomControls />
     </ReactFlow>

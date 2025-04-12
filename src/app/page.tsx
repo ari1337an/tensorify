@@ -7,6 +7,7 @@ import { Pricing } from "@/components/pricing";
 import { FAQ } from "@/components/faq";
 import { CTA } from "@/components/cta";
 import { Footer } from "@/components/footer";
+import { NewsletterSignup } from "@/components/newsletter-signup";
 import { useEffect, useRef } from "react";
 // import { Demo } from "@/components/demo";
 
@@ -95,6 +96,7 @@ export default function Home() {
         </div>
       </main>
       <Footer />
+      <NewsletterSignup />
     </div>
   );
 }
