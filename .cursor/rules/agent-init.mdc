@@ -1,0 +1,11 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# MUST RUN THIS BEOFRE EVERY AGENT CALL
+
+- (Step 0) read the project structure and analyze it to understand its flow
+- (Step 1) if the user asking a feature request, add frontend backend and state logic (if required) for the feature and make sure it is functional
+- (Step 2) use dry framework ( do not repeat youself) and make the whole website as sales copy to solve the AI Researchers / Developers / Engineers pain points by highlighting those.
+- (Step 3) do not write unecessary code, before writing any functionality check if there is already redundant (or close) thing available and use that. and do not import package unless its necessary, I want it lightweight.
