@@ -89,10 +89,10 @@ export function Hero() {
                 
                 <div className="absolute top-3 left-3 right-3 flex justify-between items-center z-10">
                   <Badge className="bg-gray-900/70 text-white backdrop-blur-md border-violet-600/30 shadow px-3 py-1">
-                    <Zap className="mr-1 h-3 w-3 text-violet-400" /> AI Workflow Editor
+                    <Zap className="mr-1 h-3 w-3 text-violet-400" /> AI Workflow Example
                   </Badge>
-                  <Badge className="bg-gray-900/70 text-white backdrop-blur-md border-violet-600/30 shadow px-3 py-1">
-                    Interactive Demo
+                  <Badge className="bg-gray-900/70 text-white backdrop-blur-md border-violet-600/30 shadow px-3 py-1 animate-pulse">
+                    <ArrowRight className="mr-1 h-3 w-3 text-violet-400" /> Try clicking on nodes!
                   </Badge>
                 </div>
                 
@@ -100,7 +100,7 @@ export function Hero() {
                 
                 <div className="absolute bottom-3 left-0 right-0 flex justify-center">
                   <Badge variant="outline" className="bg-gray-900/70 text-white backdrop-blur-md border-violet-600/30 shadow px-4 py-1.5">
-                    Build, train, and deploy AI models without writing a single line of code
+                    Zoom, pan, and interact with the workflow editor
                   </Badge>
                 </div>
               </div>

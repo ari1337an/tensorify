@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import ReactFlow, {
-  Controls,
   Background,
   useNodesState,
   useEdgesState,
@@ -12,22 +11,20 @@ import ReactFlow, {
   ConnectionLineType,
   MarkerType,
   Handle,
+  useReactFlow,
+  ReactFlowProvider,
 } from 'reactflow';
 import { 
   Brain, 
-  BarChart, 
-  Code, 
   Database, 
-  GitMerge, 
-  Layers, 
-  Zap, 
-  CheckCircle2, 
-  GanttChart, 
-  Cylinder, 
   Share2, 
   GitBranch, 
   Workflow,
-  ServerCog
+  ServerCog,
+  ZoomIn,
+  ZoomOut,
+  Maximize,
+  Minimize
 } from 'lucide-react';
 import 'reactflow/dist/style.css';
 
@@ -92,7 +89,7 @@ const nodeStyles = {
 };
 
 // Icons for the nodes
-const NodeIcon = ({ type }) => {
+const NodeIcon = ({ type }: { type: string }) => {
   const icons = {
     input: <Database className="h-5 w-5" />,
     model: <Brain className="h-5 w-5" />,
@@ -102,17 +99,37 @@ const NodeIcon = ({ type }) => {
     default: <ServerCog className="h-5 w-5" />
   };
   
-  return icons[type] || icons.default;
+  return icons[type as keyof typeof icons] || icons.default;
 };
 
 // Custom node component
-const CustomNode = ({ data, selected, id }) => {
+interface NodeData {
+  type?: string;
+  label: string;
+  description?: string;
+  params?: Record<string, string>;
+  handles?: {
+    input?: boolean;
+    output?: boolean;
+  };
+  conditional?: boolean;
+  selected?: boolean;
+}
+
+const CustomNode = ({ 
+  data, 
+  selected 
+}: { 
+  data: NodeData; 
+  selected: boolean; 
+  id: string;
+}) => {
   return (
     <>
       <div
         style={{
           ...nodeStyles.base,
-          ...(data.type && nodeStyles[data.type]),
+          ...(data.type && nodeStyles[data.type as keyof typeof nodeStyles]),
           ...(selected && nodeStyles.selected),
         }}
         className="group"
@@ -152,7 +169,7 @@ const CustomNode = ({ data, selected, id }) => {
 
         <div className="flex items-center gap-3 mb-2">
           <div className="p-2 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-            <NodeIcon type={data.type} />
+            <NodeIcon type={data.type || 'default'} />
           </div>
           <div className="font-bold text-sm text-white">{data.label}</div>
         </div>
@@ -166,7 +183,7 @@ const CustomNode = ({ data, selected, id }) => {
             {Object.entries(data.params).map(([key, value]) => (
               <div key={key} className="flex justify-between items-center mb-2 text-xs">
                 <span className="opacity-70">{key}:</span>
-                <code className="px-2 py-1 rounded-md bg-indigo-500/10 text-indigo-300">{value}</code>
+                <code className="px-2 py-1 rounded-md bg-indigo-500/10 text-indigo-300">{String(value)}</code>
               </div>
             ))}
           </div>
@@ -378,13 +395,77 @@ const nodeTypes = {
   custom: CustomNode,
 };
 
-export function InteractiveFlow() {
+// Custom flow controls component
+const CustomControls = () => {
+  const { zoomIn, zoomOut } = useReactFlow();
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const flowContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Find the closest parent with the flow container class
+  useEffect(() => {
+    flowContainerRef.current = document.querySelector('.react-flow') as HTMLDivElement;
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!flowContainerRef.current) return;
+    
+    if (!isFullscreen) {
+      if (flowContainerRef.current.requestFullscreen) {
+        flowContainerRef.current.requestFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  return (
+    <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-10">
+      <button
+        onClick={() => zoomIn()}
+        className="flex items-center justify-center w-10 h-10 rounded-lg backdrop-blur-md bg-indigo-500/20 border border-indigo-500/40 text-white hover:bg-indigo-500/30 transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-indigo-500/20"
+        aria-label="Zoom in"
+      >
+        <ZoomIn size={18} />
+      </button>
+      <button
+        onClick={() => zoomOut()}
+        className="flex items-center justify-center w-10 h-10 rounded-lg backdrop-blur-md bg-indigo-500/20 border border-indigo-500/40 text-white hover:bg-indigo-500/30 transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-indigo-500/20"
+        aria-label="Zoom out"
+      >
+        <ZoomOut size={18} />
+      </button>
+      <button
+        onClick={toggleFullscreen}
+        className="flex items-center justify-center w-10 h-10 rounded-lg backdrop-blur-md bg-indigo-500/20 border border-indigo-500/40 text-white hover:bg-indigo-500/30 transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-indigo-500/20"
+        aria-label="Toggle fullscreen"
+      >
+        {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+      </button>
+    </div>
+  );
+};
+
+const InteractiveFlowInner = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [isClient, setIsClient] = useState(false);
   
   // Handle node click for interactive effect
-  const onNodeClick = useCallback((_, node) => {
+  const onNodeClick = useCallback((
+    _: React.MouseEvent, 
+    node: Node
+  ) => {
     setNodes((nds) =>
       nds.map((n) => ({
         ...n,
@@ -421,25 +502,36 @@ export function InteractiveFlow() {
   }
 
   return (
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onNodeClick={onNodeClick}
+      nodeTypes={nodeTypes}
+      fitView
+      minZoom={0.5}
+      maxZoom={1.5}
+      proOptions={{ hideAttribution: true }}
+      connectionLineType={ConnectionLineType.SmoothStep}
+      connectionLineStyle={{ stroke: 'rgba(99, 102, 241, 0.6)', strokeWidth: 2 }}
+    >
+      <Background 
+        color="rgba(255, 255, 255, 0.05)" 
+        gap={25} 
+        variant={"dots" as any} 
+      />
+      <CustomControls />
+    </ReactFlow>
+  );
+};
+
+export function InteractiveFlow() {
+  return (
     <div style={{ width: '100%', height: '400px', backgroundColor: '#0f172a', borderRadius: '12px', overflow: 'hidden' }}>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onNodeClick={onNodeClick}
-        nodeTypes={nodeTypes}
-        fitView
-        minZoom={0.5}
-        maxZoom={1.5}
-        defaultZoom={0.85}
-        proOptions={{ hideAttribution: true }}
-        connectionLineType={ConnectionLineType.SmoothStep}
-        connectionLineStyle={{ stroke: 'rgba(99, 102, 241, 0.6)', strokeWidth: 2 }}
-      >
-        <Background color="rgba(255, 255, 255, 0.05)" gap={25} variant="dots" />
-        <Controls className="bg-indigo-900/20 rounded-md border border-indigo-500/20" showInteractive={false} />
-      </ReactFlow>
+      <ReactFlowProvider>
+        <InteractiveFlowInner />
+      </ReactFlowProvider>
     </div>
   );
 } 
