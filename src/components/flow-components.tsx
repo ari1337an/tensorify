@@ -82,24 +82,26 @@ export const FlowNode = ({
   const Icon = data.icon;
   const colors = personaColors[data.persona as keyof typeof personaColors] || personaColors.default;
   
-  // Node base styles
+  // Node base styles - reduced size
   const nodeBaseStyle = {
-    padding: '14px',
-    borderRadius: '12px',
-    minWidth: '180px',
-    fontSize: '12px',
-    backgroundColor: 'rgba(32, 32, 40, 0.8)',
+    padding: '10px',
+    borderRadius: '10px',
+    minWidth: '140px', // Reduced from 180px
+    maxWidth: '160px', // Added max width
+    fontSize: '11px', // Reduced from 12px
+    backgroundColor: 'rgba(20, 20, 28, 0.8)',
     backdropFilter: 'blur(16px)',
     border: `1px solid ${colors.primary.replace('0.9', '0.2')}`,
-    boxShadow: `0 8px 24px rgba(0, 0, 0, 0.2), 0 0 0 1px ${colors.primary.replace('0.9', '0.1')}`,
-    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+    boxShadow: `0 4px 12px rgba(0, 0, 0, 0.15)`, // Reduced shadow
+    transition: 'all 0.3s ease',
     color: 'rgba(255, 255, 255, 0.8)',
+    zIndex: 1, // Lower z-index to ensure edges appear above
   };
   
   // Apply selection styles
   const selectedStyle = selected ? {
-    boxShadow: `0 12px 32px ${colors.primary.replace('0.9', '0.3')}, 0 0 0 2px ${colors.primary.replace('0.9', '0.5')}`,
-    transform: 'translateY(-5px) scale(1.03)',
+    boxShadow: `0 8px 16px ${colors.primary.replace('0.9', '0.3')}, 0 0 0 2px ${colors.primary.replace('0.9', '0.5')}`,
+    transform: 'translateY(-3px) scale(1.02)', // Reduced transform
   } : {};
   
   return (
@@ -107,13 +109,15 @@ export const FlowNode = ({
       style={{ ...nodeBaseStyle, ...selectedStyle }}
       className="group"
     >
+      {/* Improved handle positioning to extend beyond node */}
       <Handle
         type="target"
         position={Position.Left}
-        className={`w-3 h-3 rounded-full border-2 -ml-1.5`}
+        className="w-3 h-3 rounded-full border-2 -ml-2" // Extended more to the left
         style={{ 
           backgroundColor: colors.primary, 
-          borderColor: colors.secondary 
+          borderColor: colors.secondary,
+          zIndex: 10 // Ensure handles are above edges
         }}
         isConnectable={isConnectable}
       />
@@ -121,10 +125,11 @@ export const FlowNode = ({
       <Handle
         type="source"
         position={Position.Right}
-        className={`w-3 h-3 rounded-full border-2 -mr-1.5`}
+        className="w-3 h-3 rounded-full border-2 -mr-2" // Extended more to the right
         style={{ 
           backgroundColor: colors.primary, 
-          borderColor: colors.secondary 
+          borderColor: colors.secondary,
+          zIndex: 10 // Ensure handles are above edges
         }}
         isConnectable={isConnectable}
       />
@@ -135,38 +140,40 @@ export const FlowNode = ({
             type="source"
             position={Position.Bottom}
             id="yes"
-            className="w-3 h-3 rounded-full bg-green-500 border-2 border-green-700 -mb-1.5 left-1/3"
+            className="w-3 h-3 rounded-full bg-green-500 border-2 border-green-700 -mb-2 left-1/3" // Extended more
+            style={{ zIndex: 10 }}
             isConnectable={isConnectable}
           />
           <Handle
             type="source"
             position={Position.Bottom}
             id="no"
-            className="w-3 h-3 rounded-full bg-red-500 border-2 border-red-700 -mb-1.5 left-2/3"
+            className="w-3 h-3 rounded-full bg-red-500 border-2 border-red-700 -mb-2 left-2/3" // Extended more
+            style={{ zIndex: 10 }}
             isConnectable={isConnectable}
           />
         </>
       )}
 
-      <div className="flex items-center gap-3 mb-2">
-        <div className="p-2 rounded-lg flex items-center justify-center" 
+      <div className="flex items-center gap-2 mb-1.5"> {/* Reduced gap and margin */}
+        <div className="p-1.5 rounded-lg flex items-center justify-center" // Reduced padding
           style={{ backgroundColor: colors.primary.replace('0.9', '0.2') }}>
-          <Icon className={`h-5 w-5 ${selected ? 'text-white' : colors.icon}`} />
+          <Icon className={`h-4 w-4 ${selected ? 'text-white' : colors.icon}`} /> {/* Reduced icon size */}
         </div>
-        <div className="font-bold text-sm text-white">{data.label}</div>
+        <div className="font-bold text-xs text-white">{data.label}</div> {/* Reduced font size */}
       </div>
       
       {data.description && (
-        <div className="text-xs opacity-70 mb-3">{data.description}</div>
+        <div className="text-[10px] opacity-70 mb-2">{data.description}</div> // Further reduced description text size
       )}
       
       {data.params && (
-        <div className="mt-2 pt-3 border-t w-full" 
+        <div className="mt-1.5 pt-1.5 border-t w-full" // Reduced margins
           style={{ borderColor: colors.primary.replace('0.9', '0.2') }}>
           {Object.entries(data.params).map(([key, value]) => (
-            <div key={key} className="flex justify-between items-center mb-2 text-xs">
+            <div key={key} className="flex justify-between items-center mb-1 text-[10px]"> {/* Reduced text size */}
               <span className="opacity-70">{key}:</span>
-              <code className="px-2 py-1 rounded-md text-xs"
+              <code className="px-1.5 py-0.5 rounded-md text-[10px]" // Reduced padding
                 style={{ 
                   backgroundColor: colors.primary.replace('0.9', '0.1'),
                   color: colors.primary.replace('0.9', '1.0')
@@ -184,7 +191,7 @@ export const FlowNode = ({
         style={{ 
           background: `radial-gradient(circle at center, ${colors.primary}, transparent 70%)`,
           filter: 'blur(8px)',
-          zIndex: -1
+          zIndex: 0 // Ensure glow is below content
         }} 
       ></div>
     </div>
@@ -197,6 +204,9 @@ export interface FlowItem {
   icon: LucideIcon;
   label: string;
   position: { x: number; y: number };
+  description?: string;
+  params?: Record<string, string | undefined>;
+  conditional?: boolean;
 }
 
 export interface Connection {
@@ -238,8 +248,13 @@ const createNodesAndEdges = (
     data: {
       icon: item.icon,
       label: item.label,
+      description: item.description,
+      params: item.params,
+      conditional: item.conditional,
       persona: persona
-    }
+    },
+    // Ensure nodes are positioned on lower z-index layer
+    style: { zIndex: 1 }
   }));
 
   // Create edges from connections
@@ -249,8 +264,9 @@ const createNodesAndEdges = (
     
     if (typeof connection.from === 'number') {
       source = `${connection.from}`;
-      // sourcePosition kept for future use if needed
-      // const sourcePosition = Position.Right;
+      // Find the actual node to ensure it exists before creating the edge
+      const sourceNode = flowItems.find(item => item.id === connection.from);
+      if (!sourceNode) return null;
     } else {
       // For direct position objects, we'd need a different approach
       // This case handles legacy connections
@@ -259,8 +275,9 @@ const createNodesAndEdges = (
     
     if (typeof connection.to === 'number') {
       target = `${connection.to}`;
-      // targetPosition kept for future use if needed
-      // const targetPosition = Position.Left;
+      // Find the actual node to ensure it exists before creating the edge
+      const targetNode = flowItems.find(item => item.id === connection.to);
+      if (!targetNode) return null;
     } else {
       // For direct position objects
       return null;
@@ -273,17 +290,25 @@ const createNodesAndEdges = (
       id: `e${index}`,
       source,
       target,
+      sourceHandle: null, // Let React Flow automatically connect to the closest handle
+      targetHandle: null, // Let React Flow automatically connect to the closest handle
       animated: connection.animated,
+      // Enhanced edge styling for better visibility
       style: { 
         stroke: edgeColor, 
-        strokeWidth: connection.animated ? 2 : 1.5,
-        strokeDasharray: connection.dashed ? '5,5' : undefined
+        strokeWidth: connection.animated ? 3 : 2, // Increased stroke width
+        strokeDasharray: connection.dashed ? '5,5' : undefined,
+        strokeOpacity: 0.9, // Increased opacity
+        zIndex: 5, // Ensure edges appear above nodes
       },
       markerEnd: {
         type: MarkerType.ArrowClosed,
         color: edgeColor,
+        width: 15, // Larger arrow
+        height: 15, // Larger arrow
       },
-      type: 'smoothstep'
+      // Add a slight curve to edges to avoid direct overlapping
+      type: 'smoothstep',
     };
   }).filter(Boolean) as Edge[];
 
@@ -336,8 +361,8 @@ const InteractiveFlowInner = ({
   onNodeClick
 }: InteractiveFlowProps) => {
   const [containerDimensions, setContainerDimensions] = useState({ width: 600, height: 400 });
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes] = useNodesState([]);
+  const [edges, setEdges] = useEdgesState([]);
   
   // Set up container ref to measure dimensions
   const containerRef = useCallback((node: HTMLDivElement | null) => {
@@ -363,54 +388,35 @@ const InteractiveFlowInner = ({
     }
   }, [containerDimensions, flowItems, connections, persona, setNodes, setEdges]);
   
-  // Handle node click
-  const handleNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
-    if (onNodeClick) {
-      onNodeClick(node.id);
-    }
-  }, [onNodeClick]);
-  
-  // Auto-cycle through nodes
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setNodes((nds) => {
-        if (nds.length === 0) return nds;
-        
-        const randomNodeIdx = Math.floor(Math.random() * nds.length);
-        const newActiveId = nds[randomNodeIdx].id;
-        
-        if (onNodeClick) {
-          onNodeClick(newActiveId);
-        }
-        
-        return nds;
-      });
-    }, 4000);
-    
-    return () => clearInterval(interval);
-  }, [setNodes, onNodeClick]);
+  // Removed node click handler and auto-cycling
   
   return (
     <div ref={containerRef} className="w-full h-full">
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onNodeClick={handleNodeClick}
         nodeTypes={nodeTypes}
         fitView
-        minZoom={0.5}
-        maxZoom={1.5}
+        zoomOnScroll={false}
+        zoomOnPinch={false}
+        zoomOnDoubleClick={false}
+        panOnScroll={false}
+        panOnDrag={false}
+        preventScrolling={false}
         proOptions={{ hideAttribution: true }}
         connectionLineType={ConnectionLineType.SmoothStep}
         nodesDraggable={false}
         nodesConnectable={false}
-        elementsSelectable={true}
+        elementsSelectable={false}
+        minZoom={1}
+        maxZoom={1}
+        className="react-flow-edges-on-top" // Add custom class to ensure edges are on top
       >
+        {/* Add subtle background dots that won't interfere with edges */}
         <Background 
-          color="rgba(255, 255, 255, 0.05)" 
-          gap={25} 
+          color="rgba(255, 255, 255, 0.025)" 
+          gap={15} 
+          size={1}
           variant="dots" 
         />
       </ReactFlow>
@@ -421,7 +427,22 @@ const InteractiveFlowInner = ({
 // Export wrapped component with provider
 export function InteractiveFlow(props: InteractiveFlowProps) {
   return (
-    <div className={`w-full h-full bg-gray-950/50 backdrop-blur-sm rounded-xl overflow-hidden border border-primary/10 relative ${props.className || ''}`}>
+    <div className={`w-full h-full bg-transparent rounded-xl overflow-hidden ${props.className || ''}`}>
+      {/* Add custom style to ensure edges render on top of nodes */}
+      <style jsx global>{`
+        .react-flow-edges-on-top .react-flow__edges {
+          z-index: 5;
+        }
+        .react-flow-edges-on-top .react-flow__edge-path {
+          stroke-width: 2px;
+        }
+        .react-flow-edges-on-top .react-flow__edge.animated path {
+          stroke-width: 3px;
+        }
+        .react-flow-edges-on-top .react-flow__nodes {
+          z-index: 1;
+        }
+      `}</style>
       <ReactFlowProvider>
         <InteractiveFlowInner {...props} />
       </ReactFlowProvider>

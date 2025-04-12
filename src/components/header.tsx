@@ -1,96 +1,122 @@
 'use client';
 
-import Link from "next/link";
-import { Button } from "./ui/button";
-import { Menu, X } from "lucide-react";
+import * as React from "react";
 import { useState, useEffect } from "react";
-import { NewsletterSignup } from "./newsletter-signup";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { useNewsletterSignup } from "@/hooks/use-newsletter-signup";
+import { cn } from "@/lib/utils";
+import { Menu } from "lucide-react";
+import Image from "next/image";
 
 export function Header() {
+  const { openNewsletterSignup } = useNewsletterSignup();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  // const [showWaitlist, setShowWaitlist] = useState(false);
-
-  const { openNewsletterSignup } = useNewsletterSignup();
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
+      const offset = window.scrollY;
+      setIsScrolled(offset > 50);
     };
+
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
-    <>
-      <header className={`fixed top-0 z-50 w-full transition-all duration-300 ${isScrolled ? "bg-background/80 backdrop-blur-lg shadow-sm" : ""}`}>
-        <div className="container flex h-16 items-center justify-between px-4 md:px-8">
-          <Link href="/" className="flex items-center space-x-2">
-            <span className="bg-gradient-to-r from-primary to-violet-500 bg-clip-text text-xl font-bold text-transparent hover:opacity-90 transition-opacity">
-              Tensorify
-            </span>
-          </Link>
+    <header
+      className={cn(
+        "fixed top-0 left-0 right-0 z-50 py-4 transition-all duration-300",
+        isScrolled ? "bg-background/80 backdrop-blur-md shadow-sm" : "bg-transparent"
+      )}
+    >
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-12">
+            <Link href="/" className="flex items-center gap-2">
+              <Image 
+                src="/tensorify-logo-only.svg" 
+                alt="Tensorify Logo" 
+                width={32} 
+                height={32} 
+                className="h-8 w-auto"
+              />
+              <span className="font-bold text-lg">Tensorify</span>
+            </Link>
 
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Features
-            </Link>
-            <Link href="#benefits" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Benefits
-            </Link>
-            <Link href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Testimonials
-            </Link>
-            <Link href="#faq" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              FAQ
-            </Link>
-            <Button 
-              onClick={openNewsletterSignup}
-              className="bg-gradient-to-r from-primary to-violet-500 hover:opacity-90"
-            >
-              Join Waitlist
-            </Button>
-          </nav>
-
-          <button
-            className="md:hidden"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
-          </button>
-        </div>
-
-        {isMobileMenuOpen && (
-          <div className="md:hidden border-t">
-            <div className="container px-4 py-4 space-y-4">
-              <Link href="#features" className="block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <nav className="hidden md:flex items-center gap-6">
+              <Link href="/#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 Features
               </Link>
-              <Link href="#benefits" className="block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                Benefits
+              <Link href="/#for-whom" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                For Whom
               </Link>
-              <Link href="#testimonials" className="block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                Testimonials
+              <Link href="/#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                Pricing
               </Link>
-              <Link href="#faq" className="block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                FAQ
-              </Link>
-              <Button 
-                onClick={openNewsletterSignup}
-                className="w-full bg-gradient-to-r from-primary to-violet-500 hover:opacity-90"
-              >
-                Join Waitlist
-              </Button>
-            </div>
+            </nav>
           </div>
-        )}
-      </header>
-      <NewsletterSignup />
-    </>
+
+          <div className="flex items-center gap-4">
+            <Button
+              onClick={openNewsletterSignup}
+              className="hidden md:flex"
+              variant="outline"
+            >
+              Get Early Access
+            </Button>
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden"
+              aria-label="Toggle Menu"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden py-4 px-6 bg-background/90 backdrop-blur-md border-b">
+          <div className="container mx-auto max-w-7xl">
+            <nav className="flex flex-col gap-4">
+              <Link
+                href="/#features"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Features
+              </Link>
+              <Link
+                href="/#for-whom"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                For Whom
+              </Link>
+              <Link
+                href="/#pricing"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Pricing
+              </Link>
+              <Button
+                onClick={() => {
+                  openNewsletterSignup();
+                  setIsMobileMenuOpen(false);
+                }}
+                variant="outline"
+                className="mt-2"
+              >
+                Get Early Access
+              </Button>
+            </nav>
+          </div>
+        </div>
+      )}
+    </header>
   );
 } 

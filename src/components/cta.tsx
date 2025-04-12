@@ -49,20 +49,7 @@ export function CTA() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-8 w-full max-w-4xl">
-            <div className="flex flex-col items-center space-y-2 rounded-lg border bg-background/50 p-4 backdrop-blur-sm">
-              <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-500">Priority Access</p>
-              <p className="text-sm text-muted-foreground text-center">Be the first to try new features</p>
-            </div>
-            <div className="flex flex-col items-center space-y-2 rounded-lg border bg-background/50 p-4 backdrop-blur-sm">
-              <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-500">Special Pricing</p>
-              <p className="text-sm text-muted-foreground text-center">Exclusive early adopter rates</p>
-            </div>
-            <div className="flex flex-col items-center space-y-2 rounded-lg border bg-background/50 p-4 backdrop-blur-sm">
-              <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-500">Direct Support</p>
-              <p className="text-sm text-muted-foreground text-center">Direct line to our dev team</p>
-            </div>
-          </div>
+          
         </div>
       </div>
     </section>

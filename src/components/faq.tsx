@@ -51,14 +51,6 @@ export function FAQ() {
   return (
     <SectionWrapper id="faq">
       <div className="flex flex-col items-center justify-center space-y-4 text-center mb-20">
-        <div className="animate-fade-in opacity-0" style={{ animationDelay: '0.2s' }}>
-          <Badge 
-            variant="outline" 
-            className="px-6 py-2 rounded-full bg-primary/5 text-primary border-primary/20 text-sm font-medium hover:bg-primary/10 transition-colors duration-300"
-          >
-            FAQ
-          </Badge>
-        </div>
         <h2 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl animate-fade-in opacity-0" style={{ animationDelay: '0.4s' }}>
           Common{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-violet-500 to-primary bg-[200%_auto] animate-gradient">

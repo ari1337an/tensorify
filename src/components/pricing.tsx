@@ -8,7 +8,7 @@ import { useNewsletterSignup } from "@/hooks/use-newsletter-signup";
 
 export function Pricing() {
   const { openNewsletterSignup } = useNewsletterSignup();
-  
+
   const plans = [
     {
       name: "Early Adopter",
@@ -54,41 +54,30 @@ export function Pricing() {
   return (
     <SectionWrapper id="pricing">
       <div className="flex flex-col items-center justify-center space-y-4 text-center mb-20">
-        <div className="animate-fade-in opacity-0" style={{ animationDelay: '0.2s' }}>
-          <Badge 
-            variant="outline" 
-            className="px-6 py-2 rounded-full bg-primary/5 text-primary border-primary/20 text-sm font-medium hover:bg-primary/10 transition-colors duration-300"
-          >
-            Join Us
-          </Badge>
-        </div>
-        <h2 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl animate-fade-in opacity-0" style={{ animationDelay: '0.4s' }}>
+        <h2 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
           Become an{" "}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-violet-500 to-primary bg-[200%_auto] animate-gradient">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-violet-500 to-primary bg-[200%_auto]">
             Early Adopter
           </span>
         </h2>
-        <p className="max-w-[900px] text-lg sm:text-xl text-muted-foreground animate-fade-in opacity-0" style={{ animationDelay: '0.6s' }}>
-          We're looking for forward-thinking AI professionals to help shape the future of Tensorify
+        <p className="max-w-[900px] text-lg sm:text-xl text-muted-foreground">
+          We&apos;re looking for forward-thinking AI professionals to help shape the future of Tensorify
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-16 max-w-5xl mx-auto">
-        {plans.map((plan, index) => {
+        {plans.map((plan) => {
           const Icon = plan.icon;
           return (
-            <div 
+            <div
               key={plan.name}
-              className={`group relative flex flex-col rounded-2xl border border-primary/10 hover:border-primary/30 bg-background/50 backdrop-blur-sm p-6 md:p-8 transition-all duration-500 hover:shadow-2xl animate-fade-in opacity-0 ${
-                plan.popular ? 'md:scale-105 md:shadow-xl' : 'shadow-lg'
-              }`}
-              style={{ animationDelay: `${0.8 + index * 0.2}s` }}
+              className={`group relative flex flex-col rounded-2xl border border-primary/10 hover:border-primary/30 bg-background/50 backdrop-blur-sm p-6 md:p-8 transition-all duration-500 hover:shadow-2xl ${plan.popular ? 'md:scale-105 md:shadow-xl' : 'shadow-lg'}`}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-violet-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
-              
+
               {plan.popular && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <Badge 
+                  <Badge
                     className="px-4 py-1 bg-gradient-to-r from-primary to-violet-500 text-white font-medium shadow-lg"
                   >
                     <SparklesIcon className="h-4 w-4 mr-1" />
@@ -138,11 +127,10 @@ export function Pricing() {
               </ul>
 
               {plan.action.href ? (
-                <Button 
-                  variant={plan.action.variant || "default"}
-                  className={`mt-auto relative h-11 md:h-12 ${
-                    !plan.action.variant ? 'bg-gradient-to-r from-primary to-violet-500 hover:opacity-90' : 'border-primary/20 hover:bg-primary/5'
-                  } shadow-lg hover:shadow-xl transition-all duration-300`}
+                <Button
+                  variant={plan.action.variant as "default" | "outline" | undefined}
+                  className={`mt-auto relative h-11 md:h-12 ${!plan.action.variant ? 'bg-gradient-to-r from-primary to-violet-500 hover:opacity-90' : 'border-primary/20 hover:bg-primary/5'
+                    } shadow-lg hover:shadow-xl transition-all duration-300`}
                   asChild
                 >
                   <Link href={plan.action.href}>
@@ -150,11 +138,10 @@ export function Pricing() {
                   </Link>
                 </Button>
               ) : (
-                <Button 
-                  variant={plan.action.variant || "default"}
-                  className={`mt-auto relative h-11 md:h-12 ${
-                    !plan.action.variant ? 'bg-gradient-to-r from-primary to-violet-500 hover:opacity-90' : 'border-primary/20 hover:bg-primary/5'
-                  } shadow-lg hover:shadow-xl transition-all duration-300`}
+                <Button
+                  variant={plan.action.variant as "default" | "outline" | undefined}
+                  className={`mt-auto relative h-11 md:h-12 ${!plan.action.variant ? 'bg-gradient-to-r from-primary to-violet-500 hover:opacity-90' : 'border-primary/20 hover:bg-primary/5'
+                    } shadow-lg hover:shadow-xl transition-all duration-300`}
                   onClick={plan.action.onClick}
                 >
                   {plan.action.text}

@@ -31,11 +31,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background text-foreground relative`}
       >
-        <div className="fixed inset-0 -z-10 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]"></div>
-        <div className="fixed inset-0 -z-10 bg-gradient-to-tr from-background via-accent/5 to-background"></div>
+        <div className="fixed inset-0 -z-10 bg-[linear-gradient(to_right,#33333308_1px,transparent_1px),linear-gradient(to_bottom,#33333308_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+        <div className="fixed inset-0 -z-10 bg-gradient-radial from-background via-[#2c2c3a15] to-background dark:from-[#0b0b12] dark:via-[#13131f] dark:to-[#0a0a14]"></div>
+        <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,transparent_60%,rgba(0,0,0,0.12))] dark:bg-[radial-gradient(ellipse_at_center,transparent_50%,rgba(0,0,0,0.3))]"></div>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >
