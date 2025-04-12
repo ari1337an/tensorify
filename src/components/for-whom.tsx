@@ -1,15 +1,16 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
-import { BeakerIcon, BriefcaseIcon, UsersIcon, ArrowRightIcon, Database, Brain, Zap, GitBranch, Share2, BarChart } from 'lucide-react';
+import { Beaker as BeakerIcon, Briefcase as BriefcaseIcon, Users as UsersIcon, ArrowRight as ArrowRightIcon, Database, Brain, Zap, GitBranch, Share2, BarChart, GraduationCap as GraduationCapIcon, ArrowUp as ArrowUpIcon } from 'lucide-react';
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { SectionWrapper } from "./section-wrapper";
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 
 // Node component for the interactive flow visualization
-const FlowNode = ({ icon: Icon, label, active, onClick, type = "default", position, size = "md" }) => {
+const FlowNode = ({ icon: Icon, label, active, onClick = () => {}, type = "default", position, size = "md" }) => {
   const sizeClasses = {
     sm: "w-10 h-10 text-xs",
     md: "w-14 h-14 text-sm",
@@ -43,8 +44,8 @@ const FlowNode = ({ icon: Icon, label, active, onClick, type = "default", positi
       whileHover={{ scale: 1.05 }}
       transition={{ duration: 0.3 }}
       onClick={onClick}
-      style={positionStyles}
-      className={`${sizeClasses[size]} rounded-full bg-gradient-to-br ${colors[type]} backdrop-blur-md 
+      style={positionStyles as any}
+      className={`${sizeClasses[size as keyof typeof sizeClasses]} rounded-full bg-gradient-to-br ${colors[type as keyof typeof colors]} backdrop-blur-md 
         border flex items-center justify-center cursor-pointer transition-all
         ${active ? 'border-violet-500 shadow-lg shadow-violet-500/20' : 'shadow-sm'}`}
     >
@@ -291,6 +292,35 @@ const UserTypeSection = ({ data, index }) => {
   );
 };
 
+// Add educator user type
+const educatorUserType = {
+  key: "educators",
+  icon: GraduationCapIcon,
+  title: "For Academic Educators",
+  challenge: "Your students spend more time debugging code than learning AI concepts. The complexity of implementation is a barrier to understanding the fundamental principles you're trying to teach.",
+  quote: "I spend half my office hours helping students fix their PyTorch code instead of discussing the actual models.",
+  benefits: [
+    { icon: ArrowRightIcon, title: "Focus on concepts", description: "Students learn AI principles without getting lost in implementation details" },
+    { icon: ArrowRightIcon, title: "Enable hands-on learning", description: "Experiment with complex architectures that would be impractical to code from scratch" },
+    { icon: ArrowRightIcon, title: "Accelerate learning cycles", description: "Complete more meaningful projects within academic time constraints" }
+  ],
+  flowNodes: [
+    { id: 1, icon: Brain, position: { x: 25, y: 35 }, label: "Concept" },
+    { id: 2, icon: UsersIcon, position: { x: 25, y: 65 }, label: "Students" },
+    { id: 3, icon: Database, position: { x: 50, y: 50 }, label: "Visualization" },
+    { id: 4, icon: GitBranch, position: { x: 75, y: 35 }, label: "Experiments" },
+    { id: 5, icon: Zap, position: { x: 75, y: 65 }, label: "Learning" }
+  ],
+  connections: [
+    { from: { x: 25, y: 35 }, to: { x: 50, y: 50 }, animated: true },
+    { from: { x: 25, y: 65 }, to: { x: 50, y: 50 }, animated: true },
+    { from: { x: 50, y: 50 }, to: { x: 75, y: 35 }, animated: true },
+    { from: { x: 50, y: 50 }, to: { x: 75, y: 65 }, animated: true },
+    { from: { x: 75, y: 35 }, to: { x: 75, y: 65 }, dashed: true }
+  ],
+  nodeType: "lead"
+};
+
 export function ForWhom() {
   const sectionRef = useRef(null);
   const { scrollYProgress } = useScroll({
@@ -377,7 +407,8 @@ export function ForWhom() {
         { from: { x: 50, y: 50 }, to: { x: 80, y: 70 }, animated: true }
       ],
       nodeType: "lead"
-    }
+    },
+    educatorUserType
   ];
 
   // Scroll progress mapping for animations
@@ -387,9 +418,13 @@ export function ForWhom() {
   return (
     <SectionWrapper 
       id="benefits" 
-      className="bg-background py-28"
+      className="bg-background pt-0 pb-28"
       containerClassName="flex flex-col items-center"
     >
+      <div className="relative mb-8">
+        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 h-28 w-px bg-gradient-to-b from-primary/40 to-primary/10"></div>
+      </div>
+      
       <motion.div 
         ref={sectionRef}
         className="flex flex-col items-center justify-center space-y-4 text-center mb-24"
@@ -399,7 +434,7 @@ export function ForWhom() {
           variant="outline" 
           className="px-6 py-2 rounded-full bg-primary/5 text-primary border-primary/20 text-sm font-medium hover:bg-primary/10 transition-colors duration-300"
         >
-          Who Benefits
+          Deep Dive
         </Badge>
         <h2 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
           For the AI Professional Who's{" "}
@@ -408,7 +443,7 @@ export function ForWhom() {
           </span>
         </h2>
         <p className="max-w-[800px] text-lg sm:text-xl text-muted-foreground">
-          Tensorify solves the real pain points that slow down AI professionals at every level
+          Discover how Tensorify solves specific pain points for each role in the AI development lifecycle
         </p>
       </motion.div>
 
@@ -416,6 +451,46 @@ export function ForWhom() {
       {userTypes.map((userData, index) => (
         <UserTypeSection key={userData.key} data={userData} index={index} />
       ))}
+      
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+        className="mt-10 w-full max-w-4xl px-4"
+      >
+        <Card className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-violet-500/5 border-primary/20 p-8 sm:p-12">
+          <div className="absolute inset-0 bg-grid-white/5 bg-grid-pattern [mask-image:radial-gradient(white,transparent_85%)]" />
+          <div className="relative flex flex-col gap-6 items-center text-center">
+            <h3 className="text-3xl sm:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-500">
+              Join the visual AI revolution
+            </h3>
+            <p className="text-xl text-muted-foreground max-w-2xl">
+              Stop wasting time on implementation details and focus on what really matters—solving AI challenges.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <Button 
+                size="lg"
+                className="h-14 px-8 text-lg bg-gradient-to-r from-primary to-violet-500 hover:opacity-90 shadow-lg hover:shadow-xl transition-all duration-300"
+                asChild
+              >
+                <Link href="/get-started">Start Building Today</Link>
+              </Button>
+              <Button 
+                size="lg"
+                variant="outline"
+                className="h-14 px-8 text-lg border-primary/20 hover:bg-primary/5 transition-all duration-300"
+                asChild
+              >
+                <Link href="#features">
+                  <ArrowUpIcon className="mr-2 h-4 w-4" />
+                  Back to Features
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </motion.div>
     </SectionWrapper>
   );
 } 
