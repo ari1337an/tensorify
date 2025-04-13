@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import ReactFlow, {
   Background,
+  BackgroundVariant,
   useNodesState,
   useEdgesState,
   Node,
@@ -13,7 +14,6 @@ import ReactFlow, {
   Handle,
   useReactFlow,
   ReactFlowProvider,
-  BackgroundVariant,
 } from 'reactflow';
 import { 
   Brain, 
@@ -398,7 +398,7 @@ const nodeTypes = {
 
 // Custom flow controls component
 const CustomControls = () => {
-  const { zoomIn, zoomOut } = useReactFlow();
+  const reactFlowInstance = useReactFlow();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const flowContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -430,10 +430,18 @@ const CustomControls = () => {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
+  const handleZoomIn = () => {
+    reactFlowInstance.zoomIn();
+  };
+
+  const handleZoomOut = () => {
+    reactFlowInstance.zoomOut();
+  };
+
   return (
     <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-10">
       <button
-        onClick={() => zoomIn()}
+        onClick={handleZoomIn}
         className="bg-black/30 rounded-lg p-2 text-white backdrop-blur-sm border border-white/10 hover:bg-black/50 transition-colors cursor-pointer"
         aria-label="Zoom In"
       >
@@ -441,7 +449,7 @@ const CustomControls = () => {
       </button>
       
       <button
-        onClick={() => zoomOut()}
+        onClick={handleZoomOut}
         className="bg-black/30 rounded-lg p-2 text-white backdrop-blur-sm border border-white/10 hover:bg-black/50 transition-colors cursor-pointer"
         aria-label="Zoom Out"
       >

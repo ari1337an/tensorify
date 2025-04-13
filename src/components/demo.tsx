@@ -1,15 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Button } from "./ui/button";
-import { PlayIcon, PauseIcon, CodeIcon, MonitorIcon } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { SectionWrapper } from "./section-wrapper";
 
 export function Demo() {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
   
   const togglePlayback = () => {
     setIsPlaying(!isPlaying);
@@ -17,14 +14,8 @@ export function Demo() {
     if (!isPlaying) {
       // Start demo animation
       const interval = setInterval(() => {
-        setCurrentStep(prevStep => {
-          if (prevStep >= 3) {
-            clearInterval(interval);
-            setIsPlaying(false);
-            return 0;
-          }
-          return prevStep + 1;
-        });
+        setIsPlaying(false);
+        clearInterval(interval);
       }, 3000);
       
       return () => clearInterval(interval);

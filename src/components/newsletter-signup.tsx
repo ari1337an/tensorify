@@ -100,7 +100,7 @@ export function NewsletterSignup() {
             </Button>
           </div>
           <p className="text-xs text-center text-muted-foreground">
-            By joining, you'll receive exclusive updates about Tensorify's launch and early access opportunities.
+            By joining, you&apos;ll receive exclusive updates about Tensorify&apos;s launch and early access opportunities.
           </p>
         </form>
       </DialogContent>

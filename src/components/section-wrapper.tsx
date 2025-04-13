@@ -2,7 +2,6 @@
 
 import { useRef, useEffect } from "react";
 import { useInView } from "framer-motion";
-import { cn } from "@/lib/utils";
 
 interface SectionWrapperProps {
   children: React.ReactNode;

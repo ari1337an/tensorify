@@ -3,7 +3,7 @@
 import { Code as CodeIcon, Brain as BrainCircuitIcon, Zap as ZapIcon, Plug as PlugIcon, BookOpen as BookOpenIcon, Wand2 as WandIcon, Rocket as RocketIcon, ArrowDown as ArrowDownIcon } from 'lucide-react';
 import { Badge } from "./ui/badge";
 import { SectionWrapper } from "./section-wrapper";
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import React from 'react';
 
@@ -159,49 +159,7 @@ export function Features() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const lastClickTime = useRef<number>(0);
 
-  // Function to handle cycling through features
-  const cycleFeatures = () => {
-    setActiveFeature(prev => prev === null ? 0 : (prev + 1) % features.length);
-  };
-
-  // Set up auto-cycling through features and client-side rendering check
-  useEffect(() => {
-    setIsClient(true);
-
-    // Start the initial timer
-    timerRef.current = setInterval(cycleFeatures, 4000);
-
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, []);
-
-  // Handle click on a feature node
-  const handleFeatureClick = (idx: number) => {
-    // Clear any existing interval
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-
-    // Update active feature
-    setActiveFeature(idx);
-
-    // Store the click time
-    lastClickTime.current = Date.now();
-
-    // Set a new interval after 5 seconds
-    timerRef.current = setInterval(() => {
-      // Only start cycling again if it's been at least 5 seconds since the last click
-      if (Date.now() - lastClickTime.current >= 5000) {
-        cycleFeatures();
-      }
-    }, 4000);
-  };
-
-  // Feature data with node positions - adjusted for better visualization
+  // Feature data with node positions - moved up
   const features: Feature[] = [
     {
       icon: BrainCircuitIcon,
@@ -258,6 +216,48 @@ export function Features() {
       connections: [2, 4]
     }
   ];
+
+  // Function to handle cycling through features - memoized with useCallback
+  const cycleFeatures = useCallback(() => {
+    setActiveFeature(prev => prev === null ? 0 : (prev + 1) % features.length);
+  }, [features.length]);
+
+  // Set up auto-cycling through features and client-side rendering check
+  useEffect(() => {
+    setIsClient(true);
+
+    // Start the initial timer
+    timerRef.current = setInterval(cycleFeatures, 4000);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [cycleFeatures]);
+
+  // Handle click on a feature node
+  const handleFeatureClick = (idx: number) => {
+    // Clear any existing interval
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    // Update active feature
+    setActiveFeature(idx);
+
+    // Store the click time
+    lastClickTime.current = Date.now();
+
+    // Set a new interval after 5 seconds
+    timerRef.current = setInterval(() => {
+      // Only start cycling again if it's been at least 5 seconds since the last click
+      if (Date.now() - lastClickTime.current >= 5000) {
+        cycleFeatures();
+      }
+    }, 4000);
+  };
 
   // Build connection lines
   const connections: { start: Feature; end: Feature }[] = [];

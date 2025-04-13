@@ -58,7 +58,7 @@ export function Testimonials() {
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-violet-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
               <QuoteIcon className="h-8 w-8 text-primary/20 mb-4 group-hover:text-primary/40 transition-colors duration-300" />
               <p className="mb-6 text-muted-foreground leading-relaxed">
-                "{testimonial.quote}"
+                &quot;{testimonial.quote}&quot;
               </p>
               <div className="relative flex items-center gap-4 mt-auto">
                 <div className="rounded-full bg-gradient-to-br from-primary/10 to-violet-500/10 p-1 group-hover:from-primary/20 group-hover:to-violet-500/20 transition-all duration-300">

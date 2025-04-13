@@ -1,13 +1,9 @@
-import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
-import { HelpCircleIcon, MailIcon } from "lucide-react";
+'use client';
+
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 import { SectionWrapper } from "./section-wrapper";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "./ui/accordion";
+import { Button } from "./ui/button";
+import { MailIcon, HelpCircleIcon } from "lucide-react";
 
 export function FAQ() {
   const faqs = [
@@ -88,7 +84,7 @@ export function FAQ() {
       <div className="mt-24 text-center animate-fade-in opacity-0" style={{ animationDelay: '1s' }}>
         <div className="inline-block rounded-2xl bg-gradient-to-br from-primary/5 via-background to-violet-500/5 border border-primary/20 p-6 md:p-8 backdrop-blur-sm">
           <p className="text-xl text-muted-foreground mb-6">
-            Still have questions? We're here to help!
+            Still have questions? We&apos;re here to help!
           </p>
           <Button 
             className="bg-gradient-to-r from-primary to-violet-500 hover:opacity-90 shadow-lg hover:shadow-xl transition-all duration-300 h-12 px-6"

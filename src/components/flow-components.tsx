@@ -23,6 +23,7 @@ import ReactFlow, {
   MarkerType,
   Handle,
   ReactFlowProvider,
+  BackgroundVariant
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
@@ -346,7 +347,6 @@ interface InteractiveFlowProps {
   }>;
   persona?: string;
   className?: string;
-  onNodeClick?: (nodeId: string) => void;
 }
 
 const nodeTypes = {
@@ -358,7 +358,6 @@ const InteractiveFlowInner = ({
   flowItems,
   connections,
   persona = "default",
-  onNodeClick
 }: InteractiveFlowProps) => {
   const [containerDimensions, setContainerDimensions] = useState({ width: 600, height: 400 });
   const [nodes, setNodes] = useNodesState([]);
@@ -388,8 +387,6 @@ const InteractiveFlowInner = ({
     }
   }, [containerDimensions, flowItems, connections, persona, setNodes, setEdges]);
   
-  // Removed node click handler and auto-cycling
-  
   return (
     <div ref={containerRef} className="w-full h-full">
       <ReactFlow
@@ -417,7 +414,7 @@ const InteractiveFlowInner = ({
           color="rgba(255, 255, 255, 0.025)" 
           gap={15} 
           size={1}
-          variant="dots" 
+          variant={"dots" as BackgroundVariant}
         />
       </ReactFlow>
     </div>
@@ -484,13 +481,6 @@ export function PersonaCard({
   connections,
   className
 }: PersonaCardProps) {
-  const [activeNodeIdx, setActiveNodeIdx] = useState<number | null>(null);
-  
-  const handleNodeClick = (nodeId: string) => {
-    const idx = flowItems.findIndex(item => `${item.id}` === nodeId);
-    setActiveNodeIdx(idx >= 0 ? idx : null);
-  };
-  
   const colors = personaColors[persona as keyof typeof personaColors] || personaColors.default;
   
   return (
@@ -543,25 +533,7 @@ export function PersonaCard({
           flowItems={flowItems}
           connections={connections}
           persona={persona}
-          onNodeClick={handleNodeClick}
         />
-        
-        {/* Node details */}
-        {activeNodeIdx !== null && (
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-gray-950/90 to-gray-950/0 backdrop-blur-sm p-4">
-            <div className="bg-gray-900/70 border border-primary/20 rounded-lg p-3 text-sm">
-              <div className="flex items-center gap-2 mb-1">
-                {flowItems[activeNodeIdx]?.icon && React.createElement(flowItems[activeNodeIdx].icon, {
-                  className: "h-4 w-4 text-primary"
-                })}
-                <span className="font-medium">{flowItems[activeNodeIdx]?.label}</span>
-              </div>
-              <p className="text-muted-foreground text-xs">
-                Connect and visualize your AI workflow components
-              </p>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
