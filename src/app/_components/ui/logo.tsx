@@ -1,0 +1,65 @@
+import { cn } from "@/app/_lib/utils";
+import React from "react";
+
+export default function Logo({ className }: { className?: string }) {
+  return (
+    <svg
+      width="30"
+      height="31"
+      viewBox="0 0 30 31"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={cn(className)}
+    >
+      <path
+        d="M1.00004 5.09311L18.0124 2V8.18632L1 11.2794L1.00004 5.09311Z"
+        fill="url(#paint0_linear_45_9)"
+      />
+      <path
+        d="M18.1068 10.198V27.2104L11.9205 29L11.9204 11.7446L18.1068 10.198Z"
+        fill="url(#paint1_linear_45_9)"
+      />
+      <path
+        d="M11.8261 6.63982L28.8385 3.54671V9.73303L11.8261 12.8261L11.8261 6.63982Z"
+        fill="url(#paint2_linear_45_9)"
+      />
+      <defs>
+        <linearGradient
+          id="paint0_linear_45_9"
+          x1="2.08086"
+          y1="3.48702"
+          x2="17.6356"
+          y2="35.1441"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop stopColor="#A371D3" />
+          <stop offset="0.32" stopColor="#54396F" />
+          <stop offset="1" stopColor="#8257AC" />
+        </linearGradient>
+        <linearGradient
+          id="paint1_linear_45_9"
+          x1="2.08086"
+          y1="3.48702"
+          x2="17.6356"
+          y2="35.1441"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop stopColor="#A371D3" />
+          <stop offset="0.32" stopColor="#54396F" />
+          <stop offset="1" stopColor="#8257AC" />
+        </linearGradient>
+        <linearGradient
+          id="paint2_linear_45_9"
+          x1="14.2403"
+          y1="5.55834"
+          x2="28.9328"
+          y2="10.9714"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop stopColor="#8F9EBE" />
+          <stop offset="1" stopColor="#5E48BF" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
