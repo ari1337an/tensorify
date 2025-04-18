@@ -13,6 +13,9 @@ import { Checkbox } from "./ui/checkbox";
 import { validateNewsletterForm } from "@/lib/validation";
 import { motion, AnimatePresence } from "framer-motion";
 
+// Import Role type from the hook file
+import type { Role } from "@/types/newsletter";
+
 export function NewsletterSignup() {
   const { 
     isOpen, 
@@ -161,7 +164,7 @@ export function NewsletterSignup() {
             <Label className="text-sm font-medium">Your Role</Label>
             <RadioGroup 
               value={form.role} 
-              onValueChange={(value) => updateRole(value as any)}
+              onValueChange={(value) => updateRole(value as Role)}
               className="grid grid-cols-2 gap-2"
             >
               {[

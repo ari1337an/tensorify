@@ -1,13 +1,5 @@
 import { create } from 'zustand';
-
-type Role = 'student' | 'researcher' | 'developer' | 'other';
-
-interface NewsletterSignupForm {
-  email: string;
-  role: Role;
-  otherRole: string;
-  consentGiven: boolean;
-}
+import type { Role, NewsletterSignupForm } from '@/types/newsletter';
 
 interface NewsletterSignupStore {
   isOpen: boolean;
