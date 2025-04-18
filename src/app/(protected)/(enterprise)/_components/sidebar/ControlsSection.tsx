@@ -15,7 +15,7 @@ import {
   Settings,
   Newspaper,
   File,
-  Image,
+  Image as ImageIcon,
   TestTube,
   BarChart,
   UserPlus,
@@ -266,7 +266,7 @@ const SortableSection = ({
           <div className="w-5">
             {label === "Blog Posts" && <Newspaper className="h-5 w-5" />}
             {label === "Pages" && <File className="h-5 w-5" />}
-            {label === "Media" && <Image className="h-5 w-5" />}
+            {label === "Media" && <ImageIcon className="h-5 w-5" />}
             {label === "Feature Flags" && <Flag className="h-5 w-5" />}
             {label === "A/B Testing" && <TestTube className="h-5 w-5" />}
             {label === "Analytics" && <BarChart className="h-5 w-5" />}
