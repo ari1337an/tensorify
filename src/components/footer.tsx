@@ -17,7 +17,7 @@ export function Footer() {
           <div className="flex flex-col gap-2">
             <h3 className="text-sm font-medium mb-1">Product</h3>
             <Link href="#features" className="text-sm text-muted-foreground hover:underline">Features</Link>
-            <Link href="#benefits" className="text-sm text-muted-foreground hover:underline">Benefits</Link>
+            <Link href="#for-whom" className="text-sm text-muted-foreground hover:underline">For Whom</Link>
             <Link href="#pricing" className="text-sm text-muted-foreground hover:underline">Pricing</Link>
             <Link href="/docs" className="text-sm text-muted-foreground hover:underline">Documentation</Link>
           </div>

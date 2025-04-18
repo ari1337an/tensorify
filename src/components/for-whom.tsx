@@ -162,7 +162,7 @@ export function ForWhom() {
 
   return (
     <SectionWrapper 
-      id="benefits" 
+      id="for-whom" 
       className="pt-24 pb-32"
       containerClassName="flex flex-col items-center"
     >
