@@ -41,6 +41,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import useStore from "@/app/(protected)/(enterprise)/_store/store";
 
 type Control = {
   id: string;
@@ -234,6 +235,8 @@ const SortableSection = ({
   active: boolean;
   onClick: () => void;
 }) => {
+  const setCurrentRoute = useStore((state) => state.setCurrentRoute);
+
   const {
     attributes,
     listeners,
@@ -249,6 +252,11 @@ const SortableSection = ({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+  };
+
+  const handleClick = () => {
+    onClick();
+    setCurrentRoute(label);
   };
 
   return (
@@ -272,7 +280,7 @@ const SortableSection = ({
         }
         label={label}
         active={active}
-        onClick={onClick}
+        onClick={handleClick}
       />
     </div>
   );
