@@ -168,6 +168,13 @@ const StaticControl = ({
   onItemClick: () => void;
   setActiveItem: (item: string) => void;
 }) => {
+  const setCurrentRoute = useStore((state) => state.setCurrentRoute);
+
+  const handleClick = () => {
+    onItemClick();
+    setCurrentRoute(control.name);
+  };
+
   return (
     <Collapsible open={isOpen} onOpenChange={toggleControl}>
       <CollapsibleTrigger asChild>
@@ -200,23 +207,19 @@ const StaticControl = ({
             }
             label={control.name}
             active={active}
-            onClick={onItemClick}
+            onClick={handleClick}
           />
         </div>
       </CollapsibleTrigger>
 
       <CollapsibleContent>
         {isOpen && (
-          <div className="space-y-1 mt-1 pl-4">
-            {control.sections.map((section) => (
-              <MenuItem
-                key={`${control.id}-${section}`}
-                icon={<div className="w-5" />}
-                label={section}
-                active={active && section === ""}
-                onClick={() => setActiveItem(section)}
-              />
-            ))}
+          <div className="pl-4">
+            <SortableSections
+              control={control}
+              activeItem={active ? control.id : ""}
+              onItemClick={setActiveItem}
+            />
           </div>
         )}
       </CollapsibleContent>
@@ -384,6 +387,7 @@ export function ControlsSection({
   const [hoveredControl, setHoveredControl] = React.useState<string | null>(
     null
   );
+  const setCurrentRoute = useStore((state) => state.setCurrentRoute);
 
   // Example controls - in a real app, this would come from your data source
   const [controls, setControls] = React.useState<Control[]>([
@@ -456,6 +460,11 @@ export function ControlsSection({
     setActiveControl(null);
   };
 
+  const handleDashboardClick = () => {
+    setActiveItem("Dashboard");
+    setCurrentRoute("Dashboard");
+  };
+
   return (
     <div className="space-y-2">
       {/* Dashboard Button */}
@@ -463,7 +472,7 @@ export function ControlsSection({
         icon={<LayoutDashboard className="h-4 w-4" />}
         label="Dashboard"
         active={activeItem === "Dashboard"}
-        onClick={() => setActiveItem("Dashboard")}
+        onClick={handleDashboardClick}
       />
 
       <Collapsible

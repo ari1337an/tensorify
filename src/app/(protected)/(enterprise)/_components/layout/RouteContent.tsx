@@ -2,6 +2,8 @@
 
 import React from "react";
 import useStore from "@/app/(protected)/(enterprise)/_store/store";
+import { CanvasClient } from "@/app/(protected)/(canvas)/_components/CanvasClient";
+import { NotFound } from "./NotFound";
 
 // Blog Posts Component
 const BlogPostsContent = () => {
@@ -87,16 +89,14 @@ const MediaContent = () => {
   );
 };
 
+// Dashboard Component
+const DashboardContent = () => {
+  return <CanvasClient />;
+};
+
 // Default Component for other routes
 const DefaultContent = () => {
-  return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Welcome to the Dashboard</h1>
-      <p className="text-gray-600">
-        Select an option from the sidebar to view specific content.
-      </p>
-    </div>
-  );
+  return <NotFound />;
 };
 
 export function RouteContent() {
@@ -105,6 +105,8 @@ export function RouteContent() {
   // Render different content based on the current route
   const renderContent = () => {
     switch (currentRoute) {
+      case "Dashboard":
+        return <DashboardContent />;
       case "Blog Posts":
         return <BlogPostsContent />;
       case "Pages":

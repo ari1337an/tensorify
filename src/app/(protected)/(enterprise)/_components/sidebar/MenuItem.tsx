@@ -8,6 +8,7 @@ import {
   TooltipTrigger,
 } from "@/app/_components/ui/tooltip";
 import { cn } from "@/app/_lib/utils";
+import useStore from "@/app/(protected)/(enterprise)/_store/store";
 
 type MenuItemProps = {
   icon: React.ReactNode;
@@ -26,6 +27,9 @@ export function MenuItem({
   notification = false,
   onClick,
 }: MenuItemProps) {
+  const currentRoute = useStore((state) => state.currentRoute);
+  const isActive = active || currentRoute === label;
+
   return (
     <TooltipProvider delayDuration={100}>
       <Tooltip>
@@ -33,14 +37,14 @@ export function MenuItem({
           <button
             className={cn(
               "hover:cursor-pointer w-full flex items-center rounded-md px-3 py-2 text-sm transition-all duration-200 relative overflow-hidden",
-              active
+              isActive
                 ? "bg-primary text-primary-foreground font-medium"
                 : "text-muted-foreground hover:text-foreground hover:bg-accent"
             )}
             onClick={onClick}
           >
             {/* Background decoration for active item */}
-            {active && (
+            {isActive && (
               <div className="absolute inset-0 bg-gradient-to-r from-primary/60 via-primary to-primary/80 opacity-20" />
             )}
 
