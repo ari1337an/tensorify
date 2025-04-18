@@ -23,6 +23,7 @@ import {
   Shield,
   Key,
   Link,
+  LayoutDashboard,
 } from "lucide-react";
 import {
   DndContext,
@@ -456,85 +457,95 @@ export function ControlsSection({
   };
 
   return (
-    <Collapsible
-      open={controlsSectionOpen}
-      onOpenChange={setControlsSectionOpen}
-      className="py-3"
-    >
-      <div className="flex items-center justify-between px-2 mb-1">
-        <CollapsibleTrigger asChild>
-          <button className="flex items-center text-xs font-medium text-muted-foreground hover:text-foreground hover:scale-[1.02] transition-transform duration-200">
-            <span className="flex items-center gap-1.5">
-              <span>CONTROL PANEL</span>
-            </span>
-          </button>
-        </CollapsibleTrigger>
-      </div>
+    <div className="space-y-2">
+      {/* Dashboard Button */}
+      <MenuItem
+        icon={<LayoutDashboard className="h-4 w-4" />}
+        label="Dashboard"
+        active={activeItem === "Dashboard"}
+        onClick={() => setActiveItem("Dashboard")}
+      />
 
-      <CollapsibleContent className="mt-1 mb-2 space-y-1">
-        {isClient ? (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-          >
-            <div className="space-y-1">
-              <SortableContext
-                items={controls.map((control) => control.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {controls.map((control) => (
-                  <SortableControl
-                    key={control.id}
-                    control={control}
-                    active={activeItem === control.id}
-                    isOpen={openControls.has(control.id)}
-                    hoveredControl={hoveredControl}
-                    setHoveredControl={setHoveredControl}
-                    toggleControl={() => toggleControl(control.id)}
-                    onItemClick={() => setActiveItem(control.id)}
-                    setActiveItem={setActiveItem}
+      <Collapsible
+        open={controlsSectionOpen}
+        onOpenChange={setControlsSectionOpen}
+        className="py-3"
+      >
+        <div className="flex items-center justify-between px-2 mb-1">
+          <CollapsibleTrigger asChild>
+            <button className="flex items-center text-xs font-medium text-muted-foreground hover:text-foreground hover:scale-[1.02] transition-transform duration-200">
+              <span className="flex items-center gap-1.5">
+                <span>CONTROL PANEL</span>
+              </span>
+            </button>
+          </CollapsibleTrigger>
+        </div>
+
+        <CollapsibleContent className="mt-1 mb-2 space-y-1">
+          {isClient ? (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <div className="space-y-1">
+                <SortableContext
+                  items={controls.map((control) => control.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {controls.map((control) => (
+                    <SortableControl
+                      key={control.id}
+                      control={control}
+                      active={activeItem === control.id}
+                      isOpen={openControls.has(control.id)}
+                      hoveredControl={hoveredControl}
+                      setHoveredControl={setHoveredControl}
+                      toggleControl={() => toggleControl(control.id)}
+                      onItemClick={() => setActiveItem(control.id)}
+                      setActiveItem={setActiveItem}
+                    />
+                  ))}
+                </SortableContext>
+              </div>
+
+              <DragOverlay>
+                {activeControl ? (
+                  <MenuItem
+                    icon={
+                      <div className="h-5 w-5">
+                        {controls.find((c) => c.id === activeControl)?.name[0]}
+                      </div>
+                    }
+                    label={
+                      controls.find((c) => c.id === activeControl)?.name || ""
+                    }
+                    active={activeItem === activeControl}
+                    onClick={() => {}}
                   />
-                ))}
-              </SortableContext>
-            </div>
-
-            <DragOverlay>
-              {activeControl ? (
-                <MenuItem
-                  icon={
-                    <div className="h-5 w-5">
-                      {controls.find((c) => c.id === activeControl)?.name[0]}
-                    </div>
-                  }
-                  label={
-                    controls.find((c) => c.id === activeControl)?.name || ""
-                  }
-                  active={activeItem === activeControl}
-                  onClick={() => {}}
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          ) : (
+            <div className="space-y-1">
+              {controls.map((control) => (
+                <StaticControl
+                  key={control.id}
+                  control={control}
+                  active={activeItem === control.id}
+                  isOpen={openControls.has(control.id)}
+                  hoveredControl={hoveredControl}
+                  setHoveredControl={setHoveredControl}
+                  toggleControl={() => toggleControl(control.id)}
+                  onItemClick={() => setActiveItem(control.id)}
+                  setActiveItem={setActiveItem}
                 />
-              ) : null}
-            </DragOverlay>
-          </DndContext>
-        ) : (
-          <div className="space-y-1">
-            {controls.map((control) => (
-              <StaticControl
-                key={control.id}
-                control={control}
-                active={activeItem === control.id}
-                isOpen={openControls.has(control.id)}
-                hoveredControl={hoveredControl}
-                setHoveredControl={setHoveredControl}
-                toggleControl={() => toggleControl(control.id)}
-                onItemClick={() => setActiveItem(control.id)}
-                setActiveItem={setActiveItem}
-              />
-            ))}
-          </div>
-        )}
-      </CollapsibleContent>
-    </Collapsible>
+              ))}
+            </div>
+          )}
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
   );
 }
