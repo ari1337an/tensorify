@@ -1,14 +1,29 @@
 "use client";
 
 import * as React from "react";
-import { Avatar } from "@/app/_components/ui/avatar";
 import { MenuItem } from "@/app/(protected)/(enterprise)/_components/sidebar/MenuItem";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/app/_components/ui/collapsible";
-import { ChevronDown } from "lucide-react";
+import {
+  ChevronDown,
+  FileText,
+  Flag,
+  Users,
+  Settings,
+  Newspaper,
+  File,
+  Image,
+  TestTube,
+  BarChart,
+  UserPlus,
+  UserCog,
+  Shield,
+  Key,
+  Link,
+} from "lucide-react";
 import {
   DndContext,
   DragEndEvent,
@@ -27,34 +42,34 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-type Project = {
+type Control = {
   id: string;
   name: string;
-  workflows: string[];
+  sections: string[];
 };
 
-type ProjectsSectionProps = {
+type ControlsSectionProps = {
   activeItem: string;
   setActiveItem: (item: string) => void;
 };
 
-// Sortable Project Item component
-const SortableProject = ({
-  project,
+// Sortable Control Item component
+const SortableControl = ({
+  control,
   active,
   isOpen,
-  hoveredProject,
-  setHoveredProject,
-  toggleProject,
+  hoveredControl,
+  setHoveredControl,
+  toggleControl,
   onItemClick,
   setActiveItem,
 }: {
-  project: Project;
+  control: Control;
   active: boolean;
   isOpen: boolean;
-  hoveredProject: string | null;
-  setHoveredProject: (id: string | null) => void;
-  toggleProject: () => void;
+  hoveredControl: string | null;
+  setHoveredControl: (id: string | null) => void;
+  toggleControl: () => void;
   onItemClick: () => void;
   setActiveItem: (item: string) => void;
 }) => {
@@ -66,7 +81,7 @@ const SortableProject = ({
     transition,
     isDragging,
   } = useSortable({
-    id: project.id,
+    id: control.id,
   });
 
   const style = {
@@ -77,29 +92,38 @@ const SortableProject = ({
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <Collapsible open={isOpen} onOpenChange={toggleProject}>
+      <Collapsible open={isOpen} onOpenChange={toggleControl}>
         <CollapsibleTrigger asChild>
           <div
-            onMouseEnter={() => setHoveredProject(project.id)}
-            onMouseLeave={() => setHoveredProject(null)}
+            onMouseEnter={() => setHoveredControl(control.id)}
+            onMouseLeave={() => setHoveredControl(null)}
           >
             <MenuItem
               icon={
                 <div className="relative flex items-center">
-                  {hoveredProject === project.id ? (
+                  {hoveredControl === control.id ? (
                     <ChevronDown
                       className={`h-5 w-5 transition-transform duration-200 ${
                         isOpen ? "rotate-180" : ""
                       }`}
                     />
                   ) : (
-                    <Avatar className="h-5 w-5 bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white text-xs">
-                      {project.name[0]}
-                    </Avatar>
+                    <div className="h-5 w-5">
+                      {control.id === "content" && (
+                        <FileText className="h-5 w-5" />
+                      )}
+                      {control.id === "features" && (
+                        <Flag className="h-5 w-5" />
+                      )}
+                      {control.id === "users" && <Users className="h-5 w-5" />}
+                      {control.id === "settings" && (
+                        <Settings className="h-5 w-5" />
+                      )}
+                    </div>
                   )}
                 </div>
               }
-              label={project.name}
+              label={control.name}
               active={active}
               onClick={onItemClick}
             />
@@ -108,11 +132,13 @@ const SortableProject = ({
 
         <CollapsibleContent>
           {isOpen && (
-            <SortableWorkflows
-              project={project}
-              activeItem={active ? project.id : ""}
-              onItemClick={setActiveItem}
-            />
+            <div className="pl-4">
+              <SortableSections
+                control={control}
+                activeItem={active ? control.id : ""}
+                onItemClick={setActiveItem}
+              />
+            </div>
           )}
         </CollapsibleContent>
       </Collapsible>
@@ -120,50 +146,57 @@ const SortableProject = ({
   );
 };
 
-// Regular project item for server-side rendering
-const StaticProject = ({
-  project,
+// Regular control item for server-side rendering
+const StaticControl = ({
+  control,
   active,
   isOpen,
-  hoveredProject,
-  setHoveredProject,
-  toggleProject,
+  hoveredControl,
+  setHoveredControl,
+  toggleControl,
   onItemClick,
   setActiveItem,
 }: {
-  project: Project;
+  control: Control;
   active: boolean;
   isOpen: boolean;
-  hoveredProject: string | null;
-  setHoveredProject: (id: string | null) => void;
-  toggleProject: () => void;
+  hoveredControl: string | null;
+  setHoveredControl: (id: string | null) => void;
+  toggleControl: () => void;
   onItemClick: () => void;
   setActiveItem: (item: string) => void;
 }) => {
   return (
-    <Collapsible open={isOpen} onOpenChange={toggleProject}>
+    <Collapsible open={isOpen} onOpenChange={toggleControl}>
       <CollapsibleTrigger asChild>
         <div
-          onMouseEnter={() => setHoveredProject(project.id)}
-          onMouseLeave={() => setHoveredProject(null)}
+          onMouseEnter={() => setHoveredControl(control.id)}
+          onMouseLeave={() => setHoveredControl(null)}
         >
           <MenuItem
             icon={
               <div className="relative flex items-center">
-                {hoveredProject === project.id ? (
+                {hoveredControl === control.id ? (
                   <ChevronDown
                     className={`h-5 w-5 transition-transform duration-200 ${
                       isOpen ? "rotate-180" : ""
                     }`}
                   />
                 ) : (
-                  <Avatar className="h-5 w-5 bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white text-xs">
-                    {project.name[0]}
-                  </Avatar>
+                  <div className="h-5 w-5">
+                    {control.id === "content" && (
+                      <FileText className="h-5 w-5" />
+                    )}
+                    {control.id === "features" && <Flag className="h-5 w-5" />}
+                    {control.id === "users" && <Users className="h-5 w-5" />}
+                    {control.id === "settings" && (
+                      <Settings className="h-5 w-5" />
+                    )}
+                  </div>
                 )}
               </div>
             }
-            label={project.name}
+            label={control.name}
             active={active}
             onClick={onItemClick}
           />
@@ -172,14 +205,14 @@ const StaticProject = ({
 
       <CollapsibleContent>
         {isOpen && (
-          <div className="space-y-1 mt-1">
-            {project.workflows.map((workflow) => (
+          <div className="space-y-1 mt-1 pl-4">
+            {control.sections.map((section) => (
               <MenuItem
-                key={`${project.id}-${workflow}`}
+                key={`${control.id}-${section}`}
                 icon={<div className="w-5" />}
-                label={workflow}
-                active={active && workflow === ""}
-                onClick={() => setActiveItem(workflow)}
+                label={section}
+                active={active && section === ""}
+                onClick={() => setActiveItem(section)}
               />
             ))}
           </div>
@@ -189,8 +222,8 @@ const StaticProject = ({
   );
 };
 
-// Sortable Workflow Item component
-const SortableWorkflow = ({
+// Sortable Section Item component
+const SortableSection = ({
   id,
   label,
   active,
@@ -221,7 +254,22 @@ const SortableWorkflow = ({
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <MenuItem
-        icon={<div className="w-5" />}
+        icon={
+          <div className="w-5">
+            {label === "Blog Posts" && <Newspaper className="h-5 w-5" />}
+            {label === "Pages" && <File className="h-5 w-5" />}
+            {label === "Media" && <Image className="h-5 w-5" />}
+            {label === "Feature Flags" && <Flag className="h-5 w-5" />}
+            {label === "A/B Testing" && <TestTube className="h-5 w-5" />}
+            {label === "Analytics" && <BarChart className="h-5 w-5" />}
+            {label === "Onboarding" && <UserPlus className="h-5 w-5" />}
+            {label === "User Management" && <UserCog className="h-5 w-5" />}
+            {label === "Roles" && <Shield className="h-5 w-5" />}
+            {label === "General" && <Settings className="h-5 w-5" />}
+            {label === "Security" && <Key className="h-5 w-5" />}
+            {label === "Integrations" && <Link className="h-5 w-5" />}
+          </div>
+        }
         label={label}
         active={active}
         onClick={onClick}
@@ -230,20 +278,18 @@ const SortableWorkflow = ({
   );
 };
 
-// Sortable Workflows component
-const SortableWorkflows = ({
-  project,
+// Sortable Sections component
+const SortableSections = ({
+  control,
   activeItem,
   onItemClick,
 }: {
-  project: Project;
+  control: Control;
   activeItem: string;
   onItemClick: (item: string) => void;
 }) => {
-  const [workflows, setWorkflows] = React.useState(project.workflows);
-  const [activeWorkflow, setActiveWorkflow] = React.useState<string | null>(
-    null
-  );
+  const [sections, setSections] = React.useState(control.sections);
+  const [activeSection, setActiveSection] = React.useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -255,26 +301,26 @@ const SortableWorkflows = ({
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
-    setActiveWorkflow(active.id as string);
+    setActiveSection(active.id as string);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      setWorkflows((items) => {
+      setSections((items) => {
         const oldIndex = items.findIndex(
-          (item) => `${project.id}-${item}` === active.id
+          (item) => `${control.id}-${item}` === active.id
         );
         const newIndex = items.findIndex(
-          (item) => `${project.id}-${item}` === over.id
+          (item) => `${control.id}-${item}` === over.id
         );
 
         return arrayMove(items, oldIndex, newIndex);
       });
     }
 
-    setActiveWorkflow(null);
+    setActiveSection(null);
   };
 
   return (
@@ -284,20 +330,20 @@ const SortableWorkflows = ({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="space-y-1 mt-1">
+      <div className="space-y-1 mt-1 pl-4">
         <SortableContext
-          items={workflows.map((workflow) => `${project.id}-${workflow}`)}
+          items={sections.map((section) => `${control.id}-${section}`)}
           strategy={verticalListSortingStrategy}
         >
-          {workflows.map((workflow) => (
-            <SortableWorkflow
-              key={`${project.id}-${workflow}`}
-              id={`${project.id}-${workflow}`}
-              label={workflow}
-              active={activeItem === workflow}
+          {sections.map((section) => (
+            <SortableSection
+              key={`${control.id}-${section}`}
+              id={`${control.id}-${section}`}
+              label={section}
+              active={activeItem === section}
               onClick={() => {
-                const workflowId = workflow;
-                onItemClick(workflowId);
+                const sectionId = section;
+                onItemClick(sectionId);
               }}
             />
           ))}
@@ -305,10 +351,10 @@ const SortableWorkflows = ({
       </div>
 
       <DragOverlay>
-        {activeWorkflow ? (
+        {activeSection ? (
           <MenuItem
             icon={<div className="w-5" />}
-            label={activeWorkflow.split(`${project.id}-`)[1] || ""}
+            label={activeSection.split(`${control.id}-`)[1] || ""}
             active={false}
             onClick={() => {}}
           />
@@ -321,30 +367,40 @@ const SortableWorkflows = ({
 export function ControlsSection({
   activeItem,
   setActiveItem,
-}: ProjectsSectionProps) {
-  const [projectsSectionOpen, setProjectsSectionOpen] = React.useState(true);
-  const [openProjects, setOpenProjects] = React.useState<Set<string>>(
-    new Set(["project-1"])
+}: ControlsSectionProps) {
+  const [controlsSectionOpen, setControlsSectionOpen] = React.useState(true);
+  const [openControls, setOpenControls] = React.useState<Set<string>>(
+    new Set(["content"])
   );
-  const [hoveredProject, setHoveredProject] = React.useState<string | null>(
+  const [hoveredControl, setHoveredControl] = React.useState<string | null>(
     null
   );
 
-  // Example projects - in a real app, this would come from your data source
-  const [projects, setProjects] = React.useState<Project[]>([
+  // Example controls - in a real app, this would come from your data source
+  const [controls, setControls] = React.useState<Control[]>([
     {
-      id: "project-1",
-      name: "Project 1",
-      workflows: ["Workflow 1", "Workflow 2", "Workflow 3"],
+      id: "content",
+      name: "Content",
+      sections: ["Blog Posts", "Pages", "Media"],
     },
     {
-      id: "project-2",
-      name: "Project 2",
-      workflows: ["Workflow 1", "Workflow 2", "Workflow 3", "Workflow 4"],
+      id: "features",
+      name: "Features",
+      sections: ["Feature Flags", "A/B Testing", "Analytics"],
+    },
+    {
+      id: "users",
+      name: "Users",
+      sections: ["Onboarding", "User Management", "Roles"],
+    },
+    {
+      id: "settings",
+      name: "Settings",
+      sections: ["General", "Security", "Integrations"],
     },
   ]);
 
-  const [activeProject, setActiveProject] = React.useState<string | null>(null);
+  const [activeControl, setActiveControl] = React.useState<string | null>(null);
   const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
@@ -359,13 +415,13 @@ export function ControlsSection({
     })
   );
 
-  const toggleProject = (projectId: string) => {
-    setOpenProjects((prev) => {
+  const toggleControl = (controlId: string) => {
+    setOpenControls((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(projectId)) {
-        newSet.delete(projectId);
+      if (newSet.has(controlId)) {
+        newSet.delete(controlId);
       } else {
-        newSet.add(projectId);
+        newSet.add(controlId);
       }
       return newSet;
     });
@@ -373,35 +429,35 @@ export function ControlsSection({
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
-    setActiveProject(active.id as string);
+    setActiveControl(active.id as string);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      setProjects((items) => {
-        const oldIndex = items.findIndex((project) => project.id === active.id);
-        const newIndex = items.findIndex((project) => project.id === over.id);
+      setControls((items) => {
+        const oldIndex = items.findIndex((control) => control.id === active.id);
+        const newIndex = items.findIndex((control) => control.id === over.id);
 
         return arrayMove(items, oldIndex, newIndex);
       });
     }
 
-    setActiveProject(null);
+    setActiveControl(null);
   };
 
   return (
     <Collapsible
-      open={projectsSectionOpen}
-      onOpenChange={setProjectsSectionOpen}
+      open={controlsSectionOpen}
+      onOpenChange={setControlsSectionOpen}
       className="py-3"
     >
       <div className="flex items-center justify-between px-2 mb-1">
         <CollapsibleTrigger asChild>
           <button className="flex items-center text-xs font-medium text-muted-foreground hover:text-foreground hover:scale-[1.02] transition-transform duration-200">
             <span className="flex items-center gap-1.5">
-              <span>CONTROLS</span>
+              <span>CONTROL PANEL</span>
             </span>
           </button>
         </CollapsibleTrigger>
@@ -417,19 +473,19 @@ export function ControlsSection({
           >
             <div className="space-y-1">
               <SortableContext
-                items={projects.map((project) => project.id)}
+                items={controls.map((control) => control.id)}
                 strategy={verticalListSortingStrategy}
               >
-                {projects.map((project) => (
-                  <SortableProject
-                    key={project.id}
-                    project={project}
-                    active={activeItem === project.id}
-                    isOpen={openProjects.has(project.id)}
-                    hoveredProject={hoveredProject}
-                    setHoveredProject={setHoveredProject}
-                    toggleProject={() => toggleProject(project.id)}
-                    onItemClick={() => setActiveItem(project.id)}
+                {controls.map((control) => (
+                  <SortableControl
+                    key={control.id}
+                    control={control}
+                    active={activeItem === control.id}
+                    isOpen={openControls.has(control.id)}
+                    hoveredControl={hoveredControl}
+                    setHoveredControl={setHoveredControl}
+                    toggleControl={() => toggleControl(control.id)}
+                    onItemClick={() => setActiveItem(control.id)}
                     setActiveItem={setActiveItem}
                   />
                 ))}
@@ -437,17 +493,17 @@ export function ControlsSection({
             </div>
 
             <DragOverlay>
-              {activeProject ? (
+              {activeControl ? (
                 <MenuItem
                   icon={
-                    <Avatar className="h-5 w-5 bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white text-xs">
-                      {projects.find((p) => p.id === activeProject)?.name[0]}
-                    </Avatar>
+                    <div className="h-5 w-5">
+                      {controls.find((c) => c.id === activeControl)?.name[0]}
+                    </div>
                   }
                   label={
-                    projects.find((p) => p.id === activeProject)?.name || ""
+                    controls.find((c) => c.id === activeControl)?.name || ""
                   }
-                  active={activeItem === activeProject}
+                  active={activeItem === activeControl}
                   onClick={() => {}}
                 />
               ) : null}
@@ -455,16 +511,16 @@ export function ControlsSection({
           </DndContext>
         ) : (
           <div className="space-y-1">
-            {projects.map((project) => (
-              <StaticProject
-                key={project.id}
-                project={project}
-                active={activeItem === project.id}
-                isOpen={openProjects.has(project.id)}
-                hoveredProject={hoveredProject}
-                setHoveredProject={setHoveredProject}
-                toggleProject={() => toggleProject(project.id)}
-                onItemClick={() => setActiveItem(project.id)}
+            {controls.map((control) => (
+              <StaticControl
+                key={control.id}
+                control={control}
+                active={activeItem === control.id}
+                isOpen={openControls.has(control.id)}
+                hoveredControl={hoveredControl}
+                setHoveredControl={setHoveredControl}
+                toggleControl={() => toggleControl(control.id)}
+                onItemClick={() => setActiveItem(control.id)}
                 setActiveItem={setActiveItem}
               />
             ))}
