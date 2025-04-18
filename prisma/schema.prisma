@@ -1,0 +1,21 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model NewsletterSignup {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  role        String    // student, researcher, developer, other
+  otherRole   String?   // Only populated if role is "other"
+  consentGiven Boolean  @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+} 

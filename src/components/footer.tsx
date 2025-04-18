@@ -17,7 +17,7 @@ export function Footer() {
           <div className="flex flex-col gap-2">
             <h3 className="text-sm font-medium mb-1">Product</h3>
             <Link href="#features" className="text-sm text-muted-foreground hover:underline">Features</Link>
-            <Link href="#benefits" className="text-sm text-muted-foreground hover:underline">Benefits</Link>
+            <Link href="#for-whom" className="text-sm text-muted-foreground hover:underline">For Whom</Link>
             <Link href="#pricing" className="text-sm text-muted-foreground hover:underline">Pricing</Link>
             <Link href="/docs" className="text-sm text-muted-foreground hover:underline">Documentation</Link>
           </div>
@@ -40,15 +40,11 @@ export function Footer() {
             © {new Date().getFullYear()} Tensorify. All rights reserved.
           </p>
           <div className="flex gap-4 mt-4 md:mt-0">
-            <Link href="https://twitter.com" className="text-muted-foreground hover:text-foreground">
-              <TwitterIcon className="h-5 w-5" />
-              <span className="sr-only">Twitter</span>
-            </Link>
-            <Link href="https://github.com" className="text-muted-foreground hover:text-foreground">
+            <Link href="https://github.com/tensorify" className="text-muted-foreground hover:text-foreground">
               <GithubIcon className="h-5 w-5" />
               <span className="sr-only">GitHub</span>
             </Link>
-            <Link href="https://linkedin.com" className="text-muted-foreground hover:text-foreground">
+            <Link href="https://www.linkedin.com/company/tensorify-io/" className="text-muted-foreground hover:text-foreground">
               <LinkedinIcon className="h-5 w-5" />
               <span className="sr-only">LinkedIn</span>
             </Link>
@@ -56,25 +52,6 @@ export function Footer() {
         </div>
       </div>
     </footer>
-  );
-}
-
-function TwitterIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
-    </svg>
   );
 }
 
