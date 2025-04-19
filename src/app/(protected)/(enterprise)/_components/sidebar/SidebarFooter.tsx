@@ -9,7 +9,7 @@ export function SidebarFooter() {
       <div className="p-3 border-t border-border/30 space-y-2">
         <div className="transition-transform duration-200">
           <Button
-            variant="outline"
+            variant="ghost"
             className="w-full justify-start text-left text-sm relative overflow-hidden group"
             onClick={() => {
               window.open("https://app.tensorify.io", "_blank");
@@ -25,7 +25,7 @@ export function SidebarFooter() {
         </div>
         <div className="transition-transform duration-200">
           <Button
-            variant="outline"
+            variant="ghost"
             className="w-full justify-start text-left text-sm relative overflow-hidden group"
             onClick={() => {
               window.open("https://tensorify.io", "_blank");
