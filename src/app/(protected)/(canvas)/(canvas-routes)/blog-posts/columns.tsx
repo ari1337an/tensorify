@@ -1,25 +1,28 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
-import { Checkbox as CheckboxComponent } from "@/app/_components/ui/checkbox";
-import { DataTableColumnHeader } from "./data-table-column-header";
-import { DataTableRowActions } from "./data-table-row-actions";
-import { Badge } from "@/app/_components/ui/badge";
+import { Column, ColumnDef } from "@tanstack/react-table";
+import { DateRange } from "react-day-picker";
+import { Filter } from "lucide-react";
 import { create } from "zustand";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/app/_components/ui/tooltip";
+
+import { Badge } from "@/app/_components/ui/badge";
+import { Button } from "@/app/_components/ui/button";
+import { Checkbox as CheckboxComponent } from "@/app/_components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/app/_components/ui/dropdown-menu";
-import { Button } from "@/app/_components/ui/button";
-import { Filter } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/app/_components/ui/tooltip";
+
+import { DataTableColumnHeader } from "./data-table-column-header";
+import { DataTableRowActions } from "./data-table-row-actions";
 
 // This type is used to define the shape of our data.
 export type BlogPost = {
@@ -160,7 +163,7 @@ export const ColumnFilter = ({
   title,
   options,
 }: {
-  column: any;
+  column: Column<BlogPost>;
   title: string;
   options: string[];
 }) => {
@@ -337,6 +340,14 @@ export const columns: ColumnDef<BlogPost>[] = [
         </div>
       );
     },
+    filterFn: (row, id, value: DateRange | undefined) => {
+      const date = new Date(row.getValue(id));
+      if (!value?.from && !value?.to) return true;
+      if (value?.from && !value?.to) return date >= value.from;
+      if (!value?.from && value?.to) return date <= value.to;
+      return date >= value.from! && date <= value.to!;
+    },
+    enableColumnFilter: true,
   },
   {
     accessorKey: "tags",

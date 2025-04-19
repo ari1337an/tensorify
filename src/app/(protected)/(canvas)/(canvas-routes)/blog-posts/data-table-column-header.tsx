@@ -1,6 +1,9 @@
 "use client";
 
+import * as React from "react";
 import { Column } from "@tanstack/react-table";
+import { format } from "date-fns";
+import { DateRange } from "react-day-picker";
 import {
   ArrowDown,
   ArrowUp,
@@ -12,6 +15,14 @@ import {
 
 import { cn } from "@/app/_lib/utils";
 import { Button } from "@/app/_components/ui/button";
+import { Calendar } from "@/app/_components/ui/calendar";
+import { Checkbox } from "@/app/_components/ui/checkbox";
+import { ScrollArea } from "@/app/_components/ui/scroll-area";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/app/_components/ui/popover";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,10 +34,8 @@ import {
   DropdownMenuSubContent,
   DropdownMenuPortal,
 } from "@/app/_components/ui/dropdown-menu";
+
 import { useTimezoneStore } from "./columns";
-import { ColumnFilter } from "./columns";
-import { Checkbox } from "@/app/_components/ui/checkbox";
-import { ScrollArea } from "@/app/_components/ui/scroll-area";
 
 interface DataTableColumnHeaderProps<TData, TValue>
   extends React.HTMLAttributes<HTMLDivElement> {
@@ -112,6 +121,7 @@ export function DataTableColumnHeader<TData, TValue>({
   className,
 }: DataTableColumnHeaderProps<TData, TValue>) {
   const { timezone, setTimezone } = useTimezoneStore();
+  const [date, setDate] = React.useState<DateRange>();
 
   if (!column.getCanSort()) {
     return <div className={cn("font-bold", className)}>{title}</div>;
@@ -123,11 +133,16 @@ export function DataTableColumnHeader<TData, TValue>({
   const isTagsColumn = title === "Tags";
 
   // Get filter count for the column
-  const selectedValues = new Set(column.getFilterValue() as string[]);
-  const filterCount = selectedValues?.size || 0;
+  const filterValue = column.getFilterValue();
+  const filterCount = isDateColumn
+    ? filterValue && (filterValue as DateRange).from
+      ? 1
+      : 0
+    : ((filterValue as string[]) || []).length;
 
   // Determine if this column has filters
-  const hasFilters = isStatusColumn || isAuthorsColumn || isTagsColumn;
+  const hasFilters =
+    isStatusColumn || isAuthorsColumn || isTagsColumn || isDateColumn;
 
   return (
     <div className={cn("flex items-center", className)}>
@@ -136,16 +151,9 @@ export function DataTableColumnHeader<TData, TValue>({
           <Button
             variant="ghost"
             size="sm"
-            className="-ml-3 h-8 data-[state=open]:bg-accent font-bold"
+            className="-ml-3 h-8 data-[state=open]:bg-accent"
           >
-            <span className="flex items-center">
-              {title}
-              {hasFilters && filterCount > 0 && (
-                <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground w-5 h-5 text-xs">
-                  {filterCount}
-                </span>
-              )}
-            </span>
+            <span>{title}</span>
             {column.getIsSorted() === "desc" ? (
               <ArrowDown className="ml-2 h-4 w-4" />
             ) : column.getIsSorted() === "asc" ? (
@@ -153,9 +161,22 @@ export function DataTableColumnHeader<TData, TValue>({
             ) : (
               <ChevronsUpDown className="ml-2 h-4 w-4" />
             )}
+            {hasFilters && (
+              <div className="ml-2 flex items-center gap-1">
+                <FilterIcon className="h-3.5 w-3.5 text-muted-foreground/70" />
+                {filterCount > 0 && (
+                  <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-medium text-primary-foreground">
+                    {filterCount}
+                  </span>
+                )}
+              </div>
+            )}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
+        <DropdownMenuContent
+          align="start"
+          className="w-[200px] max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-hidden"
+        >
           <DropdownMenuItem onClick={() => column.toggleSorting(false)}>
             <ArrowUp className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
             Asc
@@ -165,38 +186,92 @@ export function DataTableColumnHeader<TData, TValue>({
             Desc
           </DropdownMenuItem>
 
-          {/* Column Filters as simple menu items */}
+          {/* Column Filters */}
+          {isDateColumn && (
+            <>
+              <DropdownMenuSeparator />
+              <div className="relative">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      role="combobox"
+                      size="sm"
+                      className="w-full max-w-[200px] justify-start rounded-none px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent"
+                    >
+                      <FilterIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
+                      <span className="truncate">
+                        {date?.from ? (
+                          date.to ? (
+                            <>
+                              {format(date.from, "LLL dd, y")} -{" "}
+                              {format(date.to, "LLL dd, y")}
+                            </>
+                          ) : (
+                            format(date.from, "LLL dd, y")
+                          )
+                        ) : (
+                          <span>Filter by date</span>
+                        )}
+                      </span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      initialFocus
+                      mode="range"
+                      defaultMonth={date?.from}
+                      selected={date}
+                      onSelect={(value) => {
+                        setDate(value);
+                        column.setFilterValue(value);
+                      }}
+                      numberOfMonths={2}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </>
+          )}
+
           {isStatusColumn && (
             <>
               <DropdownMenuSeparator />
               <div className="px-2 py-1.5 text-sm font-semibold">
                 Filter Status
               </div>
-              <ScrollArea className="h-[200px]">
-                {statusOptions.map((option) => (
-                  <DropdownMenuItem
-                    key={option}
-                    className="flex items-center gap-2"
-                    onSelect={(e) => e.preventDefault()}
-                  >
-                    <Checkbox
-                      checked={selectedValues?.has(option)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          selectedValues.add(option);
-                        } else {
-                          selectedValues.delete(option);
-                        }
-                        const filterValues = Array.from(selectedValues);
-                        column.setFilterValue(
-                          filterValues.length ? filterValues : undefined
-                        );
-                      }}
-                      className="border-muted-foreground/70 data-[state=checked]:bg-[#8B5CF6] data-[state=checked]:border-[#8B5CF6] data-[state=checked]:text-white"
-                    />
-                    {option}
-                  </DropdownMenuItem>
-                ))}
+              <ScrollArea className="max-h-[200px] overflow-y-auto">
+                <div className="p-1">
+                  {statusOptions.map((option) => (
+                    <DropdownMenuItem
+                      key={option}
+                      className="flex items-center gap-2"
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      <Checkbox
+                        checked={((filterValue as string[]) || []).includes(
+                          option
+                        )}
+                        onCheckedChange={(checked) => {
+                          const currentValues = new Set(
+                            (filterValue as string[]) || []
+                          );
+                          if (checked) {
+                            currentValues.add(option);
+                          } else {
+                            currentValues.delete(option);
+                          }
+                          const filterValues = Array.from(currentValues);
+                          column.setFilterValue(
+                            filterValues.length ? filterValues : undefined
+                          );
+                        }}
+                        className="border-muted-foreground/70 data-[state=checked]:bg-[#8B5CF6] data-[state=checked]:border-[#8B5CF6] data-[state=checked]:text-white"
+                      />
+                      {option}
+                    </DropdownMenuItem>
+                  ))}
+                </div>
               </ScrollArea>
             </>
           )}
@@ -207,31 +282,38 @@ export function DataTableColumnHeader<TData, TValue>({
               <div className="px-2 py-1.5 text-sm font-semibold">
                 Filter Authors
               </div>
-              <ScrollArea className="h-[200px]">
-                {authorOptions.map((option) => (
-                  <DropdownMenuItem
-                    key={option}
-                    className="flex items-center gap-2"
-                    onSelect={(e) => e.preventDefault()}
-                  >
-                    <Checkbox
-                      checked={selectedValues?.has(option)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          selectedValues.add(option);
-                        } else {
-                          selectedValues.delete(option);
-                        }
-                        const filterValues = Array.from(selectedValues);
-                        column.setFilterValue(
-                          filterValues.length ? filterValues : undefined
-                        );
-                      }}
-                      className="border-muted-foreground/70 data-[state=checked]:bg-[#8B5CF6] data-[state=checked]:border-[#8B5CF6] data-[state=checked]:text-white"
-                    />
-                    {option}
-                  </DropdownMenuItem>
-                ))}
+              <ScrollArea className="max-h-[200px] overflow-y-auto">
+                <div className="p-1">
+                  {authorOptions.map((option) => (
+                    <DropdownMenuItem
+                      key={option}
+                      className="flex items-center gap-2"
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      <Checkbox
+                        checked={((filterValue as string[]) || []).includes(
+                          option
+                        )}
+                        onCheckedChange={(checked) => {
+                          const currentValues = new Set(
+                            (filterValue as string[]) || []
+                          );
+                          if (checked) {
+                            currentValues.add(option);
+                          } else {
+                            currentValues.delete(option);
+                          }
+                          const filterValues = Array.from(currentValues);
+                          column.setFilterValue(
+                            filterValues.length ? filterValues : undefined
+                          );
+                        }}
+                        className="border-muted-foreground/70 data-[state=checked]:bg-[#8B5CF6] data-[state=checked]:border-[#8B5CF6] data-[state=checked]:text-white"
+                      />
+                      {option}
+                    </DropdownMenuItem>
+                  ))}
+                </div>
               </ScrollArea>
             </>
           )}
@@ -242,31 +324,38 @@ export function DataTableColumnHeader<TData, TValue>({
               <div className="px-2 py-1.5 text-sm font-semibold">
                 Filter Tags
               </div>
-              <ScrollArea className="h-[200px]">
-                {tagOptions.map((option) => (
-                  <DropdownMenuItem
-                    key={option}
-                    className="flex items-center gap-2"
-                    onSelect={(e) => e.preventDefault()}
-                  >
-                    <Checkbox
-                      checked={selectedValues?.has(option)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          selectedValues.add(option);
-                        } else {
-                          selectedValues.delete(option);
-                        }
-                        const filterValues = Array.from(selectedValues);
-                        column.setFilterValue(
-                          filterValues.length ? filterValues : undefined
-                        );
-                      }}
-                      className="border-muted-foreground/70 data-[state=checked]:bg-[#8B5CF6] data-[state=checked]:border-[#8B5CF6] data-[state=checked]:text-white"
-                    />
-                    {option}
-                  </DropdownMenuItem>
-                ))}
+              <ScrollArea className="max-h-[200px] overflow-y-auto">
+                <div className="p-1">
+                  {tagOptions.map((option) => (
+                    <DropdownMenuItem
+                      key={option}
+                      className="flex items-center gap-2"
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      <Checkbox
+                        checked={((filterValue as string[]) || []).includes(
+                          option
+                        )}
+                        onCheckedChange={(checked) => {
+                          const currentValues = new Set(
+                            (filterValue as string[]) || []
+                          );
+                          if (checked) {
+                            currentValues.add(option);
+                          } else {
+                            currentValues.delete(option);
+                          }
+                          const filterValues = Array.from(currentValues);
+                          column.setFilterValue(
+                            filterValues.length ? filterValues : undefined
+                          );
+                        }}
+                        className="border-muted-foreground/70 data-[state=checked]:bg-[#8B5CF6] data-[state=checked]:border-[#8B5CF6] data-[state=checked]:text-white"
+                      />
+                      {option}
+                    </DropdownMenuItem>
+                  ))}
+                </div>
               </ScrollArea>
             </>
           )}
