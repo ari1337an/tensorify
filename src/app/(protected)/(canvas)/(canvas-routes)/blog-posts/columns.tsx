@@ -22,7 +22,7 @@ export const columns: ColumnDef<BlogPost>[] = [
         checked={table.getIsAllPageRowsSelected()}
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Select all"
-        className="translate-y-[2px]"
+        className="translate-y-[2px] ml-4"
       />
     ),
     cell: ({ row }) => (
@@ -30,7 +30,7 @@ export const columns: ColumnDef<BlogPost>[] = [
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
         aria-label="Select row"
-        className="translate-y-[2px]"
+        className="translate-y-[2px] ml-4"
       />
     ),
     enableSorting: false,
