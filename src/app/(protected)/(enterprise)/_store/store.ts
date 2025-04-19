@@ -1,14 +1,16 @@
 import { User } from "@clerk/nextjs/server";
 import { create } from "zustand";
 
+type RouteType = "Dashboard" | "Blog Posts" | "Pages" | "Media" | string;
+
 interface StoreState {
   currentUser: User | null;
-  setCurrentUser: (user: Partial<User>) => void;
+  currentRoute: RouteType;
 }
 
-const useStore = create<StoreState>((set) => ({
+const useStore = create<StoreState>(() => ({
   currentUser: null,
-  setCurrentUser: (user: Partial<User>) => set({ currentUser: user as User })
+  currentRoute: "Dashboard",
 }));
 
 export default useStore;

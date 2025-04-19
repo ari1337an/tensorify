@@ -1,8 +1,6 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Checkbox } from "lucide-react";
-import { Button } from "@/app/_components/ui/button";
 import { Checkbox as CheckboxComponent } from "@/app/_components/ui/checkbox";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableRowActions } from "./data-table-row-actions";
@@ -12,7 +10,7 @@ export type BlogPost = {
   id: number;
   title: string;
   author: string;
-  status: "Published" | "Draft";
+  status: string;
   date: string;
 };
 
@@ -100,10 +98,9 @@ export const columns: ColumnDef<BlogPost>[] = [
       <DataTableColumnHeader column={column} title="Date" />
     ),
     cell: ({ row }) => {
-      const date = new Date(row.getValue("date"));
       return (
-        <div className="flex w-[100px] items-center">
-          {date.toLocaleDateString()}
+        <div className="flex space-x-2">
+          <span className="max-w-[500px] truncate">{row.getValue("date")}</span>
         </div>
       );
     },
@@ -111,6 +108,5 @@ export const columns: ColumnDef<BlogPost>[] = [
   {
     id: "actions",
     cell: ({ row }) => <DataTableRowActions row={row} />,
-    size: 50,
   },
 ];

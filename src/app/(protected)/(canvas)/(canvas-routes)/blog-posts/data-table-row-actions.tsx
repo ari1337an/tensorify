@@ -21,6 +21,7 @@ interface DataTableRowActionsProps<TData> {
 export function DataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const post = row.original as BlogPost;
 
   return (
