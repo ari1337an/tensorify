@@ -20,7 +20,7 @@ type Team = {
 
 // Mock data for teams
 const mockTeams: Team[] = [
-  { id: "founders", name: "Founder's Team", icon: "T" },
+  { id: "tensorify", name: "Tensorify", icon: "T" },
 ];
 
 export function Sidebar({ className, ...props }: SidebarProps) {
