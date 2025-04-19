@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Tooltip,
   TooltipContent,
@@ -8,11 +10,11 @@ import {
   TooltipTrigger,
 } from "@/app/_components/ui/tooltip";
 import { cn } from "@/app/_lib/utils";
-import useStore from "@/app/(protected)/(enterprise)/_store/store";
 
 type MenuItemProps = {
   icon: React.ReactNode;
   label: string;
+  href: string;
   active?: boolean;
   collapsed?: boolean;
   notification?: boolean;
@@ -22,19 +24,21 @@ type MenuItemProps = {
 export function MenuItem({
   icon,
   label,
+  href,
   active = false,
   collapsed = false,
   notification = false,
   onClick,
 }: MenuItemProps) {
-  const currentRoute = useStore((state) => state.currentRoute);
-  const isActive = active || currentRoute === label;
+  const pathname = usePathname();
+  const isActive = active || pathname === href;
 
   return (
     <TooltipProvider delayDuration={100}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <button
+          <Link
+            href={href}
             className={cn(
               "hover:cursor-pointer w-full flex items-center rounded-md px-3 py-2 text-sm transition-all duration-200 relative overflow-hidden",
               isActive
@@ -55,7 +59,7 @@ export function MenuItem({
             {notification && (
               <div className="h-2 w-2 rounded-full bg-blue-500 ml-auto" />
             )}
-          </button>
+          </Link>
         </TooltipTrigger>
         {collapsed && <TooltipContent side="right">{label}</TooltipContent>}
       </Tooltip>

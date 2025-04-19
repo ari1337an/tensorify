@@ -3,7 +3,7 @@
 import React from "react";
 import useStore from "@/app/(protected)/(enterprise)/_store/store";
 import { CanvasClient } from "@/app/(protected)/(canvas)/_components/CanvasClient";
-import { NotFound } from "./NotFound";
+import { NotFound } from "@/app/(protected)/(enterprise)/_components/layout/NotFound";
 
 // Blog Posts Component
 const BlogPostsContent = () => {

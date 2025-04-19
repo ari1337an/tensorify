@@ -13,16 +13,6 @@ import {
   Flag,
   Users,
   Settings,
-  Newspaper,
-  File,
-  Image as ImageIcon,
-  TestTube,
-  BarChart,
-  UserPlus,
-  UserCog,
-  Shield,
-  Key,
-  Link,
   LayoutDashboard,
 } from "lucide-react";
 import {
@@ -38,16 +28,17 @@ import {
 import {
   SortableContext,
   arrayMove,
-  useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import useStore from "@/app/(protected)/(enterprise)/_store/store";
+import { usePathname } from "next/navigation";
+import { cn } from "@/app/_lib/utils";
 
 type Control = {
   id: string;
   name: string;
   sections: string[];
+  icon: React.ReactNode;
+  isOpen?: boolean;
 };
 
 type ControlsSectionProps = {
@@ -55,105 +46,11 @@ type ControlsSectionProps = {
   setActiveItem: (item: string) => void;
 };
 
-// Sortable Control Item component
-const SortableControl = ({
-  control,
-  active,
-  isOpen,
-  hoveredControl,
-  setHoveredControl,
-  toggleControl,
-  onItemClick,
-  setActiveItem,
-}: {
-  control: Control;
-  active: boolean;
-  isOpen: boolean;
-  hoveredControl: string | null;
-  setHoveredControl: (id: string | null) => void;
-  toggleControl: () => void;
-  onItemClick: () => void;
-  setActiveItem: (item: string) => void;
-}) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id: control.id,
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <Collapsible open={isOpen} onOpenChange={toggleControl}>
-        <CollapsibleTrigger asChild>
-          <div
-            onMouseEnter={() => setHoveredControl(control.id)}
-            onMouseLeave={() => setHoveredControl(null)}
-          >
-            <MenuItem
-              icon={
-                <div className="relative flex items-center">
-                  {hoveredControl === control.id ? (
-                    <ChevronDown
-                      className={`h-5 w-5 transition-transform duration-200 ${
-                        isOpen ? "rotate-180" : ""
-                      }`}
-                    />
-                  ) : (
-                    <div className="h-5 w-5">
-                      {control.id === "content" && (
-                        <FileText className="h-5 w-5" />
-                      )}
-                      {control.id === "features" && (
-                        <Flag className="h-5 w-5" />
-                      )}
-                      {control.id === "users" && <Users className="h-5 w-5" />}
-                      {control.id === "settings" && (
-                        <Settings className="h-5 w-5" />
-                      )}
-                    </div>
-                  )}
-                </div>
-              }
-              label={control.name}
-              active={active}
-              onClick={onItemClick}
-            />
-          </div>
-        </CollapsibleTrigger>
-
-        <CollapsibleContent>
-          {isOpen && (
-            <div className="pl-4">
-              <SortableSections
-                control={control}
-                activeItem={active ? control.id : ""}
-                onItemClick={setActiveItem}
-              />
-            </div>
-          )}
-        </CollapsibleContent>
-      </Collapsible>
-    </div>
-  );
-};
-
 // Regular control item for server-side rendering
 const StaticControl = ({
   control,
   active,
   isOpen,
-  hoveredControl,
   setHoveredControl,
   toggleControl,
   onItemClick,
@@ -162,217 +59,60 @@ const StaticControl = ({
   control: Control;
   active: boolean;
   isOpen: boolean;
-  hoveredControl: string | null;
   setHoveredControl: (id: string | null) => void;
   toggleControl: () => void;
   onItemClick: () => void;
   setActiveItem: (item: string) => void;
 }) => {
-  const setCurrentRoute = useStore((state) => state.setCurrentRoute);
-
-  const handleClick = () => {
-    onItemClick();
-    setCurrentRoute(control.name);
-  };
+  const pathname = usePathname();
 
   return (
-    <Collapsible open={isOpen} onOpenChange={toggleControl}>
-      <CollapsibleTrigger asChild>
-        <div
-          onMouseEnter={() => setHoveredControl(control.id)}
-          onMouseLeave={() => setHoveredControl(null)}
-        >
-          <MenuItem
-            icon={
-              <div className="relative flex items-center">
-                {hoveredControl === control.id ? (
-                  <ChevronDown
-                    className={`h-5 w-5 transition-transform duration-200 ${
-                      isOpen ? "rotate-180" : ""
-                    }`}
-                  />
-                ) : (
-                  <div className="h-5 w-5">
-                    {control.id === "content" && (
-                      <FileText className="h-5 w-5" />
-                    )}
-                    {control.id === "features" && <Flag className="h-5 w-5" />}
-                    {control.id === "users" && <Users className="h-5 w-5" />}
-                    {control.id === "settings" && (
-                      <Settings className="h-5 w-5" />
-                    )}
-                  </div>
-                )}
-              </div>
-            }
-            label={control.name}
-            active={active}
-            onClick={handleClick}
-          />
-        </div>
-      </CollapsibleTrigger>
-
-      <CollapsibleContent>
-        {isOpen && (
-          <div className="pl-4">
-            <SortableSections
-              control={control}
-              activeItem={active ? control.id : ""}
-              onItemClick={setActiveItem}
-            />
-          </div>
-        )}
-      </CollapsibleContent>
-    </Collapsible>
-  );
-};
-
-// Sortable Section Item component
-const SortableSection = ({
-  id,
-  label,
-  active,
-  onClick,
-}: {
-  id: string;
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) => {
-  const setCurrentRoute = useStore((state) => state.setCurrentRoute);
-
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id,
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  const handleClick = () => {
-    onClick();
-    setCurrentRoute(label);
-  };
-
-  return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <MenuItem
-        icon={
-          <div className="w-5">
-            {label === "Blog Posts" && <Newspaper className="h-5 w-5" />}
-            {label === "Pages" && <File className="h-5 w-5" />}
-            {label === "Media" && <ImageIcon className="h-5 w-5" />}
-            {label === "Feature Flags" && <Flag className="h-5 w-5" />}
-            {label === "A/B Testing" && <TestTube className="h-5 w-5" />}
-            {label === "Analytics" && <BarChart className="h-5 w-5" />}
-            {label === "Onboarding" && <UserPlus className="h-5 w-5" />}
-            {label === "User Management" && <UserCog className="h-5 w-5" />}
-            {label === "Roles" && <Shield className="h-5 w-5" />}
-            {label === "General" && <Settings className="h-5 w-5" />}
-            {label === "Security" && <Key className="h-5 w-5" />}
-            {label === "Integrations" && <Link className="h-5 w-5" />}
-          </div>
-        }
-        label={label}
-        active={active}
-        onClick={handleClick}
-      />
-    </div>
-  );
-};
-
-// Sortable Sections component
-const SortableSections = ({
-  control,
-  activeItem,
-  onItemClick,
-}: {
-  control: Control;
-  activeItem: string;
-  onItemClick: (item: string) => void;
-}) => {
-  const [sections, setSections] = React.useState(control.sections);
-  const [activeSection, setActiveSection] = React.useState<string | null>(null);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    })
-  );
-
-  const handleDragStart = (event: DragStartEvent) => {
-    const { active } = event;
-    setActiveSection(active.id as string);
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (over && active.id !== over.id) {
-      setSections((items) => {
-        const oldIndex = items.findIndex(
-          (item) => `${control.id}-${item}` === active.id
-        );
-        const newIndex = items.findIndex(
-          (item) => `${control.id}-${item}` === over.id
-        );
-
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
-
-    setActiveSection(null);
-  };
-
-  return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
+    <div
+      className="relative"
+      onMouseEnter={() => setHoveredControl(control.id)}
+      onMouseLeave={() => setHoveredControl(null)}
     >
-      <div className="space-y-1 mt-1 pl-4">
-        <SortableContext
-          items={sections.map((section) => `${control.id}-${section}`)}
-          strategy={verticalListSortingStrategy}
-        >
-          {sections.map((section) => (
-            <SortableSection
-              key={`${control.id}-${section}`}
-              id={`${control.id}-${section}`}
+      <Collapsible open={isOpen} onOpenChange={toggleControl}>
+        <CollapsibleTrigger asChild>
+          <button
+            className={cn(
+              "w-full flex items-center justify-between rounded-md px-3 py-2 text-sm transition-all duration-200",
+              active
+                ? "bg-primary/10 text-primary font-medium"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent"
+            )}
+          >
+            <div className="flex items-center">
+              <span className="text-lg flex-shrink-0">{control.icon}</span>
+              <span className="truncate ml-2">{control.name}</span>
+            </div>
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 transition-transform duration-200",
+                isOpen && "transform rotate-180"
+              )}
+            />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pl-6 mt-1 space-y-1">
+          {control.sections.map((section) => (
+            <MenuItem
+              key={section}
+              icon={<div className="h-4 w-4" />}
               label={section}
-              active={activeItem === section}
+              href={`/${section.toLowerCase().replace(/\s+/g, "-")}`}
+              active={
+                pathname === `/${section.toLowerCase().replace(/\s+/g, "-")}`
+              }
               onClick={() => {
-                const sectionId = section;
-                onItemClick(sectionId);
+                setActiveItem(section);
+                onItemClick();
               }}
             />
           ))}
-        </SortableContext>
-      </div>
-
-      <DragOverlay>
-        {activeSection ? (
-          <MenuItem
-            icon={<div className="w-5" />}
-            label={activeSection.split(`${control.id}-`)[1] || ""}
-            active={false}
-            onClick={() => {}}
-          />
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
   );
 };
 
@@ -380,69 +120,89 @@ export function ControlsSection({
   activeItem,
   setActiveItem,
 }: ControlsSectionProps) {
-  const [controlsSectionOpen, setControlsSectionOpen] = React.useState(true);
-  const [openControls, setOpenControls] = React.useState<Set<string>>(
-    new Set(["content"])
-  );
-  const [hoveredControl, setHoveredControl] = React.useState<string | null>(
-    null
-  );
-  const setCurrentRoute = useStore((state) => state.setCurrentRoute);
-
-  // Example controls - in a real app, this would come from your data source
+  const pathname = usePathname();
   const [controls, setControls] = React.useState<Control[]>([
+    {
+      id: "dashboard",
+      name: "Dashboard",
+      sections: [],
+      icon: <LayoutDashboard className="h-5 w-5" />,
+      isOpen: true,
+    },
     {
       id: "content",
       name: "Content",
       sections: ["Blog Posts", "Pages", "Media"],
+      icon: <FileText className="h-5 w-5" />,
+      isOpen: false,
     },
     {
       id: "features",
       name: "Features",
       sections: ["Feature Flags", "A/B Testing", "Analytics"],
+      icon: <Flag className="h-5 w-5" />,
+      isOpen: false,
     },
     {
       id: "users",
       name: "Users",
       sections: ["Onboarding", "User Management", "Roles"],
+      icon: <Users className="h-5 w-5" />,
+      isOpen: false,
     },
     {
       id: "settings",
       name: "Settings",
       sections: ["General", "Security", "Integrations"],
+      icon: <Settings className="h-5 w-5" />,
+      isOpen: false,
     },
   ]);
 
-  const [activeControl, setActiveControl] = React.useState<string | null>(null);
-  const [isClient, setIsClient] = React.useState(false);
-
+  // Add useEffect to handle automatic section opening based on pathname
   React.useEffect(() => {
-    setIsClient(true);
-  }, []);
+    const currentPath = pathname.toLowerCase();
+
+    setControls((prevControls) =>
+      prevControls.map((control) => {
+        // Check if any section matches the current path
+        const hasMatchingSection = control.sections.some((section) =>
+          currentPath.includes(section.toLowerCase().replace(/\s+/g, "-"))
+        );
+
+        return {
+          ...control,
+          isOpen:
+            hasMatchingSection ||
+            (control.id === "dashboard" && currentPath === "/dashboard"),
+        };
+      })
+    );
+  }, [pathname]);
+
+  const [activeId, setActiveId] = React.useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5,
+        distance: 8,
       },
     })
   );
 
   const toggleControl = (controlId: string) => {
-    setOpenControls((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(controlId)) {
-        newSet.delete(controlId);
-      } else {
-        newSet.add(controlId);
-      }
-      return newSet;
-    });
+    setControls((prev) =>
+      prev.map((control) =>
+        control.id === controlId
+          ? { ...control, isOpen: !control.isOpen }
+          : control
+      )
+    );
   };
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
-    setActiveControl(active.id as string);
+    setActiveId(active.id as string);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -450,111 +210,68 @@ export function ControlsSection({
 
     if (over && active.id !== over.id) {
       setControls((items) => {
-        const oldIndex = items.findIndex((control) => control.id === active.id);
-        const newIndex = items.findIndex((control) => control.id === over.id);
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
 
         return arrayMove(items, oldIndex, newIndex);
       });
     }
 
-    setActiveControl(null);
+    setActiveId(null);
   };
 
   const handleDashboardClick = () => {
     setActiveItem("Dashboard");
-    setCurrentRoute("Dashboard");
+  };
+
+  const handleItemClick = (item: string) => {
+    setActiveItem(item);
   };
 
   return (
-    <div className="space-y-2">
-      {/* Dashboard Button */}
-      <MenuItem
-        icon={<LayoutDashboard className="h-4 w-4" />}
-        label="Dashboard"
-        active={activeItem === "Dashboard"}
-        onClick={handleDashboardClick}
-      />
-
-      <Collapsible
-        open={controlsSectionOpen}
-        onOpenChange={setControlsSectionOpen}
-        className="py-3"
+    <div className="space-y-1">
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
       >
-        <div className="flex items-center justify-between px-2 mb-1">
-          <CollapsibleTrigger asChild>
-            <button className="flex items-center text-xs font-medium text-muted-foreground hover:text-foreground hover:scale-[1.02] transition-transform duration-200">
-              <span className="flex items-center gap-1.5">
-                <span>CONTROL PANEL</span>
-              </span>
-            </button>
-          </CollapsibleTrigger>
-        </div>
-
-        <CollapsibleContent className="mt-1 mb-2 space-y-1">
-          {isClient ? (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-            >
-              <div className="space-y-1">
-                <SortableContext
-                  items={controls.map((control) => control.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  {controls.map((control) => (
-                    <SortableControl
-                      key={control.id}
-                      control={control}
-                      active={activeItem === control.id}
-                      isOpen={openControls.has(control.id)}
-                      hoveredControl={hoveredControl}
-                      setHoveredControl={setHoveredControl}
-                      toggleControl={() => toggleControl(control.id)}
-                      onItemClick={() => setActiveItem(control.id)}
-                      setActiveItem={setActiveItem}
-                    />
-                  ))}
-                </SortableContext>
-              </div>
-
-              <DragOverlay>
-                {activeControl ? (
-                  <MenuItem
-                    icon={
-                      <div className="h-5 w-5">
-                        {controls.find((c) => c.id === activeControl)?.name[0]}
-                      </div>
-                    }
-                    label={
-                      controls.find((c) => c.id === activeControl)?.name || ""
-                    }
-                    active={activeItem === activeControl}
-                    onClick={() => {}}
-                  />
-                ) : null}
-              </DragOverlay>
-            </DndContext>
-          ) : (
-            <div className="space-y-1">
-              {controls.map((control) => (
+        <SortableContext
+          items={controls.map((control) => control.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {controls.map((control) => (
+            <div key={control.id}>
+              {control.id === "dashboard" ? (
+                <MenuItem
+                  icon={control.icon}
+                  label={control.name}
+                  href="/dashboard"
+                  active={pathname === "/dashboard"}
+                  onClick={handleDashboardClick}
+                />
+              ) : (
                 <StaticControl
-                  key={control.id}
                   control={control}
-                  active={activeItem === control.id}
-                  isOpen={openControls.has(control.id)}
-                  hoveredControl={hoveredControl}
-                  setHoveredControl={setHoveredControl}
+                  active={activeItem === control.name}
+                  isOpen={control.isOpen || false}
+                  setHoveredControl={() => {}}
                   toggleControl={() => toggleControl(control.id)}
-                  onItemClick={() => setActiveItem(control.id)}
+                  onItemClick={() => handleItemClick(control.name)}
                   setActiveItem={setActiveItem}
                 />
-              ))}
+              )}
             </div>
-          )}
-        </CollapsibleContent>
-      </Collapsible>
+          ))}
+        </SortableContext>
+        <DragOverlay>
+          {activeId ? (
+            <div className="opacity-50">
+              {controls.find((control) => control.id === activeId)?.name}
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
     </div>
   );
 }
