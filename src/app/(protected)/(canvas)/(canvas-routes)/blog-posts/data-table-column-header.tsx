@@ -25,6 +25,8 @@ import {
 } from "@/app/_components/ui/dropdown-menu";
 import { useTimezoneStore } from "./columns";
 import { ColumnFilter } from "./columns";
+import { Checkbox } from "@/app/_components/ui/checkbox";
+import { ScrollArea } from "@/app/_components/ui/scroll-area";
 
 interface DataTableColumnHeaderProps<TData, TValue>
   extends React.HTMLAttributes<HTMLDivElement> {
@@ -167,33 +169,105 @@ export function DataTableColumnHeader<TData, TValue>({
           {isStatusColumn && (
             <>
               <DropdownMenuSeparator />
-              <ColumnFilter
-                column={column}
-                title="Filter Status"
-                options={statusOptions}
-              />
+              <div className="px-2 py-1.5 text-sm font-semibold">
+                Filter Status
+              </div>
+              <ScrollArea className="h-[200px]">
+                {statusOptions.map((option) => (
+                  <DropdownMenuItem
+                    key={option}
+                    className="flex items-center gap-2"
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    <Checkbox
+                      checked={selectedValues?.has(option)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          selectedValues.add(option);
+                        } else {
+                          selectedValues.delete(option);
+                        }
+                        const filterValues = Array.from(selectedValues);
+                        column.setFilterValue(
+                          filterValues.length ? filterValues : undefined
+                        );
+                      }}
+                      className="border-muted-foreground/70 data-[state=checked]:bg-[#8B5CF6] data-[state=checked]:border-[#8B5CF6] data-[state=checked]:text-white"
+                    />
+                    {option}
+                  </DropdownMenuItem>
+                ))}
+              </ScrollArea>
             </>
           )}
 
           {isAuthorsColumn && (
             <>
               <DropdownMenuSeparator />
-              <ColumnFilter
-                column={column}
-                title="Filter Authors"
-                options={authorOptions}
-              />
+              <div className="px-2 py-1.5 text-sm font-semibold">
+                Filter Authors
+              </div>
+              <ScrollArea className="h-[200px]">
+                {authorOptions.map((option) => (
+                  <DropdownMenuItem
+                    key={option}
+                    className="flex items-center gap-2"
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    <Checkbox
+                      checked={selectedValues?.has(option)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          selectedValues.add(option);
+                        } else {
+                          selectedValues.delete(option);
+                        }
+                        const filterValues = Array.from(selectedValues);
+                        column.setFilterValue(
+                          filterValues.length ? filterValues : undefined
+                        );
+                      }}
+                      className="border-muted-foreground/70 data-[state=checked]:bg-[#8B5CF6] data-[state=checked]:border-[#8B5CF6] data-[state=checked]:text-white"
+                    />
+                    {option}
+                  </DropdownMenuItem>
+                ))}
+              </ScrollArea>
             </>
           )}
 
           {isTagsColumn && (
             <>
               <DropdownMenuSeparator />
-              <ColumnFilter
-                column={column}
-                title="Filter Tags"
-                options={tagOptions}
-              />
+              <div className="px-2 py-1.5 text-sm font-semibold">
+                Filter Tags
+              </div>
+              <ScrollArea className="h-[200px]">
+                {tagOptions.map((option) => (
+                  <DropdownMenuItem
+                    key={option}
+                    className="flex items-center gap-2"
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    <Checkbox
+                      checked={selectedValues?.has(option)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          selectedValues.add(option);
+                        } else {
+                          selectedValues.delete(option);
+                        }
+                        const filterValues = Array.from(selectedValues);
+                        column.setFilterValue(
+                          filterValues.length ? filterValues : undefined
+                        );
+                      }}
+                      className="border-muted-foreground/70 data-[state=checked]:bg-[#8B5CF6] data-[state=checked]:border-[#8B5CF6] data-[state=checked]:text-white"
+                    />
+                    {option}
+                  </DropdownMenuItem>
+                ))}
+              </ScrollArea>
             </>
           )}
 
