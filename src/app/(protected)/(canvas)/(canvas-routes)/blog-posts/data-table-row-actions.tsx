@@ -1,7 +1,7 @@
 "use client";
 
 import { Row } from "@tanstack/react-table";
-import { Copy, MoreHorizontal, Pen, Star, Tags, Trash } from "lucide-react";
+import { Copy, MoreHorizontal, Pen, Eye, Trash } from "lucide-react";
 
 import { Button } from "@/app/_components/ui/button";
 import {
@@ -21,7 +21,6 @@ interface DataTableRowActionsProps<TData> {
 export function DataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const post = row.original as BlogPost;
 
   return (
@@ -37,6 +36,11 @@ export function DataTableRowActions<TData>({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
         <DropdownMenuItem>
+          <Eye className="mr-2 h-3.5 w-3.5" />
+          View
+          <DropdownMenuShortcut>⌘V</DropdownMenuShortcut>
+        </DropdownMenuItem>
+        <DropdownMenuItem>
           <Pen className="mr-2 h-3.5 w-3.5" />
           Edit
           <DropdownMenuShortcut>⌘E</DropdownMenuShortcut>
@@ -45,16 +49,6 @@ export function DataTableRowActions<TData>({
           <Copy className="mr-2 h-3.5 w-3.5" />
           Make a copy
           <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Star className="mr-2 h-3.5 w-3.5" />
-          Favorite
-          <DropdownMenuShortcut>⌘F</DropdownMenuShortcut>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <Tags className="mr-2 h-3.5 w-3.5" />
-          Add label
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem className="text-red-600">

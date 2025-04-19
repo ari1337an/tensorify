@@ -14,27 +14,30 @@ interface DataTableToolbarProps<TData> {
 export function DataTableToolbar<TData>({
   table,
 }: DataTableToolbarProps<TData>) {
-  const isFiltered = table.getState().columnFilters.length > 0;
+  const isFiltered =
+    table.getState().columnFilters.length > 0 || table.getState().globalFilter;
 
   return (
     <div className="flex items-center justify-between">
       <div className="flex flex-1 items-center space-x-2">
         <Input
-          placeholder="Search posts..."
-          value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("title")?.setFilterValue(event.target.value)
-          }
+          placeholder="Search..."
+          value={table.getState().globalFilter ?? ""}
+          onChange={(event) => table.setGlobalFilter(event.target.value)}
           className="h-8 w-[150px] lg:w-[250px]"
         />
         {isFiltered && (
           <Button
-            variant="ghost"
-            onClick={() => table.resetColumnFilters()}
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              table.resetColumnFilters();
+              table.resetGlobalFilter();
+            }}
             className="h-8 px-2 lg:px-3"
           >
-            Reset
-            <X className="ml-2 h-4 w-4" />
+            <X className="mr-2 h-4 w-4" />
+            Filter
           </Button>
         )}
       </div>
