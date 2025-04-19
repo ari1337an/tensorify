@@ -318,18 +318,14 @@ export const columns: ColumnDef<BlogPost>[] = [
       const date = new Date(row.getValue("date"));
       const timezone = useTimezoneStore.getState().timezone;
 
-      // Convert the date to the selected UTC offset
-      const offsetMinutes = parseInt(timezone || "+0");
-      const utcDate = new Date(date.getTime() + offsetMinutes * 60 * 1000);
-
-      const formattedDate = utcDate.toLocaleString("en-US", {
+      const formattedDate = date.toLocaleString("en-US", {
         month: "short",
         day: "2-digit",
         year: "numeric",
         hour: "2-digit",
         minute: "2-digit",
         hour12: true,
-        timeZone: "UTC",
+        timeZone: timezone || "UTC",
       });
 
       return (

@@ -32,19 +32,33 @@ interface DataTableColumnHeaderProps<TData, TValue>
   title: string;
 }
 
-const timezones = Array.from({ length: 53 }, (_, i) => {
-  const offset = (i - 24) / 2; // Creates offsets from -12 to +14 in 0.5 increments
-  const hours = Math.floor(Math.abs(offset));
-  const minutes = Math.abs(offset % 1) * 60;
-  const sign = offset < 0 ? "-" : "+";
-
-  const label = `UTC${sign}${hours}${minutes ? `:${minutes}` : ""}`;
-  // For the value, we'll use minutes since that's what JS Date uses
-  const totalMinutes = (Math.abs(offset) * 60).toString();
-  const value = `${offset >= 0 ? "+" : "-"}${totalMinutes}`;
-
-  return { value, label };
-});
+const timezones = [
+  { value: "UTC", label: "UTC+0" },
+  { value: "Etc/GMT-1", label: "UTC+1" },
+  { value: "Etc/GMT-2", label: "UTC+2" },
+  { value: "Etc/GMT-3", label: "UTC+3" },
+  { value: "Etc/GMT-4", label: "UTC+4" },
+  { value: "Etc/GMT-5", label: "UTC+5" },
+  { value: "Etc/GMT-6", label: "UTC+6" },
+  { value: "Etc/GMT-7", label: "UTC+7" },
+  { value: "Etc/GMT-8", label: "UTC+8" },
+  { value: "Etc/GMT-9", label: "UTC+9" },
+  { value: "Etc/GMT-10", label: "UTC+10" },
+  { value: "Etc/GMT-11", label: "UTC+11" },
+  { value: "Etc/GMT-12", label: "UTC+12" },
+  { value: "Etc/GMT+1", label: "UTC-1" },
+  { value: "Etc/GMT+2", label: "UTC-2" },
+  { value: "Etc/GMT+3", label: "UTC-3" },
+  { value: "Etc/GMT+4", label: "UTC-4" },
+  { value: "Etc/GMT+5", label: "UTC-5" },
+  { value: "Etc/GMT+6", label: "UTC-6" },
+  { value: "Etc/GMT+7", label: "UTC-7" },
+  { value: "Etc/GMT+8", label: "UTC-8" },
+  { value: "Etc/GMT+9", label: "UTC-9" },
+  { value: "Etc/GMT+10", label: "UTC-10" },
+  { value: "Etc/GMT+11", label: "UTC-11" },
+  { value: "Etc/GMT+12", label: "UTC-12" },
+];
 
 // Sample data for filters - in a real app, this would come from your data source
 const statusOptions = ["Published", "Draft"];
