@@ -32,16 +32,19 @@ interface DataTableColumnHeaderProps<TData, TValue>
   title: string;
 }
 
-const timezones = [
-  { value: "UTC", label: "UTC" },
-  { value: "America/New_York", label: "Eastern Time" },
-  { value: "America/Chicago", label: "Central Time" },
-  { value: "America/Denver", label: "Mountain Time" },
-  { value: "America/Los_Angeles", label: "Pacific Time" },
-  { value: "Europe/London", label: "London" },
-  { value: "Europe/Paris", label: "Paris" },
-  { value: "Asia/Tokyo", label: "Tokyo" },
-];
+const timezones = Array.from({ length: 53 }, (_, i) => {
+  const offset = (i - 24) / 2; // Creates offsets from -12 to +14 in 0.5 increments
+  const hours = Math.floor(Math.abs(offset));
+  const minutes = Math.abs(offset % 1) * 60;
+  const sign = offset < 0 ? "-" : "+";
+
+  const label = `UTC${sign}${hours}${minutes ? `:${minutes}` : ""}`;
+  // For the value, we'll use minutes since that's what JS Date uses
+  const totalMinutes = (Math.abs(offset) * 60).toString();
+  const value = `${offset >= 0 ? "+" : "-"}${totalMinutes}`;
+
+  return { value, label };
+});
 
 // Sample data for filters - in a real app, this would come from your data source
 const statusOptions = ["Published", "Draft"];
@@ -186,10 +189,11 @@ export function DataTableColumnHeader<TData, TValue>({
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
                   <Clock className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
-                  Timezone ({timezone})
+                  {timezones.find((tz) => tz.value === timezone)?.label ||
+                    "UTC+0"}
                 </DropdownMenuSubTrigger>
                 <DropdownMenuPortal>
-                  <DropdownMenuSubContent>
+                  <DropdownMenuSubContent className="h-[200px] overflow-y-auto">
                     {timezones.map((tz) => (
                       <DropdownMenuItem
                         key={tz.value}
