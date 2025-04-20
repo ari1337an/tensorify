@@ -3,10 +3,9 @@ import {
   clerkMiddleware,
   createRouteMatcher,
 } from "@clerk/nextjs/server";
+import adminEmails from "./admin-emails.json";
 
 const isPublicRoute = createRouteMatcher(["/api/public(.*)", "/sign-in(.*)"]);
-
-const isAdminEmail = ["ari1337an@gmail.com", "faisalahmed531@gmail.com", "alphawolfventures@gmail.com"];
 
 export default clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req)) {
@@ -18,7 +17,10 @@ export default clerkMiddleware(async (auth, req) => {
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
     const email = user.emailAddresses[0].emailAddress;
-    const isAdmin = isAdminEmail.includes(email);
+
+    // Check if user is admin using the pre-generated JSON file
+    const isAdmin = adminEmails.includes(email);
+
     if (!isAdmin) {
       await auth.protect(() => {
         return false;
