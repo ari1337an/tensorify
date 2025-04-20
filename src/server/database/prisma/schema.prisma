@@ -8,9 +8,55 @@ datasource db {
 }
 
 model AdminAccount {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String       @id @default(uuid())
+  name        String
+  email       String       @unique
+  picture     String?
+  profileLink String?
+  designation String?
+  type        BlogPostType @default(ARTICLE)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  BlogPost    BlogPost[]
+}
+
+enum BlogPostType {
+  ANNOUNCEMENT // Product launches, company updates
+  ARTICLE // Educational, SEO-driven content
+  CUSTOMER_STORY // Case studies, user success stories
+  COMPANY_NEWS // Funding, hiring, partnerships
+  ENGINEERING_BLOG // Deep tech dives, infra, dev logs
+  THOUGHT_LEADERSHIP // Visionary, industry-opinion content
+  FEATURE_UPDATE // New features, changelogs
+  EVENT // Webinars, meetups, summits
+  GUIDE // How-tos, tutorials, onboarding guides
+  RESEARCH // Original research, benchmarks, studies
+}
+
+model BlogPost {
+  id        String         @id @default(uuid())
+  type      BlogPostType
+  title     String
+  slug      String         @unique
+  authorId  String
+  status    BlogPostStatus
+  tags      BlogTag[]
+  content   Json
+  author    AdminAccount   @relation(fields: [authorId], references: [id])
+  deletedAt DateTime?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model BlogTag {
+  id        String     @id @default(uuid())
+  tag       String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  posts     BlogPost[]
+}
+
+enum BlogPostStatus {
+  DRAFT
+  PUBLISHED
 }
