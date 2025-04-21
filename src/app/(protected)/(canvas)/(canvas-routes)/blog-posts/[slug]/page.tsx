@@ -13,6 +13,7 @@ import {
   removeTagFromBlogPost,
   updateBlogPostTitle,
   updateBlogPostSlug,
+  searchTags,
 } from "@/server/actions/blog-posts";
 import Image from "next/image";
 import TimeAgo from "react-timeago";
@@ -63,6 +64,12 @@ export default function BlogPostPage() {
   const [isSlugSaving, setIsSlugSaving] = useState(false);
   const [slugStats, setSlugStats] = useState({ words: 0, chars: 0 });
   const [isSlugTooLong, setIsSlugTooLong] = useState(false);
+  const [isTagInputOpen, setIsTagInputOpen] = useState(false);
+  const [tagSearchResults, setTagSearchResults] = useState<
+    Array<{ id: string; tag: string }>
+  >([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Keep track of tags that are being deleted
   const pendingDeletions = useRef<Set<string>>(new Set());
@@ -339,31 +346,89 @@ export default function BlogPostPage() {
     },
   });
 
-  const handleAddTag = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTag.trim() || !post) return;
+  const handleTagSearch = async (value: string) => {
+    setNewTag(value);
 
-    const tagName = newTag.trim();
+    // Clear previous timeout
+    if (searchTimeout.current) {
+      clearTimeout(searchTimeout.current);
+    }
 
-    // Check if tag already exists or is pending deletion
-    if (tags[tagName] && !tags[tagName].isError) {
-      toast.error("This tag already exists");
+    // Set a new timeout to search after user stops typing
+    searchTimeout.current = setTimeout(async () => {
+      if (value.trim()) {
+        setIsSearching(true);
+        try {
+          console.log("Searching for tags:", value.trim());
+          const result = await searchTags(value.trim());
+          console.log("Search result:", result);
+
+          if (result.error) {
+            console.error("Search error:", result.error);
+          } else if (result.tags) {
+            // Filter out tags that are already added
+            const filteredTags = result.tags.filter(
+              (tag) => !Object.keys(tags).includes(tag.tag)
+            );
+            console.log("Filtered tags:", filteredTags);
+            setTagSearchResults(filteredTags);
+          }
+        } catch (error) {
+          console.error("Error searching tags:", error);
+        } finally {
+          setIsSearching(false);
+        }
+      } else {
+        setTagSearchResults([]);
+      }
+    }, 300);
+  };
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (searchTimeout.current) {
+        clearTimeout(searchTimeout.current);
+      }
+    };
+  }, []);
+
+  const handleTagSelect = (tag: string) => {
+    handleAddTag(tag);
+    setIsTagInputOpen(false);
+    setNewTag("");
+    setTagSearchResults([]);
+    setIsInputVisible(false);
+  };
+
+  const handleAddTag = (tagName: string) => {
+    if (!tagName.trim() || !post) return;
+
+    const normalizedTag = tagName.trim().toLowerCase();
+
+    // Check if tag already exists
+    if (tags[normalizedTag]) {
       return;
     }
 
     // Add to state immediately
     setTags((prev) => ({
       ...prev,
-      [tagName]: {
-        tag: tagName,
+      [normalizedTag]: {
+        tag: normalizedTag,
         isSaved: false,
         isError: false,
       },
     }));
 
-    setNewTag(""); // Clear input
-    setIsInputVisible(false); // Hide input field after adding tag
-    addTagMutation.mutate({ postId: post.id, tagName });
+    // Clear input and close dropdown
+    setNewTag("");
+    setIsTagInputOpen(false);
+    // Hide the input and show the "Add Tag" button again
+    setIsInputVisible(false);
+
+    // Start the mutation
+    addTagMutation.mutate({ postId: post.id, tagName: normalizedTag });
   };
 
   const handleRemoveTag = (tagId: string, tagName: string) => {
@@ -580,7 +645,7 @@ export default function BlogPostPage() {
                               value={editedSlug}
                               onChange={handleSlugChange}
                               className={cn(
-                                "py-0 px-0 border-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent font-mono w-full outline-none !shadow-none",
+                                "py-0 px-0 border-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 !bg-muted/50 !rounded-0 font-mono w-full outline-none !shadow-none",
                                 !isSlugValid && "text-red-500",
                                 isSlugTooLong && "text-yellow-500"
                               )}
@@ -680,33 +745,105 @@ export default function BlogPostPage() {
                 ))}
 
                 {/* Add tag input */}
-                <div className="relative">
-                  {!isInputVisible ? (
-                    <button
-                      onClick={() => setIsInputVisible(true)}
-                      className="flex items-center gap-1 bg-secondary bg-opacity-20 hover:bg-primary hover:bg-opacity-30 px-3 py-1.5 rounded-md text-sm text-secondary-foreground hover:text-primary-foreground transition-colors duration-200"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      Add Tag
-                    </button>
-                  ) : (
-                    <form onSubmit={handleAddTag} className="flex items-center">
+                {!isInputVisible ? (
+                  <button
+                    onClick={() => {
+                      setIsInputVisible(true);
+                      // Set timeout to ensure it opens after render
+                      setTimeout(() => {
+                        setIsTagInputOpen(true);
+                      }, 50);
+                    }}
+                    className="flex items-center gap-1 bg-secondary bg-opacity-20 hover:bg-primary hover:bg-opacity-30 px-3 py-1.5 rounded-md text-sm text-secondary-foreground hover:text-primary-foreground transition-colors duration-200"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Add Tag
+                  </button>
+                ) : (
+                  <div className="relative">
+                    <div className="flex items-center">
                       <Input
                         type="text"
                         value={newTag}
-                        onChange={(e) => setNewTag(e.target.value)}
-                        placeholder="Add tag..."
-                        className="h-8 min-w-[150px] text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-0"
+                        onChange={(e) => {
+                          handleTagSearch(e.target.value);
+                          // Make sure popover stays open
+                          setIsTagInputOpen(true);
+                        }}
+                        placeholder="Search or create tag..."
+                        className="h-8 min-w-[200px] text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-0"
                         autoFocus
-                        onBlur={() => {
-                          if (!newTag.trim()) {
+                        onFocus={() => setIsTagInputOpen(true)}
+                        onBlur={(e) => {
+                          // Don't close if relatedTarget is within the popover
+                          if (
+                            !e.relatedTarget ||
+                            !e.relatedTarget.closest(".tag-popover-content")
+                          ) {
+                            if (!newTag.trim()) {
+                              setIsTagInputOpen(false);
+                              setIsInputVisible(false);
+                            }
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && newTag.trim()) {
+                            e.preventDefault();
+                            handleAddTag(newTag);
+                          } else if (e.key === "Escape") {
+                            e.preventDefault();
+                            setIsTagInputOpen(false);
                             setIsInputVisible(false);
+                            setNewTag("");
                           }
                         }}
                       />
-                    </form>
-                  )}
-                </div>
+                    </div>
+
+                    {isTagInputOpen && (
+                      <div className="absolute top-full left-0 mt-1 w-[200px] z-50 bg-background ring-2 ring-secondary border border-border  rounded-md shadow-md tag-popover-content">
+                        <div className="max-h-[200px] overflow-auto">
+                          {isSearching ? (
+                            <div className="flex items-center justify-center py-6">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            </div>
+                          ) : tagSearchResults.length > 0 ? (
+                            <div className="space-y-1">
+                              {tagSearchResults.map((tag) => (
+                                <button
+                                  key={tag.id}
+                                  className="flex items-center w-full text-left px-2 py-1.5 text-sm hover:bg-muted dark:hover:bg-gray-800 rounded-sm"
+                                  onClick={() => handleTagSelect(tag.tag)}
+                                >
+                                  {tag.tag}
+                                </button>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="py-1 px-2">
+                              {newTag.trim() ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleTagSelect(newTag.trim())}
+                                  className="flex items-center gap-2 text-sm w-full px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-sm"
+                                >
+                                  <Plus className="h-4 w-4" />
+                                  <span>
+                                    Create tag
+                                  </span>
+                                </button>
+                              ) : (
+                                <span className="text-sm text-muted-foreground">
+                                  Type to search tags
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>

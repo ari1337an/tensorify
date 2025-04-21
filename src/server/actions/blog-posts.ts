@@ -232,3 +232,33 @@ export async function updateBlogPostSlug(postId: string, slug: string) {
     return { error: "Failed to update blog post slug" };
   }
 }
+
+// Search tags
+export async function searchTags(query: string) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return { error: "You must be logged in to search tags" };
+    }
+
+    const normalizedQuery = query.toLowerCase().trim();
+
+    const tags = await db.blogTag.findMany({
+      where: {
+        tag: {
+          contains: normalizedQuery,
+          mode: "insensitive",
+        },
+      },
+      orderBy: {
+        tag: "asc",
+      },
+      take: 10,
+    });
+
+    return { tags };
+  } catch (error) {
+    console.error("Error searching tags:", error);
+    return { error: "Failed to search tags" };
+  }
+}
