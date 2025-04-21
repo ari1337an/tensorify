@@ -5,7 +5,6 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { BlogPostStatus, BlogPostType } from "@prisma/client";
 import { auth } from "@clerk/nextjs/server";
-import { getUserEmailFromUserId } from "./user";
 
 // Schema for creating a new blog post
 const createBlogPostSchema = z.object({
@@ -21,15 +20,11 @@ export type CreateBlogPostInput = z.infer<typeof createBlogPostSchema>;
 // Create a new blog post
 export async function createBlogPost(data: CreateBlogPostInput) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return { error: "You must be logged in to create a blog post" };
-    }
+    const { sessionClaims } = await auth();
 
-    const email = await getUserEmailFromUserId(userId);
-
+    const email = sessionClaims?.email;
     if (!email) {
-      return { error: "Could not find email for user" };
+      return { error: "You must be logged in to create a blog post" };
     }
 
     const adminAccount = await db.adminAccount.findFirst({
@@ -42,18 +37,6 @@ export async function createBlogPost(data: CreateBlogPostInput) {
 
     const validatedData = createBlogPostSchema.parse(data);
 
-    // First, create or find the tags
-    const tagConnections = await Promise.all(
-      validatedData.tags.map(async (tagName) => {
-        const tag = await db.blogTag.upsert({
-          where: { tag: tagName },
-          create: { tag: tagName },
-          update: {},
-        });
-        return { id: tag.id };
-      })
-    );
-
     const post = await db.blogPost.create({
       data: {
         title: validatedData.title,
@@ -62,9 +45,6 @@ export async function createBlogPost(data: CreateBlogPostInput) {
         status: validatedData.status,
         content: {},
         authorId: adminAccount.id,
-        tags: {
-          connect: tagConnections,
-        },
       },
       include: {
         tags: true,
@@ -75,8 +55,6 @@ export async function createBlogPost(data: CreateBlogPostInput) {
     revalidatePath("/blog-posts");
     return { post };
   } catch (error) {
-    console.error("Error creating blog post:", error);
-
     if (error instanceof z.ZodError) {
       return { error: error.errors[0].message };
     }
@@ -133,5 +111,68 @@ export async function getBlogPostBySlug(slug: string) {
   } catch (error) {
     console.error("Failed to fetch blog post:", error);
     return { error: "Failed to fetch blog post" };
+  }
+}
+
+// Add a tag to a blog post
+export async function addTagToBlogPost(postId: string, tagName: string) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return { error: "You must be logged in to update a blog post" };
+    }
+
+    // First, create or find the tag
+    const tag = await db.blogTag.upsert({
+      where: { tag: tagName },
+      create: { tag: tagName },
+      update: {},
+    });
+
+    // Connect the tag to the blog post
+    await db.blogPost.update({
+      where: { id: postId },
+      data: {
+        tags: {
+          connect: { id: tag.id },
+        },
+      },
+    });
+
+    // Remove revalidatePath since React Query handles cache invalidation client-side
+    // revalidatePath("/blog-posts");
+    // revalidatePath(`/blog-posts/${postId}`);
+    return { success: true, tagId: tag.id };
+  } catch (error) {
+    console.error("Error adding tag to blog post:", error);
+    return { error: "Failed to add tag to blog post" };
+  }
+}
+
+// Remove a tag from a blog post
+export async function removeTagFromBlogPost(postId: string, tagId: string) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return { error: "You must be logged in to update a blog post" };
+    }
+
+    // Disconnect the tag from the blog post
+    await db.blogPost.update({
+      where: { id: postId },
+      data: {
+        tags: {
+          disconnect: { id: tagId },
+        },
+      },
+    });
+
+    // Remove revalidatePath since React Query handles cache invalidation client-side
+    // revalidatePath("/blog-posts");
+    // revalidatePath(`/blog-posts/${postId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Error removing tag from blog post:", error);
+    return { error: "Failed to remove tag from blog post" };
   }
 }
