@@ -199,3 +199,36 @@ export async function updateBlogPostTitle(postId: string, title: string) {
     return { error: "Failed to update blog post title" };
   }
 }
+
+// Update blog post slug
+export async function updateBlogPostSlug(postId: string, slug: string) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return { error: "You must be logged in to update a blog post" };
+    }
+
+    // Validate slug format
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+      return {
+        error: "Slug must contain only lowercase letters, numbers, and hyphens",
+      };
+    }
+
+    const post = await db.blogPost.update({
+      where: { id: postId },
+      data: {
+        slug,
+        updatedAt: new Date(),
+      },
+    });
+
+    return { success: true, post };
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("Unique constraint")) {
+      return { error: "A blog post with this slug already exists" };
+    }
+    console.error("Error updating blog post slug:", error);
+    return { error: "Failed to update blog post slug" };
+  }
+}

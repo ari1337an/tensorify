@@ -12,18 +12,13 @@ import {
   addTagToBlogPost,
   removeTagFromBlogPost,
   updateBlogPostTitle,
+  updateBlogPostSlug,
 } from "@/server/actions/blog-posts";
 import Image from "next/image";
 import TimeAgo from "react-timeago";
 import { Input } from "@/app/_components/ui/input";
 import { Textarea } from "@/app/_components/ui/textarea";
 import { toast } from "sonner";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/app/_components/ui/tooltip";
 import { cn } from "@/app/_lib/utils";
 
 interface BlogPost {
@@ -64,6 +59,10 @@ export default function BlogPostPage() {
   const [editedSlug, setEditedSlug] = useState("");
   const [isTitleTooLong, setIsTitleTooLong] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSlugValid, setIsSlugValid] = useState(true);
+  const [isSlugSaving, setIsSlugSaving] = useState(false);
+  const [slugStats, setSlugStats] = useState({ words: 0, chars: 0 });
+  const [isSlugTooLong, setIsSlugTooLong] = useState(false);
 
   // Keep track of tags that are being deleted
   const pendingDeletions = useRef<Set<string>>(new Set());
@@ -305,6 +304,41 @@ export default function BlogPostPage() {
     },
   });
 
+  const updateSlugMutation = useMutation({
+    mutationFn: async ({
+      postId,
+      slug: newSlug,
+    }: {
+      postId: string;
+      slug: string;
+    }) => {
+      const result = await updateBlogPostSlug(postId, newSlug);
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      return result;
+    },
+    onSuccess: (_, { slug: newSlug }) => {
+      setIsEditingSlug(false);
+      setIsSlugSaving(false);
+
+      // Update the URL without adding to history
+      window.history.replaceState({}, "", `/blog-posts/${newSlug}`);
+
+      // Invalidate and refetch with new slug
+      queryClient.invalidateQueries({ queryKey: ["blogPost", slug] });
+
+      // Force a page reload to ensure everything is in sync
+      window.location.reload();
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update slug"
+      );
+      setIsSlugSaving(false);
+    },
+  });
+
   const handleAddTag = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTag.trim() || !post) return;
@@ -365,10 +399,21 @@ export default function BlogPostPage() {
     updateTitleMutation.mutate({ postId: post.id, title: editedTitle });
   };
 
-  const handleSlugSubmit = (e: React.FormEvent) => {
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newSlug = e.target.value.toLowerCase();
+    setEditedSlug(newSlug);
+    setIsSlugValid(validateSlug(newSlug));
+    calculateSlugStats(newSlug);
+  };
+
+  const handleSlugSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement slug update mutation
-    setIsEditingSlug(false);
+    if (!post || editedSlug === slug || !isSlugValid) {
+      setIsEditingSlug(false);
+      return;
+    }
+    setIsSlugSaving(true);
+    updateSlugMutation.mutate({ postId: post.id, slug: editedSlug });
   };
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -383,6 +428,28 @@ export default function BlogPostPage() {
       });
     } else if (newTitle.length <= 60 && isTitleTooLong) {
       setIsTitleTooLong(false);
+    }
+  };
+
+  const validateSlug = (value: string) => {
+    // Primary validation: only lowercase letters, numbers, and hyphens between words
+    return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
+  };
+
+  const calculateSlugStats = (value: string) => {
+    const words = value.split("-").filter(Boolean).length;
+    const chars = value.length;
+    const isTooLong = words > 6 || chars > 60;
+
+    setSlugStats({ words, chars });
+    setIsSlugTooLong(isTooLong);
+
+    if (isTooLong) {
+      toast.warning("Slug exceeds recommended length", {
+        description:
+          "Ideal slug length is 3-6 words or under 60 characters for better SEO",
+        duration: 4000,
+      });
     }
   };
 
@@ -458,95 +525,102 @@ export default function BlogPostPage() {
                 </time>
               </div>
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div
-                      onClick={() => setIsEditingTitle(true)}
-                      className="cursor-pointer inline-block w-full"
-                    >
-                      {isEditingTitle ? (
-                        <form onSubmit={handleTitleSubmit} className="m-0">
-                          <Textarea
-                            value={editedTitle}
-                            onChange={handleTitleChange}
-                            className={cn(
-                              "!text-5xl !font-semibold !tracking-tight !leading-tight !min-h-[1.2em] !py-0 !px-2 !-mx-2 !border-0 !outline-none !ring-0 !ring-offset-0 !shadow-none !focus:border-0 !focus:outline-none !focus:ring-0 !focus:ring-offset-0 !focus-visible:border-0 !focus-visible:outline-none !focus-visible:ring-0 !focus-visible:ring-offset-0 !bg-muted/50 !rounded !w-full !resize-none !overflow-hidden",
-                              isTitleTooLong && "!text-yellow-500"
+              <div
+                onClick={() => setIsEditingTitle(true)}
+                className="cursor-pointer inline-block w-full"
+              >
+                {isEditingTitle ? (
+                  <form onSubmit={handleTitleSubmit} className="m-0">
+                    <Textarea
+                      value={editedTitle}
+                      onChange={handleTitleChange}
+                      className={cn(
+                        "!text-5xl !font-semibold !tracking-tight !min-h-[1.2em] !py-0 !px-2 !-mx-2 !border-0 !outline-none !ring-0 !ring-offset-0 !shadow-none !focus:border-0 !focus:outline-none !focus:ring-0 !focus:ring-offset-0 !focus-visible:border-0 !focus-visible:outline-none !focus-visible:ring-0 !focus-visible:ring-offset-0 !bg-muted/50 !rounded !w-full !resize-none !overflow-hidden",
+                        isTitleTooLong && "!text-yellow-500"
+                      )}
+                      style={{ lineHeight: "1.2 !important" }}
+                      autoFocus
+                      onBlur={handleTitleSubmit}
+                      rows={1}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleTitleSubmit(e);
+                        }
+                      }}
+                    />
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {editedTitle.length}/60 characters
+                    </div>
+                  </form>
+                ) : (
+                  <h1
+                    className={cn(
+                      "text-5xl font-semibold tracking-tight hover:bg-muted/50 px-2 py-1 -mx-2 rounded whitespace-pre-wrap",
+                      isTitleTooLong && "text-yellow-500"
+                    )}
+                  >
+                    {post.title}
+                  </h1>
+                )}
+              </div>
+
+              <div className="text-sm text-muted-foreground flex items-center gap-2">
+                <div className="flex-1">
+                  <div className="flex items-center font-mono">
+                    <span className="text-muted-foreground/80">
+                      {process.env.NEXT_PUBLIC_PRODUCT_BLOG_URL}/
+                    </span>
+                    <div className="flex-1">
+                      {isEditingSlug ? (
+                        <form onSubmit={handleSlugSubmit} className="w-full">
+                          <div className="flex items-center w-full">
+                            <Input
+                              type="text"
+                              value={editedSlug}
+                              onChange={handleSlugChange}
+                              className={cn(
+                                "py-0 px-0 border-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent font-mono w-full outline-none !shadow-none",
+                                !isSlugValid && "text-red-500",
+                                isSlugTooLong && "text-yellow-500"
+                              )}
+                              style={{ boxShadow: "none" }}
+                              autoFocus
+                              onBlur={handleSlugSubmit}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  handleSlugSubmit(e);
+                                }
+                              }}
+                            />
+                            {isSlugSaving && (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin ml-2" />
                             )}
-                            style={{ lineHeight: "1.2 !important" }}
-                            autoFocus
-                            onBlur={handleTitleSubmit}
-                            rows={1}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" && !e.shiftKey) {
-                                e.preventDefault();
-                                handleTitleSubmit(e);
-                              }
-                            }}
-                          />
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {editedTitle.length}/60 characters
                           </div>
                         </form>
                       ) : (
-                        <h1
-                          className={cn(
-                            "text-5xl font-semibold tracking-tight hover:bg-muted/50 px-2 py-1 -mx-2 rounded whitespace-pre-wrap",
-                            isTitleTooLong && "text-yellow-500"
-                          )}
+                        <div
+                          onClick={() => setIsEditingSlug(true)}
+                          className="cursor-pointer text-foreground hover:bg-muted/50 px-2 py-1 -mx-2 rounded whitespace-pre-wrap"
                         >
-                          {post.title}
-                        </h1>
+                          {slug}
+                        </div>
                       )}
                     </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" align="start" sideOffset={4}>
-                    <p>Click to edit title</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <div className="text-sm text-muted-foreground flex items-center gap-2">
-                <span className="font-medium">URL:</span>
-                <code className="bg-muted rounded font-mono flex items-center">
-                  <span className="px-1.5 py-0.5 border-r border-border">
-                    {process.env.NEXT_PUBLIC_PRODUCT_BLOG_URL}/
-                  </span>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span
-                          onClick={() => setIsEditingSlug(true)}
-                          className="cursor-pointer px-1.5 py-0.5"
-                        >
-                          {isEditingSlug ? (
-                            <form
-                              onSubmit={handleSlugSubmit}
-                              className="inline"
-                            >
-                              <Input
-                                type="text"
-                                value={editedSlug}
-                                onChange={(e) => setEditedSlug(e.target.value)}
-                                className="h-auto py-0 px-0 w-auto border-none focus:ring-0 bg-transparent font-mono"
-                                autoFocus
-                                onBlur={handleSlugSubmit}
-                              />
-                            </form>
-                          ) : (
-                            <span className="hover:bg-muted/50 px-1 py-0.5 rounded">
-                              {slug}
-                            </span>
-                          )}
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Click to edit URL slug</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </code>
+                  </div>
+                  {isEditingSlug && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {slugStats.words}{" "}
+                      {slugStats.words === 1 ? "word" : "words"} /{" "}
+                      {slugStats.chars}{" "}
+                      {slugStats.chars === 1 ? "char" : "chars"}
+                      <span className="text-muted-foreground/60 ml-1">
+                        (Ideal: 3-6 words, under 60 chars)
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="flex items-center gap-3">
@@ -610,7 +684,7 @@ export default function BlogPostPage() {
                   {!isInputVisible ? (
                     <button
                       onClick={() => setIsInputVisible(true)}
-                      className="flex items-center gap-1 bg-secondary bg-opacity-20 hover:bg-primary hover:bg-opacity-30 px-3 py-1.5 rounded-md text-sm text-primary-foreground transition-colors duration-200"
+                      className="flex items-center gap-1 bg-secondary bg-opacity-20 hover:bg-primary hover:bg-opacity-30 px-3 py-1.5 rounded-md text-sm text-secondary-foreground hover:text-primary-foreground transition-colors duration-200"
                     >
                       <Plus className="h-3.5 w-3.5" />
                       Add Tag
