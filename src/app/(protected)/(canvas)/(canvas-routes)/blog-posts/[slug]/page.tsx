@@ -8,6 +8,7 @@ import { Button } from "@/app/_components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { getBlogPostBySlug } from "@/server/actions/blog-posts";
+import Image from "next/image";
 
 export default function BlogPostPage() {
   const params = useParams();
@@ -68,19 +69,55 @@ export default function BlogPostPage() {
           <Skeleton className="h-96 w-full" />
         </div>
       ) : post ? (
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold">{post.title}</h1>
-            <div className="flex items-center mt-2 text-sm text-muted-foreground">
-              <span>By {post.author.name}</span>
-              <span className="mx-2">•</span>
-              <span>{new Date(post.createdAt).toLocaleDateString()}</span>
-              <span className="mx-2">•</span>
-              <span className="capitalize">
-                {post.type.toLowerCase().replace(/_/g, " ")}
-              </span>
-              <span className="mx-2">•</span>
-              <span className="capitalize">{post.status.toLowerCase()}</span>
+        <article className="max-w-4xl mx-auto space-y-8">
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <span className="font-medium">Article</span>
+                <span>•</span>
+                <time dateTime={post.createdAt.toISOString()}>
+                  {new Date(post.createdAt).toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </time>
+              </div>
+
+              <h1 className="text-5xl font-semibold tracking-tight">
+                {post.title}
+              </h1>
+
+              <div className="flex items-center gap-3">
+                <div className="relative h-12 w-12 overflow-hidden rounded-full">
+                  <Image
+                    src={
+                      post.author.picture ||
+                      "https://avatars.githubusercontent.com/u/124599?v=4"
+                    }
+                    alt={post.author.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  {post.author.profileLink ? (
+                    <Link
+                      href={post.author.profileLink}
+                      className="font-medium hover:underline"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {post.author.name}
+                    </Link>
+                  ) : (
+                    <span className="font-medium">{post.author.name}</span>
+                  )}
+                  <span className="text-sm text-muted-foreground">
+                    {post.author.designation || "Author"}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -92,7 +129,7 @@ export default function BlogPostPage() {
               other metadata.
             </p>
           </div>
-        </div>
+        </article>
       ) : null}
     </div>
   );
