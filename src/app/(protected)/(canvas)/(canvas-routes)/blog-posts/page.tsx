@@ -7,16 +7,53 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/app/_components/ui/skeleton";
 import { CreateBlogPostDialog } from "./create-blog-post-dialog";
 import { getBlogPosts } from "@/server/actions/blog-posts";
+import { BlogPost } from "./columns";
+
+// Define the API response type
+interface ApiBlogPost {
+  id: number;
+  title: string;
+  slug: string;
+  status: string;
+  createdAt: string;
+  author: {
+    name: string;
+  };
+  tags: Array<{
+    tag: string;
+  }>;
+}
+
+interface ApiResponse {
+  posts?: ApiBlogPost[];
+  error?: string;
+}
 
 export default function BlogPostsPage() {
   const { data, error, isLoading } = useQuery({
     queryKey: ["blogPosts"],
     queryFn: async () => {
-      const response = await getBlogPosts();
+      const response = (await getBlogPosts()) as ApiResponse;
       if (response.error) {
         throw new Error(response.error);
       }
-      return response.posts;
+
+      if (!response.posts) {
+        return [];
+      }
+
+      // Transform the data to match the BlogPost type
+      const transformedPosts: BlogPost[] = response.posts.map((post) => ({
+        id: post.id,
+        title: post.title,
+        slug: post.slug,
+        authors: [post.author.name],
+        status: post.status,
+        date: post.createdAt,
+        tags: post.tags.map((tag) => tag.tag),
+      }));
+
+      return transformedPosts;
     },
   });
 
