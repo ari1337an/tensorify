@@ -26,8 +26,7 @@ import {
 } from "@/app/_components/ui/alert-dialog";
 import { toast } from "sonner";
 import { BlogPost } from "./columns";
-import { deleteBlogPost } from "@/server/actions/blog-posts";
-import { useQueryClient } from "@tanstack/react-query";
+// import { useQueryClient } from "@tanstack/react-query";
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
@@ -39,19 +38,19 @@ export function DataTableRowActions<TData>({
   const post = row.original as BlogPost;
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
 
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      const result = await deleteBlogPost(post.id);
+      // const result = await deleteBlogPost(post.id);
 
-      if (result.error) {
-        toast.error(result.error);
-      } else {
-        toast.success("Blog post deleted successfully");
-        queryClient.invalidateQueries({ queryKey: ["blogPosts"] });
-      }
+      // if (result.error) {
+      //   toast.error(result.error);
+      // } else {
+      //   toast.success("Blog post deleted successfully");
+      //   queryClient.invalidateQueries({ queryKey: ["blogPosts"] });
+      // }
     } catch (error) {
       toast.error("Failed to delete blog post");
       console.error("Delete error:", error);

@@ -1,14 +1,12 @@
 "use client";
 
-import React, { useCallback } from "react";
-import { Button } from "@/app/_components/ui/button";
-import { Plus } from "lucide-react";
+import React from "react";
 import { columns } from "./columns";
 import { DataTable } from "./data-table";
 import { useQuery } from "@tanstack/react-query";
-import { getBlogPosts } from "../../../../../server/actions/blog-posts";
 import { Skeleton } from "@/app/_components/ui/skeleton";
-import { toast } from "sonner";
+import { CreateBlogPostDialog } from "./create-blog-post-dialog";
+import { getBlogPosts } from "@/server/actions/blog-posts";
 
 export default function BlogPostsPage() {
   const { data, error, isLoading } = useQuery({
@@ -21,11 +19,6 @@ export default function BlogPostsPage() {
       return response.posts;
     },
   });
-
-  const handleCreateNewPost = useCallback(() => {
-    // Implement new post creation logic
-    toast.info("Create new post functionality to be implemented");
-  }, []);
 
   if (error) {
     return (
@@ -48,10 +41,7 @@ export default function BlogPostsPage() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Blog Posts</h1>
-        <Button onClick={handleCreateNewPost}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create New Post
-        </Button>
+        <CreateBlogPostDialog />
       </div>
 
       {isLoading ? (
