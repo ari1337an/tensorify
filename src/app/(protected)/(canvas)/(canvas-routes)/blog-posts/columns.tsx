@@ -4,6 +4,7 @@ import { Column, ColumnDef } from "@tanstack/react-table";
 import { DateRange } from "react-day-picker";
 import { Filter } from "lucide-react";
 import { create } from "zustand";
+import Link from "next/link";
 
 import { Badge } from "@/app/_components/ui/badge";
 import { Button } from "@/app/_components/ui/button";
@@ -240,12 +241,15 @@ export const columns: ColumnDef<BlogPost>[] = [
       <DataTableColumnHeader column={column} title="Title" />
     ),
     cell: ({ row }) => {
+      const slug = row.getValue("slug") as string;
       return (
         <div className="flex space-x-2">
-          <TruncatedText
-            text={row.getValue("title")}
-            maxWidth="max-w-[200px] md:max-w-[300px] lg:max-w-[400px]"
-          />
+          <Link href={`/blog-posts/${slug}`} className="hover:underline">
+            <TruncatedText
+              text={row.getValue("title")}
+              maxWidth="max-w-[200px] md:max-w-[300px] lg:max-w-[400px]"
+            />
+          </Link>
         </div>
       );
     },
