@@ -11,11 +11,20 @@ import {
   getBlogPostBySlug,
   addTagToBlogPost,
   removeTagFromBlogPost,
+  updateBlogPostTitle,
 } from "@/server/actions/blog-posts";
 import Image from "next/image";
 import TimeAgo from "react-timeago";
 import { Input } from "@/app/_components/ui/input";
+import { Textarea } from "@/app/_components/ui/textarea";
 import { toast } from "sonner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/app/_components/ui/tooltip";
+import { cn } from "@/app/_lib/utils";
 
 interface BlogPost {
   id: string;
@@ -49,6 +58,12 @@ export default function BlogPostPage() {
   const [newTag, setNewTag] = useState("");
   const [isInputVisible, setIsInputVisible] = useState(false);
   const [tags, setTags] = useState<Record<string, TagItem>>({});
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [isEditingSlug, setIsEditingSlug] = useState(false);
+  const [editedTitle, setEditedTitle] = useState("");
+  const [editedSlug, setEditedSlug] = useState("");
+  const [isTitleTooLong, setIsTitleTooLong] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Keep track of tags that are being deleted
   const pendingDeletions = useRef<Set<string>>(new Set());
@@ -104,6 +119,15 @@ export default function BlogPostPage() {
       });
     }
   }, [post?.tags]);
+
+  // Initialize title and slug when post data is loaded
+  React.useEffect(() => {
+    if (post) {
+      setEditedTitle(post.title);
+      setEditedSlug(slug);
+      setIsTitleTooLong(post.title.length > 60);
+    }
+  }, [post, slug]);
 
   const addTagMutation = useMutation({
     mutationFn: async ({
@@ -240,6 +264,47 @@ export default function BlogPostPage() {
     },
   });
 
+  const updateTitleMutation = useMutation({
+    mutationFn: async ({
+      postId,
+      title,
+    }: {
+      postId: string;
+      title: string;
+    }) => {
+      const result = await updateBlogPostTitle(postId, title);
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      return result;
+    },
+    onSuccess: () => {
+      // Update the cache with the new title
+      queryClient.setQueryData(
+        ["blogPost", slug],
+        (oldData: BlogPostResponse | undefined) => {
+          if (!oldData?.post) return oldData;
+          return {
+            ...oldData,
+            post: {
+              ...oldData.post,
+              title: editedTitle,
+              updatedAt: new Date(),
+            },
+          };
+        }
+      );
+      setIsEditingTitle(false);
+      setIsSaving(false);
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update title"
+      );
+      setIsSaving(false);
+    },
+  });
+
   const handleAddTag = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTag.trim() || !post) return;
@@ -283,12 +348,43 @@ export default function BlogPostPage() {
     removeTagMutation.mutate({ postId: post.id, tagId, tagName });
   };
 
-  const hasUnsavedChanges = React.useMemo(() => {
+  const hasUnsavedTags = React.useMemo(() => {
     return (
       Object.values(tags).some((tag) => !tag.isSaved && !tag.isError) ||
       pendingTagMutations.current.size > 0
     );
   }, [tags, pendingTagMutations.current.size]);
+
+  const handleTitleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!post || editedTitle === post.title) {
+      setIsEditingTitle(false);
+      return;
+    }
+    setIsSaving(true);
+    updateTitleMutation.mutate({ postId: post.id, title: editedTitle });
+  };
+
+  const handleSlugSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // TODO: Implement slug update mutation
+    setIsEditingSlug(false);
+  };
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newTitle = e.target.value;
+    setEditedTitle(newTitle);
+
+    if (newTitle.length > 60 && !isTitleTooLong) {
+      setIsTitleTooLong(true);
+      toast.warning("Title is longer than recommended 60 characters", {
+        description: "Consider making it shorter for better readability",
+        duration: 4000,
+      });
+    } else if (newTitle.length <= 60 && isTitleTooLong) {
+      setIsTitleTooLong(false);
+    }
+  };
 
   if (error) {
     return (
@@ -340,26 +436,118 @@ export default function BlogPostPage() {
                   dateTime={post.updatedAt.toISOString()}
                   className="flex items-center gap-2"
                 >
-                  {hasUnsavedChanges ? (
-                    <div key="saving" className="flex items-center gap-2">
+                  {isSaving || hasUnsavedTags ? (
+                    <div className="flex items-center gap-2">
                       <span>Saving changes</span>
                       <Loader2 className="h-3 w-3 animate-spin" />
                     </div>
                   ) : (
-                    <div key="updated" className="flex items-center gap-1">
+                    <div className="flex items-center gap-1">
                       Updated{" "}
                       <TimeAgo
                         date={post.updatedAt}
                         key={post.updatedAt.toString()}
+                        formatter={(value, unit) => {
+                          if (unit === "second") return "just now";
+                          const plural = value !== 1 ? "s" : "";
+                          return `${value} ${unit}${plural} ago`;
+                        }}
                       />
                     </div>
                   )}
                 </time>
               </div>
 
-              <h1 className="text-5xl font-semibold tracking-tight">
-                {post.title}
-              </h1>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      onClick={() => setIsEditingTitle(true)}
+                      className="cursor-pointer inline-block w-full"
+                    >
+                      {isEditingTitle ? (
+                        <form onSubmit={handleTitleSubmit} className="m-0">
+                          <Textarea
+                            value={editedTitle}
+                            onChange={handleTitleChange}
+                            className={cn(
+                              "!text-5xl !font-semibold !tracking-tight !leading-tight !min-h-[1.2em] !py-0 !px-2 !-mx-2 !border-0 !outline-none !ring-0 !ring-offset-0 !shadow-none !focus:border-0 !focus:outline-none !focus:ring-0 !focus:ring-offset-0 !focus-visible:border-0 !focus-visible:outline-none !focus-visible:ring-0 !focus-visible:ring-offset-0 !bg-muted/50 !rounded !w-full !resize-none !overflow-hidden",
+                              isTitleTooLong && "!text-yellow-500"
+                            )}
+                            style={{ lineHeight: "1.2 !important" }}
+                            autoFocus
+                            onBlur={handleTitleSubmit}
+                            rows={1}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                handleTitleSubmit(e);
+                              }
+                            }}
+                          />
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {editedTitle.length}/60 characters
+                          </div>
+                        </form>
+                      ) : (
+                        <h1
+                          className={cn(
+                            "text-5xl font-semibold tracking-tight hover:bg-muted/50 px-2 py-1 -mx-2 rounded whitespace-pre-wrap",
+                            isTitleTooLong && "text-yellow-500"
+                          )}
+                        >
+                          {post.title}
+                        </h1>
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" align="start" sideOffset={4}>
+                    <p>Click to edit title</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <div className="text-sm text-muted-foreground flex items-center gap-2">
+                <span className="font-medium">URL:</span>
+                <code className="bg-muted rounded font-mono flex items-center">
+                  <span className="px-1.5 py-0.5 border-r border-border">
+                    {process.env.NEXT_PUBLIC_PRODUCT_BLOG_URL}/
+                  </span>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          onClick={() => setIsEditingSlug(true)}
+                          className="cursor-pointer px-1.5 py-0.5"
+                        >
+                          {isEditingSlug ? (
+                            <form
+                              onSubmit={handleSlugSubmit}
+                              className="inline"
+                            >
+                              <Input
+                                type="text"
+                                value={editedSlug}
+                                onChange={(e) => setEditedSlug(e.target.value)}
+                                className="h-auto py-0 px-0 w-auto border-none focus:ring-0 bg-transparent font-mono"
+                                autoFocus
+                                onBlur={handleSlugSubmit}
+                              />
+                            </form>
+                          ) : (
+                            <span className="hover:bg-muted/50 px-1 py-0.5 rounded">
+                              {slug}
+                            </span>
+                          )}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Click to edit URL slug</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </code>
+              </div>
 
               <div className="flex items-center gap-3">
                 <div className="relative h-12 w-12 overflow-hidden rounded-full">

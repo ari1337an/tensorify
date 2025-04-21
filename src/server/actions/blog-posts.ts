@@ -176,3 +176,26 @@ export async function removeTagFromBlogPost(postId: string, tagId: string) {
     return { error: "Failed to remove tag from blog post" };
   }
 }
+
+// Update blog post title
+export async function updateBlogPostTitle(postId: string, title: string) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return { error: "You must be logged in to update a blog post" };
+    }
+
+    const post = await db.blogPost.update({
+      where: { id: postId },
+      data: {
+        title,
+        updatedAt: new Date(), // Explicitly update the timestamp
+      },
+    });
+
+    return { success: true, post };
+  } catch (error) {
+    console.error("Error updating blog post title:", error);
+    return { error: "Failed to update blog post title" };
+  }
+}
