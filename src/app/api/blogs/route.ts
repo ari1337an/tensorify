@@ -25,9 +25,11 @@ interface BlogContent {
 export async function GET() {
   try {
     // Fetch only published blogs with selective fields
+    // Explicitly ensure deletedAt is null to exclude deleted blogs
     const blogs = await db.blogPost.findMany({
       where: {
         status: BlogPostStatus.PUBLISHED,
+        // Ensure deleted blogs are excluded
         deletedAt: null,
       },
       select: {
