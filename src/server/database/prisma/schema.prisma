@@ -21,7 +21,7 @@ model AdminAccount {
 
 enum BlogPostType {
   ANNOUNCEMENT // Product launches, company updates
-  ARTICLE // Educational, SEO-driven content
+  ARTICLE // Educational, SEO-driven content for growth
   CUSTOMER_STORY // Case studies, user success stories
   COMPANY_NEWS // Funding, hiring, partnerships
   ENGINEERING_BLOG // Deep tech dives, infra, dev logs
