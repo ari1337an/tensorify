@@ -1,27 +1,27 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import adminEmails from "./admin-emails.json";
 
-const isPublicRoute = createRouteMatcher(["/api/public(.*)", "/sign-in(.*)"]);
+const isPublicRoute = createRouteMatcher(["/api/blogs(.*)", "/sign-in(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req)) {
     await auth.protect();
-  }
 
-  const { sessionClaims } = await auth();
-  const email = sessionClaims?.email;
+    const { sessionClaims } = await auth();
+    const email = sessionClaims?.email;
 
-  if (email) {
-    const isAdmin = adminEmails.includes(email as string);
-    if (!isAdmin) {
+    if (email) {
+      const isAdmin = adminEmails.includes(email as string);
+      if (!isAdmin) {
+        await auth.protect(() => {
+          return false;
+        });
+      }
+    } else {
       await auth.protect(() => {
         return false;
       });
     }
-  } else {
-    await auth.protect(() => {
-      return false;
-    });
   }
 
   // if (sessionClaims?.email) {
