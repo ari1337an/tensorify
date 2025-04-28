@@ -15,6 +15,7 @@ import {
 } from "@/server/actions/blog-posts";
 import { useTheme } from "next-themes";
 import "./editor-style.css";
+import uploadFile from "./upload-file";
 
 // Use BlockNote's Block type or our fallback if needed
 type Block = BlockNoteBlock;
@@ -71,8 +72,8 @@ export default function Editor() {
 
   // Set up the editor with initial content
   const editor = useCreateBlockNote({
-    trailingBlock: false,
     codeBlock,
+    uploadFile: uploadFile,
     initialContent: post?.content?.blocks || [
       {
         type: "paragraph",
