@@ -8,15 +8,14 @@ datasource db {
 }
 
 model AdminAccount {
-  id          String       @id @default(uuid())
+  id          String     @id @default(uuid())
   name        String
-  email       String       @unique
+  email       String     @unique
   picture     String?
   profileLink String?
   designation String?
-  type        BlogPostType @default(ARTICLE)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
   BlogPost    BlogPost[]
 }
 
@@ -35,7 +34,7 @@ enum BlogPostType {
 
 model BlogPost {
   id        String         @id @default(uuid())
-  type      BlogPostType
+  type      BlogPostType   @default(ARTICLE)
   title     String
   slug      String         @unique
   authorId  String
