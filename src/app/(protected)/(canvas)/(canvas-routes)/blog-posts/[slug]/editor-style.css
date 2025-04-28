@@ -2,8 +2,8 @@
 .bn-container[data-color-scheme] {
   --bn-colors-editor-text: var(--color-foreground);
   --bn-colors-editor-background: var(--color-background);
-  --bn-colors-menu-text: var(--color-primary-foreground);
-  --bn-colors-menu-background: var(--color-primary);
+  --bn-colors-menu-text: var(--color-card-foreground);
+  --bn-colors-menu-background: var(--color-card);
   --bn-colors-tooltip-text: var(--color-popover-foreground);
   --bn-colors-tooltip-background: var(--color-popover);
   --bn-colors-hovered-text: var(--color-accent-foreground);
@@ -14,7 +14,7 @@
   --bn-colors-disabled-background: var(--color-muted);
   --bn-colors-shadow: var(--color-ring);
   --bn-colors-border: var(--color-border);
-  --bn-colors-side-menu: var(--color-sidebar);
+  --bn-colors-side-menu: var(--color-primary);
   --bn-color-highlight-colors: var(--color-primary-foreground);
   --bn-border-radius: var(--radius-sm);
   --bn-font-family: var(--font-inter);
@@ -35,7 +35,7 @@
   --bn-colors-disabled-text: var(--color-muted-foreground);
   --bn-colors-disabled-background: var(--color-muted);
   --bn-colors-shadow: var(--color-ring);
-  --bn-colors-border: var(--color-neutral-50);
+  --bn-colors-border: var(--color-border);
   --bn-colors-side-menu: var(--color-primary);
   --bn-color-highlight-colors: var(--color-primary-foreground);
   --bn-border-radius: var(--radius-sm);

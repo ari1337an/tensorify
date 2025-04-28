@@ -584,8 +584,8 @@ export default function BlogPostPage() {
         </div>
       ) : post ? (
         <ScrollArea className="flex-1 pr-4 -mr-4">
-          <article className="max-w-4xl mx-auto space-y-8 pb-12">
-            <div className="space-y-6">
+          <article className="max-w-4xl mx-auto pb-12">
+            <div className="space-y-6 mb-8">
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <span className="font-medium">Article</span>
@@ -873,7 +873,10 @@ export default function BlogPostPage() {
                 </div>
               </div>
             </div>
-            <Editor />
+            {/* Add a wrapper with negative margin to align editor text */}
+            <div className="-ml-12">
+              <Editor />
+            </div>
           </article>
         </ScrollArea>
       ) : null}
