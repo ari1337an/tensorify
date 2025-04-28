@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { BlogPostStatus, BlogPostType } from "@prisma/client";
 import { auth } from "@clerk/nextjs/server";
+import { Block } from "@blocknote/core";
 
 // Schema for creating a new blog post
 const createBlogPostSchema = z.object({
@@ -264,7 +265,7 @@ export async function searchTags(query: string) {
 }
 
 // Update blog post content
-export async function updateBlogPostContent(postId: string, content: any) {
+export async function updateBlogPostContent(postId: string, content: { blocks: Block[]; }) {
   try {
     const { userId } = await auth();
     if (!userId) {
