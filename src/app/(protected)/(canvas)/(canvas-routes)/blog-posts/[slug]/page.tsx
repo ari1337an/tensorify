@@ -21,6 +21,7 @@ import { Input } from "@/app/_components/ui/input";
 import { Textarea } from "@/app/_components/ui/textarea";
 import { toast } from "sonner";
 import { cn } from "@/app/_lib/utils";
+import { Editor } from "./dynamic-editor";
 
 interface BlogPost {
   id: string;
@@ -846,14 +847,7 @@ export default function BlogPostPage() {
             </div>
           </div>
 
-          <div className="prose dark:prose-invert max-w-none">
-            {/* This is a placeholder for the blog post content editor */}
-            <p>Blog post content editor will be implemented here.</p>
-            <p>
-              This page will allow editing the blog post content, tags, and
-              other metadata.
-            </p>
-          </div>
+          <Editor />
         </article>
       ) : null}
     </div>
