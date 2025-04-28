@@ -45,6 +45,7 @@ model BlogPost {
   deletedAt DateTime?
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
+  seo       BlogSeo?
 }
 
 model BlogTag {
@@ -58,4 +59,39 @@ model BlogTag {
 enum BlogPostStatus {
   DRAFT
   PUBLISHED
+}
+
+model BlogSeo {
+  id                       String   @id @default(uuid())
+  metaTitle                String?
+  metaDescription          String?
+  metaRobots               String?  @default("index, follow")
+  keywords                 String?
+  canonicalUrl             String?
+  ogTitle                  String?
+  ogDescription            String?
+  ogImage                  String?
+  ogUrl                    String?
+  ogType                   String?  @default("article")
+  ogSiteName               String?
+  twitterCardType          String?  @default("summary_large_image")
+  twitterTitle             String?
+  twitterDescription       String?
+  twitterImage             String?
+  twitterSite              String?
+  blogpostingHeadline      String?
+  blogpostingDescription   String?
+  blogpostingAuthorName    String?
+  blogpostingAuthorUrl     String?
+  blogpostingPublisherName String?
+  blogpostingPublisherLogo String?
+  blogpostingKeywords      String?
+  blogpostingFeaturedImage String?
+  mainEntityOfPage         String?
+  favicon                  String?
+  language                 String?  @default("en")
+  blogPost                 BlogPost @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  blogPostId               String   @unique
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 }

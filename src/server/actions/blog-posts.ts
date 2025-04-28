@@ -101,6 +101,7 @@ export async function getBlogPostBySlug(slug: string) {
       include: {
         author: true,
         tags: true,
+        seo: true,
       },
     });
 
@@ -265,7 +266,10 @@ export async function searchTags(query: string) {
 }
 
 // Update blog post content
-export async function updateBlogPostContent(postId: string, content: { blocks: Block[]; }) {
+export async function updateBlogPostContent(
+  postId: string,
+  content: { blocks: Block[] }
+) {
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -284,5 +288,177 @@ export async function updateBlogPostContent(postId: string, content: { blocks: B
   } catch (error) {
     console.error("Error updating blog post content:", error);
     return { error: "Failed to update blog post content" };
+  }
+}
+
+// Define interface for SEO data
+interface BlogSeoData {
+  // Basic Metadata
+  metaTitle?: string;
+  metaDescription?: string;
+  metaRobots?: string;
+  keywords?: string;
+  canonicalUrl?: string;
+  // Open Graph
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  ogUrl?: string;
+  ogType?: string;
+  ogSiteName?: string;
+  // Twitter Card
+  twitterCardType?: string;
+  twitterTitle?: string;
+  twitterDescription?: string;
+  twitterImage?: string;
+  twitterSite?: string;
+  // Structured Data
+  blogpostingHeadline?: string;
+  blogpostingDescription?: string;
+  blogpostingAuthorName?: string;
+  blogpostingAuthorUrl?: string;
+  blogpostingPublisherName?: string;
+  blogpostingPublisherLogo?: string;
+  blogpostingKeywords?: string;
+  blogpostingFeaturedImage?: string;
+  mainEntityOfPage?: string;
+  // Additional
+  favicon?: string;
+  language?: string;
+}
+
+// Update blog post SEO
+export async function updateBlogPostSeo(postId: string, seoData: BlogSeoData) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return { error: "You must be logged in to update SEO settings" };
+    }
+
+    // Check if SEO record already exists
+    const existingSeo = await db.blogSeo.findUnique({
+      where: { blogPostId: postId },
+    });
+
+    let seo;
+
+    if (existingSeo) {
+      // Update existing SEO record
+      seo = await db.blogSeo.update({
+        where: { id: existingSeo.id },
+        data: {
+          // Basic Metadata
+          metaTitle: seoData.metaTitle,
+          metaDescription: seoData.metaDescription,
+          metaRobots: seoData.metaRobots,
+          keywords: seoData.keywords,
+          canonicalUrl: seoData.canonicalUrl,
+          // Open Graph
+          ogTitle: seoData.ogTitle,
+          ogDescription: seoData.ogDescription,
+          ogImage: seoData.ogImage,
+          ogUrl: seoData.ogUrl,
+          ogType: seoData.ogType,
+          ogSiteName: seoData.ogSiteName,
+          // Twitter Card
+          twitterCardType: seoData.twitterCardType,
+          twitterTitle: seoData.twitterTitle,
+          twitterDescription: seoData.twitterDescription,
+          twitterImage: seoData.twitterImage,
+          twitterSite: seoData.twitterSite,
+          // Structured Data
+          blogpostingHeadline: seoData.blogpostingHeadline,
+          blogpostingDescription: seoData.blogpostingDescription,
+          blogpostingAuthorName: seoData.blogpostingAuthorName,
+          blogpostingAuthorUrl: seoData.blogpostingAuthorUrl,
+          blogpostingPublisherName: seoData.blogpostingPublisherName,
+          blogpostingPublisherLogo: seoData.blogpostingPublisherLogo,
+          blogpostingKeywords: seoData.blogpostingKeywords,
+          blogpostingFeaturedImage: seoData.blogpostingFeaturedImage,
+          mainEntityOfPage: seoData.mainEntityOfPage,
+          // Additional
+          favicon: seoData.favicon,
+          language: seoData.language,
+          updatedAt: new Date(),
+        },
+      });
+    } else {
+      // Create new SEO record
+      seo = await db.blogSeo.create({
+        data: {
+          // Basic Metadata
+          metaTitle: seoData.metaTitle,
+          metaDescription: seoData.metaDescription,
+          metaRobots: seoData.metaRobots,
+          keywords: seoData.keywords,
+          canonicalUrl: seoData.canonicalUrl,
+          // Open Graph
+          ogTitle: seoData.ogTitle,
+          ogDescription: seoData.ogDescription,
+          ogImage: seoData.ogImage,
+          ogUrl: seoData.ogUrl,
+          ogType: seoData.ogType,
+          ogSiteName: seoData.ogSiteName,
+          // Twitter Card
+          twitterCardType: seoData.twitterCardType,
+          twitterTitle: seoData.twitterTitle,
+          twitterDescription: seoData.twitterDescription,
+          twitterImage: seoData.twitterImage,
+          twitterSite: seoData.twitterSite,
+          // Structured Data
+          blogpostingHeadline: seoData.blogpostingHeadline,
+          blogpostingDescription: seoData.blogpostingDescription,
+          blogpostingAuthorName: seoData.blogpostingAuthorName,
+          blogpostingAuthorUrl: seoData.blogpostingAuthorUrl,
+          blogpostingPublisherName: seoData.blogpostingPublisherName,
+          blogpostingPublisherLogo: seoData.blogpostingPublisherLogo,
+          blogpostingKeywords: seoData.blogpostingKeywords,
+          blogpostingFeaturedImage: seoData.blogpostingFeaturedImage,
+          mainEntityOfPage: seoData.mainEntityOfPage,
+          // Additional
+          favicon: seoData.favicon,
+          language: seoData.language,
+          // Relation
+          blogPostId: postId,
+        },
+      });
+    }
+
+    // Also update the blog post's updatedAt timestamp
+    await db.blogPost.update({
+      where: { id: postId },
+      data: { updatedAt: new Date() },
+    });
+
+    return { success: true, seo };
+  } catch (error) {
+    console.error("Error updating blog post SEO:", error);
+    return { error: "Failed to update SEO settings" };
+  }
+}
+
+// Update blog post publish status
+export async function updateBlogPostPublishStatus(
+  postId: string,
+  status: "DRAFT" | "PUBLISHED"
+) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return { error: "You must be logged in to update a blog post status" };
+    }
+
+    const post = await db.blogPost.update({
+      where: { id: postId },
+      data: {
+        status,
+        updatedAt: new Date(),
+      },
+    });
+
+    return { success: true, post };
+  } catch (error) {
+    console.error("Error updating blog post publish status:", error);
+    return { error: "Failed to update blog post status" };
   }
 }
