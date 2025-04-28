@@ -262,3 +262,26 @@ export async function searchTags(query: string) {
     return { error: "Failed to search tags" };
   }
 }
+
+// Update blog post content
+export async function updateBlogPostContent(postId: string, content: any) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return { error: "You must be logged in to update blog post content" };
+    }
+
+    const post = await db.blogPost.update({
+      where: { id: postId },
+      data: {
+        content,
+        updatedAt: new Date(),
+      },
+    });
+
+    return { success: true, post };
+  } catch (error) {
+    console.error("Error updating blog post content:", error);
+    return { error: "Failed to update blog post content" };
+  }
+}

@@ -22,6 +22,7 @@ import { Textarea } from "@/app/_components/ui/textarea";
 import { toast } from "sonner";
 import { cn } from "@/app/_lib/utils";
 import { Editor } from "./dynamic-editor";
+import { ScrollArea } from "@/app/_components/ui/scroll-area";
 
 interface BlogPost {
   id: string;
@@ -519,6 +520,29 @@ export default function BlogPostPage() {
     }
   };
 
+  // Add an effect to check whether editor content is being saved
+  React.useEffect(() => {
+    const checkEditorSavingState = () => {
+      const editorSaving = window.editorContentSavingState?.isSaving || false;
+      if (editorSaving && !isSaving) {
+        setIsSaving(true);
+      } else if (!editorSaving && isSaving && !updateTitleMutation.isPending) {
+        // Only turn off saving if title mutation is not in progress
+        setIsSaving(false);
+      }
+    };
+
+    // Check initially
+    checkEditorSavingState();
+
+    // Set up an interval to check regularly
+    const interval = setInterval(checkEditorSavingState, 100);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [isSaving, updateTitleMutation.isPending]);
+
   if (error) {
     return (
       <div className="p-6">
@@ -542,7 +566,7 @@ export default function BlogPostPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 h-screen flex flex-col">
       <div className="flex items-center mb-6">
         <Button variant="ghost" asChild className="mr-4">
           <Link href="/blog-posts">
@@ -559,296 +583,299 @@ export default function BlogPostPage() {
           <Skeleton className="h-96 w-full" />
         </div>
       ) : post ? (
-        <article className="max-w-4xl mx-auto space-y-8">
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <span className="font-medium">Article</span>
-                <span>•</span>
-                <time
-                  dateTime={post.updatedAt.toISOString()}
-                  className="flex items-center gap-2"
-                >
-                  {isSaving || hasUnsavedTags ? (
-                    <div className="flex items-center gap-2">
-                      <span>Saving changes</span>
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1">
-                      Updated{" "}
-                      <TimeAgo
-                        date={post.updatedAt}
-                        key={post.updatedAt.toString()}
-                        formatter={(value, unit) => {
-                          if (unit === "second") return "just now";
-                          const plural = value !== 1 ? "s" : "";
-                          return `${value} ${unit}${plural} ago`;
-                        }}
-                      />
-                    </div>
-                  )}
-                </time>
-              </div>
-
-              <div
-                onClick={() => setIsEditingTitle(true)}
-                className="cursor-pointer inline-block w-full"
-              >
-                {isEditingTitle ? (
-                  <form onSubmit={handleTitleSubmit} className="m-0">
-                    <Textarea
-                      value={editedTitle}
-                      onChange={handleTitleChange}
-                      className={cn(
-                        "!text-5xl !font-semibold !tracking-tight !min-h-[1.2em] !py-0 !px-2 !-mx-2 !border-0 !outline-none !ring-0 !ring-offset-0 !shadow-none !focus:border-0 !focus:outline-none !focus:ring-0 !focus:ring-offset-0 !focus-visible:border-0 !focus-visible:outline-none !focus-visible:ring-0 !focus-visible:ring-offset-0 !bg-muted/50 !rounded !w-full !resize-none !overflow-hidden",
-                        isTitleTooLong && "!text-yellow-500"
-                      )}
-                      style={{ lineHeight: "1.2 !important" }}
-                      autoFocus
-                      onBlur={handleTitleSubmit}
-                      rows={1}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          handleTitleSubmit(e);
-                        }
-                      }}
-                    />
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {editedTitle.length}/60 characters
-                    </div>
-                  </form>
-                ) : (
-                  <h1
-                    className={cn(
-                      "text-5xl font-semibold tracking-tight hover:bg-muted/50 px-2 py-1 -mx-2 rounded whitespace-pre-wrap",
-                      isTitleTooLong && "text-yellow-500"
-                    )}
+        <ScrollArea className="flex-1 pr-4 -mr-4">
+          <article className="max-w-4xl mx-auto space-y-8 pb-12">
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <span className="font-medium">Article</span>
+                  <span>•</span>
+                  <time
+                    dateTime={post.updatedAt.toISOString()}
+                    className="flex items-center gap-2"
                   >
-                    {post.title}
-                  </h1>
-                )}
-              </div>
-
-              <div className="text-sm text-muted-foreground flex items-center gap-2">
-                <div className="flex-1">
-                  <div className="flex items-center font-mono">
-                    <span className="text-muted-foreground/80">
-                      {process.env.NEXT_PUBLIC_PRODUCT_BLOG_URL}/
-                    </span>
-                    <div className="flex-1">
-                      {isEditingSlug ? (
-                        <form onSubmit={handleSlugSubmit} className="w-full">
-                          <div className="flex items-center w-full">
-                            <Input
-                              type="text"
-                              value={editedSlug}
-                              onChange={handleSlugChange}
-                              className={cn(
-                                "py-0 px-0 border-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 !bg-muted/50 !rounded-0 font-mono w-full outline-none !shadow-none",
-                                !isSlugValid && "text-red-500",
-                                isSlugTooLong && "text-yellow-500"
-                              )}
-                              style={{ boxShadow: "none" }}
-                              autoFocus
-                              onBlur={handleSlugSubmit}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  handleSlugSubmit(e);
-                                }
-                              }}
-                            />
-                            {isSlugSaving && (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin ml-2" />
-                            )}
-                          </div>
-                        </form>
-                      ) : (
-                        <div
-                          onClick={() => setIsEditingSlug(true)}
-                          className="cursor-pointer text-foreground hover:bg-muted/50 px-2 py-1 -mx-2 rounded whitespace-pre-wrap"
-                        >
-                          {slug}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  {isEditingSlug && (
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {slugStats.words}{" "}
-                      {slugStats.words === 1 ? "word" : "words"} /{" "}
-                      {slugStats.chars}{" "}
-                      {slugStats.chars === 1 ? "char" : "chars"}
-                      <span className="text-muted-foreground/60 ml-1">
-                        (Ideal: 3-6 words, under 60 chars)
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="relative h-12 w-12 overflow-hidden rounded-full">
-                  <Image
-                    src={
-                      post.author.picture ||
-                      "https://avatars.githubusercontent.com/u/124599?v=4"
-                    }
-                    alt={post.author.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  {post.author.profileLink ? (
-                    <Link
-                      href={post.author.profileLink}
-                      className="font-medium hover:underline"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {post.author.name}
-                    </Link>
-                  ) : (
-                    <span className="font-medium">{post.author.name}</span>
-                  )}
-                  <span className="text-sm text-muted-foreground">
-                    {post.author.designation || "Author"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Redesigned tag section */}
-              <div className="flex flex-wrap items-center gap-2">
-                {Object.values(tags).map((tag) => (
-                  <div
-                    key={tag.tag}
-                    className={`group flex items-center gap-1 bg-primary ${
-                      tag.isError ? "bg-red-500/20" : "bg-opacity-20"
-                    } px-3 py-1.5 rounded-md transition-all duration-200`}
-                  >
-                    <span className="text-sm text-primary-foreground">
-                      {tag.tag}
-                    </span>
-                    {!tag.isSaved ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin text-primary-foreground/60" />
+                    {isSaving || hasUnsavedTags ? (
+                      <div className="flex items-center gap-2">
+                        <span>Saving changes</span>
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      </div>
                     ) : (
-                      <button
-                        onClick={() => handleRemoveTag(tag.id || "", tag.tag)}
-                        className="transition-opacity duration-200"
-                      >
-                        <X className="h-3.5 w-3.5 text-primary-foreground/40 hover:text-primary-foreground" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        Updated{" "}
+                        <TimeAgo
+                          date={post.updatedAt}
+                          key={post.updatedAt.toString()}
+                          formatter={(value, unit) => {
+                            if (unit === "second") return "just now";
+                            const plural = value !== 1 ? "s" : "";
+                            return `${value} ${unit}${plural} ago`;
+                          }}
+                        />
+                      </div>
                     )}
-                  </div>
-                ))}
+                  </time>
+                </div>
 
-                {/* Add tag input */}
-                {!isInputVisible ? (
-                  <button
-                    onClick={() => {
-                      setIsInputVisible(true);
-                      // Set timeout to ensure it opens after render
-                      setTimeout(() => {
-                        setIsTagInputOpen(true);
-                      }, 50);
-                    }}
-                    className="flex items-center gap-1 bg-secondary bg-opacity-20 hover:bg-primary hover:bg-opacity-30 px-3 py-1.5 rounded-md text-sm text-secondary-foreground hover:text-primary-foreground transition-colors duration-200"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    Add Tag
-                  </button>
-                ) : (
-                  <div className="relative">
-                    <div className="flex items-center">
-                      <Input
-                        type="text"
-                        value={newTag}
-                        onChange={(e) => {
-                          handleTagSearch(e.target.value);
-                          // Make sure popover stays open
-                          setIsTagInputOpen(true);
-                        }}
-                        placeholder="Search or create tag..."
-                        className="h-8 min-w-[200px] text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-0"
+                <div
+                  onClick={() => setIsEditingTitle(true)}
+                  className="cursor-pointer inline-block w-full"
+                >
+                  {isEditingTitle ? (
+                    <form onSubmit={handleTitleSubmit} className="m-0">
+                      <Textarea
+                        value={editedTitle}
+                        onChange={handleTitleChange}
+                        className={cn(
+                          "!text-5xl !font-semibold !tracking-tight !min-h-[1.2em] !py-0 !px-2 !-mx-2 !border-0 !outline-none !ring-0 !ring-offset-0 !shadow-none !focus:border-0 !focus:outline-none !focus:ring-0 !focus:ring-offset-0 !focus-visible:border-0 !focus-visible:outline-none !focus-visible:ring-0 !focus-visible:ring-offset-0 !bg-muted/50 !rounded !w-full !resize-none !overflow-hidden",
+                          isTitleTooLong && "!text-yellow-500"
+                        )}
+                        style={{ lineHeight: "1.2 !important" }}
                         autoFocus
-                        onFocus={() => setIsTagInputOpen(true)}
-                        onBlur={(e) => {
-                          // Don't close if relatedTarget is within the popover
-                          if (
-                            !e.relatedTarget ||
-                            !e.relatedTarget.closest(".tag-popover-content")
-                          ) {
-                            if (!newTag.trim()) {
-                              setIsTagInputOpen(false);
-                              setIsInputVisible(false);
-                            }
-                          }
-                        }}
+                        onBlur={handleTitleSubmit}
+                        rows={1}
                         onKeyDown={(e) => {
-                          if (e.key === "Enter" && newTag.trim()) {
+                          if (e.key === "Enter" && !e.shiftKey) {
                             e.preventDefault();
-                            handleAddTag(newTag);
-                          } else if (e.key === "Escape") {
-                            e.preventDefault();
-                            setIsTagInputOpen(false);
-                            setIsInputVisible(false);
-                            setNewTag("");
+                            handleTitleSubmit(e);
                           }
                         }}
                       />
-                    </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {editedTitle.length}/60 characters
+                      </div>
+                    </form>
+                  ) : (
+                    <h1
+                      className={cn(
+                        "text-5xl font-semibold tracking-tight hover:bg-muted/50 px-2 py-1 -mx-2 rounded whitespace-pre-wrap",
+                        isTitleTooLong && "text-yellow-500"
+                      )}
+                    >
+                      {post.title}
+                    </h1>
+                  )}
+                </div>
 
-                    {isTagInputOpen && (
-                      <div className="absolute top-full left-0 mt-1 w-[200px] z-50 bg-background ring-2 ring-secondary border border-border  rounded-md shadow-md tag-popover-content">
-                        <div className="max-h-[200px] overflow-auto">
-                          {isSearching ? (
-                            <div className="flex items-center justify-center py-6">
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            </div>
-                          ) : tagSearchResults.length > 0 ? (
-                            <div className="space-y-1">
-                              {tagSearchResults.map((tag) => (
-                                <button
-                                  key={tag.id}
-                                  className="flex items-center w-full text-left px-2 py-1.5 text-sm hover:bg-muted dark:hover:bg-gray-800 rounded-sm"
-                                  onClick={() => handleTagSelect(tag.tag)}
-                                >
-                                  {tag.tag}
-                                </button>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="py-1 px-2">
-                              {newTag.trim() ? (
-                                <button
-                                  type="button"
-                                  onClick={() => handleTagSelect(newTag.trim())}
-                                  className="flex items-center gap-2 text-sm w-full px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-sm"
-                                >
-                                  <Plus className="h-4 w-4" />
-                                  <span>Create tag</span>
-                                </button>
-                              ) : (
-                                <span className="text-sm text-muted-foreground">
-                                  Type to search tags
-                                </span>
+                <div className="text-sm text-muted-foreground flex items-center gap-2">
+                  <div className="flex-1">
+                    <div className="flex items-center font-mono">
+                      <span className="text-muted-foreground/80">
+                        {process.env.NEXT_PUBLIC_PRODUCT_BLOG_URL}/
+                      </span>
+                      <div className="flex-1">
+                        {isEditingSlug ? (
+                          <form onSubmit={handleSlugSubmit} className="w-full">
+                            <div className="flex items-center w-full">
+                              <Input
+                                type="text"
+                                value={editedSlug}
+                                onChange={handleSlugChange}
+                                className={cn(
+                                  "py-0 px-0 border-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 !bg-muted/50 !rounded-0 font-mono w-full outline-none !shadow-none",
+                                  !isSlugValid && "text-red-500",
+                                  isSlugTooLong && "text-yellow-500"
+                                )}
+                                style={{ boxShadow: "none" }}
+                                autoFocus
+                                onBlur={handleSlugSubmit}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    handleSlugSubmit(e);
+                                  }
+                                }}
+                              />
+                              {isSlugSaving && (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin ml-2" />
                               )}
                             </div>
-                          )}
-                        </div>
+                          </form>
+                        ) : (
+                          <div
+                            onClick={() => setIsEditingSlug(true)}
+                            className="cursor-pointer text-foreground hover:bg-muted/50 px-2 py-1 -mx-2 rounded whitespace-pre-wrap"
+                          >
+                            {slug}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {isEditingSlug && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {slugStats.words}{" "}
+                        {slugStats.words === 1 ? "word" : "words"} /{" "}
+                        {slugStats.chars}{" "}
+                        {slugStats.chars === 1 ? "char" : "chars"}
+                        <span className="text-muted-foreground/60 ml-1">
+                          (Ideal: 3-6 words, under 60 chars)
+                        </span>
                       </div>
                     )}
                   </div>
-                )}
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="relative h-12 w-12 overflow-hidden rounded-full">
+                    <Image
+                      src={
+                        post.author.picture ||
+                        "https://avatars.githubusercontent.com/u/124599?v=4"
+                      }
+                      alt={post.author.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    {post.author.profileLink ? (
+                      <Link
+                        href={post.author.profileLink}
+                        className="font-medium hover:underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {post.author.name}
+                      </Link>
+                    ) : (
+                      <span className="font-medium">{post.author.name}</span>
+                    )}
+                    <span className="text-sm text-muted-foreground">
+                      {post.author.designation || "Author"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Redesigned tag section */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {Object.values(tags).map((tag) => (
+                    <div
+                      key={tag.tag}
+                      className={`group flex items-center gap-1 bg-primary ${
+                        tag.isError ? "bg-red-500/20" : "bg-opacity-20"
+                      } px-3 py-1.5 rounded-md transition-all duration-200`}
+                    >
+                      <span className="text-sm text-primary-foreground">
+                        {tag.tag}
+                      </span>
+                      {!tag.isSaved ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-primary-foreground/60" />
+                      ) : (
+                        <button
+                          onClick={() => handleRemoveTag(tag.id || "", tag.tag)}
+                          className="transition-opacity duration-200"
+                        >
+                          <X className="h-3.5 w-3.5 text-primary-foreground/40 hover:text-primary-foreground" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Add tag input */}
+                  {!isInputVisible ? (
+                    <button
+                      onClick={() => {
+                        setIsInputVisible(true);
+                        // Set timeout to ensure it opens after render
+                        setTimeout(() => {
+                          setIsTagInputOpen(true);
+                        }, 50);
+                      }}
+                      className="flex items-center gap-1 bg-secondary bg-opacity-20 hover:bg-primary hover:bg-opacity-30 px-3 py-1.5 rounded-md text-sm text-secondary-foreground hover:text-primary-foreground transition-colors duration-200"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Add Tag
+                    </button>
+                  ) : (
+                    <div className="relative">
+                      <div className="flex items-center">
+                        <Input
+                          type="text"
+                          value={newTag}
+                          onChange={(e) => {
+                            handleTagSearch(e.target.value);
+                            // Make sure popover stays open
+                            setIsTagInputOpen(true);
+                          }}
+                          placeholder="Search or create tag..."
+                          className="h-8 min-w-[200px] text-sm bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-0"
+                          autoFocus
+                          onFocus={() => setIsTagInputOpen(true)}
+                          onBlur={(e) => {
+                            // Don't close if relatedTarget is within the popover
+                            if (
+                              !e.relatedTarget ||
+                              !e.relatedTarget.closest(".tag-popover-content")
+                            ) {
+                              if (!newTag.trim()) {
+                                setIsTagInputOpen(false);
+                                setIsInputVisible(false);
+                              }
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && newTag.trim()) {
+                              e.preventDefault();
+                              handleAddTag(newTag);
+                            } else if (e.key === "Escape") {
+                              e.preventDefault();
+                              setIsTagInputOpen(false);
+                              setIsInputVisible(false);
+                              setNewTag("");
+                            }
+                          }}
+                        />
+                      </div>
+
+                      {isTagInputOpen && (
+                        <div className="absolute top-full left-0 mt-1 w-[200px] z-50 bg-background ring-2 ring-secondary border border-border  rounded-md shadow-md tag-popover-content">
+                          <div className="max-h-[200px] overflow-auto">
+                            {isSearching ? (
+                              <div className="flex items-center justify-center py-6">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              </div>
+                            ) : tagSearchResults.length > 0 ? (
+                              <div className="space-y-1">
+                                {tagSearchResults.map((tag) => (
+                                  <button
+                                    key={tag.id}
+                                    className="flex items-center w-full text-left px-2 py-1.5 text-sm hover:bg-muted dark:hover:bg-gray-800 rounded-sm"
+                                    onClick={() => handleTagSelect(tag.tag)}
+                                  >
+                                    {tag.tag}
+                                  </button>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="py-1 px-2">
+                                {newTag.trim() ? (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleTagSelect(newTag.trim())
+                                    }
+                                    className="flex items-center gap-2 text-sm w-full px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-sm"
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                    <span>Create tag</span>
+                                  </button>
+                                ) : (
+                                  <span className="text-sm text-muted-foreground">
+                                    Type to search tags
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-
-          <Editor />
-        </article>
+            <Editor />
+          </article>
+        </ScrollArea>
       ) : null}
     </div>
   );
