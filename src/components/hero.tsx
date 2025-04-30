@@ -5,52 +5,52 @@ import { Badge } from "./ui/badge";
 import { ArrowRight, Clock, Code, Zap } from "lucide-react";
 import { useNewsletterSignup } from "@/hooks/use-newsletter-signup";
 import { InteractiveFlow } from "./interactive-flow";
-import { useRef, useEffect, useState } from "react";
+// import { useRef, useEffect, useState } from "react";
 
 export function Hero() {
   const { openNewsletterSignup } = useNewsletterSignup();
-  const gradientRef = useRef<HTMLDivElement>(null);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  // const gradientRef = useRef<HTMLDivElement>(null);
+  // const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   
-  // Effect for dynamic gradient animation
-  useEffect(() => {
-    if (!gradientRef.current) return;
+  // // Effect for dynamic gradient animation
+  // useEffect(() => {
+  //   if (!gradientRef.current) return;
     
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!gradientRef.current) return;
+  //   const handleMouseMove = (e: MouseEvent) => {
+  //     if (!gradientRef.current) return;
       
-      const { clientX, clientY } = e;
-      const x = Math.round((clientX / window.innerWidth) * 100);
-      const y = Math.round((clientY / window.innerHeight) * 100);
+  //     const { clientX, clientY } = e;
+  //     const x = Math.round((clientX / window.innerWidth) * 100);
+  //     const y = Math.round((clientY / window.innerHeight) * 100);
       
-      gradientRef.current.style.background = `radial-gradient(circle at ${x}% ${y}%, rgba(30,30,50,0.15), rgba(24,24,45,0.1), rgba(20,20,40,0.05))`;
+  //     gradientRef.current.style.background = `radial-gradient(circle at ${x}% ${y}%, rgba(30,30,50,0.15), rgba(24,24,45,0.1), rgba(20,20,40,0.05))`;
       
-      // Update mouse position for parallax effect
-      setMousePosition({
-        x: (clientX / window.innerWidth) * 2 - 1,
-        y: (clientY / window.innerHeight) * 2 - 1
-      });
-    };
+  //     // Update mouse position for parallax effect
+  //     setMousePosition({
+  //       x: (clientX / window.innerWidth) * 2 - 1,
+  //       y: (clientY / window.innerHeight) * 2 - 1
+  //     });
+  //   };
     
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+  //   window.addEventListener('mousemove', handleMouseMove);
+  //   return () => window.removeEventListener('mousemove', handleMouseMove);
+  // }, []);
 
-  const relX = mousePosition.x;
-  const relY = mousePosition.y;
+  // const relX = mousePosition.x;
+  // const relY = mousePosition.y;
 
   return (
     <section className="relative pt-32 pb-48 md:pt-40 md:pb-60 overflow-hidden">
-      {/* Dynamic background gradient overlay */}
+      {/* Dynamic background gradient overlay
       <div 
         ref={gradientRef}
-        className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_50%,rgba(30,30,50,0.15),rgba(24,24,45,0.1),rgba(20,20,40,0.05))]"
+        className="absolute inset-0 -z-10 bg-background"
       ></div>
       
       {/* Enhanced background elements */}
-      <div className="absolute inset-0 -z-10">
+      {/* <div className="absolute inset-0 -z-10">
         <div
-          className="absolute inset-0 bg-gradient-radial from-[#1E1E30]/20 to-transparent"
+          className="absolute inset-0 bg-background"
           style={{
             opacity: 0.4,
             transform: `translate(${relX * 20}px, ${relY * 20}px)`,
@@ -58,19 +58,19 @@ export function Hero() {
           }}
         />
         <div
-          className="absolute inset-0 bg-gradient-radial from-[#2A1E3D]/20 to-transparent"
+          className="absolute inset-0 bg-background"
           style={{
             opacity: 0.35,
             transform: `translate(${-relX * 25}px, ${-relY * 25}px)`,
             transition: 'transform 0.3s ease-out',
           }}
-        />
+        /> */}
         {/* Orbital gradient - keep static */}
-        <div className="absolute w-full h-full overflow-hidden">
+        {/* <div className="absolute w-full h-full overflow-hidden">
           <div className="absolute w-[150%] h-[150%] top-[-25%] left-[-25%] rounded-full bg-gradient-to-t from-[#1E1E30]/5 to-[#1E1E3D]/10 blur-3xl"></div>
-        </div>
+        </div> */}
         {/* Static particles instead of floating */}
-        <div className="absolute inset-0">
+        {/* <div className="absolute inset-0">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
@@ -84,9 +84,9 @@ export function Hero() {
             />
           ))}
         </div>
-      </div>
+      </div> */} 
       
-      {/* Decorative elements */}
+      {/* Decorative elements
       <div className="absolute inset-0 -z-10 mx-0 max-w-none overflow-hidden">
         <div className="absolute top-0 w-full h-[25rem] dark:[mask-image:linear-gradient(white,transparent)]">
           <div className="absolute inset-0 bg-gradient-to-r from-[#2A1E3D]/20 to-[#27274D]/20 [mask-image:radial-gradient(farthest-side_at_top,white,transparent)] dark:from-[#2A1E3D]/20 dark:to-[#27274D]/20">
@@ -98,12 +98,12 @@ export function Hero() {
             </svg>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Static aurora effects instead of animated */}
-      <div className="absolute top-20 left-[10%] w-[30rem] h-[30rem] rounded-full bg-[#2A1E3D]/8 mix-blend-multiply blur-[128px]"></div>
+      {/* <div className="absolute top-20 left-[10%] w-[30rem] h-[30rem] rounded-full bg-[#2A1E3D]/8 mix-blend-multiply blur-[128px]"></div>
       <div className="absolute top-40 right-[10%] w-[35rem] h-[35rem] rounded-full bg-[#1E2A3D]/8 mix-blend-multiply blur-[128px]"></div>
-      <div className="absolute bottom-20 left-[30%] w-[40rem] h-[40rem] rounded-full bg-[#1E1E30]/8 mix-blend-multiply blur-[128px]"></div>
+      <div className="absolute bottom-20 left-[30%] w-[40rem] h-[40rem] rounded-full bg-[#1E1E30]/8 mix-blend-multiply blur-[128px]"></div> */}
 
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="flex flex-col items-center gap-4 text-center">

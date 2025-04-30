@@ -1,124 +1,112 @@
-'use client';
+"use client";
 
-import * as React from "react";
-import { useState, useEffect } from "react";
+import Logo from "@/components/logo";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useNewsletterSignup } from "@/hooks/use-newsletter-signup";
-import { cn } from "@/lib/utils";
-import { Menu } from "lucide-react";
-import Image from "next/image";
+import { useState } from "react";
 
 export function Header() {
-  const { openNewsletterSignup } = useNewsletterSignup();
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const offset = window.scrollY;
-      setIsScrolled(offset > 50);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
   return (
-    <header
-      className={cn(
-        "fixed top-0 left-0 right-0 z-50 py-4 transition-all duration-300",
-        isScrolled ? "bg-background/80 backdrop-blur-md shadow-sm" : "bg-transparent"
-      )}
-    >
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-12">
-            <Link href="/" className="flex items-center gap-2">
-              <Image 
-                src="/tensorify-logo-only.svg" 
-                alt="Tensorify Logo" 
-                width={32} 
-                height={32} 
-                className="h-8 w-auto"
-              />
-              <span className="font-bold text-lg">Tensorify</span>
+    <>
+      <header className="fixed top-0 left-0 right-0 z-50 py-4 px-6 bg-background">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <Logo />
+          <nav className="hidden md:flex items-center space-x-8 text-muted-foreground">
+            <Link
+              href="/#features"
+              className="hover:text-primary transition-colors"
+            >
+              Features
+            </Link>
+            <Link
+              href="/#for-whom"
+              className="hover:text-primary transition-colors"
+            >
+              For Whom
+            </Link>
+            <Link
+              href="/#pricing"
+              className="hover:text-primary transition-colors"
+            >
+              Pricing
+            </Link>
+            <Link href="/blog" className="hover:text-primary transition-colors">
+              Blog
+            </Link>
+          </nav>
+          <div className="flex items-center space-x-4">
+            <Link href="/early-access">
+              <Button className="items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer hover:bg-primary/90 h-9 rounded-md px-3 bg-gradient-to-r from-[#A371D3] to-[#5E48BF] text-white hover:opacity-90 shadow-lg">
+                Get Early Access
+              </Button>
             </Link>
 
-            <nav className="hidden md:flex items-center gap-6">
-              <Link href="/#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                Features
-              </Link>
-              <Link href="/#for-whom" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                For Whom
-              </Link>
-              <Link href="/#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                Pricing
-              </Link>
-            </nav>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <Button
-              onClick={openNewsletterSignup}
-              className="hidden md:flex bg-gradient-to-r from-[#A371D3] to-[#5E48BF] text-white hover:opacity-90 shadow-lg"
-              variant="default"
-              size="sm"
-            >
-              Get Early Access
-            </Button>
+            {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden cursor-pointer"
-              aria-label="Toggle Menu"
+              className="md:hidden p-2 text-muted-foreground hover:text-primary"
+              aria-label="Toggle mobile menu"
             >
-              <Menu className="h-6 w-6" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                {isMobileMenuOpen ? (
+                  <path d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden py-4 px-6 bg-background/90 backdrop-blur-md border-b">
-          <div className="container mx-auto max-w-7xl">
-            <nav className="flex flex-col gap-4">
-              <Link
-                href="/#features"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Features
-              </Link>
-              <Link
-                href="/#for-whom"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                For Whom
-              </Link>
-              <Link
-                href="/#pricing"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Pricing
-              </Link>
-              <Button
-                onClick={() => {
-                  openNewsletterSignup();
-                  setIsMobileMenuOpen(false);
-                }}
-                variant="default"
-                size="sm"
-                className="mt-2 w-full bg-gradient-to-r from-[#A371D3] to-[#5E48BF] text-white hover:opacity-90 shadow-lg"
-              >
-                Get Early Access
-              </Button>
-            </nav>
-          </div>
+        {/* Mobile Menu Dropdown */}
+        <div
+          className={`md:hidden absolute top-full left-0 right-0 bg-background/95 backdrop-blur-sm border-b ${
+            isMobileMenuOpen ? "block" : "hidden"
+          }`}
+        >
+          <nav className="flex flex-col space-y-4 p-6 text-muted-foreground">
+            <Link
+              href="/#features"
+              className="hover:text-primary transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Features
+            </Link>
+            <Link
+              href="/#for-whom"
+              className="hover:text-primary transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              For Whom
+            </Link>
+            <Link
+              href="/#pricing"
+              className="hover:text-primary transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Pricing
+            </Link>
+            <Link
+              href="/blog"
+              className="hover:text-primary transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Blog
+            </Link>
+          </nav>
         </div>
-      )}
-    </header>
+      </header>
+      <div className="mx-4 zm:mx-6 lg:mx-8 my-8" />
+    </>
   );
-} 
+}
