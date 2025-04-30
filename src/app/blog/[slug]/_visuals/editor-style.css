@@ -1,0 +1,54 @@
+.bn-container[data-color-scheme="dark"] {
+  --bn-colors-editor-text: var(--color-muted-foreground);
+  --bn-colors-editor-background: var(--color-background);
+  --bn-colors-menu-text: var(--color-card-foreground);
+  --bn-colors-menu-background: var(--color-card);
+  --bn-colors-tooltip-text: var(--color-popover-foreground);
+  --bn-colors-tooltip-background: var(--color-popover);
+  --bn-colors-hovered-text: var(--color-accent-foreground);
+  --bn-colors-hovered-background: var(--color-accent);
+  --bn-colors-selected-text: var(--color-secondary-foreground);
+  --bn-colors-selected-background: var(--color-secondary);
+  --bn-colors-disabled-text: var(--color-muted-foreground);
+  --bn-colors-disabled-background: var(--color-muted);
+  --bn-colors-shadow: var(--color-ring);
+  --bn-colors-border: var(--color-border);
+  --bn-colors-side-menu: var(--color-primary);
+  --bn-color-highlight-colors: var(--color-primary-foreground);
+  --bn-border-radius: var(--radius-sm);
+  --bn-font-family: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont,
+    "Open Sans", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell",
+    "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+}
+
+/* Table of contents styles */
+.table-of-contents a {
+  position: relative;
+  transition: all 0.2s ease-in-out;
+}
+
+.table-of-contents a::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%) scaleY(0);
+  height: 0;
+  width: 2px;
+  background-color: var(--color-primary);
+  border-radius: 9999px;
+  opacity: 0;
+  transition: transform 0.2s ease-in-out, opacity 0.15s ease-in-out,
+    height 0.2s ease-in-out;
+}
+
+.table-of-contents a.active {
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.table-of-contents a.active::before {
+  height: 80%;
+  opacity: 1;
+  transform: translateY(-50%) scaleY(1);
+}
