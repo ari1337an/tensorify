@@ -7,4 +7,3 @@ Host: https://tensorify.io
 
 # Sitemaps
 Sitemap: https://tensorify.io/sitemap.xml
-Sitemap: https://tensorify.io/server-sitemap.xml

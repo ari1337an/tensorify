@@ -17,6 +17,27 @@ async function getBlogBySlug(slug: string): Promise<Blog | null> {
   }
 }
 
+// Fetch all blogs for static generation
+async function getAllBlogs(): Promise<Blog[]> {
+  try {
+    const response = await fetch("https://controls.tensorify.io/api/blogs");
+    const { data }: BlogsResponse = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching all blog data:", error);
+    return [];
+  }
+}
+
+// Generate static paths for all blogs at build time
+export async function generateStaticParams() {
+  const blogs = await getAllBlogs();
+
+  return blogs.map((blog) => ({
+    slug: blog.slug,
+  }));
+}
+
 // Generate metadata for SEO
 export async function generateMetadata({
   params,

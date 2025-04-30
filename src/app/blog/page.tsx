@@ -88,29 +88,33 @@ export interface BlogsResponse {
   data: Blog[];
 }
 
-export async function generateStaticParams() {
-  try {
-    const response = await fetch("https://controls.tensorify.io/api/blogs");
-    const { data }: BlogsResponse = await response.json();
-
-    return data.map((blog) => ({
-      slug: blog.slug,
-    }));
-  } catch (error) {
-    console.error("Error fetching blog data:", error);
-    return [];
-  }
-}
+// Make this page static with no revalidation (fully static)
+export const dynamic = "force-static";
 
 async function getBlogs(): Promise<Blog[]> {
   try {
-    const response = await fetch("https://controls.tensorify.io/api/blogs");
+    const response = await fetch("https://controls.tensorify.io/api/blogs", {
+      cache: "force-cache", // Use the cached version from build time
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch blogs: ${response.status}`);
+    }
+
     const { data }: BlogsResponse = await response.json();
     return data;
   } catch (error) {
     console.error("Error fetching blogs:", error);
     return [];
   }
+}
+
+// Enable static generation for blog pages
+export async function generateStaticParams() {
+  const blogs = await getBlogs();
+  return blogs.map((blog) => ({
+    slug: blog.slug,
+  }));
 }
 
 export default async function Blog() {
@@ -222,7 +226,6 @@ export default async function Blog() {
           </div>
         )}
       </div>
-
     </>
   );
 }
