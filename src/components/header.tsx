@@ -4,9 +4,10 @@ import Logo from "@/components/logo";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-
+import { useNewsletterSignup } from "@/hooks/use-newsletter-signup";
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { openNewsletterSignup } = useNewsletterSignup();
 
   return (
     <>
@@ -37,11 +38,12 @@ export function Header() {
             </Link>
           </nav>
           <div className="flex items-center space-x-4">
-            <Link href="/early-access">
-              <Button className="items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer hover:bg-primary/90 h-9 rounded-md px-3 bg-gradient-to-r from-[#A371D3] to-[#5E48BF] text-white hover:opacity-90 shadow-lg">
-                Get Early Access
-              </Button>
-            </Link>
+            <Button
+              onClick={() => openNewsletterSignup()}
+              className="items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer hover:bg-primary/90 h-9 rounded-md px-3 bg-gradient-to-r from-[#A371D3] to-[#5E48BF] text-white hover:opacity-90 shadow-lg"
+            >
+              Get Early Access
+            </Button>
 
             {/* Mobile Menu Button */}
             <button
