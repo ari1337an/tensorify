@@ -1,13 +1,11 @@
 "use client";
-import { Header } from "@/components/header";
 import { Hero } from "@/components/hero";
 // import { Features } from "@/components/features";
 import { ForWhom } from "@/components/for-whom";
 import { Pricing } from "@/components/pricing";
 import { FAQ } from "@/components/faq";
 import { CTA } from "@/components/cta";
-import { Footer } from "@/components/footer";
-import { NewsletterSignup } from "@/components/newsletter-signup";
+
 // import { useEffect, useRef } from "react";
 // import { Demo } from "@/components/demo";
 
@@ -33,7 +31,7 @@ export default function Home() {
 
   //   // Attach event listeners
   //   window.addEventListener('mousemove', handleMouseMove);
-    
+
   //   return () => {
   //     window.removeEventListener('mousemove', handleMouseMove);
   //   };
@@ -46,11 +44,10 @@ export default function Home() {
         ref={backgroundRef}
         className="fixed inset-0 -z-20 bg-[#0a0a14] dark:bg-[#050508]"
       ></div> */}
-      
+
       {/* Background pattern overlay - more subtle */}
       {/* <div className="fixed inset-0 -z-20 opacity-20 dark:opacity-15"></div>  */}
-      
-      <Header />
+
       <main className="flex-1">
         <div className="relative">
           {/* Decorative elements with parallax - more subtle and darker */}
@@ -66,37 +63,35 @@ export default function Home() {
             ref={parallaxRef3}
             className="absolute top-[40%] left-0 -z-10 h-[300px] w-[300px] rounded-full bg-gradient-to-r from-[#2A1E3D]/10 to-[#27274D]/10 blur-3xl"
           ></div> */}
-          
+
           {/* Main content with sections */}
           <div className="space-y-16">
             <section className="fluid-section">
               <Hero />
             </section>
-            
+
             {/* <section className="fluid-section">
               <Features />
             </section> */}
-            
+
             <section className="fluid-section">
               <ForWhom />
             </section>
-            
+
             <section className="fluid-section">
               <Pricing />
             </section>
-            
+
             <section className="fluid-section">
               <FAQ />
             </section>
-            
+
             <section className="fluid-section">
               <CTA />
             </section>
           </div>
         </div>
       </main>
-      <Footer />
-      <NewsletterSignup />
     </div>
   );
 }

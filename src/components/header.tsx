@@ -39,7 +39,10 @@ export function Header() {
           </nav>
           <div className="flex items-center space-x-4">
             <Button
-              onClick={() => openNewsletterSignup()}
+              onClick={() => {
+                openNewsletterSignup();
+                setIsMobileMenuOpen(false);
+              }}
               className="items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer hover:bg-primary/90 h-9 rounded-md px-3 bg-gradient-to-r from-[#A371D3] to-[#5E48BF] text-white hover:opacity-90 shadow-lg"
             >
               Get Early Access
