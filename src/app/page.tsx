@@ -1,7 +1,7 @@
 "use client";
 import { Header } from "@/components/header";
 import { Hero } from "@/components/hero";
-import { Features } from "@/components/features";
+// import { Features } from "@/components/features";
 import { ForWhom } from "@/components/for-whom";
 import { Pricing } from "@/components/pricing";
 import { FAQ } from "@/components/faq";
@@ -73,9 +73,9 @@ export default function Home() {
               <Hero />
             </section>
             
-            <section className="fluid-section">
+            {/* <section className="fluid-section">
               <Features />
-            </section>
+            </section> */}
             
             <section className="fluid-section">
               <ForWhom />

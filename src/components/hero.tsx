@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -11,27 +11,27 @@ export function Hero() {
   const { openNewsletterSignup } = useNewsletterSignup();
   // const gradientRef = useRef<HTMLDivElement>(null);
   // const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  
+
   // // Effect for dynamic gradient animation
   // useEffect(() => {
   //   if (!gradientRef.current) return;
-    
+
   //   const handleMouseMove = (e: MouseEvent) => {
   //     if (!gradientRef.current) return;
-      
+
   //     const { clientX, clientY } = e;
   //     const x = Math.round((clientX / window.innerWidth) * 100);
   //     const y = Math.round((clientY / window.innerHeight) * 100);
-      
+
   //     gradientRef.current.style.background = `radial-gradient(circle at ${x}% ${y}%, rgba(30,30,50,0.15), rgba(24,24,45,0.1), rgba(20,20,40,0.05))`;
-      
+
   //     // Update mouse position for parallax effect
   //     setMousePosition({
   //       x: (clientX / window.innerWidth) * 2 - 1,
   //       y: (clientY / window.innerHeight) * 2 - 1
   //     });
   //   };
-    
+
   //   window.addEventListener('mousemove', handleMouseMove);
   //   return () => window.removeEventListener('mousemove', handleMouseMove);
   // }, []);
@@ -65,12 +65,12 @@ export function Hero() {
             transition: 'transform 0.3s ease-out',
           }}
         /> */}
-        {/* Orbital gradient - keep static */}
-        {/* <div className="absolute w-full h-full overflow-hidden">
+      {/* Orbital gradient - keep static */}
+      {/* <div className="absolute w-full h-full overflow-hidden">
           <div className="absolute w-[150%] h-[150%] top-[-25%] left-[-25%] rounded-full bg-gradient-to-t from-[#1E1E30]/5 to-[#1E1E3D]/10 blur-3xl"></div>
         </div> */}
-        {/* Static particles instead of floating */}
-        {/* <div className="absolute inset-0">
+      {/* Static particles instead of floating */}
+      {/* <div className="absolute inset-0">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
@@ -84,8 +84,8 @@ export function Hero() {
             />
           ))}
         </div>
-      </div> */} 
-      
+      </div> */}
+
       {/* Decorative elements
       <div className="absolute inset-0 -z-10 mx-0 max-w-none overflow-hidden">
         <div className="absolute top-0 w-full h-[25rem] dark:[mask-image:linear-gradient(white,transparent)]">
@@ -107,7 +107,6 @@ export function Hero() {
 
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="flex flex-col items-center gap-4 text-center">
-          
           <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl/none">
             <span className="block bg-clip-text text-transparent bg-gradient-to-r from-[#A371D3] to-[#5E48BF]">
               Design Your Model Pipeline
@@ -116,13 +115,16 @@ export function Hero() {
               Not Your Code and Dependencies.
             </span>
           </h1>
-          
+
           <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl dark:text-gray-400">
-            Tensorify is a node-based AI code generation platform that lets you create, connect, and reuse AI components visually. Build once, use anywhere—whether it&apos;s a novel attention mechanism or a specialized data preprocessing pipeline.
+            Tensorify is a node-based AI code generation platform that lets you
+            create, connect, and reuse AI components visually. Build once, use
+            anywhere—whether it&apos;s a novel attention mechanism or a
+            specialized data preprocessing pipeline.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-4 min-[400px]:gap-6">
-            <Button 
+            <Button
               size="lg"
               onClick={openNewsletterSignup}
               variant="default"
@@ -133,30 +135,6 @@ export function Hero() {
             </Button>
           </div>
 
-          <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-8 w-full max-w-4xl">
-            <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-background/50 backdrop-blur-sm border border-[#A371D3]/10 hover:border-[#A371D3]/30 transition-all duration-300 hover:shadow-md hover:shadow-[#A371D3]/5">
-              <div className="p-3 rounded-full bg-[#A371D3]/10">
-                <Clock className="h-6 w-6 text-[#A371D3]" />
-              </div>
-              <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#A371D3] to-[#5E48BF]">80% Less Time</p>
-              <p className="text-sm text-muted-foreground">From concept to deployment in minutes, not weeks</p>
-            </div>
-            <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-background/50 backdrop-blur-sm border border-[#8257AC]/10 hover:border-[#8257AC]/30 transition-all duration-300 hover:shadow-md hover:shadow-[#8257AC]/5">
-              <div className="p-3 rounded-full bg-[#8257AC]/10">
-                <Code className="h-6 w-6 text-[#8257AC]" />
-              </div>
-              <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#8257AC] to-[#5E48BF]">Zero Boilerplate</p>
-              <p className="text-sm text-muted-foreground">Focus on architecture, not implementation</p>
-            </div>
-            <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-background/50 backdrop-blur-sm border border-[#5E48BF]/10 hover:border-[#5E48BF]/30 transition-all duration-300 hover:shadow-md hover:shadow-[#5E48BF]/5">
-              <div className="p-3 rounded-full bg-[#5E48BF]/10">
-                <Zap className="h-6 w-6 text-[#5E48BF]" />
-              </div>
-              <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#5E48BF] to-[#8F9EBE]">3x Faster Results</p>
-              <p className="text-sm text-muted-foreground">Rapid experimentation and iteration</p>
-            </div>
-          </div>
-
           <div className="relative mt-16 w-full max-w-5xl">
             <div className="absolute -inset-4 bg-gradient-to-r from-[#5E48BF]/20 via-[#A371D3]/10 to-[#8257AC]/20 rounded-xl blur-3xl"></div>
             <div className="relative overflow-hidden rounded-xl backdrop-blur">
@@ -164,28 +142,69 @@ export function Hero() {
               <div className="relative rounded-lg p-1">
                 <div className="absolute -top-10 -left-10 w-40 h-40 bg-[#5E48BF]/10 rounded-full filter blur-3xl"></div>
                 <div className="absolute -bottom-14 -right-14 w-60 h-60 bg-[#A371D3]/10 rounded-full filter blur-3xl"></div>
-                
+
                 <div className="absolute top-3 left-3 right-3 flex justify-between items-center z-10">
                   <Badge className="bg-gray-900/70 text-white backdrop-blur-md border-[#A371D3]/30 shadow px-3 py-1">
-                    <Zap className="mr-1 h-3 w-3 text-[#A371D3]" /> AI Workflow Example
+                    <Zap className="mr-1 h-3 w-3 text-[#A371D3]" /> AI Workflow
+                    Example
                   </Badge>
                   <Badge className="bg-gray-900/70 text-white backdrop-blur-md border-[#5E48BF]/30 shadow px-3 py-1">
-                    <ArrowRight className="mr-1 h-3 w-3 text-[#5E48BF]" /> Try clicking on nodes!
+                    <ArrowRight className="mr-1 h-3 w-3 text-[#5E48BF]" /> Try
+                    clicking on nodes!
                   </Badge>
                 </div>
-                
+
                 <InteractiveFlow />
-                
+
                 <div className="absolute bottom-3 left-0 right-0 flex justify-center">
-                  <Badge variant="outline" className="bg-gray-900/70 text-white backdrop-blur-md border-[#A371D3]/30 shadow px-4 py-1.5">
+                  <Badge
+                    variant="outline"
+                    className="bg-gray-900/70 text-white backdrop-blur-md border-[#A371D3]/30 shadow px-4 py-1.5"
+                  >
                     Zoom, pan, and interact with the workflow editor
                   </Badge>
                 </div>
               </div>
             </div>
           </div>
+
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-8 w-full max-w-4xl">
+            <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-background/50 backdrop-blur-sm border border-[#A371D3]/10 hover:border-[#A371D3]/30 transition-all duration-300 hover:shadow-md hover:shadow-[#A371D3]/5">
+              <div className="p-3 rounded-full bg-[#A371D3]/10">
+                <Clock className="h-6 w-6 text-[#A371D3]" />
+              </div>
+              <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#A371D3] to-[#5E48BF]">
+                80% Less Time
+              </p>
+              <p className="text-sm text-muted-foreground">
+                From concept to deployment in minutes, not weeks
+              </p>
+            </div>
+            <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-background/50 backdrop-blur-sm border border-[#8257AC]/10 hover:border-[#8257AC]/30 transition-all duration-300 hover:shadow-md hover:shadow-[#8257AC]/5">
+              <div className="p-3 rounded-full bg-[#8257AC]/10">
+                <Code className="h-6 w-6 text-[#8257AC]" />
+              </div>
+              <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#8257AC] to-[#5E48BF]">
+                Zero Boilerplate
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Focus on architecture, not implementation
+              </p>
+            </div>
+            <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-background/50 backdrop-blur-sm border border-[#5E48BF]/10 hover:border-[#5E48BF]/30 transition-all duration-300 hover:shadow-md hover:shadow-[#5E48BF]/5">
+              <div className="p-3 rounded-full bg-[#5E48BF]/10">
+                <Zap className="h-6 w-6 text-[#5E48BF]" />
+              </div>
+              <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#5E48BF] to-[#8F9EBE]">
+                3x Faster Results
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Rapid experimentation and iteration
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
   );
-} 
+}
