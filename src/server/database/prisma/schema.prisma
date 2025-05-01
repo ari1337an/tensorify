@@ -90,6 +90,8 @@ model BlogSeo {
   mainEntityOfPage         String?
   favicon                  String?
   language                 String?  @default("en")
+  faqEnabled               Boolean  @default(false)
+  faqData                  Json?    @default("{\"questions\":[]}")
   blogPost                 BlogPost @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
   blogPostId               String   @unique
   createdAt                DateTime @default(now())

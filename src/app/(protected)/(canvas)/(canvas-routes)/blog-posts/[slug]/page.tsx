@@ -14,6 +14,7 @@ import {
   Upload,
   File,
   Link as LinkIcon,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -50,6 +51,7 @@ import {
   AccordionTrigger,
 } from "@/app/_components/ui/accordion";
 import uploadFile from "./upload-file";
+import { Toggle } from "@/app/_components/ui/toggle";
 
 interface SeoData {
   // Basic Metadata
@@ -83,6 +85,14 @@ interface SeoData {
   blogpostingKeywords: string;
   blogpostingFeaturedImage: string;
   mainEntityOfPage: string;
+  // FAQ Section
+  faqEnabled: boolean;
+  faqData: {
+    questions: {
+      questionName: string;
+      acceptedAnswerText: string;
+    }[];
+  };
   // Additional
   favicon: string;
   language: string;
@@ -248,6 +258,9 @@ export default function BlogPostPage() {
           // Additional
           favicon: post.seo.favicon || "",
           language: post.seo.language || "en",
+          // FAQ Section
+          faqEnabled: post.seo?.faqEnabled || false,
+          faqData: post.seo?.faqData || { questions: [] },
         });
       } else {
         // Initialize with default values when no SEO data exists
@@ -288,6 +301,9 @@ export default function BlogPostPage() {
           // Additional
           favicon: "",
           language: "en",
+          // FAQ Section
+          faqEnabled: false,
+          faqData: { questions: [] },
         });
       }
     }
@@ -702,6 +718,7 @@ export default function BlogPostPage() {
   const [isSeoDialogOpen, setIsSeoDialogOpen] = useState(false);
   const [expandedSections, setExpandedSections] = useState<string[]>([
     "basic-metadata",
+    "faq-section",
   ]);
   const [seoData, setSeoData] = useState<SeoData>({
     metaTitle: "",
@@ -733,6 +750,8 @@ export default function BlogPostPage() {
     mainEntityOfPage: "",
     favicon: "",
     language: "en",
+    faqEnabled: false,
+    faqData: { questions: [] },
   });
 
   // Handle accordion state changes
@@ -814,7 +833,7 @@ export default function BlogPostPage() {
   React.useEffect(() => {
     if (isSeoDialogOpen && post) {
       // Reset expanded sections when dialog opens
-      setExpandedSections(["basic-metadata"]);
+      setExpandedSections(["basic-metadata", "faq-section"]);
 
       // Prefill with existing SEO data or defaults
       setSeoData((prev) => ({
@@ -857,6 +876,8 @@ export default function BlogPostPage() {
         mainEntityOfPage: post.seo?.mainEntityOfPage || "",
         favicon: post.seo?.favicon || "",
         language: post.seo?.language || "en",
+        faqEnabled: post.seo?.faqEnabled || false,
+        faqData: post.seo?.faqData || { questions: [] },
       }));
     }
   }, [isSeoDialogOpen, post]);
@@ -1165,6 +1186,61 @@ export default function BlogPostPage() {
   const handlePublishPost = () => {
     if (!post) return;
     updatePublishStatusMutation.mutate({ postId: post.id });
+  };
+
+  // Handle FAQ addition
+  const handleAddFaqQuestion = () => {
+    setSeoData((prev) => ({
+      ...prev,
+      faqData: {
+        questions: [
+          ...prev.faqData.questions,
+          { questionName: "", acceptedAnswerText: "" },
+        ],
+      },
+    }));
+  };
+
+  // Handle FAQ removal
+  const handleRemoveFaqQuestion = (index: number) => {
+    setSeoData((prev) => {
+      const updatedQuestions = [...prev.faqData.questions];
+      updatedQuestions.splice(index, 1);
+      return {
+        ...prev,
+        faqData: {
+          questions: updatedQuestions,
+        },
+      };
+    });
+  };
+
+  // Handle FAQ question or answer change
+  const handleFaqChange = (
+    index: number,
+    field: "questionName" | "acceptedAnswerText",
+    value: string
+  ) => {
+    setSeoData((prev) => {
+      const updatedQuestions = [...prev.faqData.questions];
+      updatedQuestions[index] = {
+        ...updatedQuestions[index],
+        [field]: value,
+      };
+      return {
+        ...prev,
+        faqData: {
+          questions: updatedQuestions,
+        },
+      };
+    });
+  };
+
+  const handleFaqToggle = () => {
+    setSeoData((prev) => ({
+      ...prev,
+      faqEnabled: !prev.faqEnabled,
+    }));
   };
 
   if (error) {
@@ -1766,9 +1842,121 @@ export default function BlogPostPage() {
                           </AccordionContent>
                         </AccordionItem>
 
-                        {/* Additional Settings Section */}
+                        {/* FAQ Section */}
                         <AccordionItem
-                          value="additional-settings"
+                          value="faq-section"
+                          className="border border-border rounded-lg px-4"
+                        >
+                          <AccordionTrigger className="py-3">
+                            <span className="text-sm font-medium">
+                              FAQ Section
+                            </span>
+                          </AccordionTrigger>
+                          <AccordionContent className="space-y-4 pb-2">
+                            <div className="flex items-center justify-between">
+                              <label
+                                htmlFor="faq-toggle"
+                                className="text-sm font-medium"
+                              >
+                                Enable FAQ Section
+                              </label>
+                              <Toggle
+                                id="faq-toggle"
+                                pressed={seoData.faqEnabled}
+                                onPressedChange={handleFaqToggle}
+                                variant="outline"
+                              >
+                                {seoData.faqEnabled ? "Enabled" : "Disabled"}
+                              </Toggle>
+                            </div>
+
+                            {seoData.faqEnabled && (
+                              <div className="space-y-4">
+                                {seoData.faqData.questions.map(
+                                  (question, index) => (
+                                    <div
+                                      key={index}
+                                      className="border border-border rounded-lg p-4 space-y-3"
+                                    >
+                                      <div className="flex justify-between items-center">
+                                        <h4 className="text-sm font-medium">
+                                          Question {index + 1}
+                                        </h4>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          type="button"
+                                          onClick={() =>
+                                            handleRemoveFaqQuestion(index)
+                                          }
+                                        >
+                                          <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                        </Button>
+                                      </div>
+                                      <div className="space-y-2">
+                                        <label
+                                          htmlFor={`question-${index}`}
+                                          className="text-sm font-medium"
+                                        >
+                                          Question
+                                        </label>
+                                        <Input
+                                          id={`question-${index}`}
+                                          value={question.questionName}
+                                          onChange={(e) =>
+                                            handleFaqChange(
+                                              index,
+                                              "questionName",
+                                              e.target.value
+                                            )
+                                          }
+                                          placeholder="Enter question"
+                                          className="w-full"
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <label
+                                          htmlFor={`answer-${index}`}
+                                          className="text-sm font-medium"
+                                        >
+                                          Answer
+                                        </label>
+                                        <Textarea
+                                          id={`answer-${index}`}
+                                          value={question.acceptedAnswerText}
+                                          onChange={(e) =>
+                                            handleFaqChange(
+                                              index,
+                                              "acceptedAnswerText",
+                                              e.target.value
+                                            )
+                                          }
+                                          placeholder="Enter the answer"
+                                          className="w-full"
+                                          rows={3}
+                                        />
+                                      </div>
+                                    </div>
+                                  )
+                                )}
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={handleAddFaqQuestion}
+                                  className="w-full"
+                                >
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Add Question
+                                </Button>
+                              </div>
+                            )}
+                          </AccordionContent>
+                        </AccordionItem>
+
+                        {/* Additional Section */}
+                        <AccordionItem
+                          value="additional"
                           className="border border-border rounded-lg px-4"
                         >
                           <AccordionTrigger className="py-3">

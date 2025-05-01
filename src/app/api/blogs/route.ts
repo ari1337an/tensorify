@@ -80,6 +80,8 @@ export async function GET() {
             mainEntityOfPage: true,
             favicon: true,
             language: true,
+            faqEnabled: true,
+            faqData: true,
           },
         },
         // Include tags without ID, createdAt, updatedAt
