@@ -16,16 +16,10 @@ export function Header() {
           <Logo />
           <nav className="hidden md:flex items-center space-x-8 text-muted-foreground">
             <Link
-              href="/#features"
-              className="hover:text-primary transition-colors"
-            >
-              Features
-            </Link>
-            <Link
               href="/#for-whom"
               className="hover:text-primary transition-colors"
             >
-              For Whom
+              Use Cases
             </Link>
             <Link
               href="/#pricing"
@@ -81,18 +75,11 @@ export function Header() {
         >
           <nav className="flex flex-col space-y-4 p-6 text-muted-foreground">
             <Link
-              href="/#features"
-              className="hover:text-primary transition-colors"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Features
-            </Link>
-            <Link
               href="/#for-whom"
               className="hover:text-primary transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              For Whom
+              Use Cases
             </Link>
             <Link
               href="/#pricing"

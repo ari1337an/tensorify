@@ -16,23 +16,19 @@ export function Footer() {
           </div>
           <div className="flex flex-col gap-2">
             <h3 className="text-sm font-medium mb-1">Product</h3>
-            <Link href="#features" className="text-sm text-muted-foreground hover:underline">Features</Link>
-            <Link href="#for-whom" className="text-sm text-muted-foreground hover:underline">For Whom</Link>
+            <Link href="#for-whom" className="text-sm text-muted-foreground hover:underline">Use Cases</Link>
             <Link href="#pricing" className="text-sm text-muted-foreground hover:underline">Pricing</Link>
-            <Link href="/docs" className="text-sm text-muted-foreground hover:underline">Documentation</Link>
           </div>
           <div className="flex flex-col gap-2">
             <h3 className="text-sm font-medium mb-1">Company</h3>
             <Link href="/about" className="text-sm text-muted-foreground hover:underline">About</Link>
             <Link href="/blog" className="text-sm text-muted-foreground hover:underline">Blog</Link>
-            <Link href="/careers" className="text-sm text-muted-foreground hover:underline">Careers</Link>
             <Link href="/contact" className="text-sm text-muted-foreground hover:underline">Contact</Link>
           </div>
           <div className="flex flex-col gap-2">
             <h3 className="text-sm font-medium mb-1">Legal</h3>
             <Link href="/privacy" className="text-sm text-muted-foreground hover:underline">Privacy Policy</Link>
             <Link href="/terms" className="text-sm text-muted-foreground hover:underline">Terms of Service</Link>
-            <Link href="/cookies" className="text-sm text-muted-foreground hover:underline">Cookie Policy</Link>
           </div>
         </div>
         <div className="mt-12 flex flex-col md:flex-row justify-between items-center border-t pt-8">
