@@ -338,6 +338,14 @@ interface BlogSeoData {
   blogpostingKeywords?: string;
   blogpostingFeaturedImage?: string;
   mainEntityOfPage?: string;
+  // FAQ Section
+  faqEnabled?: boolean;
+  faqData?: {
+    questions: {
+      questionName: string;
+      acceptedAnswerText: string;
+    }[];
+  };
   // Additional
   favicon?: string;
   language?: string;
@@ -350,6 +358,11 @@ export async function updateBlogPostSeo(postId: string, seoData: BlogSeoData) {
     if (!userId) {
       return { error: "You must be logged in to update SEO settings" };
     }
+
+    // Ensure faqData has a valid structure if it's enabled but data is undefined
+    const processedFaqData = seoData.faqEnabled
+      ? seoData.faqData || { questions: [] }
+      : { questions: [] };
 
     // Check if SEO record already exists
     const existingSeo = await db.blogSeo.findUnique({
@@ -392,6 +405,9 @@ export async function updateBlogPostSeo(postId: string, seoData: BlogSeoData) {
           blogpostingKeywords: seoData.blogpostingKeywords,
           blogpostingFeaturedImage: seoData.blogpostingFeaturedImage,
           mainEntityOfPage: seoData.mainEntityOfPage,
+          // FAQ Section
+          faqEnabled: seoData.faqEnabled,
+          faqData: processedFaqData,
           // Additional
           favicon: seoData.favicon,
           language: seoData.language,
@@ -431,6 +447,9 @@ export async function updateBlogPostSeo(postId: string, seoData: BlogSeoData) {
           blogpostingKeywords: seoData.blogpostingKeywords,
           blogpostingFeaturedImage: seoData.blogpostingFeaturedImage,
           mainEntityOfPage: seoData.mainEntityOfPage,
+          // FAQ Section
+          faqEnabled: seoData.faqEnabled,
+          faqData: processedFaqData,
           // Additional
           favicon: seoData.favicon,
           language: seoData.language,
@@ -502,7 +521,9 @@ export async function deleteBlogPost(postId: string) {
 
     // Prepare the content object with the original slug info
     const updatedContent = {
-      ...existingPost.content,
+      ...(typeof existingPost.content === "object"
+        ? (existingPost.content as object)
+        : {}),
       _deletion: {
         originalSlug: existingPost.slug,
         deletedAt: new Date().toISOString(),
