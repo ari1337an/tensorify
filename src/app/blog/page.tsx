@@ -1,7 +1,14 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Metadata } from "next";
+import { Metadata, Viewport } from "next";
+
+// Define viewport config
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
 // Define metadata for the blog listing page
 export const metadata: Metadata = {
   title: "Blog | Tensorify.io",
@@ -122,6 +129,31 @@ export default async function Blog() {
 
   return (
     <>
+      {/* Breadcrumb Schema */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://tensorify.io"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Blog",
+                "item": "https://tensorify.io/blog"
+              }
+            ]
+          })
+        }}
+      />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
