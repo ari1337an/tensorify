@@ -26,6 +26,40 @@ export interface Block {
   children?: Block[];
 }
 
+export interface SEO {
+  metaTitle?: string;
+  metaDescription?: string;
+  metaRobots?: string;
+  keywords?: string;
+  canonicalUrl?: string;
+
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  ogUrl?: string;
+  ogType?: string;
+  ogSiteName?: string;
+
+  twitterCardType?: string;
+  twitterTitle?: string;
+  twitterDescription?: string;
+  twitterImage?: string;
+  twitterSite?: string;
+
+  blogpostingHeadline?: string;
+  blogpostingDescription?: string;
+  blogpostingAuthorName?: string;
+  blogpostingAuthorUrl?: string;
+  blogpostingPublisherName?: string;
+  blogpostingPublisherLogo?: string;
+  blogpostingKeywords?: string;
+  blogpostingFeaturedImage?: string;
+
+  mainEntityOfPage?: string;
+  favicon?: string;
+  language?: string;
+}
+
 export interface BlogPost {
   id: string;
   title: string;
@@ -44,4 +78,5 @@ export interface BlogPost {
   createdAt: string;
   updatedAt?: string;
   tags: string[];
+  seo?: SEO;
 }
