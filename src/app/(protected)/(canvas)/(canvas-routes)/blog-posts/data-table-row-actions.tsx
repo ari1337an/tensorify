@@ -1,7 +1,7 @@
 "use client";
 
 import { Row } from "@tanstack/react-table";
-import { Copy, MoreHorizontal, Pen, Eye, Trash } from "lucide-react";
+import { MoreHorizontal, Pen, Eye, Trash } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 
@@ -26,7 +26,8 @@ import {
 } from "@/app/_components/ui/alert-dialog";
 import { toast } from "sonner";
 import { BlogPost } from "./columns";
-// import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import { deleteBlogPost } from "@/server/actions/blog-posts";
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
@@ -38,19 +39,19 @@ export function DataTableRowActions<TData>({
   const post = row.original as BlogPost;
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
-  // const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      // const result = await deleteBlogPost(post.id);
+      const result = await deleteBlogPost(post.id);
 
-      // if (result.error) {
-      //   toast.error(result.error);
-      // } else {
-      //   toast.success("Blog post deleted successfully");
-      //   queryClient.invalidateQueries({ queryKey: ["blogPosts"] });
-      // }
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Blog post deleted successfully");
+        queryClient.invalidateQueries({ queryKey: ["blogPosts"] });
+      }
     } catch (error) {
       toast.error("Failed to delete blog post");
       console.error("Delete error:", error);
@@ -73,16 +74,22 @@ export function DataTableRowActions<TData>({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[160px]">
+          {post.status.toLowerCase() === "published" && (
+            <a
+              href={`https://tensorify.io/blog/${post.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <DropdownMenuItem asChild>
+                <span>
+                  <Eye className="mr-2 h-3.5 w-3.5" />
+                  View
+                  <DropdownMenuShortcut>⌘V</DropdownMenuShortcut>
+                </span>
+              </DropdownMenuItem>
+            </a>
+          )}
           <Link href={`/blog-posts/${post.slug}`} passHref>
-            <DropdownMenuItem asChild>
-              <span>
-                <Eye className="mr-2 h-3.5 w-3.5" />
-                View
-                <DropdownMenuShortcut>⌘V</DropdownMenuShortcut>
-              </span>
-            </DropdownMenuItem>
-          </Link>
-          <Link href={`/blog-posts/${post.slug}/edit`} passHref>
             <DropdownMenuItem asChild>
               <span>
                 <Pen className="mr-2 h-3.5 w-3.5" />
@@ -91,11 +98,6 @@ export function DataTableRowActions<TData>({
               </span>
             </DropdownMenuItem>
           </Link>
-          <DropdownMenuItem>
-            <Copy className="mr-2 h-3.5 w-3.5" />
-            Make a copy
-            <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
-          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             className="text-red-600"

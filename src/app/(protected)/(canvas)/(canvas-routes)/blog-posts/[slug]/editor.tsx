@@ -183,6 +183,7 @@ export default function Editor() {
     <BlockNoteView
       className="mb-6"
       editor={editor}
+      editable={true}
       theme={theme === "dark" ? "dark" : "light"}
       onChange={() => {
         // Get the current document

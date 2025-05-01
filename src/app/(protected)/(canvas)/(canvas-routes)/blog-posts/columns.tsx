@@ -27,7 +27,7 @@ import { DataTableRowActions } from "./data-table-row-actions";
 
 // This type is used to define the shape of our data.
 export type BlogPost = {
-  id: number;
+  id: string;
   title: string;
   slug: string;
   authors: string[];
@@ -301,9 +301,9 @@ export const columns: ColumnDef<BlogPost>[] = [
         <div className="flex w-[100px] items-center">
           <span
             className={`px-2 py-1 rounded-full text-xs ${
-              status === "Published"
-                ? "bg-green-100 text-green-800"
-                : "bg-yellow-100 text-yellow-800"
+              status === "PUBLISHED"
+                ? "bg-green-500/10 text-green-500"
+                : "bg-yellow-500/10 text-yellow-500"
             }`}
           >
             {status}

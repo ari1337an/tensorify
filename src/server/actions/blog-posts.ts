@@ -6,6 +6,7 @@ import { z } from "zod";
 import { BlogPostStatus, BlogPostType } from "@prisma/client";
 import { auth } from "@clerk/nextjs/server";
 import { Block } from "@blocknote/core";
+import crypto from "crypto";
 
 // Schema for creating a new blog post
 const createBlogPostSchema = z.object({
@@ -46,10 +47,19 @@ export async function createBlogPost(data: CreateBlogPostInput) {
         status: validatedData.status,
         content: {},
         authorId: adminAccount.id,
+        seo: {
+          create: {
+            metaTitle: validatedData.title,
+            metaDescription: `${validatedData.title} - Learn more about this topic`,
+            ogTitle: validatedData.title,
+            twitterTitle: validatedData.title,
+          },
+        },
       },
       include: {
         tags: true,
         author: true,
+        seo: true,
       },
     });
 
@@ -78,6 +88,9 @@ export async function createBlogPost(data: CreateBlogPostInput) {
 export async function getBlogPosts() {
   try {
     const posts = await db.blogPost.findMany({
+      where: {
+        deletedAt: null, // Only return non-deleted posts
+      },
       include: {
         author: true,
         tags: true,
@@ -97,7 +110,10 @@ export async function getBlogPosts() {
 export async function getBlogPostBySlug(slug: string) {
   try {
     const post = await db.blogPost.findUnique({
-      where: { slug },
+      where: {
+        slug,
+        deletedAt: null, // Only return non-deleted posts
+      },
       include: {
         author: true,
         tags: true,
@@ -460,5 +476,52 @@ export async function updateBlogPostPublishStatus(
   } catch (error) {
     console.error("Error updating blog post publish status:", error);
     return { error: "Failed to update blog post status" };
+  }
+}
+
+// Delete a blog post (soft delete)
+export async function deleteBlogPost(postId: string) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return { error: "You must be logged in to delete a blog post" };
+    }
+
+    // Generate a random UUID to replace the slug
+    const randomUuid = crypto.randomUUID();
+
+    // Save the original slug before updating
+    const existingPost = await db.blogPost.findUnique({
+      where: { id: postId },
+      select: { slug: true, content: true },
+    });
+
+    if (!existingPost) {
+      return { error: "Blog post not found" };
+    }
+
+    // Prepare the content object with the original slug info
+    const updatedContent = {
+      ...existingPost.content,
+      _deletion: {
+        originalSlug: existingPost.slug,
+        deletedAt: new Date().toISOString(),
+      },
+    };
+
+    // Perform a soft delete by setting the deletedAt field and changing the slug to a UUID
+    const post = await db.blogPost.update({
+      where: { id: postId },
+      data: {
+        deletedAt: new Date(),
+        slug: `deleted-${randomUuid}`, // Prefix with 'deleted-' for clarity
+        content: updatedContent,
+      },
+    });
+
+    return { success: true, post };
+  } catch (error) {
+    console.error("Error deleting blog post:", error);
+    return { error: "Failed to delete blog post" };
   }
 }

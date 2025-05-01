@@ -10,9 +10,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Tensorify Studio",
+  title: "Tensorify Controls",
   description:
-    "Tensorify Studio is a platform for writing AI pipelines visually.",
+    "Tensorify Controls is a platform for controlling tensorify business.",
 };
 
 export default async function RootLayout({

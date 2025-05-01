@@ -11,7 +11,7 @@ import { BlogPost } from "./columns";
 
 // Define the API response type
 interface ApiBlogPost {
-  id: number;
+  id: string;
   title: string;
   slug: string;
   status: string;
