@@ -5,7 +5,6 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
-import { ScrollProgress } from "@/components/scroll-progress";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -187,7 +186,6 @@ export default function RootLayout({
         enableSystem
         disableTransitionOnChange
       >
-        <ScrollProgress />
         <div className="text-foreground min-h-screen flex flex-col">
           <Header />
           {/* Add padding-top to match header height */}

@@ -674,35 +674,4 @@ code {
     overscroll-behavior: none;
   }
   
-  /* Custom scrollbar progress styling */
-  .scroll-progress-container {
-    position: fixed;
-    top: 0;
-    right: 0px;
-    width: 4px;
-    height: 100vh;
-    z-index: 999;
-    pointer-events: none;
-  }
-  
-  .scroll-progress-bar {
-    width: 100%;
-    background: linear-gradient(to bottom, rgba(180, 122, 235, 0.3), rgba(122, 112, 255, 0.3));
-    height: 0%;
-    border-radius: 2px;
-    transition: height 0.1s ease;
-    box-shadow: 0 0 8px rgba(180, 122, 235, 0.3);
-  }
-  
-  /* Hide default scrollbar when custom progress bar is active */
-  .hide-scrollbar::-webkit-scrollbar {
-    width: 0;
-    background: transparent;
-    display: none;
-  }
-  
-  .hide-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
 }
