@@ -178,7 +178,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen relative`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen relative overscroll-none`}
       >
       <ThemeProvider
         attribute="class"
@@ -186,7 +186,7 @@ export default function RootLayout({
         enableSystem
         disableTransitionOnChange
       >
-        <div className="bg-[color:var(--background)] dark:bg-[color:var(--background)] text-foreground min-h-screen flex flex-col">
+        <div className="text-foreground min-h-screen flex flex-col">
           <Header />
           {/* Add padding-top to match header height */}
           <main className="flex-1 pt-16 md:pt-20">

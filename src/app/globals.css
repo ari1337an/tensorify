@@ -6,6 +6,7 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    overscroll-behavior: none;
   }
   
   :root {
@@ -666,4 +667,10 @@ code {
   width: 100%;
   height: 2px;
   background: linear-gradient(90deg, #B47AEB, transparent);
+}
+
+@layer utilities {
+  .overscroll-none {
+    overscroll-behavior: none;
+  }
 }
