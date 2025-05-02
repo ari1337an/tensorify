@@ -28,19 +28,8 @@ export function Hero() {
           <div className="w-full">
             <h1 className="text-center font-extrabold tracking-tight w-full">
               <div className="flex flex-wrap justify-center items-baseline text-5xl sm:text-6xl md:text-7xl lg:text-8xl mb-3">
-                <span className="text-gradient-primary">Accelerate Your AI </span>
-                <span className="relative ml-2 inline-block">
-                  {/* Glass background effect with extra padding */}
-                  <span className="absolute inset-0 -left-2 -right-2 rounded-xl bg-gradient-to-r from-purple-500/20 to-violet-400/20 backdrop-blur-sm border border-purple-300/20 shadow-xl shadow-purple-500/10 transform -skew-x-3 z-0"></span>
-
-                  {/* Inner text with purple gradient and more padding */}
-                  <span className="relative z-10 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-violet-500 px-6 py-1">
-                    Experiments
-                  </span>
-
-                  {/* Subtle glow effect with extended reach */}
-                  <span className="absolute -inset-2 bg-purple-400/5 rounded-xl filter blur-sm z-0"></span>
-                </span>
+                <span className="text-gradient-primary">Accelerate Your AI Experiments</span>
+                
               </div>
               <div className="flex items-center justify-center gap-3 mt-6">
                 <span className="text-zinc-400 text-3xl md:text-4xl font-semibold w-2xl md:w-4xl">
