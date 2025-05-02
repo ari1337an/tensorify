@@ -2,22 +2,15 @@
 
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { ArrowRight, Clock, Code, Zap } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useNewsletterSignup } from "@/hooks/use-newsletter-signup";
 import { InteractiveFlow } from "./interactive-flow";
-
-// Standard feature description length to ensure visual balance
-const FEATURE_DESCRIPTIONS = {
-  time: "From concept to deployment in minutes, not weeks",
-  boilerplate: "Focus on architecture, not implementation details",
-  results: "Rapid experimentation and iteration cycles",
-};
 
 export function Hero() {
   const { openNewsletterSignup } = useNewsletterSignup();
 
   return (
-    <section className="relative pt-32 pb-40 md:pt-40 md:pb-56 overflow-hidden bg-gradient-to-b from-background to-background/95 hero-gradient-bg">
+    <section className="relative pt-32 pb-32 md:pt-40 md:pb-46 overflow-hidden bg-gradient-to-b from-background to-background/95 hero-gradient-bg">
       {/* Subtle background gradient */}
       <div className="absolute inset-0 bg-gradient-to-tr from-[hsl(var(--accent))]/5 via-[hsl(var(--primary))]/3 to-[hsl(var(--primary))]/5 z-0" />
 
@@ -29,7 +22,7 @@ export function Hero() {
             <h1 className="text-center font-extrabold tracking-tight w-full">
               <div className="flex flex-wrap justify-center items-baseline text-5xl sm:text-6xl md:text-7xl lg:text-8xl mb-3">
                 <span className="text-gradient-primary">Accelerate Your AI Experiments</span>
-                
+
               </div>
               <div className="flex items-center justify-center gap-3 mt-6">
                 <span className="text-zinc-400 text-3xl md:text-4xl font-semibold w-2xl md:w-4xl">
@@ -38,7 +31,7 @@ export function Hero() {
               </div>
             </h1>
           </div>
-          
+
           {/* CTA Button with modern styling */}
           <div className="mt-2">
             <Button
@@ -55,9 +48,9 @@ export function Hero() {
               <span className="absolute inset-0 rounded-md bg-black/5" />
             </Button>
           </div>
-          
+
           {/* Clean description with solid metallic color and highlight */}
-          <div className="w-full max-w-3xl mx-auto relative my-4">
+          <div className="w-full max-w-4xl mx-auto relative my-4">
             {/* Subtle top accent line */}
             <div className="w-24 h-0.5 bg-gradient-to-r from-violet-400/30 to-purple-400/30 mx-auto mb-8"></div>
 
@@ -78,7 +71,7 @@ export function Hero() {
           </div>
 
           {/* Interactive Flow Section */}
-          <div className="relative my-4 w-full max-w-5xl">
+          <div className="relative my-4 w-full max-w-6xl mt-8 xl:px-4">
             <div className="absolute -inset-4 bg-gradient-to-r from-[hsl(var(--accent))]/20 via-[hsl(var(--primary))]/10 to-[hsl(var(--primary))]/20 rounded-xl blur-3xl" />
             <div className="relative overflow-hidden rounded-xl backdrop-blur border border-white/5">
               <div className="absolute inset-0 bg-gradient-to-tr from-[hsl(var(--accent))]/10 to-[hsl(var(--primary))]/10" />
@@ -88,12 +81,8 @@ export function Hero() {
 
                 <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
                   <Badge className="bg-gray-900/80 text-white backdrop-blur-md border-[color:var(--hero-primary)]/40 shadow-sm px-3 py-1.5">
-                    <Zap className="mr-1.5 h-3.5 w-3.5 text-[color:var(--hero-primary)]" />
-                    AI Workflow Example
-                  </Badge>
-                  <Badge className="bg-gray-900/80 text-white backdrop-blur-md border-[color:var(--hero-tertiary)]/40 shadow-sm px-3 py-1.5">
                     <ArrowRight className="mr-1.5 h-3.5 w-3.5 text-[color:var(--hero-tertiary)]" />
-                    Try clicking on nodes!
+                    Demo Workflow
                   </Badge>
                 </div>
 
@@ -110,50 +99,7 @@ export function Hero() {
               </div>
             </div>
           </div>
-          
-          {/* Feature boxes in horizontal layout for desktop */}
-          <div className="w-full max-w-5xl mt-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Feature box 1 */}
-              <div className="flex flex-col items-center p-7 rounded-xl bg-background/50 backdrop-blur-sm border border-[color:var(--hero-primary)]/15 hover:border-[color:var(--hero-primary)]/30 transition-all duration-300 hover:shadow-md hover:shadow-[color:var(--hero-primary)]/10 h-full">
-                <div className="p-4 rounded-full bg-[color:var(--hero-primary)]/15 mb-4">
-                  <Clock className="h-7 w-7 text-[color:var(--hero-primary)]" />
-                </div>
-                <h2 className="text-2xl font-semibold text-gradient-primary leading-tight mb-2">
-                  80% Less Time
-                </h2>
-                <p className="text-sm text-zinc-400 leading-relaxed text-center">
-                  {FEATURE_DESCRIPTIONS.time}
-                </p>
-              </div>
 
-              {/* Feature box 2 */}
-              <div className="flex flex-col items-center p-7 rounded-xl bg-background/50 backdrop-blur-sm border border-[color:var(--hero-primary)]/15 hover:border-[color:var(--hero-primary)]/30 transition-all duration-300 hover:shadow-md hover:shadow-[color:var(--hero-primary)]/10 h-full">
-                <div className="p-4 rounded-full bg-[color:var(--hero-primary)]/15 mb-4">
-                  <Code className="h-7 w-7 text-[color:var(--hero-primary)]" />
-                </div>
-                <h2 className="text-2xl font-semibold text-gradient-primary leading-tight mb-2">
-                  Zero Boilerplate
-                </h2>
-                <p className="text-sm text-zinc-400 leading-relaxed text-center">
-                  {FEATURE_DESCRIPTIONS.boilerplate}
-                </p>
-              </div>
-
-              {/* Feature box 3 */}
-              <div className="flex flex-col items-center p-7 rounded-xl bg-background/50 backdrop-blur-sm border border-[color:var(--hero-primary)]/15 hover:border-[color:var(--hero-primary)]/30 transition-all duration-300 hover:shadow-md hover:shadow-[color:var(--hero-primary)]/10 h-full">
-                <div className="p-4 rounded-full bg-[color:var(--hero-primary)]/15 mb-4">
-                  <Zap className="h-7 w-7 text-[color:var(--hero-primary)]" />
-                </div>
-                <h2 className="text-2xl font-semibold text-gradient-primary leading-tight mb-2">
-                  3x Faster Results
-                </h2>
-                <p className="text-sm text-zinc-400 leading-relaxed text-center">
-                  {FEATURE_DESCRIPTIONS.results}
-                </p>
-              </div>
-            </div>
-          </div>
 
         </div>
       </div>

@@ -1,8 +1,7 @@
 'use client';
 
 import { Button } from "./ui/button";
-import { ArrowRight, Star } from "lucide-react";
-import { Badge } from "./ui/badge";
+import { ArrowRight } from "lucide-react";
 import { useNewsletterSignup } from "@/hooks/use-newsletter-signup";
 
 export function CTA() {
@@ -19,15 +18,12 @@ export function CTA() {
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex flex-col items-center gap-8 text-center">
           <div className="space-y-4">
-            <Badge variant="outline">
-              <Star className="mr-1 h-3 w-3 fill-primary" /> Limited Early Access
-            </Badge>
             
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-500">
+            <h2 className="text-4xl font-bold tracking-tighter sm:text-4xl md:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-500">
               Be Among the First to Experience Tensorify
             </h2>
             
-            <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl dark:text-gray-400">
+            <p className="mx-auto max-w-4xl text-muted-foreground md:text-xl dark:text-gray-400">
               Join our exclusive waitlist to get early access to the most innovative AI development framework. Limited spots available.
             </p>
           </div>

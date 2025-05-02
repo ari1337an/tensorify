@@ -53,14 +53,14 @@ export function Pricing() {
 
   return (
     <SectionWrapper id="pricing">
-      <div className="flex flex-col items-center justify-center space-y-4 text-center mb-20">
+      <div className="flex flex-col items-center justify-center space-y-4 text-center mb-20 max-w-4xl mx-auto">
         <h2 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
           Become an{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-violet-500 to-primary bg-[200%_auto]">
             Early Adopter
           </span>
         </h2>
-        <p className="max-w-[900px] text-lg sm:text-xl text-muted-foreground">
+        <p className="max-w-4xl text-lg sm:text-xl text-muted-foreground">
           We&apos;re looking for forward-thinking AI professionals to help shape the future of Tensorify
         </p>
       </div>

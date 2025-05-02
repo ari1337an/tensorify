@@ -1,5 +1,5 @@
 import { Hero } from "@/components/hero";
-// import { Features } from "@/components/features";
+import { Features } from "@/components/features";
 import { ForWhom } from "@/components/for-whom";
 import { Pricing } from "@/components/pricing";
 import { FAQ } from "@/components/faq";
@@ -51,6 +51,7 @@ export default function Home() {
         <div className="relative">
           {/* Main content with sections, no extra divs between sections to maintain seamless transitions */}
           <Hero />
+          <Features />
           <ForWhom />
           <Pricing />
           <FAQ />

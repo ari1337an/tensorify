@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
-import { Beaker as BeakerIcon, Briefcase as BriefcaseIcon, Users as UsersIcon, ArrowRight as ArrowRightIcon, GraduationCap as GraduationCapIcon } from 'lucide-react';
+import { Beaker as BeakerIcon, Users as UsersIcon, ArrowRight as ArrowRightIcon, GraduationCap as GraduationCapIcon } from 'lucide-react';
 import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { SectionWrapper } from "./section-wrapper";
@@ -21,20 +21,6 @@ const userTypes = [
       { icon: ArrowRightIcon, title: "Focus on research goals", description: "Abstract away implementation details" },
       { icon: ArrowRightIcon, title: "Accelerate iterations", description: "Test variations with minimal friction" }
     ],
-    nodeType: "researcher"
-  },
-  {
-    key: "engineers",
-    icon: BriefcaseIcon,
-    title: "For ML Engineers",
-    challenge: "Your team keeps reinventing the wheel with every project. Knowledge is trapped in fragmented codebases, making collaboration inefficient. The gap between research papers and production code costs you weeks of translation work.",
-    quote: "We spent three weeks reimplementing the architecture from that paper, only to find a critical design flaw after deployment.",
-    benefits: [
-      { icon: ArrowRightIcon, title: "Bridge implementation gaps", description: "Go from whiteboard to working prototype in hours" },
-      { icon: ArrowRightIcon, title: "Generate optimized code", description: "For PyTorch with one click" },
-      { icon: ArrowRightIcon, title: "Maintain full control", description: "Access and customize the generated code" }
-    ],
-    nodeType: "engineer"
   },
   {
     key: "leaders",
@@ -47,7 +33,6 @@ const userTypes = [
       { icon: ArrowRightIcon, title: "Accelerate onboarding", description: "New team members understand complex systems at a glance" },
       { icon: ArrowRightIcon, title: "Increase team productivity", description: "3x faster development cycle" }
     ],
-    nodeType: "lead"
   },
   {
     key: "educators",
@@ -60,7 +45,6 @@ const userTypes = [
       { icon: ArrowRightIcon, title: "Enable hands-on learning", description: "Experiment with complex architectures that would be impractical to code from scratch" },
       { icon: ArrowRightIcon, title: "Accelerate learning cycles", description: "Complete more meaningful projects within academic time constraints" }
     ],
-    nodeType: "lead"
   }
 ];
 
@@ -97,14 +81,14 @@ const UserTypeSection = ({
   return (
     <div
       ref={ref}
-      className="w-full max-w-6xl px-4 mb-16 md:mb-20 relative" // Reduced spacing between cards
+      className="w-full max-w-6xl mb-16 md:mb-20 relative" // Reduced spacing between cards
     >
       <Card className="border-primary/10 bg-gray-950/20 backdrop-blur-xl overflow-hidden rounded-xl shadow-xl">
         <div className="p-6 sm:p-8 md:p-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
             {/* Left column with title, challenge, and quote */}
             <div className="space-y-6 md:space-y-8">
-              <div className="flex items-center flex-wrap gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Badge variant="outline" className="px-4 py-1.5 border-primary/20 bg-primary/5 text-primary text-sm font-medium">
                   {data.key.charAt(0).toUpperCase() + data.key.slice(1)}
                 </Badge>
@@ -176,7 +160,7 @@ export function ForWhom() {
             Had Enough
           </span>
         </h2>
-        <p className="max-w-[800px] text-base md:text-lg lg:text-xl text-muted-foreground">
+        <p className="max-w-4xl text-base md:text-lg lg:text-xl text-muted-foreground">
           Discover how Tensorify solves specific pain points for each role in the AI development lifecycle
         </p>
       </div>

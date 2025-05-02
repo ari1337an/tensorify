@@ -2,9 +2,7 @@
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 import { SectionWrapper } from "./section-wrapper";
-import { Button } from "./ui/button";
-import { MailIcon, HelpCircleIcon } from "lucide-react";
-
+import { HelpCircleIcon } from "lucide-react";
 export function FAQ() {
   const faqs = [
     {
@@ -72,12 +70,12 @@ export function FAQ() {
             Questions
           </span>
         </h2>
-        <p className="max-w-[800px] text-lg sm:text-xl text-muted-foreground animate-fade-in opacity-0" style={{ animationDelay: '0.6s' }}>
+        <p className="max-w-4xl text-lg sm:text-xl text-muted-foreground animate-fade-in opacity-0" style={{ animationDelay: '0.6s' }}>
           Everything you need to know about Tensorify and how it can transform your AI workflow
         </p>
       </div>
       
-      <div className="mx-auto max-w-3xl animate-fade-in opacity-0" style={{ animationDelay: '0.8s' }}>
+      <div className="mx-auto max-w-4xl animate-fade-in opacity-0" style={{ animationDelay: '0.8s' }}>
         <Accordion type="single" collapsible className="w-full space-y-4">
           {faqs.map((faq, index) => (
             <AccordionItem 
@@ -100,7 +98,7 @@ export function FAQ() {
         </Accordion>
       </div>
       
-      <div className="mt-24 text-center animate-fade-in opacity-0" style={{ animationDelay: '1s' }}>
+      {/* <div className="mt-24 text-center animate-fade-in opacity-0" style={{ animationDelay: '1s' }}>
         <div className="inline-block rounded-2xl bg-gradient-to-br from-primary/5 via-background to-violet-500/5 border border-primary/20 p-6 md:p-8 backdrop-blur-sm">
           <p className="text-xl text-muted-foreground mb-6">
             Still have questions? We&apos;re here to help!
@@ -118,7 +116,7 @@ export function FAQ() {
             </a>
           </Button>
         </div>
-      </div>
+      </div> */}
     </SectionWrapper>
   );
 } 
