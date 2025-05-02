@@ -1,5 +1,4 @@
 'use client';
-import Link from "next/link";
 import { CheckIcon, SparklesIcon, RocketIcon, BuildingIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -125,7 +124,7 @@ export function Pricing() {
                 ))}
               </ul>
 
-              {plan.action.href ? (
+              {/* {plan.action.href ? (
                 <Button
                   variant={plan.action.variant as "default" | "outline" | undefined}
                   className={`mt-auto relative h-11 md:h-12 ${!plan.action.variant ? 'bg-gradient-to-r from-primary to-violet-500 hover:opacity-90' : 'border-primary/20 hover:bg-primary/5'
@@ -137,15 +136,16 @@ export function Pricing() {
                   </Link>
                 </Button>
               ) : (
-                <Button
-                  variant={plan.action.variant as "default" | "outline" | undefined}
-                  className={`mt-auto relative h-11 md:h-12 ${!plan.action.variant ? 'bg-gradient-to-r from-primary to-violet-500 hover:opacity-90' : 'border-primary/20 hover:bg-primary/5'
-                    } shadow-lg hover:shadow-xl transition-all duration-300`}
-                  onClick={plan.action.onClick}
-                >
-                  {plan.action.text}
-                </Button>
-              )}
+                
+              )} */}
+              <Button
+                variant={plan.action.variant as "default" | "outline" | undefined}
+                className={`mt-auto relative h-11 md:h-12 ${!plan.action.variant ? 'bg-gradient-to-r from-primary to-violet-500 hover:opacity-90' : 'border-primary/20 hover:bg-primary/5'
+                  } shadow-lg hover:shadow-xl transition-all duration-300`}
+                onClick={plan.action.onClick}
+              >
+                {plan.action.text}
+              </Button>
             </div>
           );
         })}
