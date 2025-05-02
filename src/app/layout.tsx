@@ -179,20 +179,25 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background text-foreground relative`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen relative`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="dark"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <div className="bg-[color:var(--background)] dark:bg-[color:var(--background)] text-foreground min-h-screen flex flex-col">
           <Header />
-          {children}
+          {/* Add padding-top to match header height */}
+          <main className="flex-1 pt-16 md:pt-20">
+            {children}
+          </main>
           <Footer />
           <NewsletterSignup />
-        </ThemeProvider>
-      </body>
+        </div>
+      </ThemeProvider>
+    </body>
     </html>
   );
 }

@@ -5,100 +5,107 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useNewsletterSignup } from "@/hooks/use-newsletter-signup";
+import { Menu, X } from "lucide-react";
+
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { openNewsletterSignup } = useNewsletterSignup();
 
+  // Common background styling for both header and mobile menu
+  const commonBackground = "bg-background/95 hero-gradient-bg backdrop-blur-xl";
+
   return (
-    <>
-      <header className="fixed top-0 left-0 right-0 z-50 py-4 px-6 bg-background">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Logo />
-          <nav className="hidden md:flex items-center space-x-8 text-muted-foreground">
-            <Link
-              href="/#for-whom"
-              className="hover:text-primary transition-colors"
-            >
+    <header className={`fixed top-0 left-0 right-0 z-50 w-full ${commonBackground} border-b border-border/40`}>
+      <div className="max-w-7xl mx-auto px-4 md:px-8">
+        <div className="flex items-center justify-between h-16 md:h-20">
+          {/* Logo with correct baseline alignment */}
+          <div className="flex items-center h-full">
+            <Logo className="flex items-end h-full pb-[18px] md:pb-[22px]" />
+          </div>
+
+          {/* Desktop Navigation with baseline alignment */}
+          <nav className="hidden md:flex items-end h-full pb-[22px] space-x-10">
+            <Link href="/#for-whom" className="text-base font-medium text-foreground/90 hover:text-primary transition-colors">
               Use Cases
             </Link>
-            <Link
-              href="/#pricing"
-              className="hover:text-primary transition-colors"
-            >
+            <Link href="/#pricing" className="text-base font-medium text-foreground/90 hover:text-primary transition-colors">
               Pricing
             </Link>
-            <Link href="/blog" className="hover:text-primary transition-colors">
+            <Link href="/blog" className="text-base font-medium text-foreground/90 hover:text-primary transition-colors">
               Blog
             </Link>
           </nav>
-          <div className="flex items-center space-x-4">
+
+          {/* Action Buttons with baseline alignment */}
+          <div className="flex items-end h-full pb-[18px] md:pb-[22px] gap-2">
             <Button
               onClick={() => {
                 openNewsletterSignup();
                 setIsMobileMenuOpen(false);
               }}
-              className="items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer hover:bg-primary/90 h-9 rounded-md px-3 bg-gradient-to-r from-[#A371D3] to-[#5E48BF] text-white hover:opacity-90 shadow-lg"
+              className="hero-button-gradient text-white font-medium 
+                text-xs sm:text-sm md:text-sm 
+                h-7 sm:h-7 md:h-8 
+                px-3 sm:px-4 md:px-5 
+                rounded-md"
             >
-              Get Early Access
+              Early Access
             </Button>
 
-            {/* Mobile Menu Button */}
+            {/* Mobile Menu Button with properly sized icon */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 text-muted-foreground hover:text-primary"
-              aria-label="Toggle mobile menu"
+              className="md:hidden flex items-center justify-center 
+                h-7 sm:h-7 md:h-8 
+                w-7 sm:w-7 md:w-8
+                rounded-md border border-border/60 hover:bg-background/20 transition-colors"
+              aria-label="Toggle menu"
             >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                {isMobileMenuOpen ? (
-                  <path d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
+              {isMobileMenuOpen ?
+                <X size={18} strokeWidth={2} /> :
+                <Menu size={18} strokeWidth={2} />
+              }
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Mobile Menu Dropdown */}
-        <div
-          className={`md:hidden absolute top-full left-0 right-0 bg-background/95 backdrop-blur-sm border-b ${
-            isMobileMenuOpen ? "block" : "hidden"
-          }`}
-        >
-          <nav className="flex flex-col space-y-4 p-6 text-muted-foreground">
-            <Link
-              href="/#for-whom"
-              className="hover:text-primary transition-colors"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Use Cases
-            </Link>
-            <Link
-              href="/#pricing"
-              className="hover:text-primary transition-colors"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Pricing
-            </Link>
-            <Link
-              href="/blog"
-              className="hover:text-primary transition-colors"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Blog
-            </Link>
-          </nav>
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div className={`md:hidden ${commonBackground} border-t border-border/30 shadow-lg`}>
+          <div className="max-w-7xl mx-auto px-4 md:px-8">
+            <nav className="flex flex-col py-2">
+              <div className="flex flex-col">
+                <Link
+                  href="/#for-whom"
+                  className="py-3 px-4 text-base hover:bg-primary/10 rounded-md transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Use Cases
+                </Link>
+                <div className="h-px bg-gradient-to-r from-border/10 via-border/50 to-border/10 mx-2"></div>
+
+                <Link
+                  href="/#pricing"
+                  className="py-3 px-4 text-base hover:bg-primary/10 rounded-md transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Pricing
+                </Link>
+                <div className="h-px bg-gradient-to-r from-border/10 via-border/50 to-border/10 mx-2"></div>
+
+                <Link
+                  href="/blog"
+                  className="py-3 px-4 text-base hover:bg-primary/10 rounded-md transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Blog
+                </Link>
+              </div>
+            </nav>
+          </div>
         </div>
-      </header>
-      <div className="mx-4 zm:mx-6 lg:mx-8 my-8" />
-    </>
+      )}
+    </header>
   );
 }

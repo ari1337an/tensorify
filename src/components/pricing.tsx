@@ -19,7 +19,7 @@ export function Pricing() {
       icon: RocketIcon,
       features: [
         "Full access to all features",
-        "PyTorch & TensorFlow support",
+        "PyTorch",
         "Unlimited models and components",
         "Priority support",
         "Influence product roadmap",

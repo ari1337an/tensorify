@@ -19,10 +19,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Please specify your role' }, { status: 400 });
     }
 
-    if (!consentGiven) {
-      return NextResponse.json({ error: 'Consent is required' }, { status: 400 });
-    }
-
     // Check for existing email
     const existingSignup = await prisma.newsletterSignup.findUnique({
       where: { email },
@@ -41,7 +37,7 @@ export async function POST(request: Request) {
         email,
         role,
         otherRole: role === 'other' ? otherRole : null,
-        consentGiven,
+        consentGiven: !!consentGiven, // Cast to boolean to handle undefined/null values
       },
     });
 

@@ -10,7 +10,7 @@ import { CTA } from "@/components/cta";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col overflow-hidden">
+    <div className="flex min-h-screen flex-col overflow-hidden bg-[color:var(--background)] dark:bg-[color:var(--background)]">
       {/* SoftwareApplication Schema for SaaS product */}
       <script
         type="application/ld+json"
@@ -49,32 +49,12 @@ export default function Home() {
      
       <main className="flex-1">
         <div className="relative">
-          {/* Main content with sections */}
-          <div className="space-y-16">
-            <section className="fluid-section">
-              <Hero />
-            </section>
-
-            {/* <section className="fluid-section">
-              <Features />
-            </section> */}
-
-            <section className="fluid-section">
-              <ForWhom />
-            </section>
-
-            <section className="fluid-section">
-              <Pricing />
-            </section>
-
-            <section className="fluid-section">
-              <FAQ />
-            </section>
-
-            <section className="fluid-section">
-              <CTA />
-            </section>
-          </div>
+          {/* Main content with sections, no extra divs between sections to maintain seamless transitions */}
+          <Hero />
+          <ForWhom />
+          <Pricing />
+          <FAQ />
+          <CTA />
         </div>
       </main>
     </div>

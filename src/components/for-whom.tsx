@@ -41,7 +41,7 @@ const userTypes = [
     icon: UsersIcon,
     title: "For AI Team Leads",
     challenge: "Your experts waste valuable time on routine coding tasks instead of solving core business problems. Knowledge silos create bottlenecks, and onboarding new team members to your complex AI systems takes months instead of days.",
-    quote: "Half my senior researchers are stuck debugging TensorFlow code instead of advancing our core technology.",
+    quote: "Half my senior researchers are stuck debugging PyTorch code instead of advancing our core technology.",
     benefits: [
       { icon: ArrowRightIcon, title: "Eliminate documentation debt", description: "Self-documenting visual models" },
       { icon: ArrowRightIcon, title: "Accelerate onboarding", description: "New team members understand complex systems at a glance" },
@@ -65,10 +65,10 @@ const userTypes = [
 ];
 
 // Add the BenefitNode component definition
-const BenefitNode = ({ 
+const BenefitNode = ({
   benefit
-}: { 
-  benefit: { icon: LucideIcon; title: string; description: string }; 
+}: {
+  benefit: { icon: LucideIcon; title: string; description: string };
 }) => {
   return (
     <div className="relative pl-8 py-4">
@@ -76,7 +76,7 @@ const BenefitNode = ({
       <div className="absolute left-0 top-5 w-7 h-7 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center shadow-md shadow-primary/10">
         <benefit.icon className="h-4 w-4 text-primary" />
       </div>
-      
+
       {/* Content */}
       <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 shadow-md shadow-primary/5">
         <h5 className="font-semibold text-base text-primary mb-1">{benefit.title}</h5>
@@ -97,52 +97,52 @@ const UserTypeSection = ({
   return (
     <div
       ref={ref}
-      className="w-full max-w-6xl px-4 mb-32 relative"
+      className="w-full max-w-6xl px-4 mb-16 md:mb-20 relative" // Reduced spacing between cards
     >
       <Card className="border-primary/10 bg-gray-950/20 backdrop-blur-xl overflow-hidden rounded-xl shadow-xl">
-        <div className="p-8 sm:p-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+        <div className="p-6 sm:p-8 md:p-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
             {/* Left column with title, challenge, and quote */}
-            <div className="space-y-8">
-              <div className="flex items-center gap-4">
+            <div className="space-y-6 md:space-y-8">
+              <div className="flex items-center flex-wrap gap-4">
                 <Badge variant="outline" className="px-4 py-1.5 border-primary/20 bg-primary/5 text-primary text-sm font-medium">
                   {data.key.charAt(0).toUpperCase() + data.key.slice(1)}
                 </Badge>
-                <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-500">{data.title}</h3>
+                <h3 className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-500">{data.title}</h3>
               </div>
-              
-              <div className="space-y-6">
+
+              <div className="space-y-4 md:space-y-6">
                 <div className="space-y-2">
-                  <h4 className="font-semibold text-lg text-foreground">Your Current Challenge:</h4>
-                  <p className="text-muted-foreground leading-relaxed">
+                  <h4 className="font-semibold text-base md:text-lg text-foreground">Your Current Challenge:</h4>
+                  <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
                     {data.challenge}
                   </p>
                 </div>
-                
-                <blockquote className="border-l-4 border-primary/60 pl-6 py-3 italic text-muted-foreground bg-primary/5 rounded-r-md">
+
+                <blockquote className="border-l-4 border-primary/60 pl-4 md:pl-6 py-3 italic text-sm md:text-base text-muted-foreground bg-primary/5 rounded-r-md">
                   &ldquo;{data.quote}&rdquo;
                 </blockquote>
               </div>
             </div>
-            
+
             {/* Right column with vertical benefit nodes */}
-            <div className="pt-6 mt-4">
+            <div className="pt-4 md:pt-6">
               {/* Section title */}
-              <div className="mb-8">
-                <h4 className="font-semibold text-lg bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-500 inline-block">
+              <div className="mb-6 md:mb-8">
+                <h4 className="font-semibold text-base md:text-lg bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-500 inline-block">
                   How Tensorify Helps:
                 </h4>
-                <div className="mt-2 h-0.5 w-32 bg-gradient-to-r from-primary/50 to-transparent"></div>
+                <div className="mt-2 h-0.5 w-24 md:w-32 bg-gradient-to-r from-primary/50 to-transparent"></div>
               </div>
-              
+
               {/* Let's keep the vertical decorative line inside each benefit card but remove the connecting animated lines */}
               <div className="relative">
                 <div className="absolute top-0 bottom-0 left-3 w-0.5 bg-gradient-to-b from-primary/50 via-violet-500/30 to-transparent"></div>
-                
+
                 {/* Benefit nodes */}
                 <div className="space-y-0">
                   {data.benefits.map((benefit, idx) => (
-                    <BenefitNode 
+                    <BenefitNode
                       key={idx}
                       benefit={benefit}
                     />
@@ -161,22 +161,22 @@ export function ForWhom() {
   const sectionRef = useRef(null);
 
   return (
-    <SectionWrapper 
-      id="for-whom" 
-      className="pt-24 pb-32"
+    <SectionWrapper
+      id="for-whom"
+      className="pt-16 md:pt-24 pb-24 md:pb-32"
       containerClassName="flex flex-col items-center"
     >
-      <div 
+      <div
         ref={sectionRef}
-        className="flex flex-col items-center justify-center space-y-6 text-center mb-24"
+        className="flex flex-col items-center justify-center space-y-4 md:space-y-6 text-center mb-16 md:mb-24 px-4"
       >
-        <h2 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+        <h2 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight">
           For the AI Professional Who&apos;s{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-violet-500 to-primary bg-[200%_auto]">
             Had Enough
           </span>
         </h2>
-        <p className="max-w-[800px] text-lg sm:text-xl text-muted-foreground">
+        <p className="max-w-[800px] text-base md:text-lg lg:text-xl text-muted-foreground">
           Discover how Tensorify solves specific pain points for each role in the AI development lifecycle
         </p>
       </div>
@@ -187,4 +187,4 @@ export function ForWhom() {
       ))}
     </SectionWrapper>
   );
-} 
+}

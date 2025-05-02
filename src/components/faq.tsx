@@ -18,7 +18,7 @@ export function FAQ() {
         "Unlike traditional frameworks where you write code first, Tensorify focuses on visual design and abstraction. You focus on the architecture and connections between components, and Tensorify handles the implementation details. This dramatically reduces development time and errors while making it easier to experiment with different designs."
     },
     {
-      question: "Do I need to know Python or TensorFlow/PyTorch to use Tensorify?",
+      question: "Do I need to know Python or PyTorch to use Tensorify?",
       answer:
         "While some familiarity with AI concepts is helpful, Tensorify drastically reduces the amount of code you need to write. You'll focus on architectural decisions rather than implementation details. This makes it more accessible for those new to AI development while still being powerful for experts."
     },
