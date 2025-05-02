@@ -20,6 +20,9 @@ export const metadata: Metadata = {
       "Explore the latest articles and insights about AI, machine learning, and development from Tensorify.io",
     type: "website",
   },
+  alternates: {
+    canonical: "https://tensorify.io/blog",
+  },
 };
 
 interface ContentBlock {

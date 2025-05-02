@@ -13,6 +13,9 @@ export const metadata: Metadata = {
     description: "Privacy Policy for Tensorify.io - Learn how we collect, use, and protect your personal information.",
     type: "website",
   },
+  alternates: {
+    canonical: "https://tensorify.io/privacy",
+  },
 };
 
 export default function PrivacyPolicyPage() {

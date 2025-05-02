@@ -19,7 +19,6 @@ const geistMono = Geist_Mono({
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
 };
 
 export const metadata: Metadata = {
@@ -36,7 +35,7 @@ export const metadata: Metadata = {
   publisher: "Tensorify.io",
   metadataBase: new URL("https://tensorify.io"),
   alternates: {
-    canonical: "/",
+    canonical: "https://tensorify.io/",
   },
   icons: {
     icon: "/favicon.ico?v=2",

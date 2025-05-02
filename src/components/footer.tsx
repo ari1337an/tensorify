@@ -15,17 +15,17 @@ export function Footer() {
             </p>
           </div>
           <div className="flex flex-col gap-2">
-            <h3 className="text-sm font-medium mb-1">Product</h3>
+            <h2 className="text-sm font-medium mb-1">Product</h2>
             <Link href="#for-whom" className="text-sm text-muted-foreground hover:underline">Use Cases</Link>
             <Link href="#pricing" className="text-sm text-muted-foreground hover:underline">Pricing</Link>
           </div>
           <div className="flex flex-col gap-2">
-            <h3 className="text-sm font-medium mb-1">Company</h3>
+            <h2 className="text-sm font-medium mb-1">Company</h2>
             <Link href="/about" className="text-sm text-muted-foreground hover:underline">About</Link>
             <Link href="/blog" className="text-sm text-muted-foreground hover:underline">Blog</Link>
           </div>
           <div className="flex flex-col gap-2">
-            <h3 className="text-sm font-medium mb-1">Legal</h3>
+            <h2 className="text-sm font-medium mb-1">Legal</h2>
             <Link href="/privacy" className="text-sm text-muted-foreground hover:underline">Privacy Policy</Link>
             <Link href="/terms" className="text-sm text-muted-foreground hover:underline">Terms of Service</Link>
           </div>

@@ -13,6 +13,9 @@ export const metadata: Metadata = {
     description: "Learn about Tensorify.io, our mission, and the team behind the visual AI development platform.",
     type: "website",
   },
+  alternates: {
+    canonical: "https://tensorify.io/about",
+  },
 };
 
 export default function AboutPage() {

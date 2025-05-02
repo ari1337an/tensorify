@@ -13,6 +13,9 @@ export const metadata: Metadata = {
     description: "Terms of Service for Tensorify.io - Please read these terms carefully before using our platform.",
     type: "website",
   },
+  alternates: {
+    canonical: "https://tensorify.io/terms",
+  },
 };
 
 export default function TermsOfServicePage() {
