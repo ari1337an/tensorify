@@ -60,7 +60,7 @@ export default function PrivacyPolicyPage() {
             </p>
             
             <p className="mb-4">
-              For purposes of this Agreement, &ldquo;Site&rdquo; refers to the Company&apos;s website, which can be accessed at <a href="https://tensorify.io" className="text-primary hover:underline">https://tensorify.io</a> and all of its subdomains, including but not limited to <a href="https://app.tensorify.io" className="text-primary hover:underline">app.tensorify.io</a>, <a href="https://mockapi.tensorify.io" className="text-primary hover:underline">mockapi.tensorify.io</a>, and <a href="https://plugins.tensorify.io" className="text-primary hover:underline">plugins.tensorify.io</a>.
+              For purposes of this Agreement, &ldquo;Site&rdquo; refers to the Company&apos;s website, which can be accessed at <a href="https://tensorify.io" className="text-primary hover:underline">https://tensorify.io</a> and all of its subdomains, including but not limited to <a href="https://plugins.tensorify.io" className="text-primary hover:underline">plugins.tensorify.io</a>.
               &ldquo;Service&rdquo; refers to the Company&apos;s services accessed via the Site, in which users can design AI model pipelines visually and generate production-ready code.
               The terms &ldquo;we,&rdquo; &ldquo;us,&rdquo; and &ldquo;our&rdquo; refer to the Company.
               &ldquo;You&rdquo; refers to you, as a user of our Site or our Service.
