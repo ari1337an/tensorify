@@ -14,38 +14,69 @@ export function Footer() {
               Connect different parts of AI systems and get runnable code instantly. Accelerate your AI research and development.
             </p>
           </div>
-          <div className="flex flex-col gap-2">
+          <nav className="flex flex-col gap-2" aria-label="Product navigation">
             <h2 className="text-sm font-medium mb-1">Product</h2>
             <Link href="#for-whom" className="text-sm text-muted-foreground hover:underline">Use Cases</Link>
             <Link href="#pricing" className="text-sm text-muted-foreground hover:underline">Pricing</Link>
-          </div>
-          <div className="flex flex-col gap-2">
+          </nav>
+          <nav className="flex flex-col gap-2" aria-label="Company navigation">
             <h2 className="text-sm font-medium mb-1">Company</h2>
             <Link href="/about" className="text-sm text-muted-foreground hover:underline">About</Link>
             <Link href="/blog" className="text-sm text-muted-foreground hover:underline">Blog</Link>
-          </div>
-          <div className="flex flex-col gap-2">
+          </nav>
+          <nav className="flex flex-col gap-2" aria-label="Legal navigation">
             <h2 className="text-sm font-medium mb-1">Legal</h2>
             <Link href="/privacy" className="text-sm text-muted-foreground hover:underline">Privacy Policy</Link>
             <Link href="/terms" className="text-sm text-muted-foreground hover:underline">Terms of Service</Link>
-          </div>
+          </nav>
         </div>
         <div className="mt-12 flex flex-col md:flex-row justify-between items-center border-t pt-8">
           <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} Tensorify. All rights reserved.
           </p>
           <div className="flex gap-4 mt-4 md:mt-0">
-            <Link href="https://github.com/tensorify" className="text-muted-foreground hover:text-foreground">
+            <Link 
+              href="https://github.com/tensorify" 
+              className="text-muted-foreground hover:text-foreground"
+              rel="noopener noreferrer"
+              aria-label="GitHub"
+            >
               <GithubIcon className="h-5 w-5" />
               <span className="sr-only">GitHub</span>
             </Link>
-            <Link href="https://www.linkedin.com/company/tensorify-io/" className="text-muted-foreground hover:text-foreground">
+            <Link 
+              href="https://www.linkedin.com/company/tensorify-io/" 
+              className="text-muted-foreground hover:text-foreground"
+              rel="noopener noreferrer"
+              aria-label="LinkedIn"
+            >
               <LinkedinIcon className="h-5 w-5" />
               <span className="sr-only">LinkedIn</span>
             </Link>
           </div>
         </div>
       </div>
+      {/* Structured data for footer navigation */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SiteNavigationElement",
+            "name": [
+              "Use Cases", "Pricing", "About", "Blog", "Privacy Policy", "Terms of Service"
+            ],
+            "url": [
+              "https://tensorify.io/#for-whom",
+              "https://tensorify.io/#pricing",
+              "https://tensorify.io/about",
+              "https://tensorify.io/blog",
+              "https://tensorify.io/privacy",
+              "https://tensorify.io/terms"
+            ]
+          })
+        }}
+      />
     </footer>
   );
 }

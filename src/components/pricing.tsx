@@ -45,7 +45,6 @@ export function Pricing() {
       ],
       action: {
         text: "Contact Us",
-        href: "/contact",
         variant: "outline"
       }
     }
