@@ -88,7 +88,7 @@ const UserTypeSection = ({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
             {/* Left column with title, challenge, and quote */}
             <div className="space-y-6 md:space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
                 <Badge variant="outline" className="px-4 py-1.5 border-primary/20 bg-primary/5 text-primary text-sm font-medium">
                   {data.key.charAt(0).toUpperCase() + data.key.slice(1)}
                 </Badge>
