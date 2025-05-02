@@ -43,36 +43,13 @@ export function Hero() {
                 </span>
               </div>
               <div className="flex items-center justify-center gap-3 mt-6">
-                <span className="text-zinc-400 text-3xl md:text-4xl font-semibold">
-                  Eliminate Bottlenecks, Build Without Limits
+                <span className="text-zinc-400 text-3xl md:text-4xl font-semibold w-2xl md:w-4xl">
+                  Create, Connect, Re-use AI Components and Generate PyTorch Code
                 </span>
               </div>
             </h1>
           </div>
           
-          {/* Clean description with solid metallic color and highlight */}
-          <div className="w-full max-w-3xl mx-auto relative my-4">
-            {/* Subtle top accent line */}
-            <div className="w-24 h-0.5 bg-gradient-to-r from-violet-400/30 to-purple-400/30 mx-auto mb-8"></div>
-
-            <p className="text-center font-medium text-xl leading-relaxed mb-5 text-zinc-400">
-              Tensorify is a node-based AI development platform that lets you visually create,
-              connect, and reuse model components —
-              like snapping together LEGO blocks.
-            </p>
-
-            <p className="text-center font-medium leading-relaxed text-zinc-500">
-              Whether you&apos;re building attention mechanisms, embedding layers, or custom data pipelines,
-              Tensorify helps AI researchers and engineers focus on innovative architecture rather than
-              boilerplate code. Deploy experiments in minutes instead of weeks, and iterate 3x faster on your AI models.
-            </p>
-
-            {/* Subtle bottom accent line */}
-            <div className="w-24 h-0.5 bg-gradient-to-r from-violet-400/30 to-purple-400/30 mx-auto mt-8"></div>
-          </div>
-
-         
-
           {/* CTA Button with modern styling */}
           <div className="mt-2">
             <Button
@@ -89,7 +66,62 @@ export function Hero() {
               <span className="absolute inset-0 rounded-md bg-black/5" />
             </Button>
           </div>
+          
+          {/* Clean description with solid metallic color and highlight */}
+          <div className="w-full max-w-3xl mx-auto relative my-4">
+            {/* Subtle top accent line */}
+            <div className="w-24 h-0.5 bg-gradient-to-r from-violet-400/30 to-purple-400/30 mx-auto mb-8"></div>
 
+            <p className="text-center font-medium text-xl leading-relaxed mb-5 text-zinc-400">
+              Tensorify is a node-based AI development platform that lets you visually create,
+              connect, and reuse model components —
+              like snapping together LEGO blocks.
+            </p>
+
+            <p className="text-center font-medium leading-relaxed text-zinc-500">
+              Whether you&apos;re building attention mechanisms, embedding layers, or custom data pipelines,
+              Tensorify helps AI researchers and engineers focus on innovative architecture rather than
+              boilerplate code.
+            </p>
+
+            {/* Subtle bottom accent line */}
+            <div className="w-24 h-0.5 bg-gradient-to-r from-violet-400/30 to-purple-400/30 mx-auto mt-8"></div>
+          </div>
+
+          {/* Interactive Flow Section */}
+          <div className="relative my-4 w-full max-w-5xl">
+            <div className="absolute -inset-4 bg-gradient-to-r from-[hsl(var(--accent))]/20 via-[hsl(var(--primary))]/10 to-[hsl(var(--primary))]/20 rounded-xl blur-3xl" />
+            <div className="relative overflow-hidden rounded-xl backdrop-blur border border-white/5">
+              <div className="absolute inset-0 bg-gradient-to-tr from-[hsl(var(--accent))]/10 to-[hsl(var(--primary))]/10" />
+              <div className="relative rounded-lg p-1">
+                <div className="absolute -top-10 -left-10 w-40 h-40 bg-[hsl(var(--accent))]/20 rounded-full filter blur-3xl" />
+                <div className="absolute -bottom-14 -right-14 w-60 h-60 bg-[hsl(var(--primary))]/20 rounded-full filter blur-3xl" />
+
+                <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
+                  <Badge className="bg-gray-900/80 text-white backdrop-blur-md border-[color:var(--hero-primary)]/40 shadow-sm px-3 py-1.5">
+                    <Zap className="mr-1.5 h-3.5 w-3.5 text-[color:var(--hero-primary)]" />
+                    AI Workflow Example
+                  </Badge>
+                  <Badge className="bg-gray-900/80 text-white backdrop-blur-md border-[color:var(--hero-tertiary)]/40 shadow-sm px-3 py-1.5">
+                    <ArrowRight className="mr-1.5 h-3.5 w-3.5 text-[color:var(--hero-tertiary)]" />
+                    Try clicking on nodes!
+                  </Badge>
+                </div>
+
+                <InteractiveFlow />
+
+                <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+                  <Badge
+                    variant="outline"
+                    className="bg-gray-900/80 text-white backdrop-blur-md border-[color:var(--hero-primary)]/40 shadow-sm px-4 py-1.5"
+                  >
+                    Zoom, pan, and interact with the workflow editor
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          </div>
+          
           {/* Feature boxes in horizontal layout for desktop */}
           <div className="w-full max-w-5xl mt-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -134,39 +166,6 @@ export function Hero() {
             </div>
           </div>
 
-          {/* Interactive Flow Section */}
-          <div className="relative mt-16 w-full max-w-5xl">
-            <div className="absolute -inset-4 bg-gradient-to-r from-[hsl(var(--accent))]/20 via-[hsl(var(--primary))]/10 to-[hsl(var(--primary))]/20 rounded-xl blur-3xl" />
-            <div className="relative overflow-hidden rounded-xl backdrop-blur border border-white/5">
-              <div className="absolute inset-0 bg-gradient-to-tr from-[hsl(var(--accent))]/10 to-[hsl(var(--primary))]/10" />
-              <div className="relative rounded-lg p-1">
-                <div className="absolute -top-10 -left-10 w-40 h-40 bg-[hsl(var(--accent))]/20 rounded-full filter blur-3xl" />
-                <div className="absolute -bottom-14 -right-14 w-60 h-60 bg-[hsl(var(--primary))]/20 rounded-full filter blur-3xl" />
-
-                <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
-                  <Badge className="bg-gray-900/80 text-white backdrop-blur-md border-[color:var(--hero-primary)]/40 shadow-sm px-3 py-1.5">
-                    <Zap className="mr-1.5 h-3.5 w-3.5 text-[color:var(--hero-primary)]" />
-                    AI Workflow Example
-                  </Badge>
-                  <Badge className="bg-gray-900/80 text-white backdrop-blur-md border-[color:var(--hero-tertiary)]/40 shadow-sm px-3 py-1.5">
-                    <ArrowRight className="mr-1.5 h-3.5 w-3.5 text-[color:var(--hero-tertiary)]" />
-                    Try clicking on nodes!
-                  </Badge>
-                </div>
-
-                <InteractiveFlow />
-
-                <div className="absolute bottom-4 left-0 right-0 flex justify-center">
-                  <Badge
-                    variant="outline"
-                    className="bg-gray-900/80 text-white backdrop-blur-md border-[color:var(--hero-primary)]/40 shadow-sm px-4 py-1.5"
-                  >
-                    Zoom, pan, and interact with the workflow editor
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </section>
