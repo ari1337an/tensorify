@@ -2,7 +2,6 @@
 
 @custom-variant dark (&:is(.dark *));
 @tailwind utilities;
-
 @layer base {
   html {
     scroll-behavior: smooth;
@@ -10,69 +9,71 @@
   }
   
   :root {
-    --background: 240 50% 99%;
-    --foreground: 222 47% 11%;
+    /* Zinc color palette for light mode */
+    --background: 240 3% 99%; /* zinc-50 */
+    --foreground: 240 5% 10%; /* zinc-900 */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card: 0 0% 100%; /* white */
+    --card-foreground: 240 5% 10%; /* zinc-900 */
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 0 0% 100%; /* white */
+    --popover-foreground: 240 5% 10%; /* zinc-900 */
 
-    /* Refined primary purple - slightly more saturated */
+    /* Keep primary and accent colors unchanged */
     --primary: 272 65% 65%; /* #AD74E8 - enhanced main purple */
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 240 60% 99%;
-    --secondary-foreground: 222 47% 11%;
+    /* Zinc colors for secondary, muted, border, etc. */
+    --secondary: 240 5% 96%; /* zinc-100 */
+    --secondary-foreground: 240 5% 10%; /* zinc-900 */
 
-    --muted: 240 10% 97%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 240 5% 96%; /* zinc-100 */
+    --muted-foreground: 240 5% 46%; /* zinc-500 */
 
-    /* Consistent accent color */
+    /* Keep accent colors unchanged */
     --accent: 255 70% 55%; /* #665AFF - vibrant blue-purple */
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
+    --border: 240 5% 88%; /* zinc-200 */
+    --input: 240 5% 88%; /* zinc-200 */
     --ring: 272 65% 65%; /* Match enhanced primary */
 
     --radius: 0.75rem;
   }
 
   .dark {
-    /* Richer dark background */
-    --background: 250 15% 6%; /* #0E0D15 - rich deep background */
-    --foreground: 0 0% 98%;
+    /* Zinc color palette for dark mode */
+    --background: 240 5% 7%; /* zinc-950 */
+    --foreground: 240 5% 97%; /* zinc-100 */
 
-    --card: 250 15% 8%; /* #12101B - slightly lighter card background */
-    --card-foreground: 0 0% 98%;
+    --card: 240 5% 9%; /* zinc-900 */
+    --card-foreground: 240 5% 97%; /* zinc-100 */
 
-    --popover: 250 15% 8%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 240 5% 9%; /* zinc-900 */
+    --popover-foreground: 240 5% 97%; /* zinc-100 */
 
-    /* Enhanced primary purple for dark mode - more vibrant */
+    /* Keep primary color unchanged but enhanced for dark mode */
     --primary: 272 75% 65%; /* #B47AEB - enhanced for dark background */
-    --primary-foreground: 240 5.9% 10%;
+    --primary-foreground: 240 5% 10%; /* zinc-900 */
 
-    --secondary: 250 15% 12%; /* #17141F - subtle secondary background */
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 240 5% 14%; /* zinc-800 */
+    --secondary-foreground: 240 5% 97%; /* zinc-100 */
 
-    --muted: 250 15% 12%;
-    --muted-foreground: 240 5% 70%;
+    --muted: 240 5% 14%; /* zinc-800 */
+    --muted-foreground: 240 5% 70%; /* zinc-400 */
 
-    /* Enhanced accent */
+    /* Keep accent color unchanged but enhanced for dark mode */
     --accent: 255 80% 65%; /* #7A70FF - brightened for dark mode */
-    --accent-foreground: 0 0% 98%;
+    --accent-foreground: 240 5% 97%; /* zinc-100 */
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 240 5% 97%; /* zinc-100 */
 
-    --border: 250 15% 14%; /* #1E1A2A - subtle border color */
-    --input: 250 15% 14%;
+    --border: 240 5% 16%; /* zinc-750 */
+    --input: 240 5% 16%; /* zinc-750 */
     --ring: 272 75% 65%; /* Match enhanced primary */
   }
 }

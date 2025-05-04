@@ -67,6 +67,19 @@ export default function Editor({ initialContent }: EditorProps) {
         }
       });
 
+      // Process links to ensure they're properly styled
+      const links = doc.querySelectorAll('a');
+      links.forEach(link => {
+        // Add class for targeting in CSS
+        link.classList.add('bn-link');
+
+        // Ensure links have proper attributes for security and accessibility
+        if (link.getAttribute('href')?.startsWith('http')) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener noreferrer');
+        }
+      });
+
       setHtml(doc.body.innerHTML);
     };
 

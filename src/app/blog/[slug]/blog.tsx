@@ -94,28 +94,6 @@ export default function ClientBlog({ blog }: BlogProps) {
 
   return (
     <div className="min-h-screen bg-background pt-[50px] sm:pt-[60px]">
-      {/* <NextSeo
-        title={blog.seo?.metaTitle || blog.title || "Tensorify Blog"}
-        description={blog.seo?.metaDescription || description}
-        canonical={canonicalUrl}
-        // keywords={blog.seo?.keywords || blog.tags.join(", ")}
-        openGraph={{
-          url: canonicalUrl,
-          title: blog.seo?.ogTitle || blog.title || "Tensorify Blog",
-          description: blog.seo?.ogDescription || description,
-          images: [
-            { url: blog.seo?.ogImage || "https://tensorify.io/logo.png" },
-          ],
-          siteName: blog.seo?.ogSiteName || "Tensorify.io",
-        }}
-        twitter={{
-          handle: "@tensorify",
-          cardType: blog.seo?.twitterCardType
-            ? "summary_large_image"
-            : "summary",
-        }}
-      /> */}
-
       {/* JSON-LD for Article */}
       <ArticleJsonLd
         useAppDir={true}
@@ -179,70 +157,75 @@ export default function ClientBlog({ blog }: BlogProps) {
           color="#7F22FF"
         />
       </div>
+
       <div className="relative lg:flex lg:gap-8 max-w-[1200px] mx-auto">
-        {/* TableOfContents for desktop - hidden on mobile */}
-        <div className="hidden xl:block">
-          <TableOfContents blocks={blocksForTOC} />
-        </div>
-
-        <article className="flex-1 w-full max-w-[900px] mx-auto px-4 sm:px-6 py-6 sm:py-16">
-          <div className="space-y-3 sm:space-y-4">
-            {/* Article Type, Date, and Reading Time */}
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
-              <span>{blog.type || "Article"}</span>
-              <span>•</span>
-              <span>{formattedDate}</span>
-              {blog.updatedAt && blog.updatedAt !== blog.createdAt && (
-                <>
-                  <span>•</span>
-                  <span>Updated {format(blog.updatedAt)}</span>
-                </>
-              )}
-              <span>•</span>
-              <span>{readingTime} min read</span>
-            </div>
-
-            {/* Title */}
-            <h1 className="text-[32px] sm:text-[40px] md:text-[50px] font-bold tracking-[-0.02em] sm:tracking-[-0.05em] leading-[1.2] bg-clip-text text-transparent bg-primary">
-              {blog.title}
-            </h1>
-
-            {/* Author */}
-            <div className="flex items-center gap-3 pt-1 sm:pt-2">
-              <div className="relative w-10 h-10 sm:w-12 sm:h-12">
-                <Image
-                  src={authorPicture}
-                  alt={authorName}
-                  className="rounded-full object-cover"
-                  fill
-                  sizes="(max-width: 640px) 40px, 48px"
-                />
+        {/* Main content area */}
+        <div className="flex-1 w-full max-w-[900px] mx-auto px-4 sm:px-6 py-6 sm:py-16">
+          <article>
+            <div className="space-y-3 sm:space-y-4">
+              {/* Article Type, Date, and Reading Time */}
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-500 dark:text-zinc-400">
+                <span>{blog.type || "Article"}</span>
+                <span>•</span>
+                <span>{formattedDate}</span>
+                {blog.updatedAt && blog.updatedAt !== blog.createdAt && (
+                  <>
+                    <span>•</span>
+                    <span>Updated {format(blog.updatedAt)}</span>
+                  </>
+                )}
+                <span>•</span>
+                <span>{readingTime} min read</span>
               </div>
-              <div>
-                <a
-                  href={authorUrl}
-                  className="font-medium text-[15px] sm:text-base text-foreground/90 hover:text-foreground"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+
+              <h1 className="text-[32px] sm:text-[40px] md:text-[50px] font-bold tracking-[-0.02em] sm:tracking-[-0.05em] leading-[1.2] text-zinc-800 dark:text-zinc-50 animate-fade-in">
+                {blog.title}
+              </h1>
+
+              {/* Author section - enhanced */}
+              <div className="flex items-center gap-3 pt-1 sm:pt-2">
+                <div className="relative w-10 h-10 sm:w-12 sm:h-12 ring-2 ring-zinc-100 dark:ring-zinc-800 rounded-full">
+                  <Image
+                    src={authorPicture}
+                    alt={authorName}
+                    className="rounded-full object-cover"
+                    fill
+                    sizes="(max-width: 640px) 40px, 48px"
+                  />
+                </div>
+                <div>
+                  <a
+                    href={authorUrl}
+                    className="font-medium text-[15px] sm:text-base text-zinc-800 dark:text-zinc-200 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                   {authorName}
                 </a>
-                <p className="text-sm sm:text-[15px] text-muted-foreground">
+                <p className="text-sm sm:text-[15px] text-zinc-500 dark:text-zinc-400">
                   {authorDesignation}
                 </p>
               </div>
             </div>
 
-            {/* TableOfContents for mobile - shown only on mobile, below author details */}
-            <div className="block xl:hidden mt-4 mb-2">
-              <TableOfContents blocks={blocksForTOC} />
-            </div>
+              {/* Mobile Table of Contents - only shown on mobile */}
+              <div className="block xl:hidden mt-4 mb-2">
+                <h4 className="text-base font-semibold mb-2">Table of Contents</h4>
+                <TableOfContents blocks={blocksForTOC} />
+              </div>
 
-            <div className="prose-headings:scroll-mt-[100px]">
-              <Editor initialContent={blocksForEditor} />
+              {/* Main content */}
+              <div className="prose-headings:scroll-mt-[100px]">
+                <Editor initialContent={blocksForEditor} />
+              </div>
             </div>
-          </div>
-        </article>
+          </article>
+        </div>
+
+        {/* Desktop Table of Contents - positioned normally in the sidebar */}
+        <div className="hidden xl:block xl:w-[250px] xl:mt-10 xl:sticky xl:top-[100px] xl:h-fit">
+          <TableOfContents blocks={blocksForTOC} />
+        </div>
       </div>
     </div>
   );

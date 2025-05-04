@@ -160,10 +160,10 @@ export default async function Blog() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             Latest Insights & Articles
           </h1>
-          <p className="mt-4 text-lg text-gray-400 max-w-2xl mx-auto">
+          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
             Explore cutting-edge research, tutorials, and perspectives on AI,
             machine learning, and development from our expert team.
           </p>
@@ -188,7 +188,7 @@ export default async function Blog() {
 
             return (
               <Link href={`/blog/${blog.slug}`} key={blog.id} className="group">
-                <div className="bg-gray-900 rounded-xl overflow-hidden shadow-md hover:shadow-lg hover:shadow-purple-900/20 transition-all duration-300 h-full flex flex-col border border-gray-800">
+                <div className="bg-card rounded-xl overflow-hidden shadow-md hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 h-full flex flex-col border border-border">
                   <div className="aspect-video overflow-hidden relative">
                     <Image
                       src={imageUrl}
@@ -197,7 +197,7 @@ export default async function Blog() {
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       className="object-cover transition-transform duration-500 group-hover:scale-110"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent opacity-30 group-hover:opacity-60 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-30 group-hover:opacity-60 transition-opacity duration-300"></div>
                   </div>
 
                   <div className="p-6 flex flex-col flex-grow">
@@ -206,7 +206,7 @@ export default async function Blog() {
                         {blog.tags.slice(0, 3).map((tag, index) => (
                           <span
                             key={index}
-                            className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-purple-900/40 text-purple-300"
+                            className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-primary/20 text-primary"
                           >
                             {tag}
                           </span>
@@ -214,19 +214,19 @@ export default async function Blog() {
                       </div>
                     )}
 
-                    <h2 className="text-xl font-bold leading-tight mb-3 text-white group-hover:text-purple-400 transition-colors duration-200">
+                    <h2 className="text-xl font-bold leading-tight mb-3 text-card-foreground group-hover:text-primary transition-colors duration-200">
                       {blog.title}
                     </h2>
 
-                    <p className="text-gray-400 text-sm mb-4 line-clamp-2">
+                    <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
                       {blog.seo?.metaDescription ||
                         `Read our latest article on ${blog.title}`}
                     </p>
 
-                    <div className="mt-auto pt-4 border-t border-gray-800 flex items-center justify-between">
+                    <div className="mt-auto pt-4 border-t border-border flex items-center justify-between">
                       <div className="flex items-center">
                         {blog.author?.picture && (
-                          <div className="relative w-8 h-8 rounded-full mr-3 border-2 border-gray-800 shadow-sm overflow-hidden">
+                          <div className="relative w-8 h-8 rounded-full mr-3 border-2 border-border shadow-sm overflow-hidden">
                             <Image
                               src={blog.author.picture}
                               alt={blog.author?.name || "Author"}
@@ -236,14 +236,14 @@ export default async function Blog() {
                           </div>
                         )}
                         <div>
-                          <p className="text-sm font-medium text-gray-300">
+                          <p className="text-sm font-medium text-card-foreground">
                             {blog.author?.name || "Tensorify Team"}
                           </p>
-                          <p className="text-xs text-gray-500">{publishDate}</p>
+                          <p className="text-xs text-muted-foreground">{publishDate}</p>
                         </div>
                       </div>
 
-                      <span className="text-purple-400 group-hover:translate-x-1 transition-transform duration-200">
+                      <span className="text-primary group-hover:translate-x-1 transition-transform duration-200">
                         →
                       </span>
                     </div>
@@ -256,7 +256,7 @@ export default async function Blog() {
 
         {blogs.length === 0 && (
           <div className="text-center py-16">
-            <p className="text-lg text-gray-400">
+            <p className="text-lg text-muted-foreground">
               No blog posts available yet. Check back soon!
             </p>
           </div>

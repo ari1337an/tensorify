@@ -1,3 +1,28 @@
+/* Editor container - light mode */
+.bn-container[data-color-scheme="light"] {
+  --bn-colors-editor-text: var(--color-foreground);
+  --bn-colors-editor-background: var(--color-background);
+  --bn-colors-menu-text: var(--color-card-foreground);
+  --bn-colors-menu-background: var(--color-card);
+  --bn-colors-tooltip-text: var(--color-popover-foreground);
+  --bn-colors-tooltip-background: var(--color-popover);
+  --bn-colors-hovered-text: var(--color-accent-foreground);
+  --bn-colors-hovered-background: var(--color-accent);
+  --bn-colors-selected-text: var(--color-secondary-foreground);
+  --bn-colors-selected-background: var(--color-secondary);
+  --bn-colors-disabled-text: var(--color-muted-foreground);
+  --bn-colors-disabled-background: var(--color-muted);
+  --bn-colors-shadow: var(--color-ring);
+  --bn-colors-border: var(--color-border);
+  --bn-colors-side-menu: var(--color-primary);
+  --bn-color-highlight-colors: var(--color-primary-foreground);
+  --bn-border-radius: var(--radius-sm);
+  --bn-font-family: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont,
+    "Open Sans", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell",
+    "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+}
+
+/* Editor container - dark mode */
 .bn-container[data-color-scheme="dark"] {
   --bn-colors-editor-text: var(--color-muted-foreground);
   --bn-colors-editor-background: var(--color-background);
@@ -51,4 +76,181 @@
   height: 80%;
   opacity: 1;
   transform: translateY(-50%) scaleY(1);
+}
+
+/* Add specific styling for links in the prose content */
+.prose a {
+  color: rgb(63, 63, 70); /* zinc-700 */
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  transition: all 0.2s ease-in-out;
+}
+
+.dark .prose a {
+  color: rgb(161, 161, 170); /* zinc-400 */
+}
+
+.prose a:hover {
+  color: rgb(39, 39, 42); /* zinc-800 */
+  text-decoration-thickness: 2px;
+}
+
+.dark .prose a:hover {
+  color: rgb(228, 228, 231); /* zinc-200 */
+}
+
+/* Style links with content from BlockNote */
+.prose .bn-inline-content a {
+  color: rgb(63, 63, 70); /* zinc-700 */
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.dark .prose .bn-inline-content a {
+  color: rgb(161, 161, 170); /* zinc-400 */
+}
+
+.prose .bn-inline-content a:hover {
+  opacity: 0.85;
+}
+
+/* Table of contents text colors */
+.table-of-contents h4 {
+  color: rgb(39, 39, 42); /* zinc-800 */
+}
+
+.dark .table-of-contents h4 {
+  color: rgb(228, 228, 231); /* zinc-200 */
+}
+
+.table-of-contents a {
+  color: rgb(113, 113, 122); /* zinc-500 */
+}
+
+.dark .table-of-contents a {
+  color: rgb(161, 161, 170); /* zinc-400 */
+}
+
+.table-of-contents a:hover {
+  color: rgb(39, 39, 42); /* zinc-800 */
+}
+
+.dark .table-of-contents a:hover {
+  color: rgb(228, 228, 231); /* zinc-200 */
+}
+
+/* Prose styling with zinc colors */
+.prose h1 {
+  color: rgb(39, 39, 42); /* zinc-800 */
+}
+
+.dark .prose h1 {
+  color: rgb(244, 244, 245); /* zinc-100 */
+}
+
+.prose h2 {
+  color: rgb(39, 39, 42); /* zinc-800 */
+}
+
+.dark .prose h2 {
+  color: rgb(244, 244, 245); /* zinc-100 */
+}
+
+.prose h3 {
+  color: rgb(39, 39, 42); /* zinc-800 */
+}
+
+.dark .prose h3 {
+  color: rgb(244, 244, 245); /* zinc-100 */
+}
+
+.prose h4 {
+  color: rgb(39, 39, 42); /* zinc-800 */
+}
+
+.dark .prose h4 {
+  color: rgb(244, 244, 245); /* zinc-100 */
+}
+
+.prose p {
+  color: rgb(63, 63, 70); /* zinc-700 */
+}
+
+.dark .prose p {
+  color: rgb(228, 228, 231); /* zinc-200 */
+}
+
+.prose ul, .prose ol {
+  color: rgb(63, 63, 70); /* zinc-700 */
+}
+
+.dark .prose ul, .dark .prose ol {
+  color: rgb(228, 228, 231); /* zinc-200 */
+}
+
+.prose code {
+  color: rgb(82, 82, 91); /* zinc-600 */
+  background-color: rgb(244, 244, 245); /* zinc-100 */
+}
+
+.dark .prose code {
+  color: rgb(212, 212, 216); /* zinc-300 */
+  background-color: rgb(39, 39, 42); /* zinc-800 */
+}
+
+.prose pre {
+  background-color: rgb(244, 244, 245); /* zinc-100 */
+  color: rgb(39, 39, 42); /* zinc-800 */
+}
+
+.dark .prose pre {
+  background-color: rgb(39, 39, 42); /* zinc-800 */
+  color: rgb(244, 244, 245); /* zinc-100 */
+}
+
+.prose blockquote {
+  color: rgb(82, 82, 91); /* zinc-600 */
+  border-left-color: rgb(212, 212, 216); /* zinc-300 */
+}
+
+.dark .prose blockquote {
+  color: rgb(212, 212, 216); /* zinc-300 */
+  border-left-color: rgb(82, 82, 91); /* zinc-600 */
+}
+
+.prose hr {
+  border-color: rgb(228, 228, 231); /* zinc-200 */
+}
+
+.dark .prose hr {
+  border-color: rgb(63, 63, 70); /* zinc-700 */
+}
+
+.prose table {
+  color: rgb(63, 63, 70); /* zinc-700 */
+  border-color: rgb(228, 228, 231); /* zinc-200 */
+}
+
+.dark .prose table {
+  color: rgb(212, 212, 216); /* zinc-300 */
+  border-color: rgb(63, 63, 70); /* zinc-700 */
+}
+
+.prose thead {
+  color: rgb(39, 39, 42); /* zinc-800 */
+  border-bottom-color: rgb(228, 228, 231); /* zinc-200 */
+}
+
+.dark .prose thead {
+  color: rgb(244, 244, 245); /* zinc-100 */
+  border-bottom-color: rgb(63, 63, 70); /* zinc-700 */
+}
+
+.prose tbody tr {
+  border-bottom-color: rgb(244, 244, 245); /* zinc-100 */
+}
+
+.dark .prose tbody tr {
+  border-bottom-color: rgb(39, 39, 42); /* zinc-800 */
 }
