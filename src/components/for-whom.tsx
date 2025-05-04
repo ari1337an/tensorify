@@ -48,7 +48,6 @@ const userTypes = [
   }
 ];
 
-// Add the BenefitNode component definition
 const BenefitNode = ({
   benefit
 }: {
@@ -62,14 +61,13 @@ const BenefitNode = ({
       </div>
 
       {/* Content */}
-      <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 shadow-md shadow-primary/5">
+      <div className="bg-zinc-100/80 dark:bg-primary/5 border border-zinc-200/80 dark:border-primary/20 rounded-lg p-4 shadow-md shadow-zinc-200/50 dark:shadow-primary/5">
         <h5 className="font-semibold text-base text-primary mb-1">{benefit.title}</h5>
-        <p className="text-sm text-muted-foreground">{benefit.description}</p>
+        <p className="text-sm text-zinc-700 dark:text-zinc-400">{benefit.description}</p>
       </div>
     </div>
   );
 };
-
 // UserTypeSection with static rendering
 const UserTypeSection = ({
   data
@@ -83,7 +81,7 @@ const UserTypeSection = ({
       ref={ref}
       className="w-full max-w-6xl mb-16 md:mb-20 relative" // Reduced spacing between cards
     >
-      <Card className="border-primary/10 bg-gray-950/20 backdrop-blur-xl overflow-hidden rounded-xl shadow-xl">
+      <Card className="border-zinc-200/30 dark:border-primary/10 bg-zinc-50/90 dark:bg-gray-950/20 backdrop-blur-xl overflow-hidden rounded-xl shadow-xl">
         <div className="p-6 sm:p-8 md:p-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
             {/* Left column with title, challenge, and quote */}
@@ -97,13 +95,13 @@ const UserTypeSection = ({
 
               <div className="space-y-4 md:space-y-6">
                 <div className="space-y-2">
-                  <h4 className="font-semibold text-base md:text-lg text-foreground">Your Current Challenge:</h4>
-                  <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                  <h4 className="font-semibold text-base md:text-lg text-zinc-800 dark:text-zinc-100">Your Current Challenge:</h4>
+                  <p className="text-sm md:text-base text-zinc-700 dark:text-zinc-300 leading-relaxed">
                     {data.challenge}
                   </p>
                 </div>
 
-                <blockquote className="border-l-4 border-primary/60 pl-4 md:pl-6 py-3 italic text-sm md:text-base text-muted-foreground bg-primary/5 rounded-r-md">
+                <blockquote className="border-l-4 border-primary/60 pl-4 md:pl-6 py-3 italic text-sm md:text-base text-zinc-600 dark:text-zinc-400 bg-zinc-100/70 dark:bg-primary/5 rounded-r-md">
                   &ldquo;{data.quote}&rdquo;
                 </blockquote>
               </div>
@@ -119,7 +117,6 @@ const UserTypeSection = ({
                 <div className="mt-2 h-0.5 w-24 md:w-32 bg-gradient-to-r from-primary/50 to-transparent"></div>
               </div>
 
-              {/* Let's keep the vertical decorative line inside each benefit card but remove the connecting animated lines */}
               <div className="relative">
                 <div className="absolute top-0 bottom-0 left-3 w-0.5 bg-gradient-to-b from-primary/50 via-violet-500/30 to-transparent"></div>
 
@@ -154,13 +151,13 @@ export function ForWhom() {
         ref={sectionRef}
         className="flex flex-col items-center justify-center space-y-4 md:space-y-6 text-center mb-16 md:mb-24 px-4"
       >
-        <h2 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight">
+        <h2 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight text-zinc-800 dark:text-zinc-100">
           For the AI Professional Who&apos;s{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-violet-500 to-primary bg-[200%_auto]">
             Had Enough
           </span>
         </h2>
-        <p className="max-w-4xl text-base md:text-lg lg:text-xl text-muted-foreground">
+        <p className="max-w-4xl text-base md:text-lg lg:text-xl text-zinc-600 dark:text-zinc-400">
           Discover how Tensorify solves specific pain points for each role in the AI development lifecycle
         </p>
       </div>
