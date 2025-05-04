@@ -93,7 +93,7 @@ export default function ClientBlog({ blog }: BlogProps) {
   const authorDesignation = blog.author?.designation || "";
 
   return (
-    <div className="min-h-screen bg-background pt-[50px] sm:pt-[60px]">
+    <div className="min-h-screen bg-background pt-[70px] sm:pt-[80px]">
       {/* JSON-LD for Article */}
       <ArticleJsonLd
         useAppDir={true}
@@ -158,14 +158,14 @@ export default function ClientBlog({ blog }: BlogProps) {
         />
       </div>
 
-      <div className="relative lg:flex lg:gap-8 max-w-[1200px] mx-auto">
+      <div className="relative lg:flex lg:gap-12 max-w-[1200px] mx-auto">
         {/* Main content area */}
-        <div className="flex-1 w-full max-w-[900px] mx-auto px-4 sm:px-6 py-6 sm:py-16">
+        <div className="flex-1 w-full max-w-[900px] mx-auto px-5 sm:px-8 py-8 sm:py-12">
           <article>
-            <div className="space-y-3 sm:space-y-4">
+            <div className="space-y-6 sm:space-y-8"> {/* Increased spacing between article sections */}
               {/* Article Type, Date, and Reading Time */}
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-500 dark:text-zinc-400">
-                <span>{blog.type || "Article"}</span>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+                <span className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-full">{blog.type || "Article"}</span>
                 <span>•</span>
                 <span>{formattedDate}</span>
                 {blog.updatedAt && blog.updatedAt !== blog.createdAt && (
@@ -178,19 +178,19 @@ export default function ClientBlog({ blog }: BlogProps) {
                 <span>{readingTime} min read</span>
               </div>
 
-              <h1 className="text-[32px] sm:text-[40px] md:text-[50px] font-bold tracking-[-0.02em] sm:tracking-[-0.05em] leading-[1.2] text-zinc-800 dark:text-zinc-50 animate-fade-in">
+              <h1 className="text-[32px] sm:text-[40px] md:text-[50px] font-bold tracking-[-0.02em] sm:tracking-[-0.05em] leading-[1.2] text-zinc-800 dark:text-zinc-50 animate-fade-in mb-6">
                 {blog.title}
               </h1>
 
               {/* Author section - enhanced */}
-              <div className="flex items-center gap-3 pt-1 sm:pt-2">
-                <div className="relative w-10 h-10 sm:w-12 sm:h-12 ring-2 ring-zinc-100 dark:ring-zinc-800 rounded-full">
+              <div className="flex items-center gap-4 pt-2 sm:pt-3 pb-6 border-b border-zinc-200 dark:border-zinc-800">
+                <div className="relative w-12 h-12 sm:w-14 sm:h-14 ring-2 ring-zinc-100 dark:ring-zinc-800 rounded-full">
                   <Image
                     src={authorPicture}
                     alt={authorName}
                     className="rounded-full object-cover"
                     fill
-                    sizes="(max-width: 640px) 40px, 48px"
+                    sizes="(max-width: 640px) 48px, 56px"
                   />
                 </div>
                 <div>
@@ -200,31 +200,50 @@ export default function ClientBlog({ blog }: BlogProps) {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                  {authorName}
-                </a>
-                <p className="text-sm sm:text-[15px] text-zinc-500 dark:text-zinc-400">
-                  {authorDesignation}
-                </p>
+                    {authorName}
+                  </a>
+                  <p className="text-sm sm:text-[15px] text-zinc-500 dark:text-zinc-400">
+                    {authorDesignation}
+                  </p>
+                </div>
               </div>
-            </div>
 
               {/* Mobile Table of Contents - only shown on mobile */}
-              <div className="block xl:hidden mt-4 mb-2">
-                <h4 className="text-base font-semibold mb-2">Table of Contents</h4>
+              <div className="block xl:hidden mt-8 mb-8 p-5 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg border border-zinc-200 dark:border-zinc-700/50">
+                <h4 className="text-base font-semibold mb-4">Table of Contents</h4>
                 <TableOfContents blocks={blocksForTOC} />
               </div>
 
               {/* Main content */}
-              <div className="prose-headings:scroll-mt-[100px]">
+              <div className="prose-headings:scroll-mt-[100px] prose-p:my-6 prose-headings:mt-10 prose-headings:mb-6 prose-h2:pt-4 prose-h2:border-t prose-h2:border-zinc-100 dark:prose-h2:border-zinc-800 prose-ul:my-6 prose-ol:my-6 prose-li:mb-2">
                 <Editor initialContent={blocksForEditor} />
               </div>
+
+              {/* Tags if available */}
+              {tags.length > 0 && (
+                <div className="mt-12 pt-6 border-t border-zinc-200 dark:border-zinc-800">
+                  <h4 className="text-sm font-medium mb-3 text-zinc-500 dark:text-zinc-400">RELATED TOPICS</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {tags.map((tag, index) => (
+                      <a
+                        key={index}
+                        href={`/blog/tag/${tag}`}
+                        className="text-sm px-3 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                      >
+                        {tag}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </article>
         </div>
 
         {/* Desktop Table of Contents - positioned normally in the sidebar */}
-        <div className="hidden xl:block xl:w-[250px] xl:mt-10 xl:sticky xl:top-[100px] xl:h-fit">
-          <TableOfContents blocks={blocksForTOC} />
+        <div className="hidden xl:block xl:w-[280px] xl:mt-12 xl:sticky xl:top-[100px] xl:h-fit">
+            <TableOfContents blocks={blocksForTOC} />
+          
         </div>
       </div>
     </div>
