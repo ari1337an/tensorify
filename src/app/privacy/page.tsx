@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: "Privacy Policy",
   description: "Privacy Policy for Tensorify.io - Learn how we collect, use, and protect your personal information.",
   openGraph: {
+    // TODO: og image, url; and description too short.
     title: "Privacy Policy | Tensorify.io",
     description: "Privacy Policy for Tensorify.io - Learn how we collect, use, and protect your personal information.",
     type: "website",

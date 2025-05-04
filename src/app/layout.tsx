@@ -23,11 +23,11 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "Tensorify.io - AI Development Platform",
+    default: "Tensorify.io - Visual AI Development Platform",
     template: "%s | Tensorify.io"
   },
-  description: "Modern AI development platform for researchers and engineers. Design your model pipeline visually and generate production-ready code instantly.",
-  keywords: "AI platform, visual AI development, PyTorch, model architecture, code generation, neural networks, machine learning",
+  description: "Modern Low-code Visual AI development platform for researchers and engineers. Design your model pipeline visually and generate production-ready code instantly.",
+  keywords: "AI platform, visual AI development, PyTorch, model architecture, code generation, neural networks, machine learning, tensorify, PyTorch Code Generator, PyTorch Generator",
   authors: [
     { name: "Tensorify Team", url: "https://tensorify.io" }
   ],
@@ -66,10 +66,11 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://tensorify.io",
     siteName: "Tensorify.io",
-    title: "Tensorify.io - AI Development Platform",
-    description: "Modern AI development platform for researchers and engineers. Design your model pipeline visually and generate production-ready code instantly.",
+    title: "Tensorify.io - Visual AI Development Platform",
+    description: "Modern Low-code Visual AI development platform for researchers and engineers. Design your model pipeline visually and generate production-ready code instantly.",
     images: [
       {
+        // TODO: add the og-image and related alt
         url: "https://tensorify.io/og-image.png",
         width: 1200,
         height: 630,
@@ -78,9 +79,10 @@ export const metadata: Metadata = {
     ],
   },
   twitter: {
+    // TODO: Add the og-image and related alt
     card: "summary_large_image",
-    title: "Tensorify.io - AI Development Platform",
-    description: "Modern AI development platform for researchers and engineers. Design your model pipeline visually and generate production-ready code instantly.",
+    title: "Tensorify.io - Visual AI Development Platform",
+    description: "Modern Low-code Visual AI development platform for researchers and engineers. Design your model pipeline visually and generate production-ready code instantly.",
     images: ["https://tensorify.io/twitter-image.png"],
     creator: "@tensorify",
     site: "@tensorify",
@@ -95,13 +97,13 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  verification: {
-    google: "verification_token",
-    yandex: "verification_token",
-    other: {
-      me: ["mailto:info@tensorify.io", "https://tensorify.io"],
-    },
-  },
+  // verification: {
+  //   google: "verification_token",
+  //   yandex: "verification_token",
+  //   other: {
+  //     me: ["mailto:info@tensorify.io", "https://tensorify.io"],
+  //   },
+  // },
 };
 
 export default function RootLayout({
@@ -113,6 +115,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className="hide-scrollbar">
       <head>
         <link rel="manifest" href="/site.webmanifest" />
+        {/* AHRefs analytics */}
         <script
           src="https://analytics.ahrefs.com/analytics.js"
           data-key="Ey1D/Da5BY/S4h/iJ/S4oQ"
@@ -129,7 +132,7 @@ export default function RootLayout({
               "@id": "https://tensorify.io/#website",
               "url": "https://tensorify.io",
               "name": "Tensorify.io",
-              "description": "Modern AI development platform for researchers and engineers. Design your model pipeline visually and generate production-ready code instantly.",
+              "description": "Modern Low-code Visual AI development platform for researchers and engineers. Design your model pipeline visually and generate production-ready code instantly.",
               "publisher": {
                 "@id": "https://tensorify.io/#organization"
               },
@@ -158,21 +161,22 @@ export default function RootLayout({
                 "https://github.com/tensorify",
                 "https://www.linkedin.com/company/tensorify-io/"
               ],
-              "contactPoint": {
-                "@type": "ContactPoint",
-                "telephone": "+1-800-123-4567",
-                "contactType": "customer service",
-                "email": "support@tensorify.io",
-                "areaServed": "Worldwide"
-              },
-              "address": {
-                "@type": "PostalAddress",
-                "streetAddress": "123 AI Street",
-                "addressLocality": "San Francisco",
-                "addressRegion": "CA",
-                "postalCode": "94107",
-                "addressCountry": "US"
-              }
+              // TODO: fix the contact point and the address
+              // "contactPoint": {
+              //   "@type": "ContactPoint",
+              //   "telephone": "+1-800-123-4567",
+              //   "contactType": "customer service",
+              //   "email": "support@tensorify.io",
+              //   "areaServed": "Worldwide"
+              // },
+              // "address": {
+              //   "@type": "PostalAddress",
+              //   "streetAddress": "123 AI Street",
+              //   "addressLocality": "San Francisco",
+              //   "addressRegion": "CA",
+              //   "postalCode": "94107",
+              //   "addressCountry": "US"
+              // }
             })
           }}
         />

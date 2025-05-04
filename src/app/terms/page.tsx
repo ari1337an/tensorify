@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: "Terms of Service",
   description: "Terms of Service for Tensorify.io - Please read these terms carefully before using our platform.",
   openGraph: {
+    // TODO: og image, url; and description too short.
     title: "Terms of Service | Tensorify.io",
     description: "Terms of Service for Tensorify.io - Please read these terms carefully before using our platform.",
     type: "website",

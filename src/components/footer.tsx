@@ -38,7 +38,7 @@ export function Footer() {
             <Link 
               href="https://github.com/tensorify" 
               className="text-muted-foreground hover:text-foreground"
-              rel="noopener noreferrer"
+              rel="noopener noreferrer nofollow"
               aria-label="GitHub"
             >
               <GithubIcon className="h-5 w-5" />
@@ -47,7 +47,7 @@ export function Footer() {
             <Link 
               href="https://www.linkedin.com/company/tensorify-io/" 
               className="text-muted-foreground hover:text-foreground"
-              rel="noopener noreferrer"
+              rel="noopener noreferrer nofollow"
               aria-label="LinkedIn"
             >
               <LinkedinIcon className="h-5 w-5" />

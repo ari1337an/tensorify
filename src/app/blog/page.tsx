@@ -15,6 +15,7 @@ export const metadata: Metadata = {
   description:
     "Explore the latest articles and insights about AI, machine learning, and development from Tensorify.io",
   openGraph: {
+    // TODO: og image, url; and description too short.
     title: "Blog | Tensorify.io",
     description:
       "Explore the latest articles and insights about AI, machine learning, and development from Tensorify.io",

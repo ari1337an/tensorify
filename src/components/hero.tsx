@@ -55,9 +55,9 @@ export function Hero() {
             <div className="w-24 h-0.5 bg-gradient-to-r from-violet-400/30 to-purple-400/30 mx-auto mb-8"></div>
 
             <p className="text-center font-medium text-xl leading-relaxed mb-5 text-zinc-400">
-              Tensorify is a node-based AI development platform that lets you visually create,
+              Tensorify is a node-based low-code AI development platform that lets you visually create,
               connect, and reuse model components —
-              like snapping together LEGO blocks.
+              like snapping together LEGO® blocks.
             </p>
 
             <p className="text-center font-medium leading-relaxed text-zinc-500">
