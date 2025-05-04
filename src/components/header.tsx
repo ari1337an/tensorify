@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useNewsletterSignup } from "@/hooks/use-newsletter-signup";
 import { Menu, X } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -38,6 +39,11 @@ export function Header() {
 
           {/* Action Buttons with baseline alignment */}
           <div className="flex items-end h-full pb-[18px] md:pb-[22px] gap-2">
+            {/* Theme toggle button - visible only on desktop */}
+            <div className="hidden md:block">
+              <ThemeToggle />
+            </div>
+            
             <Button
               onClick={() => {
                 openNewsletterSignup();
@@ -101,6 +107,13 @@ export function Header() {
                 >
                   Blog
                 </Link>
+                <div className="h-px bg-gradient-to-r from-border/10 via-border/50 to-border/10 mx-2"></div>
+
+                {/* Theme toggle in mobile menu */}
+                <div className="flex items-center py-3 px-4 text-base hover:bg-primary/10 rounded-md transition-colors">
+                  <span className="mr-2">Toggle Theme</span>
+                  <ThemeToggle />
+                </div>
               </div>
             </nav>
           </div>
