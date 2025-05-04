@@ -27,56 +27,65 @@ export interface Block {
 }
 
 export interface SEO {
-  metaTitle?: string;
-  metaDescription?: string;
-  metaRobots?: string;
-  keywords?: string;
-  canonicalUrl?: string;
+  metaTitle: string;
+  metaDescription: string;
+  metaRobots: string;
+  keywords: string;
+  canonicalUrl: string;
+  ogTitle: string;
+  ogDescription: string;
+  ogImage: string;
+  ogUrl: string;
+  ogType: string;
+  ogSiteName: string;
+  twitterCardType: string;
+  twitterTitle: string;
+  twitterDescription: string;
+  twitterImage: string;
+  twitterSite: string;
+  blogpostingHeadline: string;
+  blogpostingDescription: string;
+  blogpostingAuthorName: string;
+  blogpostingAuthorUrl: string;
+  blogpostingPublisherName: string;
+  blogpostingPublisherLogo: string;
+  blogpostingKeywords: string;
+  blogpostingFeaturedImage: string;
+  mainEntityOfPage: string;
+  favicon: string;
+  language: string;
+  faqEnabled?: boolean;
+  faqData?: FAQData;
+}
 
-  ogTitle?: string;
-  ogDescription?: string;
-  ogImage?: string;
-  ogUrl?: string;
-  ogType?: string;
-  ogSiteName?: string;
+export interface FAQData {
+  questions: FAQQuestion[];
+}
 
-  twitterCardType?: string;
-  twitterTitle?: string;
-  twitterDescription?: string;
-  twitterImage?: string;
-  twitterSite?: string;
+export interface FAQQuestion {
+  questionName: string;
+  acceptedAnswerText: string;
+}
 
-  blogpostingHeadline?: string;
-  blogpostingDescription?: string;
-  blogpostingAuthorName?: string;
-  blogpostingAuthorUrl?: string;
-  blogpostingPublisherName?: string;
-  blogpostingPublisherLogo?: string;
-  blogpostingKeywords?: string;
-  blogpostingFeaturedImage?: string;
-
-  mainEntityOfPage?: string;
-  favicon?: string;
-  language?: string;
+export interface Author {
+  name: string;
+  designation: string;
+  profileLink: string;
+  picture: string;
 }
 
 export interface BlogPost {
   id: string;
   title: string;
-  slug?: string;
-  type?: string;
-  status?: string;
+  slug: string;
+  type: string;
+  status: string;
   content: {
-    blocks: Block[] | BlockNoteBlock[];
-  };
-  author: {
-    name: string;
-    picture: string;
-    designation: string;
-    profileLink: string;
+    blocks: BlockNoteBlock[];
   };
   createdAt: string;
   updatedAt?: string;
-  tags: string[];
+  author?: Author;
+  tags?: string[];
   seo?: SEO;
 }

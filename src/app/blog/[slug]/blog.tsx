@@ -92,6 +92,17 @@ export default function ClientBlog({ blog }: BlogProps) {
   const authorPicture = blog.author?.picture || "https://tensorify.io/logo.png";
   const authorDesignation = blog.author?.designation || "";
 
+  // Prepare FAQ data for JSON-LD if available
+  const hasFaq = Boolean(blog.seo?.faqEnabled && blog.seo?.faqData && blog.seo?.faqData.questions && blog.seo?.faqData.questions.length > 0);
+  
+  // Process FAQ questions into the format expected by FAQPageJsonLd
+  const faqQuestions = hasFaq && blog.seo?.faqData?.questions 
+    ? blog.seo.faqData.questions.map((question) => ({
+        questionName: question.questionName,
+        acceptedAnswerText: question.acceptedAnswerText,
+      }))
+    : [];
+
   return (
     <div className="min-h-screen bg-background pt-[70px] sm:pt-[80px]">
       {/* JSON-LD for Article */}
@@ -149,6 +160,27 @@ export default function ClientBlog({ blog }: BlogProps) {
           },
         ]}
       />
+
+      {/* JSON-LD for FAQ if available */}
+      {hasFaq && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              "mainEntity": faqQuestions.map(question => ({
+                "@type": "Question",
+                "name": question.questionName,
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": question.acceptedAnswerText
+                }
+              }))
+            })
+          }}
+        />
+      )}
 
       <div className="fixed top-0 left-0 z-50">
         <PageScrollProgressBar
