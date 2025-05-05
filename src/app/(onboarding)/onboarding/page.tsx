@@ -7,12 +7,14 @@ import { useRouter } from "next/navigation";
 import { OnboardingSource } from "./_components/OnboardingSource";
 import { OnboardingOrg } from "./_components/OnboardingOrg";
 import { OnboardingSetup } from "./_components/OnboardingSetup";
+import { OnboardingFramework } from "./_components/OnboardingFramework";
 
-const steps = ["source", "organization", "setup"] as const;
+const steps = ["source", "framework", "organization", "setup"] as const;
 type Step = (typeof steps)[number];
 
 const stepTitles = {
   source: "How did you hear about us?",
+  framework: "Which ML/DL/AI framework do you use?",
   organization: "Setup your Organization",
   setup: "Setting up your workspace...",
 } as const;
@@ -73,6 +75,9 @@ export default function OnboardingPage() {
           >
             {currentStep === "source" && (
               <OnboardingSource onNext={handleNext} />
+            )}
+            {currentStep === "framework" && (
+              <OnboardingFramework onNext={handleNext} />
             )}
             {currentStep === "organization" && (
               <OnboardingOrg onNext={handleNext} />

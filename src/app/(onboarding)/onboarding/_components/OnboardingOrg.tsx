@@ -4,16 +4,39 @@ import { useState, useEffect } from "react";
 import { Input } from "@/app/_components/ui/input";
 import { Button } from "@/app/_components/ui/button";
 import { Label } from "@/app/_components/ui/label";
-import { Building2, Link, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  Building2,
+  Link,
+  CheckCircle2,
+  AlertCircle,
+  Users,
+  ChevronDown,
+} from "lucide-react";
 import { motion } from "framer-motion";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/app/_components/ui/select";
 
 type Props = {
   onNext: () => void;
 };
 
+const orgSizes = [
+  { value: "xs", label: "Less than 20 people" },
+  { value: "sm", label: "20-99 people" },
+  { value: "md", label: "100-499 people" },
+  { value: "lg", label: "500-999 people" },
+  { value: "xl", label: "1000+ people" },
+] as const;
+
 export function OnboardingOrg({ onNext }: Props) {
   const [orgName, setOrgName] = useState("");
   const [orgSlug, setOrgSlug] = useState("");
+  const [orgSize, setOrgSize] = useState<string>("");
   const [isSlugEdited, setIsSlugEdited] = useState(false);
   const [isValidSlug, setIsValidSlug] = useState(true);
 
@@ -36,7 +59,7 @@ export function OnboardingOrg({ onNext }: Props) {
     setIsValidSlug(/^[a-z0-9-]+$/.test(newSlug));
   };
 
-  const isValid = orgName.length > 0 && isValidSlug;
+  const isValid = orgName.length > 0 && isValidSlug && orgSize !== "";
 
   return (
     <div className="space-y-6">
@@ -91,6 +114,32 @@ export function OnboardingOrg({ onNext }: Props) {
           <p className="text-xs text-muted-foreground mt-1">
             Only lowercase letters, numbers, and hyphens are allowed
           </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-muted-foreground" />
+            Organization Size
+          </Label>
+          <Select value={orgSize} onValueChange={setOrgSize}>
+            <SelectTrigger className="w-full h-11 bg-background border-input hover:bg-accent hover:text-accent-foreground focus:ring-0 focus:ring-offset-0">
+              <SelectValue
+                placeholder="Select organization size"
+                className="text-muted-foreground"
+              />
+            </SelectTrigger>
+            <SelectContent className="w-full min-w-[320px]">
+              {orgSizes.map((size) => (
+                <SelectItem
+                  key={size.value}
+                  value={size.value}
+                  className="cursor-pointer focus:bg-accent focus:text-accent-foreground"
+                >
+                  {size.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
