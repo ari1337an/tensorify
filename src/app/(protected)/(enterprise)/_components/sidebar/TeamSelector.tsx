@@ -23,6 +23,7 @@ import {
 import { useSidebar } from "./SidebarContext";
 import { useAuth } from "@clerk/nextjs";
 import { TeamDialog } from "@/app/(protected)/(enterprise)/_components/dialog";
+import { useSettingsDialog } from "@/app/(protected)/(enterprise)/_components/settings";
 import { Badge } from "@/app/_components/ui/badge";
 
 type Team = {
@@ -50,6 +51,7 @@ export function TeamSelector({
   const [isTeamDialogOpen, setIsTeamDialogOpen] = React.useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { setIsOpen: setSidebarOpen } = useSidebar();
+  const { openSettings } = useSettingsDialog();
 
   // If no teams provided, create some example ones
   const defaultTeams =
@@ -99,7 +101,13 @@ export function TeamSelector({
           </DropdownMenuLabel>
 
           <div className="flex gap-2 px-3 py-2">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-md border border-border text-accent-foreground hover:border-primary hover:ring-1 hover:ring-primary cursor-pointer">
+            <div
+              className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-md border border-border text-accent-foreground hover:border-primary hover:ring-1 hover:ring-primary cursor-pointer"
+              onClick={() => {
+                openSettings();
+                setIsOpen(false);
+              }}
+            >
               <Settings className="h-4 w-4" />
               <span className="text-sm">Settings</span>
             </div>

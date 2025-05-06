@@ -12,7 +12,7 @@ export function SidebarFooter() {
             onClick={() => {
               window.open("https://plugins.tensorify.io/search", "_blank");
             }}
-            variant="outline"
+            variant="ghost"
             className="w-full justify-start text-left text-sm relative overflow-hidden group"
           >
             {/* Gradient background on hover */}
@@ -26,7 +26,7 @@ export function SidebarFooter() {
 
         <div className="transition-transform duration-200">
           <Button
-            variant="outline"
+            variant="ghost"
             className="w-full justify-start text-left text-sm relative overflow-hidden group"
           >
             {/* Gradient background on hover */}
