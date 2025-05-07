@@ -1,19 +1,15 @@
 export interface SettingsState {
-  startWeekOnMonday: boolean;
-  autoSetTimezone: boolean;
-  openLinksInDesktop: boolean;
-  themePreference: string;
-  language: string;
+  themePreference: "system" | "light" | "dark";
   timezone: string;
-  startupPage: string;
+  openInDesktop: boolean;
+  showViewHistory: boolean;
+  profileDiscoverable: boolean;
 }
 
 export const defaultSettings: SettingsState = {
-  startWeekOnMonday: true,
-  autoSetTimezone: true,
-  openLinksInDesktop: true,
   themePreference: "system",
-  language: "english",
-  timezone: "dhaka",
-  startupPage: "last_visited",
+  timezone: "(GMT+6:00) Dhaka",
+  openInDesktop: true,
+  showViewHistory: true,
+  profileDiscoverable: true,
 };

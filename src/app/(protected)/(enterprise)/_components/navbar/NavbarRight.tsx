@@ -10,7 +10,6 @@ import {
 import { UserButton, useUser } from "@clerk/nextjs";
 import { Button } from "@/app/_components/ui/button";
 import { CollaboratorAvatars } from "@/app/(protected)/(enterprise)/_components/navbar/CollaboratorAvatars";
-import { ThemeToggle } from "@/app/_components/ui/theme-toggle";
 import { useState } from "react";
 import { cn } from "@/app/_lib/utils";
 import { ExportDialog } from "@/app/(protected)/(enterprise)/_components/dialog/ExportDialog";
@@ -63,8 +62,6 @@ export function NavbarRight() {
       <div className="mr-2">
         <CollaboratorAvatars collaborators={collaborators} maxVisible={2} />
       </div>
-
-      <ThemeToggle />
 
       <Button
         variant={isLocked ? "destructive" : "ghost"}

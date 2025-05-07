@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   AlertCircle,
   Users,
-  ChevronDown,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import {

@@ -55,16 +55,67 @@ The application is structured using route groups for logical code organization w
       - `ShareDialog.tsx` - Dialog for sharing projects and workflows with other users.
       - `index.ts` - Export file for dialog components.
     - `settings/` - Settings module for managing user preferences.
-      - `SettingsDialog.tsx` - Main settings dialog component with section navigation.
+      - `SettingsDialog.tsx` - Main settings dialog component with section navigation and modern UI design.
       - `index.ts` - Export file for settings components.
       - `context/` - Settings state management.
-        - `SettingsContext.tsx` - Context provider for settings state. Now integrates with next-themes to update the app theme when themePreference changes.
+        - `SettingsContext.tsx` - Context provider for settings state with theme integration.
       - `types/` - Settings type definitions.
-        - `settings.types.ts` - Types and interfaces for settings state.
-      - `sections/` - Individual settings section components.
-        - `AppearanceSection.tsx` - Theme and appearance settings.
-        - `LanguageTimeSection.tsx` - Language, timezone, and calendar settings.
-        - `DesktopSection.tsx` - Desktop app specific settings.
+        - `settings.types.ts` - Types and interfaces for settings state including account, theme, timezone, and privacy preferences.
+        - `index.ts` - Export file for settings types.
+      - `group/` - Modular group structure for settings sections.
+        - `index.ts` - Export file for all group modules.
+        - `account/` - Account management module.
+          - `view.tsx` - UI component for the account section.
+          - `logic.tsx` - Logic and state management for the account section.
+          - `icon.tsx` - Icon component for the account section in the sidebar.
+          - `meta.tsx` - Metadata for the account section (label, ID, group).
+          - `index.ts` - Export file for the account module.
+        - `preferences/` - User preferences module.
+          - `view.tsx` - UI component for the preferences section.
+          - `logic.tsx` - Logic and state management for the preferences section.
+          - `icon.tsx` - Icon component for the preferences section in the sidebar.
+          - `meta.tsx` - Metadata for the preferences section (label, ID, group).
+          - `index.ts` - Export file for the preferences module.
+        - `notifications/` - Notification settings module.
+          - `view.tsx` - UI component for the notifications section.
+          - `logic.tsx` - Logic and state management for the notifications section.
+          - `icon.tsx` - Icon component for the notifications section in the sidebar.
+          - `meta.tsx` - Metadata for the notifications section (label, ID, group).
+          - `index.ts` - Export file for the notifications module.
+        - `general/` - General workspace settings module.
+          - `view.tsx` - UI component for the general section.
+          - `logic.tsx` - Logic and state management for the general section.
+          - `icon.tsx` - Icon component for the general section in the sidebar.
+          - `meta.tsx` - Metadata for the general section (label, ID, group).
+          - `index.ts` - Export file for the general module.
+        - `people/` - People management module.
+          - `view.tsx` - UI component for the people section.
+          - `logic.tsx` - Logic and state management for the people section.
+          - `icon.tsx` - Icon component for the people section in the sidebar.
+          - `meta.tsx` - Metadata for the people section (label, ID, group).
+          - `index.ts` - Export file for the people module.
+        - `identity/` - Identity management module.
+          - `view.tsx` - UI component for the identity section.
+          - `logic.tsx` - Logic and state management for the identity section.
+          - `icon.tsx` - Icon component for the identity section in the sidebar.
+          - `meta.tsx` - Metadata for the identity section (label, ID, group).
+          - `index.ts` - Export file for the identity module.
+        - `security/` - Security settings module.
+          - `view.tsx` - UI component for the security section.
+          - `logic.tsx` - Logic and state management for the security section.
+          - `icon.tsx` - Icon component for the security section in the sidebar.
+          - `meta.tsx` - Metadata for the security section (label, ID, group).
+          - `index.ts` - Export file for the security module.
+        - `teamspaces/` - Teamspaces management module.
+          - `view.tsx` - UI component for the teamspaces section.
+          - `logic.tsx` - Logic and state management for the teamspaces section.
+          - `icon.tsx` - Icon component for the teamspaces section in the sidebar.
+          - `meta.tsx` - Metadata for the teamspaces section (label, ID, group).
+          - `index.ts` - Export file for the teamspaces module.
+  - `settings/` - Settings pages for managing user and workspace preferences.
+    - `layout.tsx` - Layout component for settings pages with sidebar navigation, properly typed with LucideIcon type for icon components.
+    - `account/` - Account settings pages.
+      - `page.tsx` - Account settings page with profile management, security settings, and device management.
   - `_hooks/` - Custom React hooks for enterprise feature functionality.
     - `use-mobile.ts` - Hook for detecting mobile viewport and responsive behavior.
     - `index.ts` - Export file for enterprise hooks.
@@ -124,4 +175,11 @@ The application is structured using route groups for logical code organization w
   - `navigation-menu.tsx` - Navigation component for main app navigation.
   - `popover.tsx` - Popover component for tooltips and floating content.
   - `progress.tsx` - Progress indicator component for loading and completion status.
-  - `radio-group.tsx`
+  - `radio-group.tsx` - Radio button group component for selecting options.
+  - `select.tsx` - Select dropdown component for choosing from options.
+  - `separator.tsx` - Visual separator component for dividing content.
+  - `switch.tsx` - Toggle switch component for boolean settings.
+  - `table.tsx` - Table component for displaying structured data.
+  - `tabs.tsx` - Tab component for organizing content into panels.
+  - `textarea.tsx` - Multi-line text input component.
+  - `tooltip.tsx` - Tooltip component for displaying additional information.

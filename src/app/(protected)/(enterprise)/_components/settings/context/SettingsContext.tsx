@@ -45,12 +45,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   );
 
   const openSettings = React.useCallback(() => {
-    console.log("Opening settings dialog");
     setIsOpen(true);
   }, []);
 
   const closeSettings = React.useCallback(() => {
-    console.log("Closing settings dialog");
     setIsOpen(false);
   }, []);
 

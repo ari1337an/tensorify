@@ -17,7 +17,6 @@ export function SettingsSection({
   const settingsContext = useSettingsDialog();
 
   const handleSettingsClick = () => {
-    console.log("Settings clicked, opening dialog");
     settingsContext.openSettings();
     setActiveItem("Settings");
   };
