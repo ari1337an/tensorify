@@ -19,6 +19,10 @@ model AdminAccount {
   BlogPost    BlogPost[]
 }
 
+/**
+ * Blog Post
+ */
+
 enum BlogPostType {
   ANNOUNCEMENT // Product launches, company updates
   ARTICLE // Educational, SEO-driven content for growth
@@ -96,4 +100,106 @@ model BlogSeo {
   blogPostId               String   @unique
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
+}
+
+/**
+ * Onboarding
+ */
+
+enum QuestionType {
+  single_choice
+  multi_choice
+}
+
+enum OrgSizeBracket {
+  ONE_TO_FIVE
+  SIX_TO_TWENTY
+  TWENTYONE_TO_FIFTY
+  FIFTYONE_PLUS
+}
+
+enum IntentTag {
+  WILL_NOT_PAY
+  WILL_PAY_HOBBY
+  WILL_PAY_TEAM
+  ENTERPRISE_POTENTIAL
+}
+
+enum TagStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model OnboardingTagVersion {
+  id          String    @id @default(uuid())
+  tag         String    @unique
+  title       String
+  description String?
+  status      TagStatus @default(DRAFT)
+  createdAt   DateTime  @default(now())
+  publishedAt DateTime?
+
+  questions OnboardingQuestion[]
+  responses OnboardingResponse[]
+
+  @@index([status])
+}
+
+model OnboardingQuestion {
+  id        String       @id @default(uuid())
+  versionId String
+  slug      String
+  type      QuestionType
+  title     String
+  iconSlug  String?
+  isActive  Boolean      @default(true)
+  sortOrder Int          @default(0)
+  createdAt DateTime     @default(now())
+
+  version OnboardingTagVersion @relation(fields: [versionId], references: [id])
+  options OnboardingOption[]
+  answers OnboardingAnswer[]
+
+  @@index([versionId])
+}
+
+model OnboardingOption {
+  id         String  @id @default(uuid())
+  questionId String
+  value      String
+  label      String
+  iconSlug   String?
+  sortOrder  Int?
+
+  question OnboardingQuestion @relation(fields: [questionId], references: [id])
+  answers  OnboardingAnswer[]
+}
+
+model OnboardingResponse {
+  id                String         @id @default(uuid())
+  userId            String
+  email             String
+  clientFingerprint String
+  intentTag         IntentTag
+  orgSizeBracket    OrgSizeBracket
+  tagVersionId      String
+  createdAt         DateTime       @default(now())
+
+  tagVersion OnboardingTagVersion @relation(fields: [tagVersionId], references: [id])
+  answers    OnboardingAnswer[]
+
+  @@index([userId])
+}
+
+model OnboardingAnswer {
+  id          String  @id @default(uuid())
+  responseId  String
+  questionId  String
+  optionId    String? // Nullable for "Other"
+  customValue String? // Only used when "Other" input is filled
+
+  response OnboardingResponse @relation(fields: [responseId], references: [id])
+  question OnboardingQuestion @relation(fields: [questionId], references: [id])
+  option   OnboardingOption?  @relation(fields: [optionId], references: [id])
 }
