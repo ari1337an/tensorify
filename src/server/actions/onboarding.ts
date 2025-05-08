@@ -1,7 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import db from "@/server/database/db";
-import { QuestionType, TagStatus } from "@prisma/client";
+import { QuestionType } from "@prisma/client";
 
 // Get all onboarding tag versions
 export async function getOnboardingTagVersions() {
@@ -285,6 +285,7 @@ export async function addOnboardingQuestion(data: {
         slug: data.slug,
         type: data.type,
         iconSlug: data.iconSlug,
+        allowOtherOption: data.allowOtherOption ?? false,
         sortOrder: nextSortOrder,
         options: {
           create: data.options.map((option, index) => ({
@@ -369,7 +370,7 @@ export async function getOnboardingAnalytics(versionId: string) {
     // Calculate question-specific stats
     const questionStats = version.questions.map((question) => {
       const optionCounts = new Map();
-      let otherCount = 0;
+      const otherResponses = new Map(); // Track "Other" responses and their counts
 
       // Initialize counts for all options
       question.options.forEach((option) => {
@@ -378,19 +379,23 @@ export async function getOnboardingAnalytics(versionId: string) {
 
       // Count answers for each option
       version.responses.forEach((response) => {
-        const answer = response.answers.find(
+        const answers = response.answers.filter(
           (a) => a.questionId === question.id
         );
-        if (answer) {
+        answers.forEach((answer) => {
           if (answer.optionId) {
             optionCounts.set(
               answer.optionId,
               (optionCounts.get(answer.optionId) || 0) + 1
             );
-          } else if (answer.customValue) {
-            otherCount++;
           }
-        }
+          if (answer.customValue) {
+            otherResponses.set(
+              answer.customValue,
+              (otherResponses.get(answer.customValue) || 0) + 1
+            );
+          }
+        });
       });
 
       // Format option stats
@@ -404,24 +409,43 @@ export async function getOnboardingAnalytics(versionId: string) {
             : 0,
       }));
 
+      // Format "Other" responses
+      const otherResponseStats = Array.from(otherResponses.entries()).map(
+        ([value, count]) => ({
+          value,
+          count,
+          percentage: totalResponses > 0 ? (count / totalResponses) * 100 : 0,
+        })
+      );
+
       return {
         questionId: question.id,
         title: question.title,
         slug: question.slug,
         type: question.type,
+        allowOtherOption: question.allowOtherOption,
         optionStats,
-        otherCount,
+        otherResponseStats,
+        otherCount: otherResponseStats.reduce(
+          (sum, stat) => sum + stat.count,
+          0
+        ),
         otherPercentage:
-          totalResponses > 0 ? (otherCount / totalResponses) * 100 : 0,
+          totalResponses > 0
+            ? (otherResponseStats.reduce((sum, stat) => sum + stat.count, 0) /
+                totalResponses) *
+              100
+            : 0,
       };
     });
 
     // Calculate organization size distribution
     const orgSizeDistribution = {
-      ONE_TO_FIVE: 0,
-      SIX_TO_TWENTY: 0,
-      TWENTYONE_TO_FIFTY: 0,
-      FIFTYONE_PLUS: 0,
+      LT_20: 0,
+      FROM_20_TO_99: 0,
+      FROM_100_TO_499: 0,
+      FROM_500_TO_999: 0,
+      GTE_1000: 0,
     };
 
     version.responses.forEach((response) => {
@@ -516,7 +540,7 @@ export async function updateQuestionOrder(data: {
     }
 
     // Use a transaction for bulk updates
-    const updates = await db.$transaction(
+    await db.$transaction(
       data.questionOrders.map((item) =>
         db.onboardingQuestion.update({
           where: { id: item.id },
@@ -539,10 +563,12 @@ export interface OnboardingResponseSubmission {
   email?: string;
   clientFingerprint?: string;
   intentTag?: string;
+  // orgSizeBracket should be one of: '<20', '20-99', '100-499', '500-999', '1000+'
   orgSizeBracket?: string;
   answers: Array<{
     questionId: string;
     selectedOptionIds: string[];
+    customValue?: string;
   }>;
 }
 
@@ -552,10 +578,12 @@ export interface OnboardingResponseByTagSubmission {
   email?: string;
   clientFingerprint?: string;
   intentTag?: string;
+  // orgSizeBracket should be one of: '<20', '20-99', '100-499', '500-999', '1000+'
   orgSizeBracket?: string;
   answers: Array<{
     questionId: string;
     selectedOptionIds: string[];
+    customValue?: string;
   }>;
 }
 

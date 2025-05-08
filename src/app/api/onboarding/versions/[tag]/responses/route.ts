@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import db from "@/server/database/db";
 
 export async function GET(
-  req: Request,
-  { params }: { params: { tag: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ tag: string }> }
 ) {
   try {
-    const { tag } = params;
+    const { tag } = await params;
 
     // Find the version by tag
     const version = await db.onboardingTagVersion.findUnique({
@@ -45,6 +46,7 @@ export async function GET(
                 label: true,
               },
             },
+            // customValue: true,
           },
         },
       },
@@ -74,6 +76,7 @@ export async function GET(
               },
             ]
           : [],
+        customValue: answer.customValue,
       })),
     }));
 

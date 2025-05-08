@@ -5,23 +5,14 @@ import { X, Filter } from "lucide-react";
 import { Button } from "@/app/_components/ui/button";
 import { Input } from "@/app/_components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/app/_components/ui/select";
-import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/app/_components/ui/dropdown-menu";
 import { DataTableViewOptions } from "../data-table-view-options";
-import { OnboardingResponse } from "./response-columns";
 import { Badge } from "@/app/_components/ui/badge";
-import { useEffect, useState } from "react";
-import { ApiOnboardingQuestion } from "./page";
+import { useEffect, useMemo, useState } from "react";
 import {
   Popover,
   PopoverContent,
@@ -31,6 +22,24 @@ import { Calendar } from "@/app/_components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/app/_lib/utils";
 import React from "react";
+
+// Define ApiOnboardingQuestion interface directly
+interface ApiOnboardingQuestion {
+  id: string;
+  slug: string;
+  title: string;
+  type: string;
+  iconSlug: string | null;
+  sortOrder: number;
+  allowOtherOption: boolean;
+  options: Array<{
+    id: string;
+    value: string;
+    label: string;
+    iconSlug: string | null;
+    sortOrder: number;
+  }>;
+}
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -52,21 +61,33 @@ export function ResponseTableToolbar<TData>({
   const [toDate, setToDate] = useState<Date | undefined>(undefined);
 
   // Intent options
-  const intentOptions = [
-    { value: "WILL_PAY_TEAM", label: "Will Pay (Team)" },
-    { value: "WILL_PAY_INDIVIDUAL", label: "Will Pay (Individual)" },
-    { value: "CURIOUS", label: "Curious" },
-  ];
+  const intentOptions = useMemo(
+    () => [
+      { value: "WILL_PAY_TEAM", label: "Will Pay (Team)" },
+      { value: "WILL_PAY_HOBBY", label: "Will Pay (Hobby)" },
+      { value: "WILL_NOT_PAY", label: "Will Not Pay" },
+      { value: "ENTERPRISE_POTENTIAL", label: "Enterprise Potential" },
+      { value: "CURIOUS", label: "Curious" },
+    ],
+    []
+  );
 
   // Organization size options
-  const orgSizeOptions = [
-    { value: "ONE_TO_FIVE", label: "1-5" },
-    { value: "SIX_TO_TWENTY_FIVE", label: "6-25" },
-    { value: "TWENTY_SIX_TO_FIFTY", label: "26-50" },
-    { value: "FIFTY_ONE_TO_ONE_HUNDRED", label: "51-100" },
-    { value: "ONE_HUNDRED_ONE_TO_ONE_THOUSAND", label: "101-1,000" },
-    { value: "OVER_ONE_THOUSAND", label: "1,000+" },
-  ];
+  const orgSizeOptions = useMemo(
+    () => [
+      { value: "LT_20", label: "<20" },
+      { value: "FROM_20_TO_99", label: "20-99" },
+      { value: "FROM_100_TO_499", label: "100-499" },
+      { value: "FROM_500_TO_999", label: "500-999" },
+      { value: "GTE_1000", label: "1000+" },
+      { value: "<20", label: "<20" },
+      { value: "20-99", label: "20-99" },
+      { value: "100-499", label: "100-499" },
+      { value: "500-999", label: "500-999" },
+      { value: "1000+", label: "1000+" },
+    ],
+    []
+  );
 
   // Update date filter when date range changes
   useEffect(() => {
@@ -99,14 +120,22 @@ export function ResponseTableToolbar<TData>({
             <Button variant="outline" size="sm" className="h-8 border-dashed">
               <Filter className="mr-2 h-4 w-4" />
               Intent
-              {table.getColumn("intentTag")?.getFilterValue()?.length > 0 && (
-                <Badge
-                  variant="secondary"
-                  className="ml-2 rounded-sm px-1 font-normal"
-                >
-                  {table.getColumn("intentTag")?.getFilterValue()?.length}
-                </Badge>
-              )}
+              {Array.isArray(table.getColumn("intentTag")?.getFilterValue()) &&
+                (table.getColumn("intentTag")?.getFilterValue() as string[])
+                  .length > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="ml-2 rounded-sm px-1 font-normal"
+                  >
+                    {
+                      (
+                        table
+                          .getColumn("intentTag")
+                          ?.getFilterValue() as string[]
+                      ).length
+                    }
+                  </Badge>
+                )}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-[200px]">
@@ -146,45 +175,115 @@ export function ResponseTableToolbar<TData>({
             <Button variant="outline" size="sm" className="h-8 border-dashed">
               <Filter className="mr-2 h-4 w-4" />
               Org Size
-              {table.getColumn("orgSizeBracket")?.getFilterValue()?.length >
-                0 && (
-                <Badge
-                  variant="secondary"
-                  className="ml-2 rounded-sm px-1 font-normal"
-                >
-                  {table.getColumn("orgSizeBracket")?.getFilterValue()?.length}
-                </Badge>
-              )}
+              {Array.isArray(
+                table.getColumn("orgSizeBracket")?.getFilterValue()
+              ) &&
+                (
+                  table
+                    .getColumn("orgSizeBracket")
+                    ?.getFilterValue() as string[]
+                ).length > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="ml-2 rounded-sm px-1 font-normal"
+                  >
+                    {
+                      (
+                        table
+                          .getColumn("orgSizeBracket")
+                          ?.getFilterValue() as string[]
+                      ).length
+                    }
+                  </Badge>
+                )}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-[200px]">
-            {orgSizeOptions.map((option) => (
-              <DropdownMenuCheckboxItem
-                key={option.value}
-                checked={(
-                  (table
-                    .getColumn("orgSizeBracket")
-                    ?.getFilterValue() as string[]) || []
-                ).includes(option.value)}
-                onCheckedChange={(checked) => {
-                  const filterValues =
-                    (table
-                      .getColumn("orgSizeBracket")
-                      ?.getFilterValue() as string[]) || [];
-                  const newFilterValues = checked
-                    ? [...filterValues, option.value]
-                    : filterValues.filter((value) => value !== option.value);
+            {/* Remove duplicate labels by filtering */}
+            {orgSizeOptions
+              .reduce((unique, option) => {
+                // Only add if this label doesn't exist yet
+                const existingIndex = unique.findIndex(
+                  (item) => item.label === option.label
+                );
+                if (existingIndex === -1) {
+                  unique.push(option);
+                } else {
+                  // If we have both an enum and string format, combine them
+                  const existingItem = unique[existingIndex];
+                  // Create array of values if not already
+                  if (!Array.isArray(existingItem.value)) {
+                    existingItem.value = [existingItem.value];
+                  }
+                  // Add this value if it's not already included
+                  if (!existingItem.value.includes(option.value)) {
+                    existingItem.value.push(option.value);
+                  }
+                }
+                return unique;
+              }, [] as { label: string; value: string | string[] }[])
+              .map((option) => (
+                <DropdownMenuCheckboxItem
+                  key={
+                    typeof option.value === "string"
+                      ? option.value
+                      : option.label
+                  }
+                  checked={
+                    Array.isArray(option.value)
+                      ? option.value.some((val) =>
+                          (
+                            (table
+                              .getColumn("orgSizeBracket")
+                              ?.getFilterValue() as string[]) || []
+                          ).includes(val)
+                        )
+                      : (
+                          (table
+                            .getColumn("orgSizeBracket")
+                            ?.getFilterValue() as string[]) || []
+                        ).includes(option.value)
+                  }
+                  onCheckedChange={(checked) => {
+                    const filterValues =
+                      (table
+                        .getColumn("orgSizeBracket")
+                        ?.getFilterValue() as string[]) || [];
 
-                  table
-                    .getColumn("orgSizeBracket")
-                    ?.setFilterValue(
-                      newFilterValues.length ? newFilterValues : undefined
-                    );
-                }}
-              >
-                {option.label}
-              </DropdownMenuCheckboxItem>
-            ))}
+                    // Handle multiple values (enum + string format)
+                    const valuesToProcess = Array.isArray(option.value)
+                      ? option.value
+                      : [option.value];
+
+                    if (checked) {
+                      // Add all values for this option
+                      const newFilterValues = [...filterValues];
+                      valuesToProcess.forEach((val) => {
+                        if (!newFilterValues.includes(val)) {
+                          newFilterValues.push(val);
+                        }
+                      });
+
+                      table
+                        .getColumn("orgSizeBracket")
+                        ?.setFilterValue(newFilterValues);
+                    } else {
+                      // Remove all values for this option
+                      const newFilterValues = filterValues.filter(
+                        (val) => !valuesToProcess.includes(val)
+                      );
+
+                      table
+                        .getColumn("orgSizeBracket")
+                        ?.setFilterValue(
+                          newFilterValues.length ? newFilterValues : undefined
+                        );
+                    }
+                  }}
+                >
+                  {option.label}
+                </DropdownMenuCheckboxItem>
+              ))}
           </DropdownMenuContent>
         </DropdownMenu>
 

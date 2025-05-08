@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Users, FileText, FileDown } from "lucide-react";
+import { Users, FileDown } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -10,6 +10,9 @@ import {
   CardTitle,
 } from "@/app/_components/ui/card";
 import { Skeleton } from "@/app/_components/ui/skeleton";
+import { Button } from "@/app/_components/ui/button";
+import { ResponseDataTable } from "./response-data-table";
+import { columns, OnboardingResponse } from "./response-columns";
 import {
   Dialog,
   DialogContent,
@@ -17,24 +20,39 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/app/_components/ui/dialog";
-import { Button } from "@/app/_components/ui/button";
 import { ScrollArea } from "@/app/_components/ui/scroll-area";
-import { Separator } from "@/app/_components/ui/separator";
-import { ResponseDataTable } from "./response-data-table";
-import { columns } from "./response-columns";
-import { ApiOnboardingQuestion } from "./page";
-import { OnboardingResponse } from "./response-columns";
+import { Badge } from "@/app/_components/ui/badge";
+
+// Define ApiOnboardingQuestion directly here since there's an import issue
+interface ApiOnboardingQuestion {
+  id: string;
+  slug: string;
+  title: string;
+  type: string;
+  iconSlug: string | null;
+  sortOrder: number;
+  allowOtherOption: boolean;
+  options: Array<{
+    id: string;
+    value: string;
+    label: string;
+    iconSlug: string | null;
+    sortOrder: number;
+  }>;
+}
 
 interface ResponseTabProps {
   responses: OnboardingResponse[];
   questions: ApiOnboardingQuestion[];
   isLoading: boolean;
+  error?: Error | null;
 }
 
 export function ResponseTab({
   responses,
   questions,
   isLoading,
+  error,
 }: ResponseTabProps) {
   // Use a ref to track if the component is mounted to prevent updates after unmounting
   const isMounted = React.useRef(true);
@@ -43,14 +61,39 @@ export function ResponseTab({
   const [filteredResponses, setFilteredResponses] = useState<
     OnboardingResponse[]
   >([]);
-  const [responseDetailsOpen, setResponseDetailsOpen] = useState(false);
+
+  // State for response details dialog
   const [selectedResponse, setSelectedResponse] =
     useState<OnboardingResponse | null>(null);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
   // When component unmounts, set the ref to false
   React.useEffect(() => {
     return () => {
       isMounted.current = false;
+    };
+  }, []);
+
+  // Add event listener for view-response-details
+  React.useEffect(() => {
+    const handleViewResponseDetails = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail && customEvent.detail.response) {
+        setSelectedResponse(customEvent.detail.response);
+        setShowDetailsDialog(true);
+      }
+    };
+
+    document.addEventListener(
+      "view-response-details",
+      handleViewResponseDetails
+    );
+
+    return () => {
+      document.removeEventListener(
+        "view-response-details",
+        handleViewResponseDetails
+      );
     };
   }, []);
 
@@ -73,23 +116,16 @@ export function ResponseTab({
   }, [responses, isLoading]);
 
   // Memoize the callback to prevent re-renders
-  const handleFilteredDataChange = React.useCallback((filteredData: any[]) => {
-    if (!isMounted.current) return;
-
-    // Use a small timeout to debounce updates and prevent excessive rerenders
-    setTimeout(() => {
-      if (isMounted.current) {
-        setFilteredResponses(filteredData as OnboardingResponse[]);
-      }
-    }, 50);
-  }, []);
-
-  // Memoize view details callback
-  const viewResponseDetails = React.useCallback(
-    (response: OnboardingResponse) => {
+  const handleFilteredDataChange = React.useCallback(
+    (filteredData: OnboardingResponse[]) => {
       if (!isMounted.current) return;
-      setSelectedResponse(response);
-      setResponseDetailsOpen(true);
+
+      // Use a small timeout to debounce updates and prevent excessive rerenders
+      setTimeout(() => {
+        if (isMounted.current) {
+          setFilteredResponses(filteredData);
+        }
+      }, 50);
     },
     []
   );
@@ -108,7 +144,7 @@ export function ResponseTab({
     });
 
     // Create headers
-    let headers = [
+    const headers = [
       "Fingerprint",
       "Email",
       "Intent",
@@ -144,7 +180,7 @@ export function ResponseTab({
         const answer = response.answers.find((a) => a.questionId === qId);
         if (answer) {
           row[questionMap.get(qId) || `Question (${qId})`] =
-            answer.selectedOptions.map((opt) => opt.optionLabel).join(", ");
+            answer.selectedOptions.map((opt) => opt.optionLabel).join(": ");
         } else {
           row[questionMap.get(qId) || `Question (${qId})`] = "—";
         }
@@ -210,6 +246,13 @@ export function ResponseTab({
               <Skeleton className="h-10 w-full" />
               <Skeleton className="h-32 w-full" />
             </div>
+          ) : error ? (
+            <div className="text-center text-red-500 py-12 space-y-2">
+              <p>Error fetching responses: {error.message}</p>
+              <p className="text-sm text-muted-foreground">
+                Check the console for more details or try refreshing the page.
+              </p>
+            </div>
           ) : responses.length === 0 ? (
             <div className="text-center text-muted-foreground py-12">
               No responses have been collected yet.
@@ -219,7 +262,6 @@ export function ResponseTab({
               columns={columns}
               data={responses}
               questions={questions}
-              onViewDetails={viewResponseDetails}
               onFilteredDataChange={handleFilteredDataChange}
             />
           )}
@@ -227,95 +269,155 @@ export function ResponseTab({
       </Card>
 
       {/* Response Details Dialog */}
-      <Dialog open={responseDetailsOpen} onOpenChange={setResponseDetailsOpen}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle>Response Details</DialogTitle>
             <DialogDescription>
-              {selectedResponse?.createdAt && (
-                <span className="text-sm">
-                  Submitted on{" "}
-                  {new Date(selectedResponse.createdAt).toLocaleString()}
-                </span>
-              )}
-              {selectedResponse?.isDummy && (
-                <span className="text-xs ml-2 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400 px-2 py-0.5 rounded">
-                  Test Data
-                </span>
-              )}
+              Detailed information for this response
             </DialogDescription>
           </DialogHeader>
 
-          {selectedResponse && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    Fingerprint
-                  </h3>
-                  <p className="mt-1">
-                    {selectedResponse.clientFingerprint || "—"}
-                  </p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    Email
-                  </h3>
-                  <p className="mt-1">{selectedResponse.email || "—"}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    Intent
-                  </h3>
-                  <p className="mt-1">
-                    {selectedResponse.intentTag || "Not specified"}
-                  </p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    Organization Size
-                  </h3>
-                  <p className="mt-1">
-                    {selectedResponse.orgSizeBracket || "Not specified"}
-                  </p>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div>
-                <h3 className="text-sm font-medium mb-3">Answers</h3>
-                <ScrollArea className="h-[300px] rounded-md border p-4">
-                  <div className="space-y-6">
-                    {selectedResponse.answers.map((answer) => (
-                      <div key={answer.questionId} className="space-y-2">
-                        <h4 className="font-medium">{answer.questionTitle}</h4>
-                        <ul className="pl-6 list-disc space-y-1">
-                          {answer.selectedOptions.map((option) => (
-                            <li key={option.optionId}>{option.optionLabel}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                    {selectedResponse.answers.length === 0 && (
-                      <div className="text-center text-muted-foreground py-4">
-                        No answers provided
+          <ScrollArea className="max-h-[calc(90vh-120px)] pr-4">
+            {selectedResponse && (
+              <div className="space-y-6">
+                {/* User Info */}
+                <div className="space-y-3">
+                  <h3 className="text-lg font-medium">User Information</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Email
+                      </p>
+                      <p>{selectedResponse.email || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        User ID
+                      </p>
+                      <p>{selectedResponse.userId || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Client Fingerprint
+                      </p>
+                      <p>{selectedResponse.clientFingerprint || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Submission Date
+                      </p>
+                      <p>
+                        {new Date(selectedResponse.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Intent
+                      </p>
+                      <p>{selectedResponse.intentTag || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Organization Size
+                      </p>
+                      <p>{selectedResponse.orgSizeBracket || "—"}</p>
+                    </div>
+                    {selectedResponse.isDummy && (
+                      <div className="col-span-2">
+                        <Badge
+                          variant="outline"
+                          className="bg-purple-100 text-purple-800"
+                        >
+                          Test Data
+                        </Badge>
                       </div>
                     )}
                   </div>
-                </ScrollArea>
-              </div>
+                </div>
 
-              <div className="flex justify-end">
-                <Button
-                  variant="outline"
-                  onClick={() => setResponseDetailsOpen(false)}
-                >
-                  Close
-                </Button>
+                {/* Response Answers */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Answers</h3>
+                  {selectedResponse.answers.length === 0 ? (
+                    <p className="text-muted-foreground">No answers provided</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {selectedResponse.answers.map((answer) => (
+                        <div
+                          key={answer.questionId}
+                          className="border rounded-md p-4"
+                        >
+                          <h4 className="font-medium mb-2">
+                            {answer.questionTitle}
+                          </h4>
+                          {answer.selectedOptions.length > 0 ? (
+                            <ul className="list-disc list-inside space-y-1">
+                              {answer.selectedOptions.map((option) => (
+                                <li key={option.optionId}>
+                                  {option.optionLabel}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-muted-foreground">
+                              No options selected
+                            </p>
+                          )}
+
+                          {answer.customValue && (
+                            <div className="mt-2">
+                              <p className="text-sm font-medium text-muted-foreground">
+                                Custom Value:
+                              </p>
+                              <p className="italic">{answer.customValue}</p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Raw Response Data */}
+                <div className="space-y-2">
+                  <details className="text-sm">
+                    <summary className="font-medium cursor-pointer">
+                      View Raw Response Data
+                    </summary>
+                    <pre className="mt-2 p-4 bg-muted rounded-md overflow-x-auto text-xs">
+                      {JSON.stringify(selectedResponse, null, 2)}
+                    </pre>
+                  </details>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </ScrollArea>
+
+          <div className="flex justify-end gap-2 mt-4">
+            <Button
+              onClick={() => {
+                if (selectedResponse) {
+                  const dataStr = JSON.stringify(selectedResponse, null, 2);
+                  const dataUri =
+                    "data:application/json;charset=utf-8," +
+                    encodeURIComponent(dataStr);
+                  const exportFileDefaultName = `response-${
+                    selectedResponse.id
+                  }-${new Date().toISOString().slice(0, 10)}.json`;
+
+                  const linkElement = document.createElement("a");
+                  linkElement.setAttribute("href", dataUri);
+                  linkElement.setAttribute("download", exportFileDefaultName);
+                  linkElement.click();
+                }
+              }}
+              variant="outline"
+            >
+              Export JSON
+            </Button>
+            <Button onClick={() => setShowDetailsDialog(false)}>Close</Button>
+          </div>
         </DialogContent>
       </Dialog>
     </>

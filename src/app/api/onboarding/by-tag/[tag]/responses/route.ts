@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import db from "@/server/database/db";
 
 export async function GET(
-  req: Request,
-  { params }: { params: { tag: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ tag: string }> }
 ) {
   try {
-    const { tag } = params;
+    const { tag } = await params;
 
     // Find the version by tag
     const version = await db.onboardingTagVersion.findUnique({
@@ -53,35 +54,57 @@ export async function GET(
       },
     });
 
-    // Format responses for API
-    const formattedResponses = responses.map((response) => ({
-      id: response.id,
-      userId: response.userId,
-      userName: "Anonymous User", // Cannot get user name from this model
-      email: response.email,
-      clientFingerprint: response.clientFingerprint,
-      createdAt: response.createdAt,
-      intentTag: response.intentTag,
-      orgSizeBracket: response.orgSizeBracket,
-      answers: response.answers.map((answer) => ({
-        questionId: answer.questionId,
-        questionTitle: answer.question.title,
-        selectedOptions: answer.option
-          ? [
-              {
-                optionId: answer.optionId,
-                optionLabel: answer.option.label,
-              },
-            ]
-          : [],
-      })),
-    }));
+    // Format responses for API with proper grouping for multi-select questions
+    const formattedResponses = responses.map((response) => {
+      // Group answers by questionId for multi-select questions
+      const answersMap = new Map();
+
+      response.answers.forEach((answer) => {
+        if (!answersMap.has(answer.questionId)) {
+          answersMap.set(answer.questionId, {
+            questionId: answer.questionId,
+            questionTitle: answer.question?.title || "Unknown Question",
+            selectedOptions: [],
+            customValue: answer.customValue || undefined,
+          });
+        }
+
+        // Only add option if it exists
+        if (answer.option) {
+          const currentAnswerObj = answersMap.get(answer.questionId);
+          currentAnswerObj.selectedOptions.push({
+            optionId: answer.optionId,
+            optionLabel: answer.option.label,
+          });
+
+          // Keep the custom value even when adding more options
+          if (answer.customValue && !currentAnswerObj.customValue) {
+            currentAnswerObj.customValue = answer.customValue;
+          }
+        }
+      });
+
+      return {
+        id: response.id,
+        userId: response.userId,
+        userName: response.userId || "Anonymous User", // Use userId as name if available
+        email: response.email,
+        clientFingerprint: response.clientFingerprint,
+        createdAt: response.createdAt,
+        intentTag: response.intentTag,
+        orgSizeBracket: response.orgSizeBracket,
+        answers: Array.from(answersMap.values()),
+        isDummy: response.clientFingerprint?.startsWith("test-") || false,
+      };
+    });
 
     return NextResponse.json({ responses: formattedResponses });
   } catch (error) {
-    console.error("Error fetching version responses:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }

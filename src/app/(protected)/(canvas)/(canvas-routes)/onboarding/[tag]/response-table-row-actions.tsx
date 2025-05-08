@@ -40,7 +40,9 @@ ${response.answers
     (answer) =>
       `- ${answer.questionTitle}: ${answer.selectedOptions
         .map((option) => option.optionLabel)
-        .join(", ")}`
+        .join(", ")}${
+        answer.customValue ? ` (Other: ${answer.customValue})` : ""
+      }`
   )
   .join("\n")}
 `.trim();

@@ -20,15 +20,7 @@ import {
   CardTitle,
 } from "@/app/_components/ui/card";
 import { Badge } from "@/app/_components/ui/badge";
-import {
-  Gauge,
-  BarChart3,
-  Plus,
-  Trash,
-  GripVertical,
-  FileText,
-  Beaker,
-} from "lucide-react";
+import { Plus, Trash, GripVertical, Beaker, FileText } from "lucide-react";
 import Link from "next/link";
 import {
   deleteOnboardingQuestion,
@@ -67,16 +59,9 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ScrollArea } from "@/app/_components/ui/scroll-area";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/app/_components/ui/table";
 import { Input } from "@/app/_components/ui/input";
 import { ResponseTab } from "./response-tab";
+import { AnalyticsTab } from "./analytics-tab";
 
 // Define the API response types
 interface ApiOnboardingQuestion {
@@ -86,6 +71,7 @@ interface ApiOnboardingQuestion {
   type: string;
   iconSlug: string | null;
   sortOrder: number;
+  allowOtherOption: boolean;
   options: Array<{
     id: string;
     value: string;
@@ -107,28 +93,6 @@ interface ApiOnboardingTagVersion {
   _count: {
     responses: number;
   };
-}
-
-// Add response interface
-interface OnboardingResponse {
-  id: string;
-  userId: string;
-  userName: string;
-  email: string;
-  clientFingerprint?: string;
-  intentTag?: string;
-  orgSizeBracket?: string;
-  tagVersionId?: string;
-  createdAt: string;
-  isDummy?: boolean; // Flag to identify test/dummy data
-  answers: Array<{
-    questionId: string;
-    questionTitle: string;
-    selectedOptions: Array<{
-      optionId: string;
-      optionLabel: string;
-    }>;
-  }>;
 }
 
 // Sortable Question Card component
@@ -216,6 +180,7 @@ function SortableQuestionCard({
             {question.options.map((option) => (
               <li key={option.id}>{option.label}</li>
             ))}
+            {question.allowOtherOption && <li>Other?</li>}
           </ul>
         </div>
       </CardContent>
@@ -231,8 +196,12 @@ export default function OnboardingVersionPage() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [testUserName, setTestUserName] = useState("");
   const [testEmail, setTestEmail] = useState("");
-  const [testAnswers, setTestAnswers] = useState<Record<string, string[]>>({});
-  const [showOnlyDummyData, setShowOnlyDummyData] = useState(false);
+  const [testClientFingerprint, setTestClientFingerprint] = useState("");
+  const [testIntentTag, setTestIntentTag] = useState("");
+  const [testOrgSizeBracket, setTestOrgSizeBracket] = useState("");
+  const [testAnswers, setTestAnswers] = useState<
+    Record<string, { selectedOptions: string[]; customValue: string }>
+  >({});
 
   const { data, error, isLoading, refetch } = useQuery<ApiOnboardingTagVersion>(
     {
@@ -265,35 +234,92 @@ export default function OnboardingVersionPage() {
   }, [data]);
 
   // Add response data fetching - fix to prevent infinite loops
-  const { data: responsesData, isLoading: responsesLoading } = useQuery({
+  const {
+    data: responsesData,
+    isLoading: responsesLoading,
+    error: responsesError,
+  } = useQuery({
     queryKey: ["onboardingResponses", data?.id, tag],
     queryFn: async () => {
       if (!data?.id) return [];
 
-      const response = await fetch(`/api/onboarding/by-tag/${tag}/responses`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch responses");
-      }
+      try {
+        console.log(`Fetching responses for tag ${tag}...`);
+        const response = await fetch(`/api/onboarding/by-tag/${tag}/responses`);
 
-      const result = await response.json();
-      return result.responses || [];
+        if (!response.ok) {
+          // Improved error handling - safely extract error details
+          let errorMessage = `Failed to fetch responses: ${response.status} ${response.statusText}`;
+          try {
+            const errorData = await response.json();
+            if (errorData && errorData.error) {
+              errorMessage = errorData.error;
+            }
+            if (errorData && errorData.details) {
+              errorMessage += ` - ${errorData.details}`;
+            }
+          } catch (jsonError) {
+            // If JSON parsing fails, use the status text
+            console.error("Error parsing JSON response:", jsonError);
+          }
+
+          console.error("Error fetching responses:", errorMessage);
+          throw new Error(errorMessage);
+        }
+
+        // Parse JSON response safely
+        let result;
+        try {
+          result = await response.json();
+        } catch (jsonError) {
+          console.error("Failed to parse response JSON:", jsonError);
+          throw new Error("Invalid response format from server");
+        }
+
+        if (!result || !Array.isArray(result.responses)) {
+          console.error("Unexpected response format:", result);
+          throw new Error("Unexpected response format from server");
+        }
+
+        console.log(`Received ${result.responses?.length || 0} responses`);
+        return result.responses || [];
+      } catch (error) {
+        console.error("Fetch error:", error);
+        throw error instanceof Error ? error : new Error(String(error));
+      }
     },
-    enabled: !!data?.id && activeTab === "responses",
+    enabled: !!data?.id && !!tag,
+    retry: 2,
+    refetchOnWindowFocus: false,
   });
 
-  // Memoize processed responses to avoid unnecessary updates
-  const processedResponses = React.useMemo(() => {
-    return responsesData || [];
+  // Get local storage test responses and combine with API responses
+  const combinedResponses = React.useMemo(() => {
+    const apiResponses = responsesData || [];
+    console.log(`Processing ${apiResponses.length} API responses`);
+
+    // Get test responses from localStorage if available
+    let testResponses = [];
+    if (typeof window !== "undefined") {
+      try {
+        const storedResponses = localStorage.getItem("testResponses");
+        if (storedResponses) {
+          testResponses = JSON.parse(storedResponses);
+          console.log(`Found ${testResponses.length} test responses`);
+        }
+      } catch (error) {
+        console.error("Error loading test responses:", error);
+      }
+    }
+
+    // Combine both sources
+    return [...apiResponses, ...testResponses];
   }, [responsesData]);
 
-  // Restore the testDataResponses memo
+  // Use filtered responses for test data tab
   const testDataResponses = React.useMemo(() => {
-    return showOnlyDummyData
-      ? (responsesData || []).filter(
-          (r: OnboardingResponse) => r.isDummy === true
-        )
-      : responsesData || [];
-  }, [responsesData, showOnlyDummyData]);
+    return combinedResponses;
+  }, [combinedResponses]);
 
   const isDraft = data?.status === "DRAFT";
   const isPublished = data?.status === "PUBLISHED";
@@ -376,7 +402,7 @@ export default function OnboardingVersionPage() {
   };
 
   // Initialize sort order for existing questions if needed
-  const initializeSortOrderIfNeeded = async () => {
+  const initializeSortOrderIfNeeded = React.useCallback(async () => {
     if (!data?.id || !isDraft || !questions.length) return;
 
     // Check if sort order needs to be initialized (all questions have sort order 0)
@@ -405,14 +431,14 @@ export default function OnboardingVersionPage() {
         console.error("Error initializing question order:", error);
       }
     }
-  };
+  }, [data?.id, isDraft, questions, refetch]);
 
   // Call the initialization function when questions are loaded
   React.useEffect(() => {
     if (data?.questions && isDraft) {
       initializeSortOrderIfNeeded();
     }
-  }, [data?.id, isDraft, questions.length]);
+  }, [data?.questions, isDraft, initializeSortOrderIfNeeded]);
 
   const handlePublish = async () => {
     if (!data?.id) return;
@@ -577,13 +603,11 @@ export default function OnboardingVersionPage() {
                     ? ` (${data?._count?.responses})`
                     : ""}
                 </TabsTrigger>
-                <TabsTrigger
-                  value="analytics"
-                  disabled={!data?._count?.responses}
-                >
-                  Analytics
+                <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                <TabsTrigger value="manually-add-data">
+                  Manually Add Data
                 </TabsTrigger>
-                <TabsTrigger value="test-data">Test Data</TabsTrigger>
+                <TabsTrigger value="api-examples">API Examples</TabsTrigger>
               </TabsList>
 
               <TabsContent value="questions" className="space-y-4">
@@ -656,63 +680,39 @@ export default function OnboardingVersionPage() {
 
               <TabsContent value="responses" className="space-y-4">
                 <ResponseTab
-                  responses={processedResponses}
+                  responses={testDataResponses}
+                  questions={questions}
+                  isLoading={responsesLoading}
+                  error={responsesError}
+                />
+              </TabsContent>
+
+              <TabsContent value="analytics">
+                <AnalyticsTab
+                  responses={testDataResponses}
                   questions={questions}
                   isLoading={responsesLoading}
                 />
               </TabsContent>
 
-              <TabsContent value="analytics">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <BarChart3 className="mr-2 h-5 w-5" />
-                      Response Analytics
-                    </CardTitle>
-                    <CardDescription>
-                      View analytics for {data?._count?.responses || 0}{" "}
-                      responses to this onboarding version.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-col gap-4">
-                      <div className="flex items-center gap-4">
-                        <Gauge className="h-8 w-8 text-blue-500" />
-                        <div>
-                          <div className="text-lg font-semibold">
-                            {data?._count?.responses || 0} Responses
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            Total responses collected
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Analytics will be expanded in a separate implementation */}
-                      <div className="text-center text-muted-foreground py-12">
-                        Detailed analytics dashboard is coming soon
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="test-data">
+              <TabsContent value="manually-add-data">
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
                       <Beaker className="mr-2 h-5 w-5" />
-                      Test Data
+                      Manually Add Data
                     </CardTitle>
                     <CardDescription>
-                      Add and manage test data for this onboarding version.
+                      Add test data for this onboarding version.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-6">
                       {/* Test Data Form */}
                       <div className="space-y-4 p-4 border rounded-md">
-                        <h3 className="font-medium text-lg">Add Test Data</h3>
+                        <h3 className="font-medium text-lg">
+                          Add Manual Test Data
+                        </h3>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2">
@@ -734,6 +734,60 @@ export default function OnboardingVersionPage() {
                               value={testEmail}
                               onChange={(e) => setTestEmail(e.target.value)}
                             />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">
+                              Client Fingerprint
+                            </label>
+                            <Input
+                              placeholder="test-fingerprint-123"
+                              value={testClientFingerprint}
+                              onChange={(e) =>
+                                setTestClientFingerprint(e.target.value)
+                              }
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">
+                              Intent Tag
+                            </label>
+                            <select
+                              className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                              value={testIntentTag}
+                              onChange={(e) => setTestIntentTag(e.target.value)}
+                            >
+                              <option value="">Select Intent...</option>
+                              <option value="WILL_PAY_TEAM">
+                                Will Pay (Team)
+                              </option>
+                              <option value="WILL_PAY_HOBBY">
+                                Will Pay (Hobby)
+                              </option>
+                              <option value="WILL_NOT_PAY">Will Not Pay</option>
+                              <option value="ENTERPRISE_POTENTIAL">
+                                Enterprise Potential
+                              </option>
+                              <option value="CURIOUS">Curious</option>
+                            </select>
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">
+                              Organization Size
+                            </label>
+                            <select
+                              className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                              value={testOrgSizeBracket}
+                              onChange={(e) =>
+                                setTestOrgSizeBracket(e.target.value)
+                              }
+                            >
+                              <option value="">Select Org Size...</option>
+                              <option value="LT_20">&lt;20</option>
+                              <option value="FROM_20_TO_99">20-99</option>
+                              <option value="FROM_100_TO_499">100-499</option>
+                              <option value="FROM_500_TO_999">500-999</option>
+                              <option value="GTE_1000">1000+</option>
+                            </select>
                           </div>
                         </div>
 
@@ -761,37 +815,54 @@ export default function OnboardingVersionPage() {
                                         id={option.id}
                                         name={question.id}
                                         checked={(
-                                          testAnswers[question.id] || []
+                                          testAnswers[question.id]
+                                            ?.selectedOptions || []
                                         ).includes(option.id)}
                                         onChange={(e) => {
                                           const isChecked = e.target.checked;
                                           setTestAnswers((prev) => {
                                             const currentAnswers =
-                                              prev[question.id] || [];
+                                              prev[question.id]
+                                                ?.selectedOptions || [];
                                             if (
                                               question.type === "single_choice"
                                             ) {
                                               return {
                                                 ...prev,
-                                                [question.id]: [option.id],
+                                                [question.id]: {
+                                                  selectedOptions: [option.id],
+                                                  customValue:
+                                                    prev[question.id]
+                                                      ?.customValue || "",
+                                                },
                                               };
                                             }
                                             // For multiple choice
                                             if (isChecked) {
                                               return {
                                                 ...prev,
-                                                [question.id]: [
-                                                  ...currentAnswers,
-                                                  option.id,
-                                                ],
+                                                [question.id]: {
+                                                  selectedOptions: [
+                                                    ...currentAnswers,
+                                                    option.id,
+                                                  ],
+                                                  customValue:
+                                                    prev[question.id]
+                                                      ?.customValue || "",
+                                                },
                                               };
                                             }
                                             return {
                                               ...prev,
-                                              [question.id]:
-                                                currentAnswers.filter(
-                                                  (id) => id !== option.id
-                                                ),
+                                              [question.id]: {
+                                                selectedOptions:
+                                                  currentAnswers.filter(
+                                                    (id) => id !== option.id
+                                                  ),
+                                                customValue:
+                                                  prev[question.id]
+                                                    ?.customValue || "",
+                                              },
                                             };
                                           });
                                         }}
@@ -805,6 +876,29 @@ export default function OnboardingVersionPage() {
                                     </div>
                                   ))}
                                 </div>
+                                {question.allowOtherOption && (
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="text"
+                                      placeholder="Other"
+                                      value={
+                                        testAnswers[question.id]?.customValue ||
+                                        ""
+                                      }
+                                      onChange={(e) => {
+                                        const customValue = e.target.value;
+                                        setTestAnswers((prev) => ({
+                                          ...prev,
+                                          [question.id]: {
+                                            ...prev[question.id],
+                                            customValue,
+                                          },
+                                        }));
+                                      }}
+                                      className="border rounded-md p-1 w-full"
+                                    />
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -821,127 +915,54 @@ export default function OnboardingVersionPage() {
                             }
 
                             const hasAnswers = Object.values(testAnswers).some(
-                              (answers) => answers.length > 0
+                              (answers) => answers.selectedOptions.length > 0
                             );
                             if (!hasAnswers) {
                               toast.error("Please select at least one answer");
                               return;
                             }
 
-                            // Generate a dummy response
-                            const dummyResponse: OnboardingResponse = {
-                              id: `dummy-${Date.now()}`,
-                              userId: `dummy-user-${Date.now()}`,
-                              userName: testUserName,
+                            // Convert the test answers to API format
+                            const apiSubmission = {
+                              tag: data?.tag || "",
+                              userId: testUserName,
                               email: testEmail,
-                              createdAt: new Date().toISOString(),
-                              isDummy: true,
-                              answers: questions
+                              clientFingerprint:
+                                testClientFingerprint ||
+                                `test-${Math.random()
+                                  .toString(36)
+                                  .substring(7)}`,
+                              intentTag: testIntentTag || "WILL_PAY_TEAM",
+                              orgSizeBracket: testOrgSizeBracket || "LT_20",
+                              answers: Object.entries(testAnswers)
                                 .filter(
-                                  (q) =>
-                                    testAnswers[q.id] &&
-                                    testAnswers[q.id].length > 0
+                                  ([, answers]) =>
+                                    answers.selectedOptions.length > 0
                                 )
-                                .map((question) => ({
-                                  questionId: question.id,
-                                  questionTitle: question.title,
-                                  selectedOptions: (
-                                    testAnswers[question.id] || []
-                                  ).map((optionId) => {
-                                    const option = question.options.find(
-                                      (o) => o.id === optionId
-                                    );
+                                .map(([questionId, answers]) => {
+                                  const result = {
+                                    questionId,
+                                    selectedOptionIds: answers.selectedOptions,
+                                  };
+
+                                  // Only add customValue if it exists and is not empty
+                                  if (
+                                    answers.customValue &&
+                                    answers.customValue.trim()
+                                  ) {
                                     return {
-                                      optionId,
-                                      optionLabel:
-                                        option?.label || "Unknown Option",
+                                      ...result,
+                                      customValue: answers.customValue.trim(),
                                     };
-                                  }),
-                                })),
+                                  }
+
+                                  return result;
+                                }),
                             };
 
-                            // Store it directly in localStorage since we can't modify the state
-                            const storedResponses =
-                              localStorage.getItem("testResponses") || "[]";
-                            const updatedResponses = JSON.stringify([
-                              ...JSON.parse(storedResponses),
-                              dummyResponse,
-                            ]);
-                            localStorage.setItem(
-                              "testResponses",
-                              updatedResponses
-                            );
-
-                            // Reset form
-                            setTestUserName("");
-                            setTestEmail("");
-                            setTestAnswers({});
-
-                            toast.success("Test data added successfully");
-                          }}
-                        >
-                          Add Test Response
-                        </Button>
-
-                        <div className="mt-4 border-t pt-4">
-                          <h3 className="font-medium text-lg mb-3">
-                            Submit to API
-                          </h3>
-                          <p className="text-sm text-muted-foreground mb-4">
-                            This will submit a real response to the API endpoint
-                            that will be stored in the database. Use this to
-                            test the API integration.
-                          </p>
-
-                          <Button
-                            variant="default"
-                            className="w-full bg-blue-600 hover:bg-blue-700"
-                            onClick={async () => {
+                            // Submit to API using tag
+                            const submitResponse = async () => {
                               try {
-                                if (!data?.tag) {
-                                  toast.error("Tag is required");
-                                  return;
-                                }
-
-                                if (!testUserName || !testEmail) {
-                                  toast.error(
-                                    "Please provide both user name and email"
-                                  );
-                                  return;
-                                }
-
-                                const hasAnswers = Object.values(
-                                  testAnswers
-                                ).some((answers) => answers.length > 0);
-                                if (!hasAnswers) {
-                                  toast.error(
-                                    "Please select at least one answer"
-                                  );
-                                  return;
-                                }
-
-                                // Convert the test answers to API format
-                                const apiSubmission = {
-                                  tag: data.tag,
-                                  userId: testUserName,
-                                  email: testEmail,
-                                  clientFingerprint: `test-${Math.random()
-                                    .toString(36)
-                                    .substring(7)}`,
-                                  intentTag: "WILL_PAY_TEAM",
-                                  orgSizeBracket: "ONE_TO_FIVE",
-                                  answers: Object.entries(testAnswers)
-                                    .filter(
-                                      ([, selectedIds]) =>
-                                        selectedIds.length > 0
-                                    )
-                                    .map(([questionId, selectedOptionIds]) => ({
-                                      questionId,
-                                      selectedOptionIds,
-                                    })),
-                                };
-
-                                // Submit to API using tag
                                 const result =
                                   await submitOnboardingResponseByTag(
                                     apiSubmission
@@ -959,6 +980,9 @@ export default function OnboardingVersionPage() {
                                 // Reset form
                                 setTestUserName("");
                                 setTestEmail("");
+                                setTestClientFingerprint("");
+                                setTestIntentTag("");
+                                setTestOrgSizeBracket("");
                                 setTestAnswers({});
 
                                 // Refresh data to show the new response
@@ -970,54 +994,67 @@ export default function OnboardingVersionPage() {
                                 );
                                 toast.error("Failed to submit response to API");
                               }
-                            }}
-                          >
-                            Submit to API
-                          </Button>
-                        </div>
+                            };
 
-                        <div className="mt-8 border-t pt-4">
-                          <h3 className="font-medium text-lg mb-3">
-                            API Documentation
-                          </h3>
-                          <div className="space-y-6">
-                            {/* Fetch Questions Example */}
-                            <div className="space-y-2">
-                              <h4 className="font-semibold">
-                                Fetch Onboarding Questions
-                              </h4>
-                              <p className="text-sm text-muted-foreground">
-                                GET from{" "}
-                                <code className="bg-muted px-1 py-0.5 rounded">
-                                  /api/onboarding?tag=${"{tag}"}
-                                </code>
-                              </p>
-                              <div className="bg-black text-green-400 p-4 rounded-md font-mono text-sm overflow-x-auto">
-                                <pre>
-                                  {`curl -X GET \\
+                            submitResponse();
+                          }}
+                        >
+                          Submit to API
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="api-examples">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <FileText className="mr-2 h-5 w-5" />
+                      API Examples
+                    </CardTitle>
+                    <CardDescription>
+                      Examples for integrating with the onboarding API
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6">
+                      {/* Fetch Questions Example */}
+                      <div className="space-y-2">
+                        <h4 className="font-semibold">
+                          Fetch Onboarding Questions
+                        </h4>
+                        <p className="text-sm text-muted-foreground">
+                          GET from{" "}
+                          <code className="bg-muted px-1 py-0.5 rounded">
+                            /api/onboarding?tag=${"{tag}"}
+                          </code>
+                        </p>
+                        <div className="bg-black text-green-400 p-4 rounded-md font-mono text-sm overflow-x-auto">
+                          <pre>
+                            {`curl -X GET \\
   "${
     typeof window !== "undefined" && window.location.hostname === "localhost"
       ? "http://localhost:3000"
       : "https://controls.tensorify.io"
   }/api/onboarding?tag=${data?.tag || "{tag}"}"`}
-                                </pre>
-                              </div>
-                            </div>
+                          </pre>
+                        </div>
+                      </div>
 
-                            {/* Submission Example */}
-                            <div className="space-y-2">
-                              <h4 className="font-semibold">
-                                Submit a Response
-                              </h4>
-                              <p className="text-sm text-muted-foreground">
-                                POST to{" "}
-                                <code className="bg-muted px-1 py-0.5 rounded">
-                                  /api/onboarding/responses
-                                </code>
-                              </p>
-                              <div className="bg-black text-green-400 p-4 rounded-md font-mono text-sm overflow-x-auto">
-                                <pre>
-                                  {`# Submit with tag (recommended)
+                      {/* Submission Example */}
+                      <div className="space-y-2">
+                        <h4 className="font-semibold">Submit a Response</h4>
+                        <p className="text-sm text-muted-foreground">
+                          POST to{" "}
+                          <code className="bg-muted px-1 py-0.5 rounded">
+                            /api/onboarding/responses
+                          </code>
+                        </p>
+                        <div className="bg-black text-green-400 p-4 rounded-md font-mono text-sm overflow-x-auto">
+                          <pre>
+                            {`# Submit with tag (recommended)
 curl -X POST \\
   "${
     typeof window !== "undefined" && window.location.hostname === "localhost"
@@ -1031,334 +1068,84 @@ curl -X POST \\
   "email": "optional-email@example.com",
   "clientFingerprint": "optional-device-identifier",
   "intentTag": "WILL_PAY_TEAM",
-  "orgSizeBracket": "ONE_TO_FIVE",
+  "orgSizeBracket": "LT_20",
   "answers": [
 ${
   questions.length > 0
     ? questions
         .slice(0, Math.min(2, questions.length))
         .map(
-          (q) =>
+          (q, i) =>
             `    {
-      "questionId": "${q.id}",
-      "selectedOptionIds": [${
-        q.options.length > 0
-          ? `"${q.options[0].id}"${
-              q.type === "multiple_choice" && q.options.length > 1
-                ? `, "${q.options[1].id}"`
-                : ""
-            }`
-          : ""
-      }]
-    }`
+        "questionId": "${q.id}",
+        ${
+          i === 0 && q.allowOtherOption
+            ? `"customValue": "Your custom answer here"`
+            : `"selectedOptionIds": [${
+                q.options.length > 0
+                  ? `"${q.options[0].id}"` +
+                    (q.type === "multiple_choice" && q.options.length > 1
+                      ? `, "${q.options[1].id}"`
+                      : "")
+                  : ""
+              }]`
+        }
+      }`
         )
         .join(",\n")
     : `    {
-      "questionId": "question_id_1",
-      "selectedOptionIds": ["option_id_1"]
-    },
-    {
-      "questionId": "question_id_2",
-      "selectedOptionIds": ["option_id_2", "option_id_3"]
-    }`
+        "questionId": "question_id_1",
+        "customValue": "Your custom answer text here"
+      },
+      {
+        "questionId": "question_id_2",
+        "selectedOptionIds": ["option_id_2", "option_id_3"]
+      }`
 }
   ]
 }'`}
-                                </pre>
-                              </div>
-                              <div className="mt-2 text-xs text-muted-foreground">
-                                <p>
-                                  Expected response:{" "}
-                                  <code>{`{ "success": true, "responseId": "..." }`}</code>
-                                </p>
-                                <p className="mt-1">
-                                  <strong>Supported fields:</strong>
-                                </p>
-                                <ul className="list-disc pl-4 mt-1 space-y-1">
-                                  <li>
-                                    <code>tag</code> or <code>versionId</code>:
-                                    Required - at least one must be provided
-                                  </li>
-                                  <li>
-                                    <code>userId</code>: Optional - unique
-                                    identifier for the user
-                                  </li>
-                                  <li>
-                                    <code>email</code>: Optional - user&apos;s
-                                    email address
-                                  </li>
-                                  <li>
-                                    <code>clientFingerprint</code>: Optional -
-                                    device identifier
-                                  </li>
-                                  <li>
-                                    <code>intentTag</code>: Optional - one of:{" "}
-                                    <code>WILL_NOT_PAY</code>,{" "}
-                                    <code>WILL_PAY_HOBBY</code>,{" "}
-                                    <code>WILL_PAY_TEAM</code>,{" "}
-                                    <code>ENTERPRISE_POTENTIAL</code>
-                                  </li>
-                                  <li>
-                                    <code>orgSizeBracket</code>: Optional - one
-                                    of: <code>ONE_TO_FIVE</code>,{" "}
-                                    <code>SIX_TO_TWENTY</code>,{" "}
-                                    <code>TWENTYONE_TO_FIFTY</code>,{" "}
-                                    <code>FIFTYONE_PLUS</code>
-                                  </li>
-                                </ul>
-                              </div>
-                            </div>
-
-                            {/* Get User Responses Example */}
-                            <div className="space-y-2">
-                              <h4 className="font-semibold">
-                                Get User&apos;s Responses
-                              </h4>
-                              <p className="text-sm text-muted-foreground">
-                                GET from{" "}
-                                <code className="bg-muted px-1 py-0.5 rounded">
-                                  /api/onboarding/responses
-                                </code>
-                              </p>
-                              <div className="bg-black text-green-400 p-4 rounded-md font-mono text-sm overflow-x-auto">
-                                <pre>
-                                  {`curl -X GET \\
-  "${
-    typeof window !== "undefined" && window.location.hostname === "localhost"
-      ? "http://localhost:3000"
-      : "https://controls.tensorify.io"
-  }/api/onboarding/responses"
-
-# Filter by tag
-curl -X GET \\
-  "${
-    typeof window !== "undefined" && window.location.hostname === "localhost"
-      ? "http://localhost:3000"
-      : "https://controls.tensorify.io"
-  }/api/onboarding/responses?tag=${data?.tag || "{tag}"}"
-`}
-                                </pre>
-                              </div>
-                            </div>
-
-                            {/* Admin Get All Responses Example */}
-                            <div className="space-y-2">
-                              <h4 className="font-semibold">
-                                Get All Responses (Admin Only)
-                              </h4>
-                              <p className="text-sm text-muted-foreground">
-                                GET from{" "}
-                                <code className="bg-muted px-1 py-0.5 rounded">
-                                  /api/onboarding/by-tag/{"{tag}"}/responses
-                                </code>
-                              </p>
-                              <div className="bg-black text-green-400 p-4 rounded-md font-mono text-sm overflow-x-auto">
-                                <pre>
-                                  {`curl -X GET \\
-  "${
-    typeof window !== "undefined" && window.location.hostname === "localhost"
-      ? "http://localhost:3000"
-      : "https://controls.tensorify.io"
-  }/api/onboarding/by-tag/${data?.tag || "{tag}"}/responses"
-`}
-                                </pre>
-                              </div>
-                            </div>
-
-                            {/* Response Format */}
-                            <div className="space-y-2">
-                              <h4 className="font-semibold">Response Format</h4>
-                              <div className="bg-black text-green-400 p-4 rounded-md font-mono text-sm overflow-x-auto">
-                                <pre>
-                                  {`{
-  "responses": [
-    {
-      "id": "response_id",
-      "userId": "user_id",
-      "userName": "User Name",
-      "email": "user@example.com",
-      "createdAt": "2023-08-10T15:30:45.123Z",
-      "answers": [
-${
-  questions.length > 0
-    ? questions
-        .slice(0, Math.min(2, questions.length))
-        .map(
-          (q) =>
-            `        {
-          "questionId": "${q.id}",
-          "questionTitle": "${q.title}",
-          "selectedOptions": [
-            {
-              "optionId": "${
-                q.options.length > 0 ? q.options[0].id : "option_id"
-              }",
-              "optionLabel": "${
-                q.options.length > 0 ? q.options[0].label : "Option Label"
-              }"
-            }${
-              q.type === "multiple_choice" && q.options.length > 1
-                ? `,
-            {
-              "optionId": "${q.options[1].id}",
-              "optionLabel": "${q.options[1].label}"
-            }`
-                : ""
-            }
-          ]
-        }`
-        )
-        .join(",\n")
-    : `        {
-          "questionId": "question_id",
-          "questionTitle": "Question Title",
-          "selectedOptions": [
-            {
-              "optionId": "option_id",
-              "optionLabel": "Option Label"
-            }
-          ]
-        }`
-}
-      ]
-    }
-  ]
-}`}
-                                </pre>
-                              </div>
-                            </div>
-                          </div>
+                          </pre>
                         </div>
-                      </div>
-
-                      {/* Test Data Viewing */}
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-medium text-lg">Test Data</h3>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">Show only test data</span>
-                            <Button
-                              variant={
-                                showOnlyDummyData ? "default" : "outline"
-                              }
-                              size="sm"
-                              onClick={() =>
-                                setShowOnlyDummyData(!showOnlyDummyData)
-                              }
-                            >
-                              {showOnlyDummyData
-                                ? "Viewing Test Data"
-                                : "View All Data"}
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div className="rounded-md border">
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>User</TableHead>
-                                <TableHead>Email</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Type</TableHead>
-                                <TableHead>Actions</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {testDataResponses.length === 0 ? (
-                                <TableRow>
-                                  <TableCell
-                                    colSpan={5}
-                                    className="h-24 text-center"
-                                  >
-                                    No test data available.
-                                  </TableCell>
-                                </TableRow>
-                              ) : (
-                                testDataResponses.map(
-                                  (response: OnboardingResponse) => (
-                                    <TableRow key={response.id}>
-                                      <TableCell className="font-medium">
-                                        {response.userName}
-                                      </TableCell>
-                                      <TableCell>{response.email}</TableCell>
-                                      <TableCell>
-                                        {new Date(
-                                          response.createdAt
-                                        ).toLocaleString()}
-                                      </TableCell>
-                                      <TableCell>
-                                        {response.isDummy ? (
-                                          <Badge
-                                            variant="outline"
-                                            className="bg-purple-100 text-purple-800"
-                                          >
-                                            Test
-                                          </Badge>
-                                        ) : (
-                                          <Badge
-                                            variant="outline"
-                                            className="bg-blue-100 text-blue-800"
-                                          >
-                                            Real
-                                          </Badge>
-                                        )}
-                                      </TableCell>
-                                      <TableCell>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => {
-                                            console.log(
-                                              "View details requested for response:",
-                                              response.id
-                                            );
-                                            toast.info(
-                                              "Response details are now handled by the ResponseTab component"
-                                            );
-                                          }}
-                                        >
-                                          <FileText className="h-4 w-4 mr-1" />{" "}
-                                          View
-                                        </Button>
-                                        {response.isDummy && (
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => {
-                                              // Remove the response from localStorage
-                                              const storedResponses =
-                                                localStorage.getItem(
-                                                  "testResponses"
-                                                ) || "[]";
-                                              const updatedResponses =
-                                                JSON.parse(
-                                                  storedResponses
-                                                ).filter(
-                                                  (r: OnboardingResponse) =>
-                                                    r.id !== response.id
-                                                );
-                                              localStorage.setItem(
-                                                "testResponses",
-                                                JSON.stringify(updatedResponses)
-                                              );
-                                              toast.success(
-                                                "Test data removed"
-                                              );
-                                            }}
-                                            className="text-destructive"
-                                          >
-                                            <Trash className="h-4 w-4 mr-1" />{" "}
-                                            Remove
-                                          </Button>
-                                        )}
-                                      </TableCell>
-                                    </TableRow>
-                                  )
-                                )
-                              )}
-                            </TableBody>
-                          </Table>
+                        <div className="mt-2 text-xs text-muted-foreground">
+                          <p>
+                            Expected response:{" "}
+                            <code>{`{ "success": true, "responseId": "..." }`}</code>
+                          </p>
+                          <p className="mt-1">
+                            <strong>Supported fields:</strong>
+                          </p>
+                          <ul className="list-disc pl-4 mt-1 space-y-1">
+                            <li>
+                              <code>tag</code> or <code>versionId</code>:
+                              Required - at least one must be provided
+                            </li>
+                            <li>
+                              <code>userId</code>: Optional - unique identifier
+                              for the user
+                            </li>
+                            <li>
+                              <code>email</code>: Optional - user&apos;s email
+                              address
+                            </li>
+                            <li>
+                              <code>clientFingerprint</code>: Optional - device
+                              identifier
+                            </li>
+                            <li>
+                              <code>intentTag</code>: Optional - one of:{" "}
+                              <code>WILL_NOT_PAY</code>,{" "}
+                              <code>WILL_PAY_HOBBY</code>,{" "}
+                              <code>WILL_PAY_TEAM</code>,{" "}
+                              <code>ENTERPRISE_POTENTIAL</code>
+                            </li>
+                            <li>
+                              <code>orgSizeBracket</code>: Optional - one of:{" "}
+                              <code>LT_20</code>, <code>FROM_20_TO_99</code>,{" "}
+                              <code>FROM_100_TO_499</code>,{" "}
+                              <code>FROM_500_TO_999</code>,{" "}
+                              <code>GTE_1000</code>
+                            </li>
+                          </ul>
                         </div>
                       </div>
                     </div>

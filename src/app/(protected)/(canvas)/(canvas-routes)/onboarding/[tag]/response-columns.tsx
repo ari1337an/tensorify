@@ -11,9 +11,7 @@ import {
 } from "@/app/_components/ui/tooltip";
 import { format } from "date-fns";
 import { FileText } from "lucide-react";
-import { Button } from "@/app/_components/ui/button";
 import { DataTableColumnHeader } from "../data-table-column-header";
-import { DataTableRowActions } from "./response-table-row-actions";
 
 // Use the response type from the page component
 export interface OnboardingResponse {
@@ -34,6 +32,7 @@ export interface OnboardingResponse {
       optionId: string;
       optionLabel: string;
     }>;
+    customValue?: string;
   }>;
 }
 
@@ -64,6 +63,24 @@ const IntentTagBadge = ({ tag }: { tag?: string }) => {
   if (!tag) return <span className="text-muted-foreground">—</span>;
 
   switch (tag) {
+    case "WILL_NOT_PAY":
+      return (
+        <Badge
+          variant="outline"
+          className="bg-gray-100 dark:bg-gray-800/20 text-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-800"
+        >
+          Will Not Pay
+        </Badge>
+      );
+    case "WILL_PAY_HOBBY":
+      return (
+        <Badge
+          variant="outline"
+          className="bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800"
+        >
+          Will Pay (Hobby)
+        </Badge>
+      );
     case "WILL_PAY_TEAM":
       return (
         <Badge
@@ -73,22 +90,13 @@ const IntentTagBadge = ({ tag }: { tag?: string }) => {
           Will Pay (Team)
         </Badge>
       );
-    case "WILL_PAY_INDIVIDUAL":
+    case "ENTERPRISE_POTENTIAL":
       return (
         <Badge
           variant="outline"
           className="bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400 border-blue-200 dark:border-blue-800"
         >
-          Will Pay (Individual)
-        </Badge>
-      );
-    case "CURIOUS":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-400 border-purple-200 dark:border-purple-800"
-        >
-          Curious
+          Enterprise Potential
         </Badge>
       );
     default:
@@ -100,18 +108,66 @@ const IntentTagBadge = ({ tag }: { tag?: string }) => {
 const OrgSizeBadge = ({ size }: { size?: string }) => {
   if (!size) return <span className="text-muted-foreground">—</span>;
 
-  const sizeLabels: Record<string, string> = {
-    ONE_TO_FIVE: "1-5",
-    SIX_TO_TWENTY_FIVE: "6-25",
-    TWENTY_SIX_TO_FIFTY: "26-50",
-    FIFTY_ONE_TO_ONE_HUNDRED: "51-100",
-    ONE_HUNDRED_ONE_TO_ONE_THOUSAND: "101-1,000",
-    OVER_ONE_THOUSAND: "1,000+",
+  // Map internal enum values to new display labels
+  const sizeLabels: Record<string, { label: string; color: string }> = {
+    // Enum format values
+    LT_20: {
+      label: "<20",
+      color: "bg-gray-100 dark:bg-gray-800/20 text-gray-800 dark:text-gray-400",
+    },
+    FROM_20_TO_99: {
+      label: "20-99",
+      color: "bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400",
+    },
+    FROM_100_TO_499: {
+      label: "100-499",
+      color:
+        "bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400",
+    },
+    FROM_500_TO_999: {
+      label: "500-999",
+      color:
+        "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400",
+    },
+    GTE_1000: {
+      label: "1000+",
+      color:
+        "bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-400",
+    },
+    // String format values
+    "<20": {
+      label: "<20",
+      color: "bg-gray-100 dark:bg-gray-800/20 text-gray-800 dark:text-gray-400",
+    },
+    "20-99": {
+      label: "20-99",
+      color: "bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400",
+    },
+    "100-499": {
+      label: "100-499",
+      color:
+        "bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400",
+    },
+    "500-999": {
+      label: "500-999",
+      color:
+        "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400",
+    },
+    "1000+": {
+      label: "1000+",
+      color:
+        "bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-400",
+    },
+  };
+
+  const display = sizeLabels[size] || {
+    label: size,
+    color: "bg-gray-100 dark:bg-gray-800/20 text-gray-800 dark:text-gray-400",
   };
 
   return (
-    <Badge variant="outline" className="bg-gray-100 dark:bg-gray-800/20">
-      {sizeLabels[size] || size}
+    <Badge variant="outline" className={display.color}>
+      {display.label}
     </Badge>
   );
 };
@@ -121,7 +177,6 @@ export const columns: ColumnDef<OnboardingResponse>[] = [
     id: "select",
     header: ({ table }) => {
       const checked = table.getIsAllPageRowsSelected();
-      const indeterminate = table.getIsSomePageRowsSelected();
 
       return (
         <Checkbox
@@ -214,7 +269,9 @@ export const columns: ColumnDef<OnboardingResponse>[] = [
       return <IntentTagBadge tag={row.getValue("intentTag")} />;
     },
     filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
+      const rowValue = row.getValue(id) as string | undefined;
+      if (!rowValue) return false;
+      return (value as string[]).includes(rowValue);
     },
     size: 150,
   },
@@ -227,7 +284,43 @@ export const columns: ColumnDef<OnboardingResponse>[] = [
       return <OrgSizeBadge size={row.getValue("orgSizeBracket")} />;
     },
     filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
+      const rowValue = row.getValue(id) as string | undefined;
+      if (!rowValue) return false;
+
+      // Map of equivalent values
+      const equivalentValues: Record<string, string[]> = {
+        LT_20: ["<20"],
+        FROM_20_TO_99: ["20-99"],
+        FROM_100_TO_499: ["100-499"],
+        FROM_500_TO_999: ["500-999"],
+        GTE_1000: ["1000+"],
+        "<20": ["LT_20"],
+        "20-99": ["FROM_20_TO_99"],
+        "100-499": ["FROM_100_TO_499"],
+        "500-999": ["FROM_500_TO_999"],
+        "1000+": ["GTE_1000"],
+      };
+
+      // Direct match
+      if ((value as string[]).includes(rowValue)) {
+        return true;
+      }
+
+      // Check for equivalent matches
+      return (value as string[]).some((val) => {
+        // Check if this value has equivalent values and if rowValue is one of them
+        if (equivalentValues[val] && equivalentValues[val].includes(rowValue)) {
+          return true;
+        }
+        // Check if rowValue has equivalent values and if val is one of them
+        if (
+          equivalentValues[rowValue] &&
+          equivalentValues[rowValue].includes(val)
+        ) {
+          return true;
+        }
+        return false;
+      });
     },
     size: 120,
   },
@@ -257,7 +350,16 @@ export const columns: ColumnDef<OnboardingResponse>[] = [
     cell: ({ row }) => {
       return (
         <div className="flex justify-end">
-          <FileText className="h-4 w-4 text-muted-foreground cursor-pointer" />
+          <FileText
+            className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+            onClick={() => {
+              // Dispatch a custom event to view response details
+              const viewEvent = new CustomEvent("view-response-details", {
+                detail: { response: row.original },
+              });
+              document.dispatchEvent(viewEvent);
+            }}
+          />
         </div>
       );
     },

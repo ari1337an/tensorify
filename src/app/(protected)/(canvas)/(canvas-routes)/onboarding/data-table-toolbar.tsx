@@ -6,7 +6,6 @@ import { X } from "lucide-react";
 import { Button } from "@/app/_components/ui/button";
 import { Input } from "@/app/_components/ui/input";
 import { DataTableViewOptions } from "./data-table-view-options";
-import { OnboardingTagVersion } from "./columns";
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;

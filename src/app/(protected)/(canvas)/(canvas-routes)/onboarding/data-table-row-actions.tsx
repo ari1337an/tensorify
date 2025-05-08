@@ -230,7 +230,7 @@ export function DataTableRowActions<TData>({
             <AlertDialogTitle>Archive this version?</AlertDialogTitle>
             <AlertDialogDescription>
               Archiving this version will remove it from active use. All
-              existing data will be preserved, but new responses won't be
+              existing data will be preserved, but new responses won&apos;t be
               collected.
             </AlertDialogDescription>
           </AlertDialogHeader>

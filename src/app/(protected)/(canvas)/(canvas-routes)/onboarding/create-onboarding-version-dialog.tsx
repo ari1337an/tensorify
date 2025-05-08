@@ -104,6 +104,7 @@ export function CreateOnboardingVersionDialog() {
       try {
         formSchema.shape.tag.parse(tag);
         setIsValidTag(true);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         setIsValidTag(false);
       }

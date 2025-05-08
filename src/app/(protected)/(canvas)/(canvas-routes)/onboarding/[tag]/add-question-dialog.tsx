@@ -4,7 +4,7 @@ import { useState, ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Plus, X, Info, Trash } from "lucide-react";
+import { Plus, Info, Trash } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/app/_components/ui/button";
@@ -40,7 +40,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/app/_components/ui/tooltip";
-import { RadioGroup, RadioGroupItem } from "@/app/_components/ui/radio-group";
 import { ScrollArea } from "@/app/_components/ui/scroll-area";
 import { addOnboardingQuestion } from "@/server/actions/onboarding";
 import { Checkbox } from "@/app/_components/ui/checkbox";
@@ -120,17 +119,12 @@ export function AddQuestionDialog({
     },
   });
 
-  // Watch title for auto-generating slug
-  const title = form.watch("title");
-  const slug = form.watch("slug");
-
   // Auto-generate slug from title
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (value && !slug) {
-      const newSlug = slugify(value);
-      form.setValue("slug", newSlug, { shouldValidate: true });
-    }
+    const newSlug = slugify(value);
+    // Always update the slug field
+    form.setValue("slug", newSlug, { shouldValidate: true });
   };
 
   // Add a new option to the form
@@ -198,17 +192,20 @@ export function AddQuestionDialog({
         iconSlug: option.iconSlug || undefined,
       }));
 
-      // Get the highest sortOrder from existing questions
-      const response = await fetch(
-        `/api/onboarding/versions?tag=${encodeURIComponent(versionId)}`
-      );
-      const versionData = await response.json();
+      // Add 'Others' option if allowOtherOption is enabled
+      if (values.allowOtherOption) {
+        processedOptions.push({
+          value: "other",
+          label: "Other",
+          iconSlug: undefined,
+        });
+      }
 
       const result = await addOnboardingQuestion({
         versionId,
         title: values.title,
         slug: values.slug,
-        type: values.type as any, // TypeScript conversion
+        type: values.type as "single_choice" | "multi_choice",
         iconSlug: values.iconSlug || undefined,
         options: processedOptions,
         allowOtherOption: values.allowOtherOption,
@@ -303,16 +300,13 @@ export function AddQuestionDialog({
                         placeholder="E.g., what-frameworks-do-you-use"
                         {...field}
                         onChange={(e) => {
-                          const value = e.target.value;
+                          let value = e.target.value.toLowerCase();
                           // Only apply slugify to value if it contains invalid characters
-                          // This allows users to type hyphens directly
-                          if (/^[a-z0-9-]*$/.test(value)) {
+                          if (/^[a-z0-9-]+$/.test(value)) {
                             field.onChange(value);
                           } else {
-                            const slugified = slugify(value);
-                            form.setValue("slug", slugified, {
-                              shouldValidate: true,
-                            });
+                            value = slugify(value);
+                            field.onChange(value);
                           }
                         }}
                       />
@@ -372,10 +366,12 @@ export function AddQuestionDialog({
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Allow custom "Other" input</FormLabel>
+                      <FormLabel>
+                        Allow custom &quot;Other&quot; input
+                      </FormLabel>
                       <FormDescription>
-                        Adds an "Other" option with a text field for users to
-                        enter custom responses.
+                        Adds an &quot;Other&quot; option with a text field for
+                        users to enter custom responses.
                       </FormDescription>
                     </div>
                   </FormItem>
@@ -397,8 +393,9 @@ export function AddQuestionDialog({
                           </TooltipTrigger>
                           <TooltipContent>
                             <p>
-                              The slug for a Lucide icon (e.g., "check", "code")
-                              that will be displayed with the question.
+                              The slug for a Lucide icon (e.g.,
+                              &quot;check&quot;, &quot;code&quot;) that will be
+                              displayed with the question.
                             </p>
                           </TooltipContent>
                         </Tooltip>

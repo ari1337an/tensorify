@@ -20,21 +20,31 @@ const responseSchema = z
       ])
       .optional(),
     orgSizeBracket: z
-      .enum([
-        OrgSizeBracket.ONE_TO_FIVE,
-        OrgSizeBracket.SIX_TO_TWENTY,
-        OrgSizeBracket.TWENTYONE_TO_FIFTY,
-        OrgSizeBracket.FIFTYONE_PLUS,
-      ])
+      .enum(["<20", "20-99", "100-499", "500-999", "1000+"])
       .optional(),
     answers: z
       .array(
-        z.object({
-          questionId: z.string().min(1, "Question ID is required"),
-          selectedOptionIds: z
-            .array(z.string().min(1, "Option ID is required"))
-            .min(1, "At least one option must be selected"),
-        })
+        z
+          .object({
+            questionId: z.string().min(1, "Question ID is required"),
+            selectedOptionIds: z
+              .array(z.string().min(1, "Option ID is required"))
+              .optional(),
+            customValue: z.string().optional(),
+          })
+          .refine(
+            (data) => {
+              // Either selectedOptionIds must have values OR customValue must be present
+              return (
+                (data.selectedOptionIds && data.selectedOptionIds.length > 0) ||
+                (data.customValue && data.customValue.length > 0)
+              );
+            },
+            {
+              message:
+                "Either selectedOptionIds or customValue must be provided",
+            }
+          )
       )
       .min(1, "At least one answer is required"),
   })
@@ -42,6 +52,15 @@ const responseSchema = z
     message: "Either versionId or tag must be provided",
     path: ["versionId"],
   });
+
+// Map API org size values to internal enum
+const orgSizeApiToEnum = {
+  "<20": OrgSizeBracket.LT_20,
+  "20-99": OrgSizeBracket.FROM_20_TO_99,
+  "100-499": OrgSizeBracket.FROM_100_TO_499,
+  "500-999": OrgSizeBracket.FROM_500_TO_999,
+  "1000+": OrgSizeBracket.GTE_1000,
+};
 
 export async function POST(req: Request) {
   try {
@@ -127,23 +146,90 @@ export async function POST(req: Request) {
         email: generatedEmail,
         clientFingerprint: generatedFingerprint,
         intentTag: intentTag || IntentTag.WILL_PAY_TEAM,
-        orgSizeBracket: orgSizeBracket || OrgSizeBracket.ONE_TO_FIVE,
+        orgSizeBracket: orgSizeBracket
+          ? orgSizeApiToEnum[orgSizeBracket]
+          : OrgSizeBracket.LT_20,
         tagVersionId: actualVersionId,
-        answers: {
-          create: answers.flatMap((answer) =>
-            answer.selectedOptionIds.map((optionId) => ({
-              questionId: answer.questionId,
-              optionId: optionId,
-            }))
-          ),
-        },
       },
     });
 
-    return NextResponse.json(
-      { success: true, responseId: response.id },
-      { status: 201 }
-    );
+    // Verify all questions and options exist before creating answers
+    for (const answer of answers) {
+      // Verify question exists
+      const question = await db.onboardingQuestion.findUnique({
+        where: { id: answer.questionId },
+        include: { options: true },
+      });
+
+      if (!question) {
+        await db.onboardingResponse.delete({ where: { id: response.id } });
+        return NextResponse.json(
+          { error: `Question with ID ${answer.questionId} not found` },
+          { status: 400 }
+        );
+      }
+
+      // If selected options provided, verify they exist and belong to the question
+      if (answer.selectedOptionIds?.length) {
+        const validOptionIds = question.options.map((opt) => opt.id);
+        const invalidOptions = answer.selectedOptionIds.filter(
+          (id) => !validOptionIds.includes(id)
+        );
+
+        if (invalidOptions.length > 0) {
+          await db.onboardingResponse.delete({ where: { id: response.id } });
+          return NextResponse.json(
+            {
+              error: `Invalid options for question ${answer.questionId}`,
+              details: `Options not found or don't belong to the question: ${invalidOptions.join(
+                ", "
+              )}`,
+            },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
+    // Create answers
+    try {
+      await Promise.all(
+        answers.map(async (answer) => {
+          if (answer.customValue) {
+            // For custom value answers
+            await db.onboardingAnswer.create({
+              data: {
+                responseId: response.id,
+                questionId: answer.questionId,
+                customValue: answer.customValue,
+              },
+            });
+          } else if (answer.selectedOptionIds?.length) {
+            // For selected options
+            await Promise.all(
+              answer.selectedOptionIds.map((optionId) =>
+                db.onboardingAnswer.create({
+                  data: {
+                    responseId: response.id,
+                    questionId: answer.questionId,
+                    optionId,
+                  },
+                })
+              )
+            );
+          }
+        })
+      );
+
+      return NextResponse.json(
+        { success: true, responseId: response.id },
+        { status: 201 }
+      );
+    } catch (error) {
+      // If something goes wrong while creating answers, delete the response
+      await db.onboardingResponse.delete({ where: { id: response.id } });
+      throw error;
+    }
   } catch (error) {
     console.error("Error submitting onboarding response:", error);
     return NextResponse.json(
