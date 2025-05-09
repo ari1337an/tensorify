@@ -1140,10 +1140,10 @@ ${
                             </li>
                             <li>
                               <code>orgSizeBracket</code>: Optional - one of:{" "}
-                              <code>LT_20</code>, <code>FROM_20_TO_99</code>,{" "}
-                              <code>FROM_100_TO_499</code>,{" "}
-                              <code>FROM_500_TO_999</code>,{" "}
-                              <code>GTE_1000</code>
+                              <code>&lt;20</code>, <code>20-99</code>,{" "}
+                              <code>100-499</code>,{" "}
+                              <code>500-999</code>,{" "}
+                              <code>1000+</code>
                             </li>
                           </ul>
                         </div>

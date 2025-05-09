@@ -195,7 +195,44 @@ export async function POST(req: Request) {
     try {
       await Promise.all(
         answers.map(async (answer) => {
-          if (answer.customValue) {
+          // Get question type to handle multi_choice questions correctly
+          const question = await db.onboardingQuestion.findUnique({
+            where: { id: answer.questionId },
+            select: { type: true },
+          });
+
+          const isMultiChoice = question?.type === "multi_choice";
+
+          // For questions that have both customValue and selectedOptionIds (multi_choice with "other")
+          if (
+            isMultiChoice &&
+            answer.customValue &&
+            answer.selectedOptionIds?.length
+          ) {
+            // Create answers for selected options
+            await Promise.all(
+              answer.selectedOptionIds.map((optionId) =>
+                db.onboardingAnswer.create({
+                  data: {
+                    responseId: response.id,
+                    questionId: answer.questionId,
+                    optionId,
+                  },
+                })
+              )
+            );
+
+            // Create answer for the custom value
+            await db.onboardingAnswer.create({
+              data: {
+                responseId: response.id,
+                questionId: answer.questionId,
+                customValue: answer.customValue,
+              },
+            });
+          }
+          // For questions with only customValue
+          else if (answer.customValue) {
             // For custom value answers
             await db.onboardingAnswer.create({
               data: {
@@ -204,7 +241,9 @@ export async function POST(req: Request) {
                 customValue: answer.customValue,
               },
             });
-          } else if (answer.selectedOptionIds?.length) {
+          }
+          // For questions with only selectedOptionIds
+          else if (answer.selectedOptionIds?.length) {
             // For selected options
             await Promise.all(
               answer.selectedOptionIds.map((optionId) =>
