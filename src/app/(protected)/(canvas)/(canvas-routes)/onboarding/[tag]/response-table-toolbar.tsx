@@ -411,6 +411,25 @@ export function ResponseTableToolbar<TData>({
                   {option.label}
                 </DropdownMenuCheckboxItem>
               ))}
+
+              {/* Add "Other" option filter if this question allows custom values */}
+              {question.allowOtherOption && (
+                <DropdownMenuCheckboxItem
+                  key="other"
+                  checked={questionFilters[question.id]?.includes("other")}
+                  onCheckedChange={(checked) => {
+                    const currentFilters = questionFilters[question.id] || [];
+                    const newFilters = checked
+                      ? [...currentFilters, "other"]
+                      : currentFilters.filter((id) => id !== "other");
+
+                    onQuestionFilterChange(question.id, newFilters);
+                  }}
+                  className="border-t mt-1 pt-1 text-primary font-medium"
+                >
+                  Other (Custom Values)
+                </DropdownMenuCheckboxItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         ))}

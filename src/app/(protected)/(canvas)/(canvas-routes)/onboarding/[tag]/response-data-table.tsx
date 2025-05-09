@@ -100,16 +100,40 @@ export function ResponseDataTable({
         const answer = answers.find((a) => a.questionId === questionId);
 
         // No answer found, this response doesn't match
-        if (!answer || !answer.selectedOptions) return false;
+        if (!answer) return false;
+
+        // Special case: if this answer has no selected options but has a custom value,
+        // and we're not explicitly filtering for any options, include it
+        if (
+          answer.selectedOptions.length === 0 &&
+          answer.customValue &&
+          selectedOptionIds.length === 0
+        ) {
+          continue; // This answer passes the filter
+        }
+
+        // Another special case: if selected filter includes a specific "Other" marker
+        // and this answer has a custom value, include it
+        const hasOtherFilter = selectedOptionIds.includes("other");
+        if (hasOtherFilter && answer.customValue) {
+          continue; // This answer passes the filter because it has an "Other" value
+        }
 
         // Get all option IDs for this answer
         const optionIds = answer.selectedOptions.map((opt) => opt.optionId);
 
-        // Check if any of the selected options match this answer
-        const hasMatch = selectedOptionIds.some((id) => optionIds.includes(id));
-
-        // If no match found for this question, exclude the response
-        if (!hasMatch) return false;
+        // For normal options, check if any of the selected options match this answer
+        // Skip the "other" special filter if it exists, as we handled it above
+        const normalOptionFilters = selectedOptionIds.filter(
+          (id) => id !== "other"
+        );
+        if (normalOptionFilters.length > 0) {
+          const hasMatch = normalOptionFilters.some((id) =>
+            optionIds.includes(id)
+          );
+          // If no match found for this question, exclude the response
+          if (!hasMatch) return false;
+        }
       }
 
       // If we got here, all question filters match

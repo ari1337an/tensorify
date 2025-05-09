@@ -66,7 +66,7 @@ export async function POST(req: Request) {
   try {
     // Parse request body
     const body = await req.json();
-    console.log("Received body:", body);
+    // console.log("Received body:", body);
 
     // Validate request body
     const validationResult = responseSchema.safeParse(body);
@@ -110,7 +110,7 @@ export async function POST(req: Request) {
       actualVersionId = tagVersion.id;
     }
 
-    console.log("Using version ID:", actualVersionId);
+    // console.log("Using version ID:", actualVersionId);
 
     // Verify version exists
     const version = await db.onboardingTagVersion.findUnique({
@@ -196,19 +196,15 @@ export async function POST(req: Request) {
       await Promise.all(
         answers.map(async (answer) => {
           // Get question type to handle multi_choice questions correctly
-          const question = await db.onboardingQuestion.findUnique({
-            where: { id: answer.questionId },
-            select: { type: true },
-          });
+          // const question = await db.onboardingQuestion.findUnique({
+          //   where: { id: answer.questionId },
+          //   select: { type: true },
+          // });
 
-          const isMultiChoice = question?.type === "multi_choice";
+          // const isMultiChoice = question?.type === "multi_choice";
 
-          // For questions that have both customValue and selectedOptionIds (multi_choice with "other")
-          if (
-            isMultiChoice &&
-            answer.customValue &&
-            answer.selectedOptionIds?.length
-          ) {
+          // For questions that have both customValue and selectedOptionIds
+          if (answer.customValue && answer.selectedOptionIds?.length) {
             // Create answers for selected options
             await Promise.all(
               answer.selectedOptionIds.map((optionId) =>

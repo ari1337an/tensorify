@@ -59,28 +59,33 @@ export async function GET(
       // Group answers by questionId for multi-select questions
       const answersMap = new Map();
 
+      // First pass: set up the answer structure for each question
       response.answers.forEach((answer) => {
         if (!answersMap.has(answer.questionId)) {
           answersMap.set(answer.questionId, {
             questionId: answer.questionId,
             questionTitle: answer.question?.title || "Unknown Question",
             selectedOptions: [],
-            customValue: answer.customValue || undefined,
+            customValue: null,
           });
         }
+      });
 
-        // Only add option if it exists
+      // Second pass: Add all selected options, preserving custom values
+      response.answers.forEach((answer) => {
+        const currentAnswerObj = answersMap.get(answer.questionId);
+
+        // Store the custom value regardless of whether it has an option
+        if (answer.customValue) {
+          currentAnswerObj.customValue = answer.customValue;
+        }
+
+        // Add the option if it exists
         if (answer.option) {
-          const currentAnswerObj = answersMap.get(answer.questionId);
           currentAnswerObj.selectedOptions.push({
             optionId: answer.optionId,
             optionLabel: answer.option.label,
           });
-
-          // Keep the custom value even when adding more options
-          if (answer.customValue && !currentAnswerObj.customValue) {
-            currentAnswerObj.customValue = answer.customValue;
-          }
         }
       });
 

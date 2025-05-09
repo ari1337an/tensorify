@@ -36,14 +36,27 @@ Organization Size: ${response.orgSizeBracket || "Not specified"}
 
 Answers:
 ${response.answers
-  .map(
-    (answer) =>
-      `- ${answer.questionTitle}: ${answer.selectedOptions
+  .map((answer) => {
+    let answerText = `- ${answer.questionTitle}: `;
+
+    // Add selected options if they exist
+    if (answer.selectedOptions && answer.selectedOptions.length > 0) {
+      answerText += answer.selectedOptions
         .map((option) => option.optionLabel)
-        .join(", ")}${
-        answer.customValue ? ` (Other: ${answer.customValue})` : ""
-      }`
-  )
+        .join(", ");
+    }
+
+    // Add custom value if it exists
+    if (answer.customValue) {
+      // If there were also selected options, add a separator
+      if (answer.selectedOptions && answer.selectedOptions.length > 0) {
+        answerText += "; ";
+      }
+      answerText += `Other: "${answer.customValue}"`;
+    }
+
+    return answerText;
+  })
   .join("\n")}
 `.trim();
 

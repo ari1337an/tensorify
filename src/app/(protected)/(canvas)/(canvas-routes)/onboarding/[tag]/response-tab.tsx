@@ -179,8 +179,25 @@ export function ResponseTab({
       allQuestionIds.forEach((qId) => {
         const answer = response.answers.find((a) => a.questionId === qId);
         if (answer) {
-          row[questionMap.get(qId) || `Question (${qId})`] =
-            answer.selectedOptions.map((opt) => opt.optionLabel).join(": ");
+          let answerText = "";
+
+          // Add selected options if they exist
+          if (answer.selectedOptions.length > 0) {
+            answerText += answer.selectedOptions
+              .map((opt) => opt.optionLabel)
+              .join(", ");
+          }
+
+          // Add custom value if it exists
+          if (answer.customValue) {
+            // If there were also selected options, add a separator
+            if (answer.selectedOptions.length > 0) {
+              answerText += "; ";
+            }
+            answerText += `Other: "${answer.customValue}"`;
+          }
+
+          row[questionMap.get(qId) || `Question (${qId})`] = answerText || "—";
         } else {
           row[questionMap.get(qId) || `Question (${qId})`] = "—";
         }
@@ -351,27 +368,43 @@ export function ResponseTab({
                           <h4 className="font-medium mb-2">
                             {answer.questionTitle}
                           </h4>
-                          {answer.selectedOptions.length > 0 ? (
-                            <ul className="list-disc list-inside space-y-1">
-                              {answer.selectedOptions.map((option) => (
-                                <li key={option.optionId}>
-                                  {option.optionLabel}
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p className="text-muted-foreground">
-                              No options selected
-                            </p>
-                          )}
 
-                          {answer.customValue && (
-                            <div className="mt-2">
-                              <p className="text-sm font-medium text-muted-foreground">
+                          {/* Display selected options with "Other" value clearly marked */}
+                          {answer.selectedOptions.length > 0 ? (
+                            <div className="mb-2">
+                              <p className="text-sm font-medium text-muted-foreground mb-1">
+                                Selected Options:
+                              </p>
+                              <ul className="list-disc list-inside space-y-1">
+                                {answer.selectedOptions.map((option) => (
+                                  <li key={option.optionId}>
+                                    {option.optionLabel}
+                                  </li>
+                                ))}
+
+                                {/* Always show the "Other" value if it exists, regardless of selection state */}
+                                {answer.customValue && (
+                                  <li className="text-primary font-medium">
+                                    Other: <span>{answer.customValue}</span>
+                                  </li>
+                                )}
+                              </ul>
+                            </div>
+                          ) : answer.customValue ? (
+                            // Handle case where ONLY a custom value was provided (no selected options)
+                            <div className="mb-2">
+                              <p className="text-sm font-medium text-muted-foreground mb-1">
                                 Custom Value:
                               </p>
-                              <p className="italic">{answer.customValue}</p>
+                              <p className="text-primary font-medium ml-6">
+                                {answer.customValue}
+                              </p>
                             </div>
+                          ) : (
+                            // No options or custom value selected
+                            <p className="text-muted-foreground italic">
+                              No selection made
+                            </p>
                           )}
                         </div>
                       ))}
