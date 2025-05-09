@@ -7,9 +7,22 @@ The application is structured using route groups for logical code organization w
 ### Root Structure
 
 - `src/app/` - Root app directory containing all app code and routing structure.
-  - `layout.tsx` - Main layout that defines page structure, fonts, and theme provider.
+  - `layout.tsx` - Main layout that defines page structure, fonts, and providers wrapper for theme, user state, and fingerprinting.
   - `globals.css` - Global CSS styles including Tailwind directives and custom variables.
   - `middleware.ts` - Auth middleware for protected routes, handling authentication with Clerk.
+  - `api/` - API routes for internal data handling.
+    - `onboarding/` - API routes related to onboarding.
+      - `route.ts` - Proxy API handler for fetching onboarding questions to avoid CORS issues. Uses `NEXT_PUBLIC_ONBOARDING_TAG` environment variable for configuration.
+      - `responses/` - API routes for submitting onboarding responses.
+        - `route.ts` - Proxy API handler for submitting onboarding response data to the external API.
+
+### Global Providers
+
+- `src/app/_providers/` - Application-wide providers for shared functionality.
+  - `theme-provider.tsx` - Provider for theme management using next-themes.
+  - `fingerprint-provider.tsx` - Client component that initializes browser fingerprinting and stores it in global state.
+  - `user-provider.tsx` - Client component that syncs Clerk user data with global state for use across the application.
+  - `providers-wrapper.tsx` - Client component that wraps multiple providers (ClerkProvider, ThemeProvider, FingerprintProvider, UserProvider) for use in the root layout.
 
 ### Protected Routes
 
@@ -25,7 +38,7 @@ The application is structured using route groups for logical code organization w
   - `_components/` - Contains all enterprise-specific components organized by feature area.
     - `layout/` - Components defining the application layout structure and shell.
       - `AppWrapper.tsx` - Top-level component that wraps the app with providers (Auth, Query, etc).
-      - `AppLayout.tsx` - Handles the main layout with sidebar, animations, and user state sync.
+      - `AppLayout.tsx` - Handles the main layout with sidebar, animations, and responsive behavior.
       - `MainContent.tsx` - Renders navbar and main content area with proper flex layout.
       - `index.ts` - Export file for layout components to facilitate clean imports.
     - `navbar/` - Components for the top application navigation bar.
@@ -146,11 +159,14 @@ The application is structured using route groups for logical code organization w
   - `layout.tsx` - Layout for onboarding pages.
   - `onboarding/` - Components and pages for the onboarding process.
     - `layout.tsx` - Layout specific to the onboarding process.
-    - `page.tsx` - Main onboarding page with multi-step form.
+    - `page.tsx` - Main onboarding page with multi-step form that fetches initial questions from an API using the `NEXT_PUBLIC_ONBOARDING_TAG` environment variable before showing built-in questions. Collects data throughout the process and submits it to the API during the setup phase.
     - `_components/` - Components specific to the onboarding flow.
+      - `OnboardingApiQuestion.tsx` - Component for handling API-fetched questions, supporting both single_choice and multi_choice question types.
       - `OnboardingSource.tsx` - Component for collecting how users discovered Tensorify.
-      - `OnboardingOrg.tsx` - Component for organization name and slug setup.
-      - `OnboardingSetup.tsx` - Loading component for workspace setup process.
+      - `OnboardingUsage.tsx` - Component for collecting how users plan to use Tensorify, now with data passing to parent component.
+      - `OnboardingFramework.tsx` - Component for selecting ML/DL/AI framework.
+      - `OnboardingOrg.tsx` - Component for organization name and slug setup, passes organization data to parent component.
+      - `OnboardingSetup.tsx` - Real progress bar component that processes and submits onboarding data to the API, now accessing user data (ID, email) and fingerprint from the global store.
 
 ### UI Components
 
@@ -183,3 +199,27 @@ The application is structured using route groups for logical code organization w
   - `tabs.tsx` - Tab component for organizing content into panels.
   - `textarea.tsx` - Multi-line text input component.
   - `tooltip.tsx` - Tooltip component for displaying additional information.
+
+### Utility Functions
+
+- `src/app/_utils/` - Utility functions and helpers for the application.
+  - `clientFingerprint.ts` - Utility for accessing client browser fingerprints stored in global state. Now with hook-based approach (useClientFingerprint) that accesses the centralized fingerprint data.
+
+### Types Directory
+
+- `src/types/` - Type declarations for external libraries.
+  - `clientjs.d.ts` - Type declaration for ClientJS library to fix TypeScript errors and provide type checking.
+
+### Global State Management
+
+- `src/app/_store/` - Global state management for the application.
+  - `store.ts` - Zustand store for application-wide state management including user data and client fingerprint for tracking.
+
+### Server Actions
+
+- `src/server/actions/` - Next.js server actions for server-side data processing.
+  - `org-actions.ts` - Server actions for organization-related operations.
+  - `project-actions.ts` - Server actions for project-related operations.
+  - `team-actions.ts` - Server actions for team-related operations.
+  - `workflow-actions.ts` - Server actions for workflow-related operations.
+  - `onboarding-actions.ts` - Server actions for onboarding data submission, including processing and submitting responses to external APIs with client fingerprint.

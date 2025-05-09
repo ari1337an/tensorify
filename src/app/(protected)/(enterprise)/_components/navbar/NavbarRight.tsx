@@ -7,14 +7,13 @@ import {
   Share,
   Unlock,
 } from "lucide-react";
-import { UserButton, useUser } from "@clerk/nextjs";
 import { Button } from "@/app/_components/ui/button";
 import { CollaboratorAvatars } from "@/app/(protected)/(enterprise)/_components/navbar/CollaboratorAvatars";
 import { useState } from "react";
 import { cn } from "@/app/_lib/utils";
 import { ExportDialog } from "@/app/(protected)/(enterprise)/_components/dialog/ExportDialog";
 import { ShareDialog } from "@/app/(protected)/(enterprise)/_components/dialog/ShareDialog";
-import { Skeleton } from "@/app/_components/ui/skeleton";
+
 // Example collaborators data - in a real app, this would come from your collaboration system
 const collaborators = [
   {
@@ -51,7 +50,6 @@ export function NavbarRight() {
   const [isLocked, setIsLocked] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-  const { isLoaded } = useUser();
 
   const toggleLock = () => {
     setIsLocked((prev) => !prev);
@@ -103,21 +101,6 @@ export function NavbarRight() {
         <Download className="h-4 w-4 mr-1" />
         Export
       </Button>
-
-      <div className="h-8 w-8 flex items-center justify-center">
-        {isLoaded ? (
-          <UserButton
-            appearance={{
-              elements: {
-                avatarBox:
-                  "h-8 w-8 hover:ring-primary/30 transition-colors duration-200",
-              },
-            }}
-          />
-        ) : (
-          <Skeleton className="h-8 w-8 rounded-full bg-secondary" />
-        )}
-      </div>
 
       <ExportDialog
         isOpen={isExportDialogOpen}

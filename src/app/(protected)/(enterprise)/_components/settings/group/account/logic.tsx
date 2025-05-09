@@ -27,6 +27,13 @@ interface SessionWithActivities {
   actor: null;
 }
 
+// Define a minimal interface for Clerk User with just the properties we need
+interface ClerkUser {
+  id: string;
+  update: (data: { firstName?: string; lastName?: string }) => Promise<unknown>;
+  setProfileImage: (options: { file: File }) => Promise<unknown>;
+}
+
 export function useAccountLogic() {
   const { user } = useUser();
   const { session: currentSession } = useSession();
@@ -86,38 +93,70 @@ export function useAccountLogic() {
     }
   };
 
+  // Create a debounced function outside useCallback
+  const saveFirstNameWithDebounce = React.useMemo(
+    () =>
+      debounce(
+        async (
+          value: string,
+          userData: ClerkUser | null | undefined,
+          setIsSaving: (state: boolean) => void
+        ) => {
+          if (!userData) return;
+          try {
+            setIsSaving(true);
+            await userData.update({ firstName: value });
+            toast.success("First name updated successfully");
+          } catch (error) {
+            console.error("Error updating first name:", error);
+            toast.error("Failed to update first name");
+          } finally {
+            setIsSaving(false);
+          }
+        },
+        1000
+      ),
+    []
+  );
+
+  // Create a debounced function outside useCallback
+  const saveLastNameWithDebounce = React.useMemo(
+    () =>
+      debounce(
+        async (
+          value: string,
+          userData: ClerkUser | null | undefined,
+          setIsSaving: (state: boolean) => void
+        ) => {
+          if (!userData) return;
+          try {
+            setIsSaving(true);
+            await userData.update({ lastName: value });
+            toast.success("Last name updated successfully");
+          } catch (error) {
+            console.error("Error updating last name:", error);
+            toast.error("Failed to update last name");
+          } finally {
+            setIsSaving(false);
+          }
+        },
+        1000
+      ),
+    []
+  );
+
   const debouncedSaveFirstName = React.useCallback(
-    debounce(async (value: string) => {
-      if (!user) return;
-      try {
-        setIsSavingFirstName(true);
-        await user.update({ firstName: value });
-        toast.success("First name updated successfully");
-      } catch (error) {
-        console.error("Error updating first name:", error);
-        toast.error("Failed to update first name");
-      } finally {
-        setIsSavingFirstName(false);
-      }
-    }, 1000),
-    [user]
+    (value: string) => {
+      saveFirstNameWithDebounce(value, user as ClerkUser, setIsSavingFirstName);
+    },
+    [saveFirstNameWithDebounce, user]
   );
 
   const debouncedSaveLastName = React.useCallback(
-    debounce(async (value: string) => {
-      if (!user) return;
-      try {
-        setIsSavingLastName(true);
-        await user.update({ lastName: value });
-        toast.success("Last name updated successfully");
-      } catch (error) {
-        console.error("Error updating last name:", error);
-        toast.error("Failed to update last name");
-      } finally {
-        setIsSavingLastName(false);
-      }
-    }, 1000),
-    [user]
+    (value: string) => {
+      saveLastNameWithDebounce(value, user as ClerkUser, setIsSavingLastName);
+    },
+    [saveLastNameWithDebounce, user]
   );
 
   const handleFirstNameChange = React.useCallback(
@@ -141,7 +180,7 @@ export function useAccountLogic() {
 
     try {
       setIsUploading(true);
-      await user?.setProfileImage({ file });
+      await (user as ClerkUser)?.setProfileImage({ file });
       toast.success("Profile image updated successfully");
     } catch (error) {
       console.error("Error uploading profile image:", error);

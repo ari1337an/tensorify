@@ -21,6 +21,11 @@ import {
 } from "@/app/_components/ui/select";
 
 type Props = {
+  onOrgDataChange: (data: {
+    orgName: string;
+    orgSlug: string;
+    orgSize: string;
+  }) => void;
   onNext: () => void;
 };
 
@@ -32,15 +37,16 @@ const orgSizes = [
   { value: "xl", label: "1000+ people" },
 ] as const;
 
-export function OnboardingOrg({ onNext }: Props) {
+export function OnboardingOrg({ onOrgDataChange, onNext }: Props) {
   const [orgName, setOrgName] = useState("");
   const [orgSlug, setOrgSlug] = useState("");
   const [orgSize, setOrgSize] = useState<string>("");
   const [isSlugEdited, setIsSlugEdited] = useState(false);
   const [isValidSlug, setIsValidSlug] = useState(true);
 
+  // Handle slug generation from org name
   useEffect(() => {
-    if (!isSlugEdited) {
+    if (!isSlugEdited && orgName) {
       const newSlug = orgName
         .toLowerCase()
         .replace(/[^a-z0-9-]/g, "-")
@@ -51,6 +57,15 @@ export function OnboardingOrg({ onNext }: Props) {
     }
   }, [orgName, isSlugEdited]);
 
+  // Notify parent only when data actually changes, using a regular effect
+  // This effect runs when any of the form values change and are all valid
+  useEffect(() => {
+    // Only notify parent if we have valid, complete data
+    if (orgName && orgSlug && isValidSlug && orgSize) {
+      onOrgDataChange({ orgName, orgSlug, orgSize });
+    }
+  }, [orgName, orgSlug, isValidSlug, orgSize, onOrgDataChange]);
+
   const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIsSlugEdited(true);
     const newSlug = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
@@ -58,15 +73,19 @@ export function OnboardingOrg({ onNext }: Props) {
     setIsValidSlug(/^[a-z0-9-]+$/.test(newSlug));
   };
 
+  const handleOrgSizeChange = (value: string) => {
+    setOrgSize(value);
+  };
+
   const isValid = orgName.length > 0 && isValidSlug && orgSize !== "";
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
+      {/* <div className="space-y-2">
         <p className="text-muted-foreground">
           This will be your unique space in Tensorify
         </p>
-      </div>
+      </div> */}
 
       <div className="space-y-4">
         <div className="space-y-2">
@@ -120,7 +139,7 @@ export function OnboardingOrg({ onNext }: Props) {
             <Users className="h-4 w-4 text-muted-foreground" />
             Organization Size
           </Label>
-          <Select value={orgSize} onValueChange={setOrgSize}>
+          <Select value={orgSize} onValueChange={handleOrgSizeChange}>
             <SelectTrigger className="w-full h-11 bg-background border-input hover:bg-accent hover:text-accent-foreground focus:ring-0 focus:ring-offset-0">
               <SelectValue
                 placeholder="Select organization size"

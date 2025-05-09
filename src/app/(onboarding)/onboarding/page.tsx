@@ -1,36 +1,192 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card } from "@/app/_components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { OnboardingSource } from "./_components/OnboardingSource";
+import { OnboardingUsage } from "./_components/OnboardingUsage";
 import { OnboardingOrg } from "./_components/OnboardingOrg";
 import { OnboardingSetup } from "./_components/OnboardingSetup";
-import { OnboardingFramework } from "./_components/OnboardingFramework";
+import { OnboardingApiQuestion } from "./_components/OnboardingApiQuestion";
 
-const steps = ["source", "framework", "organization", "setup"] as const;
-type Step = (typeof steps)[number];
+// Define types for the API data
+interface OnboardingOption {
+  id: string;
+  questionId: string;
+  value: string;
+  label: string;
+  iconSlug: string | null;
+  sortOrder: number;
+}
 
+interface OnboardingQuestion {
+  id: string;
+  versionId: string;
+  slug: string;
+  type: "single_choice" | "multi_choice";
+  title: string;
+  iconSlug: string | null;
+  isActive: boolean;
+  sortOrder: number;
+  allowOtherOption: boolean;
+  options: OnboardingOption[];
+}
+
+interface OnboardingVersion {
+  id: string;
+  tag: string;
+  title: string;
+  description: string | null;
+  status: string;
+  createdAt: string;
+  publishedAt: string;
+  questions: OnboardingQuestion[];
+}
+
+interface OnboardingResponse {
+  version: OnboardingVersion;
+}
+
+// Record answers for API questions
+interface SingleChoiceAnswer {
+  questionId: string;
+  customValue?: string;
+  selectedOptionIds?: string[];
+}
+
+interface MultiChoiceAnswer {
+  questionId: string;
+  selectedOptionIds: string[];
+}
+
+type OnboardingAnswer = SingleChoiceAnswer | MultiChoiceAnswer;
+
+// Define organizational data
+interface OrgData {
+  orgName: string;
+  orgSlug: string;
+  orgSize: string;
+}
+
+// Define all step types
+const existingSteps = ["usage", "organization", "setup"] as const;
+type ExistingStep = (typeof existingSteps)[number];
+type ApiStep = { type: "api"; questionIndex: number };
+type Step = ExistingStep | ApiStep;
+
+// Titles for existing steps
 const stepTitles = {
-  source: "How did you hear about us?",
-  framework: "Which ML/DL/AI framework do you use?",
+  usage: "How you plan to use Tensorify?",
   organization: "Setup your Organization",
   setup: "Setting up your workspace...",
 } as const;
 
-export default function OnboardingPage() {
-  const [currentStep, setCurrentStep] = useState<Step>("source");
-  const router = useRouter();
+// Helper function to determine if a step is an API step
+const isApiStep = (step: Step): step is ApiStep =>
+  typeof step === "object" && step.type === "api";
 
-  const handleNext = () => {
-    const currentIndex = steps.indexOf(currentStep);
-    if (currentIndex < steps.length - 1) {
-      setCurrentStep(steps[currentIndex + 1]);
+export default function OnboardingPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [apiQuestions, setApiQuestions] = useState<OnboardingQuestion[]>([]);
+  const [apiAnswers, setApiAnswers] = useState<OnboardingAnswer[]>([]);
+  const [steps, setSteps] = useState<Step[]>([]);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [usageSelection, setUsageSelection] = useState("");
+  const [orgData, setOrgData] = useState<OrgData | null>(null);
+  const currentStep = steps[currentStepIndex];
+
+  // Fetch API questions
+  useEffect(() => {
+    const fetchOnboardingQuestions = async () => {
+      try {
+        const onboardingTag =
+          process.env.NEXT_PUBLIC_ONBOARDING_TAG ||
+          "apptensorifyio-onboarding-beta-v01";
+        const response = await fetch(`/api/onboarding?tag=${onboardingTag}`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch onboarding questions");
+        }
+
+        const data: OnboardingResponse = await response.json();
+        setApiQuestions(data.version.questions);
+
+        // Generate steps based on API questions + existing steps
+        const apiSteps: ApiStep[] = data.version.questions.map((_, index) => ({
+          type: "api",
+          questionIndex: index,
+        }));
+
+        setSteps([...apiSteps, ...existingSteps]);
+      } catch (error) {
+        console.error("Error fetching onboarding questions:", error);
+        // Fallback to existing steps if API fails
+        setSteps([...existingSteps]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOnboardingQuestions();
+  }, []);
+
+  const handleNext = useCallback(() => {
+    if (currentStepIndex < steps.length - 1) {
+      setCurrentStepIndex(currentStepIndex + 1);
     } else {
+      // All steps completed
       router.push("/");
     }
+  }, [currentStepIndex, steps.length, router]);
+
+  const handleApiQuestionAnswer = useCallback(
+    (answer: OnboardingAnswer) => {
+      // Update answers array
+      setApiAnswers((prev) => {
+        const newAnswers = [...prev];
+        const existingAnswerIndex = newAnswers.findIndex(
+          (a) => a.questionId === answer.questionId
+        );
+
+        if (existingAnswerIndex >= 0) {
+          newAnswers[existingAnswerIndex] = answer;
+        } else {
+          newAnswers.push(answer);
+        }
+
+        return newAnswers;
+      });
+
+      handleNext();
+    },
+    [handleNext]
+  );
+
+  const handleUsageSelection = useCallback((usageId: string) => {
+    setUsageSelection(usageId);
+  }, []);
+
+  const handleOrgDataChange = useCallback((data: OrgData) => {
+    setOrgData(data);
+  }, []);
+
+  // Get the title for the current step
+  const getCurrentStepTitle = () => {
+    if (isApiStep(currentStep)) {
+      const question = apiQuestions[currentStep.questionIndex];
+      return question?.title || "Loading...";
+    }
+    return stepTitles[currentStep];
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-background">
+        <div className="animate-pulse text-primary">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-background p-4 relative overflow-hidden">
@@ -43,20 +199,20 @@ export default function OnboardingPage() {
       <Card className="w-full max-w-2xl p-8 shadow-lg border-primary/10 backdrop-blur-sm relative z-10">
         <div className="flex justify-between items-center">
           <motion.h1
-            key={currentStep}
+            key={`step-${currentStepIndex}`}
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent"
           >
-            {stepTitles[currentStep]}
+            {getCurrentStepTitle()}
           </motion.h1>
           <div className="flex gap-2">
-            {steps.map((step, index) => (
+            {steps.map((_, index) => (
               <div
-                key={step}
+                key={index}
                 className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                  steps.indexOf(currentStep) >= index
+                  currentStepIndex >= index
                     ? "bg-primary scale-110"
                     : "bg-muted"
                 }`}
@@ -67,22 +223,38 @@ export default function OnboardingPage() {
 
         <AnimatePresence mode="wait">
           <motion.div
-            key={currentStep}
+            key={`step-content-${currentStepIndex}`}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            {currentStep === "source" && (
-              <OnboardingSource onNext={handleNext} />
+            {isApiStep(currentStep) && (
+              <OnboardingApiQuestion
+                question={apiQuestions[currentStep.questionIndex]}
+                onAnswer={handleApiQuestionAnswer}
+              />
             )}
-            {currentStep === "framework" && (
-              <OnboardingFramework onNext={handleNext} />
+            {currentStep === "usage" && (
+              <OnboardingUsage
+                onUsageSelected={handleUsageSelection}
+                onNext={handleNext}
+              />
             )}
             {currentStep === "organization" && (
-              <OnboardingOrg onNext={handleNext} />
+              <OnboardingOrg
+                onOrgDataChange={handleOrgDataChange}
+                onNext={handleNext}
+              />
             )}
-            {currentStep === "setup" && <OnboardingSetup onNext={handleNext} />}
+            {currentStep === "setup" && (
+              <OnboardingSetup
+                usageSelection={usageSelection}
+                orgSize={orgData?.orgSize || "xs"}
+                apiAnswers={apiAnswers}
+                onNext={handleNext}
+              />
+            )}
           </motion.div>
         </AnimatePresence>
       </Card>

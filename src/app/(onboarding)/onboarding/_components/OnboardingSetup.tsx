@@ -1,122 +1,137 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Progress } from "@/app/_components/ui/progress";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Loader2,
-  CheckCircle2,
-  Settings,
-  Database,
-  Rocket,
-} from "lucide-react";
+import { motion } from "framer-motion";
+import { Loader2 } from "lucide-react";
+import { submitOnboardingData } from "@/server/actions/onboarding-actions";
+import { useClientFingerprint } from "@/app/_utils/clientFingerprint";
+import useStore from "@/app/_store/store";
+
+type OnboardingAnswer = {
+  questionId: string;
+  customValue?: string;
+  selectedOptionIds?: string[];
+};
 
 type Props = {
   onNext: () => void;
+  usageSelection: string;
+  orgSize: string;
+  apiAnswers: OnboardingAnswer[];
 };
 
-const steps = [
-  {
-    text: "Creating your organization...",
-    icon: Settings,
-    color: "text-blue-500",
-  },
-  {
-    text: "Setting up your workspace...",
-    icon: Database,
-    color: "text-purple-500",
-  },
-  {
-    text: "Configuring default settings...",
-    icon: Settings,
-    color: "text-amber-500",
-  },
-  {
-    text: "Almost there...",
-    icon: Rocket,
-    color: "text-green-500",
-  },
-];
+export function OnboardingSetup({
+  onNext,
+  usageSelection,
+  orgSize,
+  apiAnswers,
+}: Props) {
+  const [error, setError] = useState<string | null>(null);
+  const { fingerprint, isLoading: isFingerprintLoading } =
+    useClientFingerprint();
+  const { currentUser } = useStore();
 
-export function OnboardingSetup({ onNext }: Props) {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [progress, setProgress] = useState(0);
-
+  // Handle the onboarding process
   useEffect(() => {
-    // Simulate setup process with progress updates
-    const progressInterval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(progressInterval);
-          return 100;
+    // Don't start submission until we have fingerprint
+    if (isFingerprintLoading) return;
+
+    let isMounted = true;
+    let timeout: NodeJS.Timeout | null = null;
+
+    const processOnboarding = async () => {
+      try {
+        // Get user id and email from store
+        const userId = currentUser?.id || "";
+        const email = currentUser?.emailAddresses?.[0]?.emailAddress || "";
+
+        // Submit data using server action
+        const result = await submitOnboardingData({
+          userId,
+          email,
+          answers: apiAnswers,
+          usageSelection,
+          orgSize,
+          clientFingerprint: fingerprint,
+        });
+
+        if (!result.success) {
+          if (isMounted) {
+            setError(result.error || "Failed to submit onboarding data");
+          }
+          return;
         }
-        return prev + 5;
-      });
-    }, 200);
 
-    // Rotate through steps
-    const stepInterval = setInterval(() => {
-      setCurrentStep((prev) => (prev + 1) % steps.length);
-    }, 1000);
+        // Simulate completion delay to avoid flashing
+        timeout = setTimeout(() => {
+          if (isMounted) {
+            onNext();
+          }
+        }, 1500);
+      } catch (error) {
+        console.error("Error in onboarding process:", error);
+        if (isMounted) {
+          setError("An unexpected error occurred");
+        }
+      }
+    };
 
-    // Complete after 4 seconds
-    const timer = setTimeout(() => {
-      clearInterval(progressInterval);
-      clearInterval(stepInterval);
-      setProgress(100);
-      onNext();
-    }, 4000);
+    // Start the onboarding process after a brief delay
+    // to ensure the component is fully mounted
+    const startTimeout = setTimeout(() => {
+      processOnboarding();
+    }, 500);
 
     return () => {
-      clearInterval(progressInterval);
-      clearInterval(stepInterval);
-      clearTimeout(timer);
+      isMounted = false;
+      if (timeout) clearTimeout(timeout);
+      clearTimeout(startTimeout);
     };
-  }, [onNext]);
+  }, [
+    onNext,
+    apiAnswers,
+    usageSelection,
+    orgSize,
+    fingerprint,
+    isFingerprintLoading,
+    currentUser,
+  ]);
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <p className="text-muted-foreground">
-          Please wait while we prepare everything for you
-        </p>
-      </div>
-
-      <div className="space-y-4">
-        <Progress value={progress} className="h-2" />
-
-        <div className="h-24 relative">
-          <AnimatePresence mode="wait">
-            {steps.map((step, index) => {
-              const Icon = step.icon;
-              const isActive = index === currentStep;
-              const isCompleted = index < currentStep;
-
-              return (
-                <motion.div
-                  key={step.text}
-                  className={`absolute inset-0 flex items-center justify-center gap-3 ${
-                    isActive ? "opacity-100" : "opacity-0"
-                  }`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: isActive ? 1 : 0, y: isActive ? 0 : 20 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {isCompleted ? (
-                    <CheckCircle2 className={`h-6 w-6 ${step.color}`} />
-                  ) : isActive ? (
-                    <Loader2 className={`h-6 w-6 ${step.color} animate-spin`} />
-                  ) : (
-                    <Icon className={`h-6 w-6 ${step.color}`} />
-                  )}
-                  <p className={`text-center ${step.color}`}>{step.text}</p>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
+    <div className="flex flex-col items-center justify-center space-y-8 py-4">
+      {error ? (
+        <div className="text-red-500 text-center space-y-4">
+          <p>Something went wrong:</p>
+          <p className="font-medium">{error}</p>
+          <button
+            onClick={() => {
+              setError(null);
+              location.reload();
+            }}
+            className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+          >
+            Try Again
+          </button>
         </div>
-      </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center space-y-6">
+          <Loader2 className="h-12 w-12 text-primary animate-spin" />
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="text-lg font-medium text-center text-muted-foreground"
+          >
+            {isFingerprintLoading
+              ? "Generating device signature..."
+              : "Setting up your account..."}
+          </motion.p>
+          <p className="text-sm text-center text-muted-foreground/80 max-w-xs">
+            We&apos;re configuring everything for you. This will only take a
+            moment.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

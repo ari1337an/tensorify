@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { ThemeProvider } from "@/app/_providers/theme-provider";
+import { ProvidersWrapper } from "@/app/_providers/providers-wrapper";
 import "./globals.css";
 
 const inter = Inter({
@@ -25,14 +25,7 @@ export default async function RootLayout({
       <body
         className={`${inter.variable} antialiased bg-background text-foreground min-h-screen font-[family-name:var(--font-inter)] font-medium`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
+        <ProvidersWrapper>{children}</ProvidersWrapper>
       </body>
     </html>
   );
