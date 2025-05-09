@@ -25,6 +25,7 @@ type Props = {
     orgName: string;
     orgSlug: string;
     orgSize: string;
+    orgUrl: string;
   }) => void;
   onNext: () => void;
 };
@@ -62,7 +63,8 @@ export function OnboardingOrg({ onOrgDataChange, onNext }: Props) {
   useEffect(() => {
     // Only notify parent if we have valid, complete data
     if (orgName && orgSlug && isValidSlug && orgSize) {
-      onOrgDataChange({ orgName, orgSlug, orgSize });
+      const orgUrl = orgSlug;
+      onOrgDataChange({ orgName, orgSlug, orgSize, orgUrl });
     }
   }, [orgName, orgSlug, isValidSlug, orgSize, onOrgDataChange]);
 

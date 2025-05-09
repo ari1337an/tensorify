@@ -13,293 +13,179 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ===================================================================
-// User Model
-// ===================================================================
-// Uses Clerk-provided ID as the primary key.
-// A user can belong to only one organization at a time (if any).
-// Back‑relations for pivot relations on TeamManager, ProjectLeader,
-// WorkflowVersion, and WorkflowMember are provided.
-// 
-// Relation cardinalities:
-// - organization: many-to-one (many users to one organization)
-// - adminOfOrgs: one-to-many (one user can be admin of many orgs; though typically one)
-// - teamManagers, projectLeaders, workflowVersions, workflowMembers: one-to-many (one user can be associated with many pivot records)
 model User {
-  id             String           @id // Clerk ID
-  email          String           @unique
-  name           String?
-  organizationId String?          @unique // A user may be a member of at most one organization.
-  createdAt      DateTime         @default(now())
+  userId    String @id @map("id") @default(cuid())
+  firstName String
+  lastName  String
+  email     String @unique
 
-  // Relation as a member of an Organization (many-to-one).
-  organization   Organization?    @relation("OrganizationMembers", fields: [organizationId], references: [id])
-  
-  // If the user is the designated admin of an organization (one-to-many).
-  adminOfOrgs    Organization[]   @relation("AdminOfOrganization")
-  
-  // Back-relations for elevated roles (one-to-many).
-  teamManagers     TeamManager[]     @relation("TeamManagerUser")
-  projectLeaders   ProjectLeader[]   @relation("ProjectLeaderUser")
-  workflowVersions WorkflowVersion[] @relation("WorkflowVersionUser")
-  workflowMembers  WorkflowMember[]  @relation("WorkflowMemberUser")
+  // Super-admin relations
+  superOrg      Organization? @relation("SuperAdmin")
+  superTeam     Team?         @relation("TeamAdmin")
+  superProject  Project?      @relation("ProjectAdmin")
+  superWorkflow Workflow?     @relation("WorkflowAdmin")
 
-  permissions  Permission[] // one-to-many: one user can have many permissions.
-  siteSettings SiteSetting[] // one-to-many: one user can have many UI settings.
-  invitations  Invitation[]  // one-to-many: one user can have many invitations (created).
-  onboarding   Onboarding?   // one-to-one: a user has at most one onboarding record.
+  // Memberships
+  organization   Organization? @relation("OrganizationMembers", fields: [organizationId], references: [id])
+  organizationId String?
+
+  // Many-to-many relations through join tables
+  teamMembers     TeamMember[]
+  projectMembers  ProjectMember[]
+  workflowMembers WorkflowMember[]
+
+  // RBAC
+  roles UserRole[]
 }
 
-// ===================================================================
-// Organization Model
-// ===================================================================
-// Has a unique slug and a designated admin (via adminId).
-// Users relation: one-to-many (one organization can have many member users).
-// Admin relation: one-to-one (each organization has exactly one admin).
 model Organization {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  adminId   String   @unique
-  createdAt DateTime @default(now())
+  id           String @id @default(cuid())
+  name         String
+  slug         String @unique
+  superAdminId String @unique
+  superAdmin   User   @relation("SuperAdmin", fields: [superAdminId], references: [userId], onDelete: Cascade)
 
-  // All users who belong to this organization (one-to-many).
-  users User[] @relation("OrganizationMembers") // Organization (one) -> Users (many)
-  
-  // The designated admin for the organization (one-to-one).
-  admin User @relation("AdminOfOrganization", fields: [adminId], references: [id]) // One admin per organization.
-  
-  teams       Team[]         // one-to-many: one organization has many teams.
-  invitations Invitation[]   // one-to-many: one organization can have many invitations.
-  subscription Subscription?  // one-to-one: one organization has at most one subscription.
+  members User[] @relation("OrganizationMembers")
+
+  teams     Team[]
+  projects  Project[]
+  workflows Workflow[]
+  resource  Resource   @relation(fields: [id], references: [id])
 }
 
-// ===================================================================
-// Subscription Model
-// ===================================================================
-// One-to-one relation with Organization.
-model Subscription {
-  id                        String    @id @default(cuid())
-  organizationId            String    @unique
-  stripeSubscriptionId      String
-  stripeCustomerId          String
-  stripePriceId             String
-  stripePlanName            String
-  stripeSubscriptionActive  Boolean
-  stripeSubscriptionExpires DateTime?
-  stripeBillingCycleEnds    DateTime?
-  stripeInvoiceFailed       Boolean   @default(false)
-  seatsUsed                 Int
-  seatsMax                  Int
-  canceledAt                DateTime?
-  createdAt                 DateTime  @default(now())
-  updatedAt                 DateTime  @updatedAt
-
-  // Many-to-one: Each subscription belongs to one organization.
-  organization Organization @relation(fields: [organizationId], references: [id])
-}
-
-// ===================================================================
-// Team Model & TeamManager Pivot
-// ===================================================================
-// A team belongs to an organization (many-to-one) and holds projects (one-to-many).
-// Elevated roles (managers) are stored via the TeamManager pivot table (one-to-many).
 model Team {
-  id             String @id @default(cuid())
-  name           String
-  organizationId String
+  id      String @id @default(cuid())
+  name    String
+  adminId String @unique
+  admin   User   @relation("TeamAdmin", fields: [adminId], references: [userId], onDelete: Cascade)
 
-  // Many-to-one: Each team belongs to one organization.
-  organization Organization  @relation(fields: [organizationId], references: [id])
-  
-  projects     Project[]    // one-to-many: one team has many projects.
-  managers     TeamManager[] // one-to-many: one team can have many managers.
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
+
+  members   TeamMember[]
+  projects  Project[]
+  workflows Workflow[]
+  resource  Resource     @relation(fields: [id], references: [id])
 }
 
-model TeamManager {
-  id     String @id @default(cuid())
-  teamId String
-  userId String
-
-  // Many-to-one: Each TeamManager record belongs to one team.
-  team Team @relation(fields: [teamId], references: [id])
-  // Many-to-one: Each TeamManager record associates one user.
-  user User @relation("TeamManagerUser", fields: [userId], references: [id])
-
-  @@unique([teamId, userId]) // Ensures each (team, user) pair is unique.
-}
-
-// ===================================================================
-// Project Model & ProjectLeader Pivot
-// ===================================================================
-// A project belongs to a team (many-to-one) and holds workflows (one-to-many).
-// Elevated roles (project leaders) are stored via the ProjectLeader pivot table (one-to-many).
 model Project {
-  id     String @id @default(cuid())
-  name   String
+  id      String @id @default(cuid())
+  name    String
+  adminId String @unique
+  admin   User   @relation("ProjectAdmin", fields: [adminId], references: [userId], onDelete: Cascade)
+
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
+  team           Team?         @relation(fields: [teamId], references: [id])
+  teamId         String?
+
+  members   ProjectMember[]
+  workflows Workflow[]
+  resource  Resource        @relation(fields: [id], references: [id])
+}
+
+model Workflow {
+  id      String @id @default(cuid())
+  name    String
+  code    Json
+  adminId String @unique
+  admin   User   @relation("WorkflowAdmin", fields: [adminId], references: [userId], onDelete: Cascade)
+
+  project   Project? @relation(fields: [projectId], references: [id])
+  projectId String?
+
+  members        WorkflowMember[]
+  plugins        PluginInstallation[]
+  resource       Resource             @relation(fields: [id], references: [id])
+  Organization   Organization?        @relation(fields: [organizationId], references: [id])
+  organizationId String?
+  Team           Team?                @relation(fields: [teamId], references: [id])
+  teamId         String?
+}
+
+model Plugin {
+  id            String               @id @default(cuid())
+  tag           String               @unique
+  installations PluginInstallation[]
+}
+
+model PluginInstallation {
+  id         String   @id @default(cuid())
+  workflow   Workflow @relation(fields: [workflowId], references: [id])
+  workflowId String
+  plugin     Plugin   @relation(fields: [pluginId], references: [id])
+  pluginId   String
+}
+
+model Role {
+  id              String           @id @default(cuid())
+  name            String           @unique
+  rolePermissions RolePermission[]
+  userRoles       UserRole[]
+}
+
+model Permission {
+  id              String           @id @default(cuid())
+  action          String
+  rolePermissions RolePermission[]
+}
+
+model Resource {
+  id           String         @id @default(cuid())
+  userRoles    UserRole[]
+  Organization Organization[]
+  Team         Team[]
+  Project      Project[]
+  Workflow     Workflow[]
+}
+
+// Join tables for memberships
+model TeamMember {
+  user   User   @relation(fields: [userId], references: [userId])
+  userId String
+  team   Team   @relation(fields: [teamId], references: [id])
   teamId String
 
-  // Many-to-one: Each project belongs to one team.
-  team      Team            @relation(fields: [teamId], references: [id])
-  workflows Workflow[]      // one-to-many: one project has many workflows.
-  leaders   ProjectLeader[] // one-to-many: one project can have many leaders.
+  @@id([userId, teamId])
 }
 
-model ProjectLeader {
-  id        String @id @default(cuid())
-  projectId String
+model ProjectMember {
+  user      User    @relation(fields: [userId], references: [userId])
   userId    String
-
-  // Many-to-one: Each ProjectLeader record belongs to one project.
-  project Project @relation(fields: [projectId], references: [id])
-  // Many-to-one: Each ProjectLeader record associates one user.
-  user    User    @relation("ProjectLeaderUser", fields: [userId], references: [id])
-
-  @@unique([projectId, userId])
-}
-
-// ===================================================================
-// Workflow, WorkflowVersion, and WorkflowMember Models
-// ===================================================================
-// A workflow is a collaborative canvas under a project (many-to-one).
-// WorkflowVersion stores change history (one-to-many).
-// WorkflowMember offers granular access control (one-to-many).
-model Workflow {
-  id        String @id @default(cuid())
-  name      String
+  project   Project @relation(fields: [projectId], references: [id])
   projectId String
 
-  // Many-to-one: Each workflow belongs to one project.
-  project  Project           @relation(fields: [projectId], references: [id])
-  versions WorkflowVersion[] // one-to-many: one workflow has many versions.
-  members  WorkflowMember[]  // one-to-many: one workflow has many members.
-
-  // one-to-many: one workflow can have many installed plugins.
-  installedPlugins InstalledPlugin[]
-}
-
-model WorkflowVersion {
-  id          String   @id @default(cuid())
-  workflowId  String
-  version     String
-  changeLog   String
-  createdAt   DateTime @default(now())
-  createdById String
-  flow        Json // Stores React Flow data as JSON
-
-  // Many-to-one: Each version belongs to one workflow.
-  workflow  Workflow @relation(fields: [workflowId], references: [id])
-  // Many-to-one: Each version is created by one user.
-  createdBy User     @relation("WorkflowVersionUser", fields: [createdById], references: [id])
+  @@id([userId, projectId])
 }
 
 model WorkflowMember {
-  id         String   @id @default(cuid())
-  workflowId String
+  user       User     @relation(fields: [userId], references: [userId])
   userId     String
-  addedAt    DateTime @default(now())
-
-  // Many-to-one: Each WorkflowMember record belongs to one workflow.
-  workflow Workflow @relation(fields: [workflowId], references: [id])
-  // Many-to-one: Each WorkflowMember record associates one user.
-  user     User     @relation("WorkflowMemberUser", fields: [userId], references: [id])
-
-  @@unique([workflowId, userId])
-}
-
-// ===================================================================
-// InstalledPlugin Model
-// ===================================================================
-// Records plugins installed on a workflow.
-// Each row represents a tuple (many-to-one relation): one plugin installation belongs to one workflow.
-// Plugin slug is stored as a string.
-model InstalledPlugin {
-  id         String   @id @default(cuid())
+  workflow   Workflow @relation(fields: [workflowId], references: [id])
   workflowId String
-  slug       String   // Full slug, e.g., "@username/plugin-slug:version"
-  installedAt DateTime @default(now())
 
-  // Many-to-one: Each installed plugin belongs to one workflow.
-  workflow Workflow @relation(fields: [workflowId], references: [id])
-
-  @@unique([workflowId, slug])
+  @@id([userId, workflowId])
 }
 
-// ===================================================================
-// Permission Model
-// ===================================================================
-// A flexible RBAC mapping a user to specific permission types and scopes.
-// Many-to-one: each permission associates with one user.
-model Permission {
-  id       String @id @default(cuid())
-  userId   String
-  type     String // For example, "workflow:invite"
-  entityId String
-  feature  String // Stored as a string for flexibility
-  scope    Scope
+// RBAC join tables
+model UserRole {
+  id         String   @id @default(cuid())
+  user       User     @relation(fields: [userId], references: [userId])
+  userId     String
+  role       Role     @relation(fields: [roleId], references: [id])
+  roleId     String
+  resource   Resource @relation(fields: [resourceId], references: [id])
+  resourceId String
 
-  user User @relation(fields: [userId], references: [id])
+  @@index([userId])
+  @@index([resourceId])
 }
 
-// ===================================================================
-// SiteSetting Model
-// ===================================================================
-// Persists user-specific UI state (e.g., sidebar order).
-// Many-to-one: each setting belongs to one user.
-model SiteSetting {
-  id        String   @id @default(cuid())
-  userId    String
-  type      String // E.g., "sidebar:projects:workflowId:order" or "team:selection:latest"
-  content   String // Stores a stringified value (or JSON)
-  updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now())
+model RolePermission {
+  role         Role       @relation(fields: [roleId], references: [id])
+  roleId       String
+  permission   Permission @relation(fields: [permissionId], references: [id])
+  permissionId String
 
-  user User @relation(fields: [userId], references: [id])
-}
-
-// ===================================================================
-// Invitation Model
-// ===================================================================
-// Manages invitations to join an organization.
-// Many-to-one: each invitation belongs to one organization and one inviter.
-model Invitation {
-  id             String   @id @default(cuid())
-  email          String
-  organizationId String
-  inviterId      String
-  accepted       Boolean  @default(false)
-  invitationData Json // E.g., { projectIds: [..., role: "leader"], workflowIds: [..., role: "member"] }
-  createdAt      DateTime @default(now())
-
-  // Many-to-one: Each invitation is for one organization.
-  organization Organization @relation(fields: [organizationId], references: [id])
-  // Many-to-one: Each invitation is sent by one user (inviter).
-  inviter      User         @relation(fields: [inviterId], references: [id])
-}
-
-// ===================================================================
-// Onboarding Model
-// ===================================================================
-// Stores onboarding data provided by users.
-// One-to-one: each onboarding record is linked to one user.
-model Onboarding {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  referral    String?  // How the user heard about us.
-  submittedAt DateTime @default(now())
-  status      Int      // 0,1,2,3 (3 means onboarded successfully, 0 means not onboarded yet)
-
-  // One-to-one relation: each onboarding record is for one user.
-  user User @relation(fields: [userId], references: [id])
-}
-
-// ===================================================================
-// Scope Enum
-// ===================================================================
-// Represents the levels of permission scope.
-enum Scope {
-  ORG
-  TEAM
-  PROJECT
-  WORKFLOW
+  @@id([roleId, permissionId])
 }

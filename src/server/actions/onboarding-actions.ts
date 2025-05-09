@@ -86,7 +86,7 @@ export async function submitOnboardingData({
  */
 function mapUsageToIntentTag(usageId: string): string {
   const mapping: Record<string, string> = {
-    exploring: "CURIOUS",
+    exploring: "WILL_NOT_PAY",
     personal: "WILL_NOT_PAY",
     individual: "WILL_PAY_HOBBY",
     team: "WILL_PAY_TEAM",

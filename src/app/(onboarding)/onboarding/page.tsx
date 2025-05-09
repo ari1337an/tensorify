@@ -66,6 +66,7 @@ interface OrgData {
   orgName: string;
   orgSlug: string;
   orgSize: string;
+  orgUrl: string;
 }
 
 // Define all step types
@@ -252,7 +253,9 @@ export default function OnboardingPage() {
                 usageSelection={usageSelection}
                 orgSize={orgData?.orgSize || "xs"}
                 apiAnswers={apiAnswers}
+                orgName={orgData?.orgName || ""}
                 onNext={handleNext}
+                orgUrl={orgData?.orgUrl || ""}
               />
             )}
           </motion.div>

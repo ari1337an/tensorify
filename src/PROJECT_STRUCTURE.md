@@ -27,7 +27,7 @@ The application is structured using route groups for logical code organization w
 ### Protected Routes
 
 - `src/app/(protected)/` - Route group for authenticated and protected features.
-  - `layout.tsx` - Protected layout that wraps content with the enterprise AppWrapper.
+  - `layout.tsx` - Protected layout that wraps content with the enterprise AppWrapper and checks if user is onboarded, redirecting to onboarding if needed.
   - `page.tsx` - Main page component that renders the canvas as the home page of the application.
   - `(enterprise)/` - Route group for enterprise features separated for code organization.
   - `(canvas)/` - Route group for canvas features focused on the workflow editor.
@@ -165,8 +165,8 @@ The application is structured using route groups for logical code organization w
       - `OnboardingSource.tsx` - Component for collecting how users discovered Tensorify.
       - `OnboardingUsage.tsx` - Component for collecting how users plan to use Tensorify, now with data passing to parent component.
       - `OnboardingFramework.tsx` - Component for selecting ML/DL/AI framework.
-      - `OnboardingOrg.tsx` - Component for organization name and slug setup, passes organization data to parent component.
-      - `OnboardingSetup.tsx` - Real progress bar component that processes and submits onboarding data to the API, now accessing user data (ID, email) and fingerprint from the global store.
+      - `OnboardingOrg.tsx` - Component for organization name and slug setup, passes organization data to parent component including organization URL generated from the slug in format `{slug}.app.tensorify.io`.
+      - `OnboardingSetup.tsx` - Multi-step process component with proper error handling and retry capability. Processes and submits onboarding data to the API, then calls the account setup function with the organization URL to configure the user's workspace with default organizational structure before redirecting. Includes detailed status updates and allows retrying failed submissions without resetting or reloading.
 
 ### UI Components
 
@@ -200,6 +200,20 @@ The application is structured using route groups for logical code organization w
   - `textarea.tsx` - Multi-line text input component.
   - `tooltip.tsx` - Tooltip component for displaying additional information.
 
+### Server Actions and Flows
+
+- `src/server/actions/` - Server actions for data manipulation.
+  - `onboarding-actions.ts` - Server actions for handling onboarding data submission to the external API.
+- `src/server/flows/` - Server-side flows for complex operations.
+  - `onboarding/` - Flows related to user onboarding.
+    - `setup-account.ts` - Creates a complete account setup with organizational structure in a single transaction, including organization, team, project, and workflow creation with proper access controls. Extracts organization slug from the provided organization URL.
+    - `check-onboarded.ts` - Checks if a user is onboarded by verifying they have an organization. Handles redirection to onboarding page if not onboarded, or to the correct organization subdomain if already onboarded but accessing via wrong URL. Supports both production (`{slug}.app.tensorify.io`) and development (`{slug}.localhost:PORT`) environments.
+
+### Database
+
+- `src/server/database/` - Database connection and configuration files.
+  - `db.ts` - Database client setup and connection configuration.
+
 ### Utility Functions
 
 - `src/app/_utils/` - Utility functions and helpers for the application.
@@ -215,11 +229,15 @@ The application is structured using route groups for logical code organization w
 - `src/app/_store/` - Global state management for the application.
   - `store.ts` - Zustand store for application-wide state management including user data and client fingerprint for tracking.
 
-### Server Actions
+### Testing Structure
 
-- `src/server/actions/` - Next.js server actions for server-side data processing.
-  - `org-actions.ts` - Server actions for organization-related operations.
-  - `project-actions.ts` - Server actions for project-related operations.
-  - `team-actions.ts` - Server actions for team-related operations.
-  - `workflow-actions.ts` - Server actions for workflow-related operations.
-  - `onboarding-actions.ts` - Server actions for onboarding data submission, including processing and submitting responses to external APIs with client fingerprint. Uses `CONTROLS_BASE_URL` environment variable for API endpoint.
+- `src/__tests__/` - Root test directory containing test files and utilities.
+  - `README.md` - Documentation for testing approach and guidelines.
+  - `server/` - Tests for server-side functionality.
+    - `actions/` - Unit tests for server actions.
+      - `test.test.ts` - Test for the simple test server action.
+  - `integration/` - Integration tests for testing multiple parts of the application together.
+    - `serverActions.test.ts` - Integration tests for server actions, focusing on end-to-end functionality.
+  - `utils/` - Utility functions for testing.
+    - `serverActionsInterceptor.ts` - Utilities for testing Next.js server actions, providing mocks and interceptors.
+    - `setupIntegrationTests.ts` - Setup utilities for integration tests, including environment mocking and test context.
