@@ -244,7 +244,7 @@ export default function OnboardingVersionPage() {
       if (!data?.id) return [];
 
       try {
-        console.log(`Fetching responses for tag ${tag}...`);
+        // console.log(`Fetching responses for tag ${tag}...`);
         const response = await fetch(`/api/onboarding/by-tag/${tag}/responses`);
 
         if (!response.ok) {
@@ -263,7 +263,7 @@ export default function OnboardingVersionPage() {
             console.error("Error parsing JSON response:", jsonError);
           }
 
-          console.error("Error fetching responses:", errorMessage);
+          // console.error("Error fetching responses:", errorMessage);
           throw new Error(errorMessage);
         }
 
@@ -281,7 +281,7 @@ export default function OnboardingVersionPage() {
           throw new Error("Unexpected response format from server");
         }
 
-        console.log(`Received ${result.responses?.length || 0} responses`);
+        // console.log(`Received ${result.responses?.length || 0} responses`);
         return result.responses || [];
       } catch (error) {
         console.error("Fetch error:", error);
@@ -296,7 +296,7 @@ export default function OnboardingVersionPage() {
   // Get local storage test responses and combine with API responses
   const combinedResponses = React.useMemo(() => {
     const apiResponses = responsesData || [];
-    console.log(`Processing ${apiResponses.length} API responses`);
+    // console.log(`Processing ${apiResponses.length} API responses`);
 
     // Get test responses from localStorage if available
     let testResponses = [];

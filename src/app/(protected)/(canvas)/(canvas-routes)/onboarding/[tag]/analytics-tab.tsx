@@ -316,6 +316,7 @@ export function AnalyticsTab({
 
     questions.forEach((question) => {
       const optionCounts: Record<string, number> = {};
+      let otherCount = 0; // Count for "other" values
 
       // Initialize counts for all options
       question.options.forEach((option) => {
@@ -328,20 +329,38 @@ export function AnalyticsTab({
           (a) => a.questionId === question.id
         );
         if (answer) {
+          // Count selected options
           answer.selectedOptions.forEach((selectedOption) => {
             optionCounts[selectedOption.optionId] =
               (optionCounts[selectedOption.optionId] || 0) + 1;
           });
+
+          // Count customValue/"other" responses
+          if (answer.customValue) {
+            otherCount++;
+          }
         }
       });
 
-      // Format data for chart
-      result[question.id] = question.options.map((option, index) => ({
+      // Format data for chart, including standard options
+      const chartData = question.options.map((option, index) => ({
         name: option.id,
         label: option.label,
         count: optionCounts[option.id] || 0,
         fill: COLORS[index % COLORS.length],
       }));
+
+      // Add "Other" option if there are any custom values
+      if (otherCount > 0) {
+        chartData.push({
+          name: "other",
+          label: "Other",
+          count: otherCount,
+          fill: COLORS[chartData.length % COLORS.length],
+        });
+      }
+
+      result[question.id] = chartData;
     });
 
     return result;
