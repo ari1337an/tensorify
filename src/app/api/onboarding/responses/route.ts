@@ -5,9 +5,13 @@ export async function POST(request: Request) {
     // Get the request body
     const body = await request.json();
 
+    // Get the controls base URL from environment variables
+    const controlsBaseUrl =
+      process.env.CONTROLS_BASE_URL || "https://controls.tensorify.io";
+
     // Forward the request to the external API
     const response = await fetch(
-      "https://controls.tensorify.io/api/onboarding/responses",
+      `${controlsBaseUrl}/api/onboarding/responses`,
       {
         method: "POST",
         headers: {

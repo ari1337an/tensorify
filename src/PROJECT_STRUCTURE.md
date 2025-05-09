@@ -12,9 +12,9 @@ The application is structured using route groups for logical code organization w
   - `middleware.ts` - Auth middleware for protected routes, handling authentication with Clerk.
   - `api/` - API routes for internal data handling.
     - `onboarding/` - API routes related to onboarding.
-      - `route.ts` - Proxy API handler for fetching onboarding questions to avoid CORS issues. Uses `NEXT_PUBLIC_ONBOARDING_TAG` environment variable for configuration.
+      - `route.ts` - Proxy API handler for fetching onboarding questions to avoid CORS issues. Uses `NEXT_PUBLIC_ONBOARDING_TAG` environment variable for configuration and `CONTROLS_BASE_URL` for API endpoint.
       - `responses/` - API routes for submitting onboarding responses.
-        - `route.ts` - Proxy API handler for submitting onboarding response data to the external API.
+        - `route.ts` - Proxy API handler for submitting onboarding response data to the external API. Uses `CONTROLS_BASE_URL` environment variable for API endpoint.
 
 ### Global Providers
 
@@ -222,4 +222,4 @@ The application is structured using route groups for logical code organization w
   - `project-actions.ts` - Server actions for project-related operations.
   - `team-actions.ts` - Server actions for team-related operations.
   - `workflow-actions.ts` - Server actions for workflow-related operations.
-  - `onboarding-actions.ts` - Server actions for onboarding data submission, including processing and submitting responses to external APIs with client fingerprint.
+  - `onboarding-actions.ts` - Server actions for onboarding data submission, including processing and submitting responses to external APIs with client fingerprint. Uses `CONTROLS_BASE_URL` environment variable for API endpoint.

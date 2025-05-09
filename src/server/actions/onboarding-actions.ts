@@ -32,6 +32,10 @@ export async function submitOnboardingData({
       process.env.NEXT_PUBLIC_ONBOARDING_TAG ||
       "apptensorifyio-onboarding-beta-v01";
 
+    // Get the controls base URL from environment variables
+    const controlsBaseUrl =
+      process.env.CONTROLS_BASE_URL || "https://controls.tensorify.io";
+
     // Map the usage selection to intent tag
     const intentTag = mapUsageToIntentTag(usageSelection);
 
@@ -49,9 +53,11 @@ export async function submitOnboardingData({
       answers,
     };
 
+    // console.log("payload", JSON.stringify(payload, null, 2));
+
     // Make the API call
     const response = await fetch(
-      "https://controls.tensorify.io/api/onboarding/responses",
+      `${controlsBaseUrl}/api/onboarding/responses`,
       {
         method: "POST",
         headers: {

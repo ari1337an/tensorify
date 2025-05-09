@@ -9,9 +9,13 @@ export async function GET(request: Request) {
       "apptensorifyio-onboarding-beta-v01";
     const tag = url.searchParams.get("tag") || defaultTag;
 
+    // Get the controls base URL from environment variables
+    const controlsBaseUrl =
+      process.env.CONTROLS_BASE_URL || "https://controls.tensorify.io";
+
     // Make a server-side request to the external API
     const response = await fetch(
-      `https://controls.tensorify.io/api/onboarding?tag=${tag}`,
+      `${controlsBaseUrl}/api/onboarding?tag=${tag}`,
       {
         headers: {
           "Content-Type": "application/json",
