@@ -15,6 +15,7 @@ The application is structured using route groups for logical code organization w
       - `route.ts` - Proxy API handler for fetching onboarding questions to avoid CORS issues. Uses `NEXT_PUBLIC_ONBOARDING_TAG` environment variable for configuration and `CONTROLS_BASE_URL` for API endpoint.
       - `responses/` - API routes for submitting onboarding responses.
         - `route.ts` - Proxy API handler for submitting onboarding response data to the external API. Uses `CONTROLS_BASE_URL` environment variable for API endpoint.
+    - `send-invite-email.ts` - API route for sending organization invite emails using Resend and React email template.
 
 ### Global Providers
 
@@ -204,6 +205,7 @@ The application is structured using route groups for logical code organization w
 
 - `src/server/actions/` - Server actions for data manipulation.
   - `onboarding-actions.ts` - Server actions for handling onboarding data submission to the external API.
+  - `email-actions.ts` - Server action for sending organization-related emails using Resend.io
 - `src/server/flows/` - Server-side flows for complex operations.
   - `onboarding/` - Flows related to user onboarding.
     - `setup-account.ts` - Creates a complete account setup with organizational structure in a single transaction, including organization, team, project, and workflow creation with proper access controls. Extracts organization slug from the provided organization URL.
@@ -241,3 +243,7 @@ The application is structured using route groups for logical code organization w
   - `utils/` - Utility functions for testing.
     - `serverActionsInterceptor.ts` - Utilities for testing Next.js server actions, providing mocks and interceptors.
     - `setupIntegrationTests.ts` - Setup utilities for integration tests, including environment mocking and test context.
+
+### Email Templates
+
+- `src/server/emails/OrganizationInviteEmail.tsx` - React email template for organization invite emails

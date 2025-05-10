@@ -26,15 +26,53 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/_components/ui/select";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/app/_components/ui/dialog";
+import { useState } from "react";
+import { sendInviteEmailAction } from "@/server/actions/email-actions";
 
 export function PeopleView() {
-  const {
-    teamMembers,
-    searchQuery,
-    setSearchQuery,
-    handleRoleChange,
-    handleInvite,
-  } = usePeopleLogic();
+  const { teamMembers, searchQuery, setSearchQuery, handleRoleChange } =
+    usePeopleLogic();
+
+  // Dialog state
+  const [open, setOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<null | {
+    success: boolean;
+    message: string;
+  }>(null);
+
+  async function handleSendInvite(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setResult(null);
+    try {
+      const data = await sendInviteEmailAction(inviteEmail);
+      if (data.success) {
+        setResult({ success: true, message: "Invite email sent!" });
+        setInviteEmail("");
+      } else {
+        setResult({
+          success: false,
+          message: data.error || "Failed to send email.",
+        });
+      }
+    } catch {
+      setResult({ success: false, message: "Error sending email." });
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -57,10 +95,48 @@ export function PeopleView() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <Button onClick={handleInvite}>
-          <Plus className="h-4 w-4 mr-2" />
-          Invite people
-        </Button>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={() => setOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Invite people
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Invite People</DialogTitle>
+              <DialogDescription>
+                Send an invite email to a new member.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSendInvite} className="space-y-4">
+              <Input
+                placeholder="Email"
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                required
+              />
+              <DialogFooter>
+                <Button type="submit" disabled={loading}>
+                  {loading ? "Sending..." : "Send Invite"}
+                </Button>
+                <DialogClose asChild>
+                  <Button type="button" variant="ghost">
+                    Cancel
+                  </Button>
+                </DialogClose>
+              </DialogFooter>
+              {result && (
+                <p
+                  className={result.success ? "text-green-600" : "text-red-600"}
+                >
+                  {result.message}
+                </p>
+              )}
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="rounded-md border">
