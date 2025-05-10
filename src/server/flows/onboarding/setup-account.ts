@@ -22,7 +22,8 @@ export const setupInitialTensorifyAccountWithDefaults = async (
   email: string,
   firstName: string,
   lastName: string,
-  orgUrl: string
+  orgUrl: string,
+  orgName: string
 ): Promise<
   | { success: true; message: string }
   | { success: false; error: string; stack?: string }
@@ -34,7 +35,7 @@ export const setupInitialTensorifyAccountWithDefaults = async (
   if (!firstName) missingFields.push("firstName");
   if (!lastName) missingFields.push("lastName");
   if (!orgUrl) missingFields.push("orgUrl");
-
+  if (!orgName) missingFields.push("orgName");
   if (missingFields.length > 0) {
     return {
       success: false,
@@ -70,7 +71,7 @@ export const setupInitialTensorifyAccountWithDefaults = async (
           data: {
             id: organizationResource.id,
             slug,
-            name: `${firstName}'s Organization`,
+            name: orgName,
             superAdminId: user.userId,
           },
         });

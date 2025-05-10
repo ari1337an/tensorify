@@ -69,13 +69,14 @@ export function OnboardingSetup({
 
       setCurrentStep("setting_up_account");
 
-      // Step 2: Setup account with Tensorify defaults
+      // Step 2: Setup account with Tensorify defaults  
       const accountSetupResult = await setupInitialTensorifyAccountWithDefaults(
         userId,
         email,
         firstName,
         lastName,
-        orgUrl
+        orgUrl,
+        orgName
       );
 
       if (!accountSetupResult.success) {

@@ -1,6 +1,7 @@
 import { User } from "@clerk/nextjs/server";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
+import { Organization } from "@prisma/client";
 
 type SessionClaims = {
   azp: string;
@@ -25,6 +26,8 @@ interface StoreState {
   setCurrentUser: (user: SessionClaims) => void;
   clientFingerprint: string;
   setClientFingerprint: (fingerprint: string) => void;
+  currentOrg: Organization | null;
+  setCurrentOrg: (org: Organization) => void;
 }
 
 const useStore = create<StoreState>()(
@@ -32,7 +35,11 @@ const useStore = create<StoreState>()(
     (set) => ({
       currentUser: null,
       setCurrentUser: (user: Partial<User>) =>
-        set({ currentUser: user as SessionClaims }, undefined, "setCurrentUser"),
+        set(
+          { currentUser: user as SessionClaims },
+          undefined,
+          "setCurrentUser"
+        ),
       clientFingerprint: "",
       setClientFingerprint: (fingerprint: string) =>
         set(
@@ -40,6 +47,9 @@ const useStore = create<StoreState>()(
           undefined,
           "setClientFingerprint"
         ),
+      currentOrg: null,
+      setCurrentOrg: (org: Organization) =>
+        set({ currentOrg: org }, undefined, "setCurrentOrg"),
     }),
     { name: "AppStore" }
   )

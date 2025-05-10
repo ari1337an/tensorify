@@ -39,9 +39,9 @@ export function PeopleView() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-medium">Team Members</h2>
+        <h2 className="text-lg font-medium">Organization Members</h2>
         <p className="text-sm text-muted-foreground">
-          Manage team members and their access to the workspace.
+          Manage organization members and their roles in the organization.
         </p>
       </div>
 

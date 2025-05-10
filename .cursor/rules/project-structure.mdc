@@ -6,6 +6,8 @@ alwaysApply: true
 
 # Project Structure and Its Mandatory Maintainance Before Doing All the Changes & After All the changes
 
+Prisma database client: "import db from "@/server/database/db";" use it like await db.modelName.
+
 Follow the following rules strictly.
 
 - (Step 0) Start with writing "UNDERSTANDING THE MAINTAINED PROJECT STRUCTURE" at the end.

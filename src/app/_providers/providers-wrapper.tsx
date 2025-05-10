@@ -3,6 +3,7 @@
 import { ThemeProvider } from "@/app/_providers/theme-provider";
 import { FingerprintProvider } from "@/app/_providers/fingerprint-provider";
 import { UserProvider } from "@/app/_providers/user-provider";
+import { OrganizationProvider } from "@/app/_providers/organization-provider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 
@@ -13,9 +14,11 @@ import { dark } from "@clerk/themes";
 export function ProvidersWrapper({
   children,
   sessionClaims,
+  organization,
 }: {
   children: React.ReactNode;
   sessionClaims: string;
+  organization: string;
 }) {
   return (
     <ClerkProvider
@@ -35,7 +38,11 @@ export function ProvidersWrapper({
         disableTransitionOnChange
       >
         <FingerprintProvider>
-          <UserProvider sessionClaims={sessionClaims}>{children}</UserProvider>
+          <UserProvider sessionClaims={sessionClaims}>
+            <OrganizationProvider organization={organization}>
+              {children}
+            </OrganizationProvider>
+          </UserProvider>
         </FingerprintProvider>
       </ThemeProvider>
     </ClerkProvider>

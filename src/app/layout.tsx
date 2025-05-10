@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import { ProvidersWrapper } from "@/app/_providers/providers-wrapper";
 import "./globals.css";
 import { auth } from "@clerk/nextjs/server";
+import db from "@/server/database/db";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -26,12 +27,27 @@ export default async function RootLayout({
 }) {
   const { sessionClaims } = await auth();
 
+  // Fetch organization data for the current user
+  const organization = await db.organization.findFirst({
+    where: {
+      superAdminId: sessionClaims?.sub as string,
+    },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+    },
+  });
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${inter.variable} antialiased bg-background text-foreground min-h-screen font-[family-name:var(--font-inter)] font-medium`}
       >
-        <ProvidersWrapper sessionClaims={JSON.stringify(sessionClaims)}>
+        <ProvidersWrapper
+          sessionClaims={JSON.stringify(sessionClaims)}
+          organization={JSON.stringify(organization)}
+        >
           {children}
         </ProvidersWrapper>
       </body>

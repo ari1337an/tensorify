@@ -20,6 +20,9 @@ import {
   SelectValue,
 } from "@/app/_components/ui/select";
 
+const SLUG_MIN_LENGTH = 3;
+const SLUG_MAX_LENGTH = 63; // Standard subdomain length limit
+
 type Props = {
   onOrgDataChange: (data: {
     orgName: string;
@@ -44,6 +47,7 @@ export function OnboardingOrg({ onOrgDataChange, onNext }: Props) {
   const [orgSize, setOrgSize] = useState<string>("");
   const [isSlugEdited, setIsSlugEdited] = useState(false);
   const [isValidSlug, setIsValidSlug] = useState(true);
+  const [slugError, setSlugError] = useState<string | null>(null);
 
   // Handle slug generation from org name
   useEffect(() => {
@@ -54,12 +58,34 @@ export function OnboardingOrg({ onOrgDataChange, onNext }: Props) {
         .replace(/-+/g, "-")
         .replace(/^-|-$/g, "");
       setOrgSlug(newSlug);
-      setIsValidSlug(/^[a-z0-9-]+$/.test(newSlug));
+      validateSlug(newSlug);
     }
   }, [orgName, isSlugEdited]);
 
+  const validateSlug = (slug: string) => {
+    if (slug.length < SLUG_MIN_LENGTH) {
+      setSlugError(`URL must be at least ${SLUG_MIN_LENGTH} characters`);
+      setIsValidSlug(false);
+      return false;
+    }
+    if (slug.length > SLUG_MAX_LENGTH) {
+      setSlugError(`URL cannot exceed ${SLUG_MAX_LENGTH} characters`);
+      setIsValidSlug(false);
+      return false;
+    }
+    if (!/^[a-z0-9-]+$/.test(slug)) {
+      setSlugError(
+        "URL can only contain lowercase letters, numbers, and hyphens"
+      );
+      setIsValidSlug(false);
+      return false;
+    }
+    setSlugError(null);
+    setIsValidSlug(true);
+    return true;
+  };
+
   // Notify parent only when data actually changes, using a regular effect
-  // This effect runs when any of the form values change and are all valid
   useEffect(() => {
     // Only notify parent if we have valid, complete data
     if (orgName && orgSlug && isValidSlug && orgSize) {
@@ -72,7 +98,7 @@ export function OnboardingOrg({ onOrgDataChange, onNext }: Props) {
     setIsSlugEdited(true);
     const newSlug = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
     setOrgSlug(newSlug);
-    setIsValidSlug(/^[a-z0-9-]+$/.test(newSlug));
+    validateSlug(newSlug);
   };
 
   const handleOrgSizeChange = (value: string) => {
@@ -132,7 +158,8 @@ export function OnboardingOrg({ onOrgDataChange, onNext }: Props) {
             </span>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Only lowercase letters, numbers, and hyphens are allowed
+            {slugError ||
+              "Only lowercase letters, numbers, and hyphens are allowed"}
           </p>
         </div>
 

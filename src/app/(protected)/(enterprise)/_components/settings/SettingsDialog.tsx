@@ -46,7 +46,7 @@ type SectionItem = {
 
 type SectionsType = {
   account: SectionItem[];
-  workspace: SectionItem[];
+  organization: SectionItem[];
 };
 
 export function SettingsDialog() {
@@ -75,7 +75,7 @@ export function SettingsDialog() {
         icon: PreferencesIcon,
       },
     ],
-    workspace: [
+    organization: [
       {
         id: generalMeta.id,
         label: generalMeta.label,
@@ -174,13 +174,13 @@ export function SettingsDialog() {
                 </nav>
               </div>
 
-              {/* Workspace Section */}
+              {/* Organization Section */}
               <div className="space-y-1 mt-6">
                 <h3 className="px-2 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                  Workspace
+                  Organization
                 </h3>
                 <nav>
-                  {sections.workspace.map((section) => (
+                  {sections.organization.map((section) => (
                     <button
                       key={section.id}
                       onClick={() => setActiveSection(section.id)}
