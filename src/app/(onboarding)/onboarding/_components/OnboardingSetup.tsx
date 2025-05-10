@@ -44,7 +44,7 @@ export function OnboardingSetup({
     try {
       // Get user id and email from store
       const userId = currentUser?.id || "";
-      const email = currentUser?.emailAddresses?.[0]?.emailAddress || "";
+      const email = currentUser?.email || "";
       const firstName =
         currentUser?.firstName || orgName.split(" ")[0] || "User";
       const lastName = currentUser?.lastName || "";

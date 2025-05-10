@@ -164,7 +164,7 @@ export function AccountView() {
                 <Input
                   id="email"
                   type="email"
-                  value={currentUser?.emailAddresses[0].emailAddress || ""}
+                  value={currentUser?.email || ""}
                   disabled
                   className="max-w-md "
                 />

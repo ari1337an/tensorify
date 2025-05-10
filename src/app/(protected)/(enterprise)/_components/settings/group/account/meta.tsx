@@ -11,7 +11,7 @@ export function useAccountMeta() {
 
   return {
     ...accountMeta,
-    label: currentUser?.fullName || "Account",
+    label: currentUser?.firstName + " " + currentUser?.lastName || "Account",
   };
 }
 

@@ -55,7 +55,7 @@ export function Sidebar({ className, ...props }: SidebarProps) {
           {/* Header with organization selector and close button */}
           <div className="flex items-center justify-between px-2 py-1 border-b border-border/30">
             <TeamSelector
-              email={currentUser?.emailAddresses[0].emailAddress}
+              email={currentUser?.email}
               currentTeam={currentTeam}
               teams={mockTeams}
               onChangeTeam={handleChangeTeam}

@@ -14,9 +14,10 @@ import db from "@/server/database/db";
  */
 export async function checkUserOnboarded() {
   // Get authenticated user
-  const { userId } = await auth();
+  const { sessionClaims } = await auth();
+  const email = sessionClaims?.email;
 
-  if (!userId) {
+  if (!email) {
     // User is not authenticated, let the middleware handle auth redirects
     return;
   }
@@ -24,7 +25,7 @@ export async function checkUserOnboarded() {
   try {
     // Find user with organization
     const user = await db.user.findUnique({
-      where: { userId },
+      where: { email: email as string },
       include: {
         organization: true,
       },

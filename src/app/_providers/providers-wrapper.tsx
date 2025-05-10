@@ -10,7 +10,13 @@ import { dark } from "@clerk/themes";
  * ProvidersWrapper - Client component that wraps multiple providers
  * Used in layout.tsx to provide context and state to the entire app
  */
-export function ProvidersWrapper({ children }: { children: React.ReactNode }) {
+export function ProvidersWrapper({
+  children,
+  sessionClaims,
+}: {
+  children: React.ReactNode;
+  sessionClaims: string;
+}) {
   return (
     <ClerkProvider
       appearance={{
@@ -29,7 +35,7 @@ export function ProvidersWrapper({ children }: { children: React.ReactNode }) {
         disableTransitionOnChange
       >
         <FingerprintProvider>
-          <UserProvider>{children}</UserProvider>
+          <UserProvider sessionClaims={sessionClaims}>{children}</UserProvider>
         </FingerprintProvider>
       </ThemeProvider>
     </ClerkProvider>

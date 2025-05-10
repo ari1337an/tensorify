@@ -12,7 +12,7 @@ export function AccountIcon() {
     <Avatar className="h-5 w-5">
       <AvatarImage
         src={currentUser?.imageUrl}
-        alt={currentUser?.fullName || ""}
+        alt={currentUser?.firstName + " " + currentUser?.lastName || ""}
       />
       <AvatarFallback>
         {currentUser?.firstName?.[0]}
