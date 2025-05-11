@@ -37,30 +37,34 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://tensorify.io/",
   },
+
+  // Updated icons configuration
   icons: {
-    icon: "/favicon.ico?v=2",
-    shortcut: "/favicon-16x16.png?v=2",
-    apple: "/apple-touch-icon.png?v=2",
-    other: [
-      {
-        rel: "icon",
-        type: "image/png",
-        sizes: "32x32",
-        url: "/favicon-32x32.png?v=2",
-      },
-      {
-        rel: "icon",
-        type: "image/png",
-        sizes: "16x16",
-        url: "/favicon-16x16.png?v=2",
-      },
-      {
-        rel: "apple-touch-icon",
-        sizes: "180x180",
-        url: "/apple-touch-icon.png?v=2",
-      },
+    icon: [
+      { url: "/favicon.ico?v=2" },
+      { url: "/favicon.svg?v=2", type: "image/svg+xml" }, // Added SVG favicon
+      { url: "/favicon-96x96.png?v=2", sizes: "96x96", type: "image/png" }, // Added 96x96 PNG favicon
+      { url: "/favicon-32x32.png?v=2", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png?v=2", sizes: "16x16", type: "image/png" }
     ],
+    shortcut: [
+      { url: "/favicon-16x16.png?v=2" }
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png?v=2", sizes: "180x180" }
+    ]
   },
+
+  // Add apple mobile web app title
+  appleWebApp: {
+    title: "Tensorify",
+    capable: true,
+    statusBarStyle: "default"
+  },
+
+  // Add manifest property
+  manifest: "/site.webmanifest",
+
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -114,14 +118,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="hide-scrollbar">
       <head>
-        <link rel="manifest" href="/site.webmanifest" />
+        {/* No need to manually add link rel="manifest" as it's already in the metadata */}
         {/* AHRefs analytics */}
         <script
           src="https://analytics.ahrefs.com/analytics.js"
           data-key="Ey1D/Da5BY/S4h/iJ/S4oQ"
           async
         ></script>
-        
+
         {/* Website Schema */}
         <script
           type="application/ld+json"
@@ -184,23 +188,23 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen relative overscroll-none`}
       >
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="dark"
-        enableSystem
-        disableTransitionOnChange
-      >
-        <div className="text-foreground min-h-screen flex flex-col">
-          <Header />
-          {/* Add padding-top to match header height */}
-          <main className="flex-1 pt-16 md:pt-20">
-            {children}
-          </main>
-          <Footer />
-          <NewsletterSignup />
-        </div>
-      </ThemeProvider>
-    </body>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <div className="text-foreground min-h-screen flex flex-col">
+            <Header />
+            {/* Add padding-top to match header height */}
+            <main className="flex-1 pt-16 md:pt-20">
+              {children}
+            </main>
+            <Footer />
+            <NewsletterSignup />
+          </div>
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
