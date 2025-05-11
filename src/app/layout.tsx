@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   // Updated icons configuration
   icons: {
     icon: [
-      { url: "/favicon.ico" },
+      // { url: "/favicon.ico" },
       { url: "/icon.svg", type: "image/svg+xml" }, // Added SVG favicon
       { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" }, // Added 96x96 PNG favicon
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
