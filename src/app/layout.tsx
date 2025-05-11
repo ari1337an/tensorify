@@ -42,8 +42,7 @@ export const metadata: Metadata = {
   // Updated icons configuration
   icons: {
     icon: [
-      // { url: "/favicon.ico" },
-      // { url: "/icon.svg", type: "image/svg+xml" }, // Added SVG favicon
+      { url: "/icon0.svg", type: "image/svg+xml" }, // Added SVG favicon
       { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" }, // Added 96x96 PNG favicon
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" }
@@ -52,7 +51,7 @@ export const metadata: Metadata = {
       { url: "/favicon-16x16.png" }
     ],
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180" }
+      { url: "/apple-icon.png", sizes: "180x180" }
     ]
   },
 
@@ -116,8 +115,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="hide-scrollbar">
       <head>
-        <meta name="apple-mobile-web-app-title" content="Tensorify" />
-        <meta name="theme-color" content="#000000" />
+        <meta name="theme-color" content="#ffffff" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         {/* No need to manually add link rel="manifest" as it's already in the metadata */}
         {/* AHRefs analytics */}
