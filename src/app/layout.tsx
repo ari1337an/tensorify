@@ -26,6 +26,7 @@ export const metadata: Metadata = {
     default: "Tensorify.io - Visual AI Development Platform",
     template: "%s | Tensorify.io"
   },
+  manifest: "/site.webmanifest",
   description: "Modern Low-code Visual AI development platform for researchers and engineers. Design your model pipeline visually and generate production-ready code instantly.",
   keywords: "AI platform, visual AI development, PyTorch, model architecture, code generation, neural networks, machine learning, tensorify, PyTorch Code Generator, PyTorch Generator",
   authors: [
@@ -61,9 +62,6 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "default"
   },
-
-  // Add manifest property
-  manifest: "/site.webmanifest",
 
   openGraph: {
     type: "website",
@@ -118,6 +116,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="hide-scrollbar">
       <head>
+        <meta name="apple-mobile-web-app-title" content="Tensorify" />
+        <meta name="theme-color" content="#000000" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
         {/* No need to manually add link rel="manifest" as it's already in the metadata */}
         {/* AHRefs analytics */}
         <script
