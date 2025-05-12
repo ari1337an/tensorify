@@ -21,7 +21,7 @@ export function Hero() {
           <div className="w-full">
             <h1 className="text-center font-extrabold tracking-tight w-full">
               <div className="flex flex-wrap justify-center items-baseline text-5xl sm:text-6xl md:text-7xl lg:text-8xl mb-3">
-                <span className="text-gradient-primary">Accelerate Your AI Experiments</span>
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-violet-500">Accelerate Your AI Experiments</span>
 
               </div>
               <div className="flex items-center justify-center gap-3 mt-6">
@@ -38,7 +38,7 @@ export function Hero() {
               size="lg"
               onClick={openNewsletterSignup}
               variant="default"
-              className="group min-w-[220px] hero-button-gradient text-white hover:opacity-90 relative overflow-hidden border border-[color:var(--hero-primary)]/20 py-6 px-8 text-lg"
+              className="group min-w-[220px] bg-gradient-to-r from-[#A371D3] to-[#5E48BF] text-white hover:opacity-90 relative overflow-hidden border border-[color:var(--hero-primary)]/20 py-6 px-8 text-lg shadow-lg"
               style={{
                 boxShadow: "0 4px 14px 0 rgba(var(--hero-primary), 0.39), 0 2px 4px 0 rgba(var(--hero-primary), 0.15)",
               }}

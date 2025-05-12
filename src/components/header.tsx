@@ -24,8 +24,8 @@ export function Header() {
             <Logo className="flex items-end h-full pb-[18px] md:pb-[22px]" />
           </div>
 
-          {/* Desktop Navigation with baseline alignment */}
-          <nav className="hidden md:flex items-end h-full pb-[22px] space-x-10">
+          {/* Desktop Navigation with vertical centering */}
+          <nav className="hidden md:flex items-center h-full space-x-10">
             <Link href="/#for-whom" className="text-base font-medium text-foreground/90 hover:text-primary transition-colors">
               Use Cases
             </Link>
@@ -49,7 +49,7 @@ export function Header() {
                 openNewsletterSignup();
                 setIsMobileMenuOpen(false);
               }}
-              className="hero-button-gradient text-white font-medium 
+              className="bg-gradient-to-r from-[#A371D3] to-[#5E48BF] text-white font-medium 
                 text-xs sm:text-sm md:text-sm 
                 h-7 sm:h-7 md:h-8 
                 px-3 sm:px-4 md:px-5 
