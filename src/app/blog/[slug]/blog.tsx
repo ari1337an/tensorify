@@ -8,6 +8,7 @@ import { TableOfContents } from "./_visuals/TableOfContents";
 import PageScrollProgressBar from "react-page-scroll-progress-bar";
 import { Block as BlockNoteBlock } from "@blocknote/core";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "next-seo";
+import { CTA } from "@/components/cta";
 
 interface BlogProps {
   blog: BlogPost;
@@ -278,6 +279,9 @@ export default function ClientBlog({ blog }: BlogProps) {
           
         </div>
       </div>
+
+      {/* Call to Action Section */}
+      <CTA />
     </div>
   );
 }
