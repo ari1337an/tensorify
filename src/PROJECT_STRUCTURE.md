@@ -16,6 +16,8 @@ The application is structured using route groups for logical code organization w
       - `responses/` - API routes for submitting onboarding responses.
         - `route.ts` - Proxy API handler for submitting onboarding response data to the external API. Uses `CONTROLS_BASE_URL` environment variable for API endpoint.
     - `send-invite-email.ts` - API route for sending organization invite emails using Resend and React email template.
+    - `roles/` - API routes for managing roles and permissions.
+      - `route.ts` - API handler for creating and listing roles with CRUD operations.
 
 ### Global Providers
 
@@ -102,9 +104,10 @@ The application is structured using route groups for logical code organization w
           - `icon.tsx` - Icon component for the general section in the sidebar.
           - `meta.tsx` - Metadata for the general section (label, ID, group).
           - `index.ts` - Export file for the general module.
-        - `people/` - People management module.
-          - `view.tsx` - UI component for the people section.
-          - `logic.tsx` - Logic and state management for the people section.
+        - `people/` - Organization members management module.
+          - `view.tsx` - UI component for displaying and managing organization members using server actions for data fetching.
+          - `data-table.tsx` - Advanced data table component built using TanStack Table with row selection, sorting, filtering, pagination, column visibility, and support for an invite button that appears in the filters row.
+          - `columns.tsx` - Column definitions for the organization members data table with custom cell renderers and role badges.
           - `icon.tsx` - Icon component for the people section in the sidebar.
           - `meta.tsx` - Metadata for the people section (label, ID, group).
           - `index.ts` - Export file for the people module.
@@ -121,11 +124,18 @@ The application is structured using route groups for logical code organization w
           - `meta.tsx` - Metadata for the security section (label, ID, group).
           - `index.ts` - Export file for the security module.
         - `teamspaces/` - Teamspaces management module.
-          - `view.tsx` - UI component for the teamspaces section.
-          - `logic.tsx` - Logic and state management for the teamspaces section.
+          - `view.tsx` - UI component for the teamspaces section with a paginated table displaying team information including name, admin, and member count. Features a modern UI with loading states, error handling, and a responsive design.
+          - `logic.tsx` - Logic and state management for the teamspaces section using React hooks to manage pagination, loading states, and data fetching from the server.
           - `icon.tsx` - Icon component for the teamspaces section in the sidebar.
           - `meta.tsx` - Metadata for the teamspaces section (label, ID, group).
           - `index.ts` - Export file for the teamspaces module.
+        - `rbac/` - Role Based Access Control module.
+          - `view.tsx` - UI component for managing roles and permissions.
+          - `logic.tsx` - Logic and state management for the RBAC section.
+          - `server.tsx` - Server component for fetching roles data.
+          - `icon.tsx` - Icon component for the RBAC section in the sidebar.
+          - `meta.tsx` - Metadata for the RBAC section (label, ID, group).
+          - `index.ts` - Export file for the RBAC module.
   - `settings/` - Settings pages for managing user and workspace preferences.
     - `layout.tsx` - Layout component for settings pages with sidebar navigation, properly typed with LucideIcon type for icon components.
     - `account/` - Account settings pages.
@@ -204,6 +214,8 @@ The application is structured using route groups for logical code organization w
 ### Server Actions and Flows
 
 - `src/server/actions/` - Server actions for data manipulation.
+  - `team-actions.ts` - Server actions for team management including paginated team listing with member counts and team creation with proper resource allocation.
+  - `organization-actions.ts` - Server actions for organization management including member listing with role information and member management operations.
   - `onboarding-actions.ts` - Server actions for handling onboarding data submission to the external API.
   - `email-actions.ts` - Server action for sending organization-related emails using Resend.io
 - `src/server/flows/` - Server-side flows for complex operations.
@@ -215,6 +227,8 @@ The application is structured using route groups for logical code organization w
 
 - `src/server/database/` - Database connection and configuration files.
   - `db.ts` - Database client setup and connection configuration.
+  - `prisma/` - Prisma database configuration and migrations.
+    - `seed.ts` - Seed file for initializing standard permissions in the database.
 
 ### Utility Functions
 

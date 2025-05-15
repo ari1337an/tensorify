@@ -1,11 +1,20 @@
-export const peopleMeta = {
-  id: "people",
-  label: "People",
-  group: "workspace",
-};
+import { Users } from "lucide-react";
+import { type LucideIcon } from "lucide-react";
 
-export function usePeopleMeta() {
-  return peopleMeta;
+export interface PeopleMetaType {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  group: string;
 }
 
-export default usePeopleMeta;
+export const peopleMeta: PeopleMetaType = {
+  id: "people",
+  label: "People",
+  icon: Users,
+  group: "Organization",
+};
+
+export default function usePeopleMeta() {
+  return peopleMeta;
+}

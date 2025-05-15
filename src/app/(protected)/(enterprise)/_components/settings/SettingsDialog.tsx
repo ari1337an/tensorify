@@ -27,12 +27,9 @@ import {
   TeamspacesView,
   TeamspacesIcon,
   useTeamspacesMeta,
-  SecurityView,
-  SecurityIcon,
-  useSecurityMeta,
-  IdentityView,
-  IdentityIcon,
-  useIdentityMeta,
+  RBACView,
+  RBACIcon,
+  useRBACMeta,
 } from "./group";
 
 // Types for sections
@@ -59,10 +56,9 @@ export function SettingsDialog() {
   const generalMeta = useGeneralMeta();
   const peopleMeta = usePeopleMeta();
   const teamspacesMeta = useTeamspacesMeta();
-  const securityMeta = useSecurityMeta();
-  const identityMeta = useIdentityMeta();
+  const rbacMeta = useRBACMeta();
 
-  const sections: SectionsType = {
+  const sections: SectionsType & { accessControl: SectionItem[] } = {
     account: [
       {
         id: accountMeta.id,
@@ -91,15 +87,12 @@ export function SettingsDialog() {
         label: teamspacesMeta.label,
         icon: TeamspacesIcon,
       },
+    ],
+    accessControl: [
       {
-        id: securityMeta.id,
-        label: securityMeta.label,
-        icon: SecurityIcon,
-      },
-      {
-        id: identityMeta.id,
-        label: identityMeta.label,
-        icon: IdentityIcon,
+        id: rbacMeta.id,
+        label: rbacMeta.label,
+        icon: RBACIcon,
       },
     ],
   };
@@ -116,10 +109,8 @@ export function SettingsDialog() {
         return <PeopleView />;
       case "teamspaces":
         return <TeamspacesView />;
-      case "security":
-        return <SecurityView />;
-      case "identity":
-        return <IdentityView />;
+      case "rbac":
+        return <RBACView />;
       default:
         return <div className="text-muted-foreground">Coming soon</div>;
     }
@@ -181,6 +172,35 @@ export function SettingsDialog() {
                 </h3>
                 <nav>
                   {sections.organization.map((section) => (
+                    <button
+                      key={section.id}
+                      onClick={() => setActiveSection(section.id)}
+                      aria-current={
+                        activeSection === section.id ? "page" : undefined
+                      }
+                      type="button"
+                      aria-label={`${section.label} settings`}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-md transition-colors",
+                        activeSection === section.id
+                          ? "bg-accent text-accent-foreground"
+                          : "text-muted-foreground hover:bg-accent/50"
+                      )}
+                    >
+                      {renderIcon(section.icon)}
+                      <span>{section.label}</span>
+                    </button>
+                  ))}
+                </nav>
+              </div>
+
+              {/* Access Control Section */}
+              <div className="space-y-1 mt-6">
+                <h3 className="px-2 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                  Access Control
+                </h3>
+                <nav>
+                  {sections.accessControl.map((section) => (
                     <button
                       key={section.id}
                       onClick={() => setActiveSection(section.id)}

@@ -4,7 +4,7 @@ import { OrganizationInviteEmail } from "@/server/emails/OrganizationInviteEmail
 
 export async function POST(req: NextRequest) {
   try {
-    const { email } = await req.json();
+    const { email, inviterInfo, organizationName } = await req.json();
     if (!email) {
       return NextResponse.json(
         { success: false, error: "Email is required." },
@@ -12,13 +12,15 @@ export async function POST(req: NextRequest) {
       );
     }
     const react = OrganizationInviteEmail({
-      organizationName: "Tensorify Organization", // You can make this dynamic if needed
-      inviteeEmail: email, // Generic fallback
+      organizationName: organizationName || "Tensorify Organization",
+      inviteeEmail: email,
       inviteLink: "https://app.tensorify.io/accept-invite", // Default/fallback link
+      inviterName: inviterInfo?.name,
+      inviterEmail: inviterInfo?.email,
     });
     const result = await sendOrganizationEmail({
       to: email,
-      subject: `You're invited to join Tensorify Organization!`,
+      subject: `You're invited to join ${organizationName || "Tensorify Organization"}!`,
       react,
     });
     if (result.success) {

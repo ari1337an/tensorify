@@ -14,10 +14,11 @@ datasource db {
 }
 
 model User {
-  userId    String @id @map("id") @default(cuid())
+  userId    String @id @default(cuid()) @map("id")
   firstName String
   lastName  String
   email     String @unique
+  imageUrl  String?
 
   // Super-admin relations
   superOrg      Organization? @relation("SuperAdmin")
@@ -127,7 +128,10 @@ model Role {
 model Permission {
   id              String           @id @default(cuid())
   action          String
+  resourceType    String // The type of resource this permission applies to
   rolePermissions RolePermission[]
+
+  @@unique([action, resourceType])
 }
 
 model Resource {

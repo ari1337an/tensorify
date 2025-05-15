@@ -5,7 +5,31 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-const db = globalThis.prisma || new PrismaClient();
-export default db;
+function createPrismaClient() {
+  try {
+    const client = new PrismaClient({
+      // log:
+      //   process.env.NODE_ENV === "development"
+      //     ? ["query", "error", "warn"]
+      //     : ["error"],
+    });
 
-if (process.env.ENVIRONEMENT !== "production") globalThis.prisma = db;
+    // Test the connection
+    client.$connect();
+
+    return client;
+  } catch (error) {
+    console.error("Failed to create Prisma client:", error);
+    throw error;
+  }
+}
+
+// Initialize database client
+const db = globalThis.prisma || createPrismaClient();
+
+// Save reference in development
+if (process.env.NODE_ENV !== "production") {
+  globalThis.prisma = db;
+}
+
+export default db;

@@ -5,18 +5,20 @@ interface OrganizationInviteEmailProps {
   organizationName: string;
   inviteeEmail: string;
   inviteLink: string;
+  inviterName?: string;
+  inviterEmail?: string;
 }
 
 export function OrganizationInviteEmail({
   organizationName,
   inviteeEmail,
   inviteLink,
+  inviterName = "A Tensorify Admin",
+  inviterEmail = "no-reply@app.tensorify.io",
 }: OrganizationInviteEmailProps) {
   // Extract name before @ from email
   const name = inviteeEmail.split("@")[0];
   const logoUrl = "https://app.tensorify.io/tensorify-logo.png";
-  const inviterName = "A Tensorify Admin";
-  const inviterEmail = "no-reply@app.tensorify.io";
 
   return (
     <div
@@ -55,7 +57,7 @@ export function OrganizationInviteEmail({
           >
             {inviterEmail}
           </a>
-          ) has invited you to the <b>{organizationName}</b> team on{" "}
+          ) has invited you to the <b>{organizationName}</b> organization on{" "}
           <b>Tensorify</b>.
         </div>
       </div>

@@ -48,6 +48,7 @@ export function OnboardingSetup({
       const firstName =
         currentUser?.firstName || orgName.split(" ")[0] || "User";
       const lastName = currentUser?.lastName || "";
+      const imageUrl = currentUser?.imageUrl || "";
 
       setCurrentStep("submitting_data");
       setError(null);
@@ -69,10 +70,11 @@ export function OnboardingSetup({
 
       setCurrentStep("setting_up_account");
 
-      // Step 2: Setup account with Tensorify defaults  
+      // Step 2: Setup account with Tensorify defaults
       const accountSetupResult = await setupInitialTensorifyAccountWithDefaults(
         userId,
         email,
+        imageUrl,
         firstName,
         lastName,
         orgUrl,

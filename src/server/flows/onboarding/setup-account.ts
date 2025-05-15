@@ -20,6 +20,7 @@ import { revalidatePath } from "next/cache";
 export const setupInitialTensorifyAccountWithDefaults = async (
   userId: string,
   email: string,
+  imageUrl: string, 
   firstName: string,
   lastName: string,
   orgUrl: string,
@@ -61,8 +62,8 @@ export const setupInitialTensorifyAccountWithDefaults = async (
       async (tx) => {
         const user = await tx.user.upsert({
           where: { userId },
-          update: { email, firstName, lastName },
-          create: { userId, email, firstName, lastName },
+          update: { email, firstName, lastName, imageUrl },
+          create: { userId, email, firstName, lastName, imageUrl },
         });
 
         const organizationResource = await tx.resource.create({ data: {} });
@@ -79,6 +80,24 @@ export const setupInitialTensorifyAccountWithDefaults = async (
         await tx.user.update({
           where: { userId: user.userId },
           data: { organizationId: organization.id },
+        });
+
+        // Find the Super Admin role
+        const superAdminRole = await tx.role.findUnique({
+          where: { name: "Super Admin" },
+        });
+
+        if (!superAdminRole) {
+          throw new Error("Super Admin role not found");
+        }
+
+        // Assign the Super Admin role to the user for the organization resource
+        await tx.userRole.create({
+          data: {
+            userId: user.userId,
+            roleId: superAdminRole.id,
+            resourceId: organization.id,
+          },
         });
 
         const teamResource = await tx.resource.create({ data: {} });

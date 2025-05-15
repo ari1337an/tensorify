@@ -2,6 +2,7 @@
 
 import { Resend } from "resend";
 import { OrganizationInviteEmail } from "@/server/emails/OrganizationInviteEmail";
+import { Organization } from "@prisma/client";
 
 export async function sendOrganizationEmail({
   to,
@@ -32,16 +33,29 @@ export async function sendOrganizationEmail({
   }
 }
 
-export async function sendInviteEmailAction(email: string) {
+export async function sendInviteEmailAction(
+  email: string,
+  inviterInfo?: {
+    name: string;
+    email: string;
+  },
+  organization?: Organization
+) {
   if (!email) return { success: false, error: "Email is required." };
+
+  const organizationName = organization?.name || "Tensorify Organization";
+
   const react = OrganizationInviteEmail({
-    organizationName: "Tensorify Organization",
+    organizationName,
     inviteeEmail: email,
     inviteLink: "https://app.tensorify.io/accept-invite",
+    inviterName: inviterInfo?.name,
+    inviterEmail: inviterInfo?.email,
   });
+
   return await sendOrganizationEmail({
     to: email,
-    subject: `You're invited to join Tensorify Organization!`,
+    subject: `You're invited to join ${organizationName}!`,
     react,
   });
 }

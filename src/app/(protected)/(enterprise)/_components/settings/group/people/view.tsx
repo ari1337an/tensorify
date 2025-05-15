@@ -1,24 +1,26 @@
 "use client";
 
-import * as React from "react";
+import { useEffect, useState } from "react";
+import { columns } from "./columns";
+import { DataTable } from "./data-table";
+import {
+  getOrganizationMembers,
+  type OrganizationMember,
+} from "@/server/actions/organization-actions";
 import { Button } from "@/app/_components/ui/button";
+import { Loader2, UserPlus } from "lucide-react";
 import { Separator } from "@/app/_components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/app/_components/ui/dialog";
 import { Input } from "@/app/_components/ui/input";
-import { Search, Plus } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/app/_components/ui/table";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/app/_components/ui/avatar";
-import { usePeopleLogic } from "./logic";
+import { Label } from "@/app/_components/ui/label";
 import {
   Select,
   SelectContent,
@@ -26,53 +28,154 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/_components/ui/select";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogClose,
-} from "@/app/_components/ui/dialog";
-import { useState } from "react";
-import { sendInviteEmailAction } from "@/server/actions/email-actions";
 
-export function PeopleView() {
-  const { teamMembers, searchQuery, setSearchQuery, handleRoleChange } =
-    usePeopleLogic();
+const AVAILABLE_ROLES = [
+  { id: "member", name: "Member" },
+  { id: "admin", name: "Admin" },
+  { id: "viewer", name: "Viewer" },
+] as const;
 
-  // Dialog state
-  const [open, setOpen] = useState(false);
+type Role = (typeof AVAILABLE_ROLES)[number]["id"];
+
+export default function PeopleView({
+  organizationId,
+}: {
+  organizationId: string;
+}) {
+  const [members, setMembers] = useState<OrganizationMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<null | {
-    success: boolean;
-    message: string;
-  }>(null);
+  const [selectedRole, setSelectedRole] = useState<Role>("member");
+  const [isInviting, setIsInviting] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  async function handleSendInvite(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setResult(null);
-    try {
-      const data = await sendInviteEmailAction(inviteEmail);
-      if (data.success) {
-        setResult({ success: true, message: "Invite email sent!" });
-        setInviteEmail("");
-      } else {
-        setResult({
-          success: false,
-          message: data.error || "Failed to send email.",
-        });
+  useEffect(() => {
+    async function loadMembers() {
+      try {
+        setLoading(true);
+        const data = await getOrganizationMembers(organizationId);
+        setMembers(data);
+        setError(null);
+      } catch (err) {
+        setError("Failed to load organization members");
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
-    } catch {
-      setResult({ success: false, message: "Error sending email." });
-    } finally {
-      setLoading(false);
     }
+
+    loadMembers();
+  }, [organizationId]);
+
+  const handleInvite = async () => {
+    if (!inviteEmail || !selectedRole) return;
+
+    try {
+      setIsInviting(true);
+      // TODO: Implement the actual invite functionality
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulated delay
+      console.log("Inviting:", inviteEmail, "with role:", selectedRole);
+      setInviteEmail("");
+      setSelectedRole("member"); // Reset to default
+      setIsDialogOpen(false);
+    } catch (err) {
+      console.error("Failed to invite member:", err);
+    } finally {
+      setIsInviting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <p className="text-sm">Loading members...</p>
+        </div>
+      </div>
+    );
   }
+
+  if (error) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <p className="text-sm text-red-500">{error}</p>
+      </div>
+    );
+  }
+
+  const inviteButton = (
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" className="h-8">
+          <UserPlus className="mr-2 h-4 w-4" />
+          Invite Member
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Invite Team Member</DialogTitle>
+          <DialogDescription>
+            Send an invitation email to add a new team member.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="email">Email address</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="Enter email address"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="role">Role</Label>
+            <Select
+              value={selectedRole}
+              onValueChange={(value) => setSelectedRole(value as Role)}
+            >
+              <SelectTrigger id="role">
+                <SelectValue placeholder="Select a role" />
+              </SelectTrigger>
+              <SelectContent>
+                {AVAILABLE_ROLES.map((role) => (
+                  <SelectItem key={role.id} value={role.id}>
+                    {role.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground">
+              {selectedRole === "admin"
+                ? "Can manage team members and all settings"
+                : selectedRole === "member"
+                  ? "Can view and edit content"
+                  : "Can only view content"}
+            </p>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button
+            onClick={handleInvite}
+            disabled={!inviteEmail || !selectedRole || isInviting}
+            className="w-full"
+          >
+            {isInviting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Sending Invitation...
+              </>
+            ) : (
+              "Send Invitation"
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 
   return (
     <div className="space-y-6">
@@ -85,112 +188,7 @@ export function PeopleView() {
 
       <Separator />
 
-      <div className="flex items-center justify-between">
-        <div className="relative">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search members..."
-            className="pl-8 w-[300px]"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Invite people
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Invite People</DialogTitle>
-              <DialogDescription>
-                Send an invite email to a new member.
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSendInvite} className="space-y-4">
-              <Input
-                placeholder="Email"
-                type="email"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                required
-              />
-              <DialogFooter>
-                <Button type="submit" disabled={loading}>
-                  {loading ? "Sending..." : "Send Invite"}
-                </Button>
-                <DialogClose asChild>
-                  <Button type="button" variant="ghost">
-                    Cancel
-                  </Button>
-                </DialogClose>
-              </DialogFooter>
-              {result && (
-                <p
-                  className={result.success ? "text-green-600" : "text-red-600"}
-                >
-                  {result.message}
-                </p>
-              )}
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {teamMembers.map((member) => (
-              <TableRow key={member.id}>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={member.avatar} alt={member.name} />
-                      <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <span>{member.name}</span>
-                  </div>
-                </TableCell>
-                <TableCell>{member.email}</TableCell>
-                <TableCell>
-                  <Select
-                    defaultValue={member.role}
-                    onValueChange={(value) =>
-                      handleRoleChange(member.id, value)
-                    }
-                  >
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="Select a role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="member">Member</SelectItem>
-                      <SelectItem value="viewer">Viewer</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="sm">
-                    Remove
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <DataTable columns={columns} data={members} inviteButton={inviteButton} />
     </div>
   );
 }
-
-export default PeopleView;

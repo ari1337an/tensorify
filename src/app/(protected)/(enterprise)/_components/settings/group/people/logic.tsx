@@ -1,14 +1,7 @@
 "use client";
 
 import * as React from "react";
-
-type TeamMember = {
-  id: string;
-  name: string;
-  email: string;
-  avatar: string;
-  role: string;
-};
+import { TeamMember } from "./columns";
 
 export function usePeopleLogic() {
   const [teamMembers, setTeamMembers] = React.useState<TeamMember[]>([
@@ -17,7 +10,7 @@ export function usePeopleLogic() {
       name: "John Doe",
       email: "john@example.com",
       avatar: "",
-      role: "admin",
+      role: "super admin",
     },
     {
       id: "2",
@@ -33,9 +26,14 @@ export function usePeopleLogic() {
       avatar: "",
       role: "viewer",
     },
+    {
+      id: "4",
+      name: "Alice Williams",
+      email: "alice@example.com",
+      avatar: "",
+      role: "admin",
+    },
   ]);
-
-  const [searchQuery, setSearchQuery] = React.useState("");
 
   const handleRoleChange = (userId: string, newRole: string) => {
     setTeamMembers((prev) =>
@@ -53,13 +51,7 @@ export function usePeopleLogic() {
   };
 
   return {
-    teamMembers: teamMembers.filter(
-      (member) =>
-        member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        member.email.toLowerCase().includes(searchQuery.toLowerCase())
-    ),
-    searchQuery,
-    setSearchQuery,
+    teamMembers,
     handleRoleChange,
     handleInvite,
   };

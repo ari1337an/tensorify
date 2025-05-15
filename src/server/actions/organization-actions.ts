@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import db from "@/server/database/db";
 import { auth } from "@clerk/nextjs/server";
+import { clerkClient } from "@clerk/clerk-sdk-node";
+import type { User } from "@clerk/clerk-sdk-node";
 
 const SLUG_MIN_LENGTH = 3;
 const SLUG_MAX_LENGTH = 63; // Standard subdomain length limit
@@ -75,5 +77,78 @@ export async function updateOrganization(data: UpdateOrganizationInput) {
       return { success: false, error: error.message };
     }
     return { success: false, error: "Something went wrong" };
+  }
+}
+
+export type OrganizationMember = {
+  id: string;
+  name: string;
+  email: string;
+  imageUrl: string;
+  role: string;
+};
+
+export async function getOrganizationMembers(
+  organizationId: string
+): Promise<OrganizationMember[]> {
+  try {
+    const members = await db.user.findMany({
+      where: {
+        organizationId,
+      },
+      include: {
+        roles: {
+          include: {
+            role: true,
+          },
+        },
+      },
+    });
+
+    // Get Clerk user data for avatars
+    const clerkUsersResponse = await clerkClient.users.getUserList({
+      userId: members.map((member) => member.userId),
+    });
+
+    return members.map((member) => {
+      // Find corresponding Clerk user
+      const clerkUser = clerkUsersResponse.data.find(
+        (user: User) => user.id === member.userId
+      );
+
+      // Get the highest priority role
+      const highestRole = member.roles.reduce((highest, current) => {
+        const getRolePriority = (role: string) => {
+          switch (role.toLowerCase()) {
+            case "super admin":
+              return 4;
+            case "admin":
+              return 3;
+            case "member":
+              return 2;
+            case "viewer":
+              return 1;
+            default:
+              return 0;
+          }
+        };
+
+        const currentPriority = getRolePriority(current.role.name);
+        const highestPriority = getRolePriority(highest?.role.name || "");
+
+        return currentPriority > highestPriority ? current : highest;
+      }, member.roles[0]);
+
+      return {
+        id: member.userId,
+        name: `${member.firstName} ${member.lastName}`,
+        email: member.email,
+        imageUrl: clerkUser?.imageUrl || "",
+        role: highestRole?.role.name || "member",
+      };
+    });
+  } catch (error) {
+    console.error("Error fetching organization members:", error);
+    throw new Error("Failed to fetch organization members");
   }
 }
