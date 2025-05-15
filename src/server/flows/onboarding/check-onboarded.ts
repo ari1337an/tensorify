@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@clerk/nextjs/server";
 import db from "@/server/database/db";
+import { InvitationStatus } from "@prisma/client";
 
 /**
  * Checks if a user is onboarded (has an organization) and manages redirections:
@@ -33,7 +34,26 @@ export async function checkUserOnboarded() {
 
     // User exists but doesn't have an organization - redirect to onboarding
     if (!user?.organization) {
-      // In development, redirect to onboarding directly without throwing NEXT_REDIRECT error
+      // User exists but doesn't have an organization.
+      // Check for a pending invitation before redirecting to general onboarding.
+      const pendingInvitation = await db.invitation.findFirst({
+        where: {
+          email: email as string,
+          status: InvitationStatus.PENDING,
+          expiresAt: { gt: new Date() },
+        },
+      });
+
+      if (pendingInvitation) {
+        // User has a pending invitation, redirect to accept invitation page.
+        const acceptInvitePath = "/onboarding/accept-invitation";
+        if (process.env.NODE_ENV === "development") {
+          return { redirect: acceptInvitePath };
+        }
+        return redirect(acceptInvitePath);
+      }
+
+      // No organization and no pending invitation, redirect to standard onboarding.
       if (process.env.NODE_ENV === "development") {
         return { redirect: "/onboarding" };
       }

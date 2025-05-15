@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, MinusCircle, CheckCircle2, Pencil } from "lucide-react";
+import { Plus, MinusCircle, CheckCircle2, Pencil, Loader2 } from "lucide-react";
 import { Button } from "@/app/_components/ui/button";
 import {
   Form,
@@ -48,6 +48,7 @@ import {
   DialogTitle,
 } from "@/app/_components/ui/dialog";
 import useRBACLogic, { RoleFormValues } from "./logic";
+import { useCallback } from "react";
 
 interface Role {
   id: string;
@@ -72,7 +73,7 @@ type ResourcePermissions = {
 };
 
 export default function RBACView() {
-  const { isLoading, roleSchema } = useRBACLogic();
+  const { isLoading: isLogicLoading, roleSchema } = useRBACLogic();
   const [roles, setRoles] = React.useState<Role[]>([]);
   const [permissions, setPermissions] = React.useState<Permission[]>([]);
   const [resourcePermissions, setResourcePermissions] =
@@ -81,6 +82,7 @@ export default function RBACView() {
     string[]
   >([]);
   const [isLoadingRoles, setIsLoadingRoles] = React.useState(true);
+  const [isLoadingPermissions, setIsLoadingPermissions] = React.useState(true);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [editingRole, setEditingRole] = React.useState<Role | null>(null);
   const [editDialogOpen, setEditDialogOpen] = React.useState(false);
@@ -94,6 +96,27 @@ export default function RBACView() {
       name: "",
     },
   });
+
+  // Group permissions by resource based on the prefixed format
+  const groupPermissionsByResource = useCallback(
+    (permissions: Permission[]): ResourcePermissions => {
+      const grouped: ResourcePermissions = {};
+
+      permissions.forEach((permission) => {
+        const resourceType =
+          permission.resourceType || getResourceLabel(permission.action);
+
+        if (!grouped[resourceType]) {
+          grouped[resourceType] = [];
+        }
+
+        grouped[resourceType].push(permission);
+      });
+
+      return grouped;
+    },
+    []
+  );
 
   // Fetch all permissions
   React.useEffect(() => {
@@ -111,11 +134,13 @@ export default function RBACView() {
         }
       } catch (error) {
         console.error("Failed to fetch permissions:", error);
+      } finally {
+        setIsLoadingPermissions(false);
       }
     };
 
     fetchPermissions();
-  }, []);
+  }, [groupPermissionsByResource]);
 
   // Fetch all roles
   React.useEffect(() => {
@@ -214,26 +239,6 @@ export default function RBACView() {
 
     // Fallback
     return "Unknown";
-  };
-
-  // Group permissions by resource based on the prefixed format
-  const groupPermissionsByResource = (
-    permissions: Permission[]
-  ): ResourcePermissions => {
-    const grouped: ResourcePermissions = {};
-
-    permissions.forEach((permission) => {
-      const resourceType =
-        permission.resourceType || getResourceLabel(permission.action);
-
-      if (!grouped[resourceType]) {
-        grouped[resourceType] = [];
-      }
-
-      grouped[resourceType].push(permission);
-    });
-
-    return grouped;
   };
 
   const onSubmit = async (values: RoleFormValues) => {
@@ -514,6 +519,22 @@ export default function RBACView() {
     }
   };
 
+  const isInitialLoading =
+    isLoadingPermissions || isLoadingRoles || isLogicLoading;
+
+  if (isInitialLoading) {
+    return (
+      <div className="flex h-[50vh] w-full items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">
+            Loading RBAC settings...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -610,7 +631,7 @@ export default function RBACView() {
                 <Button
                   type="submit"
                   disabled={
-                    isLoading || isSubmitting || permissions.length === 0
+                    isLogicLoading || isSubmitting || permissions.length === 0
                   }
                   className="w-full md:w-auto"
                 >

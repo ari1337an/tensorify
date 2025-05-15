@@ -14,10 +14,10 @@ datasource db {
 }
 
 model User {
-  userId    String @id @default(cuid()) @map("id")
+  userId    String  @id @default(cuid()) @map("id")
   firstName String
   lastName  String
-  email     String @unique
+  email     String  @unique
   imageUrl  String?
 
   // Super-admin relations
@@ -37,6 +37,9 @@ model User {
 
   // RBAC
   roles UserRole[]
+
+  // Invitations sent by this user
+  sentInvitations Invitation[] @relation("SentInvitations")
 }
 
 model Organization {
@@ -48,10 +51,11 @@ model Organization {
 
   members User[] @relation("OrganizationMembers")
 
-  teams     Team[]
-  projects  Project[]
-  workflows Workflow[]
-  resource  Resource   @relation(fields: [id], references: [id])
+  teams      Team[]
+  projects   Project[]
+  workflows  Workflow[]
+  resource   Resource     @relation(fields: [id], references: [id])
+  Invitation Invitation[]
 }
 
 model Team {
@@ -193,3 +197,29 @@ model RolePermission {
 
   @@id([roleId, permissionId])
 }
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+model Invitation {
+  id             String           @id @default(cuid())
+  email          String // Email of the invited user
+  organizationId String
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  roleIds        Json // Array of Role IDs to be assigned upon acceptance
+  status         InvitationStatus @default(PENDING)
+  expiresAt      DateTime
+  invitedById    String
+  invitedBy      User             @relation("SentInvitations", fields: [invitedById], references: [userId])
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([email, organizationId]) // A user can only be invited once per organization if the invitation is active
+  @@index([status])
+}
+
+// Minor change to trigger regeneration

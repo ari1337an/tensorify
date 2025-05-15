@@ -9,6 +9,7 @@ import {
 import { useSettingsDialog } from "./context/SettingsContext";
 import { cn } from "@/app/_lib/utils";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import useStore from "@/app/_store/store"; // Import the Zustand store
 
 // Import from the new modular structure
 import {
@@ -49,6 +50,7 @@ type SectionsType = {
 export function SettingsDialog() {
   const { isOpen, closeSettings } = useSettingsDialog();
   const [activeSection, setActiveSection] = React.useState("account");
+  const currentOrg = useStore((state) => state.currentOrg); // Get currentOrg from store
 
   // Use the new meta hooks
   const accountMeta = useAccountMeta();
@@ -106,7 +108,14 @@ export function SettingsDialog() {
       case "general":
         return <GeneralView />;
       case "people":
-        return <PeopleView />;
+        if (!currentOrg?.id) {
+          return (
+            <div className="p-4 text-muted-foreground">
+              Organization not selected or available.
+            </div>
+          );
+        }
+        return <PeopleView organizationId={currentOrg.id} />;
       case "teamspaces":
         return <TeamspacesView />;
       case "rbac":

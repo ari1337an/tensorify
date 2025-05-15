@@ -35,6 +35,7 @@ export async function sendOrganizationEmail({
 
 export async function sendInviteEmailAction(
   email: string,
+  invitationId: string,
   inviterInfo?: {
     name: string;
     email: string;
@@ -48,7 +49,7 @@ export async function sendInviteEmailAction(
   const react = OrganizationInviteEmail({
     organizationName,
     inviteeEmail: email,
-    inviteLink: "https://app.tensorify.io/accept-invite",
+    inviteLink: `https://app.tensorify.io/onboarding/accept-invitation?token=${invitationId}`,
     inviterName: inviterInfo?.name,
     inviterEmail: inviterInfo?.email,
   });

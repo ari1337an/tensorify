@@ -5,6 +5,14 @@ import db from "@/server/database/db";
 export async function fetchRoles() {
   try {
     const roles = await db.role.findMany({
+      where: {
+        NOT: {
+          name: {
+            equals: "Super Admin",
+            mode: "insensitive",
+          },
+        },
+      },
       include: {
         rolePermissions: {
           include: {

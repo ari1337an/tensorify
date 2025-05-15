@@ -9,9 +9,12 @@ const updateRoleSchema = z.object({
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const paramsObj = await params;
+    const roleId = paramsObj.id;
+
     // Get user authentication info
     const { userId } = await auth();
     if (!userId) {
@@ -22,8 +25,6 @@ export async function PATCH(
     }
 
     // Properly await params before using its properties (Next.js requirement)
-    const paramsObj = await params;
-    const roleId = paramsObj.id;
 
     if (!roleId) {
       return NextResponse.json(

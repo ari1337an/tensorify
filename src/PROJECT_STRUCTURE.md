@@ -83,6 +83,7 @@ The application is structured using route groups for logical code organization w
         - `account/` - Account management module.
           - `view.tsx` - UI component for the account section.
           - `logic.tsx` - Logic and state management for the account section.
+          - `server.tsx` - Server component for fetching account related data.
           - `icon.tsx` - Icon component for the account section in the sidebar.
           - `meta.tsx` - Metadata for the account section (label, ID, group).
           - `index.ts` - Export file for the account module.
@@ -105,9 +106,10 @@ The application is structured using route groups for logical code organization w
           - `meta.tsx` - Metadata for the general section (label, ID, group).
           - `index.ts` - Export file for the general module.
         - `people/` - Organization members management module.
-          - `view.tsx` - UI component for displaying and managing organization members using server actions for data fetching.
+          - `view.tsx` - UI component for displaying and managing organization members. Integrates an invitation system allowing authorized users to invite new members by email and assign roles. Includes checks to prevent inviting existing members or those with active pending invitations.
           - `data-table.tsx` - Advanced data table component built using TanStack Table with row selection, sorting, filtering, pagination, column visibility, and support for an invite button that appears in the filters row.
           - `columns.tsx` - Column definitions for the organization members data table with custom cell renderers and role badges.
+          - `EditPersonDialog.tsx` - Dialog component for editing details of a member or an invitation, such as roles for pending invitations.
           - `icon.tsx` - Icon component for the people section in the sidebar.
           - `meta.tsx` - Metadata for the people section (label, ID, group).
           - `index.ts` - Export file for the people module.
@@ -178,6 +180,9 @@ The application is structured using route groups for logical code organization w
       - `OnboardingFramework.tsx` - Component for selecting ML/DL/AI framework.
       - `OnboardingOrg.tsx` - Component for organization name and slug setup, passes organization data to parent component including organization URL generated from the slug in format `{slug}.app.tensorify.io`.
       - `OnboardingSetup.tsx` - Multi-step process component with proper error handling and retry capability. Processes and submits onboarding data to the API, then calls the account setup function with the organization URL to configure the user's workspace with default organizational structure before redirecting. Includes detailed status updates and allows retrying failed submissions without resetting or reloading.
+  - `accept-invitation/` - New route for handling user acceptance of organization invitations.
+    - `layout.tsx` - Layout for the accept invitation page, providing a consistent onboarding-style appearance.
+    - `page.tsx` - Page component that fetches pending invitation details for the logged-in user. Allows users to accept or decline the invitation, triggering server actions to update their account, roles, and redirect them accordingly.
 
 ### UI Components
 
@@ -215,19 +220,21 @@ The application is structured using route groups for logical code organization w
 
 - `src/server/actions/` - Server actions for data manipulation.
   - `team-actions.ts` - Server actions for team management including paginated team listing with member counts and team creation with proper resource allocation.
-  - `organization-actions.ts` - Server actions for organization management including member listing with role information and member management operations.
+  - `organization-actions.ts` - Server actions for organization management. Includes original member listing (`getOrganizationMembers`) and a new comprehensive action (`getOrganizationMembersAndInvites`) that fetches both active members and invitations, mapping them to a unified `PeopleListEntry` structure for display in the people management view. Also includes member management operations and organization updates.
   - `onboarding-actions.ts` - Server actions for handling onboarding data submission to the external API.
-  - `email-actions.ts` - Server action for sending organization-related emails using Resend.io
+  - `email-actions.ts` - Server actions for sending emails using Resend, like organization invites.
+  - `invitation-actions.ts` - New server actions for managing the lifecycle of user invitations. Includes creating new invitations (now with robust error handling for email sending), fetching pending invitations for a user, processing accepted invitations (upserting user, assigning roles, and updating invitation status within a transaction), declining invitations, checking if a user can be invited (verifies against existing members and pending invites), updating roles for pending invitations, and revoking pending invitations.
 - `src/server/flows/` - Server-side flows for complex operations.
   - `onboarding/` - Flows related to user onboarding.
     - `setup-account.ts` - Creates a complete account setup with organizational structure in a single transaction, including organization, team, project, and workflow creation with proper access controls. Extracts organization slug from the provided organization URL.
-    - `check-onboarded.ts` - Checks if a user is onboarded by verifying they have an organization. Handles redirection to onboarding page if not onboarded, or to the correct organization subdomain if already onboarded but accessing via wrong URL. Supports both production (`{slug}.app.tensorify.io`) and development (`{slug}.localhost:PORT`) environments.
+    - `check-onboarded.ts` - Checks if a user is onboarded by verifying they have an organization. If not, it now also checks for pending invitations for the user's email. If an invitation exists, redirects to an accept invitation page. Otherwise, handles redirection to the standard onboarding page if not onboarded, or to the correct organization subdomain if already onboarded but accessing via wrong URL. Supports both production (`{slug}.app.tensorify.io`) and development (`{slug}.localhost:PORT`) environments.
 
 ### Database
 
 - `src/server/database/` - Database connection and configuration files.
   - `db.ts` - Database client setup and connection configuration.
   - `prisma/` - Prisma database configuration and migrations.
+    - `schema.prisma` - Prisma schema definition. Updated to include a new `Invitation` model and `InvitationStatus` enum to support the user invitation system. The `Invitation` model stores email, organization, assigned roles, status, expiration, and inviter details.
     - `seed.ts` - Seed file for initializing standard permissions in the database.
 
 ### Utility Functions

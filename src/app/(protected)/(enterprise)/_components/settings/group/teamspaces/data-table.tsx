@@ -35,13 +35,11 @@ import { Filter } from "lucide-react";
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  inviteButton?: React.ReactNode;
 }
 
-export function DataTable<TData, TValue>({
+export function TeamspacesDataTable<TData, TValue>({
   columns: defaultColumns,
   data,
-  inviteButton,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -72,16 +70,15 @@ export function DataTable<TData, TValue>({
       <div className="flex items-center justify-between py-4">
         <div className="flex flex-1 items-center space-x-2">
           <Input
-            placeholder="Filter emails..."
-            value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
+            placeholder="Filter teamspaces..."
+            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
-              table.getColumn("email")?.setFilterValue(event.target.value)
+              table.getColumn("name")?.setFilterValue(event.target.value)
             }
             className="max-w-sm"
           />
         </div>
         <div className="flex space-x-2">
-          {inviteButton}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="ml-auto flex h-8">
@@ -111,7 +108,7 @@ export function DataTable<TData, TValue>({
           </DropdownMenu>
         </div>
       </div>
-      <div>
+      <div className="rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

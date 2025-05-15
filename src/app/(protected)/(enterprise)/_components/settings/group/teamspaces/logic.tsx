@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useOrganization } from "@clerk/nextjs";
 import { getTeams, type PaginatedTeams } from "@/server/actions/team-actions";
-
-const LOADING_TIMEOUT = 10000; // 10 seconds
+import useStore from "@/app/_store/store";
 
 export function useTeamspacesLogic() {
   const [loading, setLoading] = useState(true);
@@ -12,43 +10,43 @@ export function useTeamspacesLogic() {
   const [teams, setTeams] = useState<PaginatedTeams | null>(null);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const [isEmpty, setIsEmpty] = useState(false);
 
-  const { organization } = useOrganization();
-  const organizationId = organization?.id;
+  // Get organization ID from the global store instead of Clerk
+  const { currentOrg } = useStore();
+  const organizationId = currentOrg?.id;
 
   // Fetch teams with pagination
   const fetchTeams = useCallback(async () => {
-    console.log("Fetching teams with:", { organizationId, page, limit });
-
     if (!organizationId) {
-      console.log("No organization ID, skipping fetch");
+      console.log("No organization ID from store, skipping fetch");
       setLoading(false);
+      setIsEmpty(true);
       return;
     }
 
     try {
       setLoading(true);
       setError(null);
+      setIsEmpty(false);
 
-      // Set up loading timeout
-      const timeoutId = setTimeout(() => {
-        console.log("Loading timeout reached");
-        setLoading(false);
-        setError("Request timed out. Please try again.");
-      }, LOADING_TIMEOUT);
-
-      console.log("Making API call to getTeams");
       const result = await getTeams({
         page,
         limit,
         organizationId,
       });
 
-      // Clear timeout since we got a response
-      clearTimeout(timeoutId);
+      // Check if the result has a totalCount property and set accordingly
+      if (result && typeof result.totalCount === "number") {
+        // Only set isEmpty if there are no teams at all in the database
+        setIsEmpty(result.totalCount === 0);
+        setTeams(result);
+      } else {
+        // Handle malformed response
+        setError("Received invalid data format from server");
+        setIsEmpty(true);
+      }
 
-      console.log("Got teams result:", result);
-      setTeams(result);
       setLoading(false);
     } catch (err) {
       console.error("Error fetching teams:", err);
@@ -57,21 +55,21 @@ export function useTeamspacesLogic() {
     }
   }, [page, limit, organizationId]);
 
-  // Load teams on mount and when pagination changes
+  // Load teams when currentOrg, page or limit changes
   useEffect(() => {
-    console.log("useEffect triggered with:", { organizationId, page, limit });
-    fetchTeams();
-  }, [fetchTeams]);
+    // Only fetch if we have an organization ID
+    if (organizationId) {
+      fetchTeams();
+    }
+  }, [fetchTeams, organizationId]);
 
   // Handler for changing page
   const handlePageChange = (newPage: number) => {
-    console.log("Changing page to:", newPage);
     setPage(newPage);
   };
 
   // Handler for changing items per page
   const handleLimitChange = (newLimit: number) => {
-    console.log("Changing limit to:", newLimit);
     setLimit(newLimit);
     setPage(1); // Reset to first page when changing limit
   };
@@ -80,11 +78,13 @@ export function useTeamspacesLogic() {
     teams,
     loading,
     error,
+    isEmpty,
     page,
     limit,
     handlePageChange,
     handleLimitChange,
     refresh: fetchTeams,
+    organizationId, // Expose organizationId for debugging
   };
 }
 
