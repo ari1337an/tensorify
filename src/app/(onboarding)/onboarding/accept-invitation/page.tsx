@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useSession } from "@clerk/nextjs";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   getPendingInvitationForUserByEmail,
@@ -41,7 +41,8 @@ type InvitationWithOrg = {
 };
 
 export default function AcceptInvitationPage() {
-  const { userId, isLoaded, isSignedIn, sessionClaims } = useAuth();
+  const { userId, isLoaded, isSignedIn } = useAuth();
+  const { session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const invitationToken = searchParams.get("token");
@@ -63,7 +64,7 @@ export default function AcceptInvitationPage() {
       return;
     }
 
-    const userEmail = sessionClaims?.email as string;
+    const userEmail = session?.user?.emailAddresses[0].emailAddress as string;
 
     async function fetchInvitation() {
       try {
@@ -100,7 +101,7 @@ export default function AcceptInvitationPage() {
     }
 
     fetchInvitation();
-  }, [userId, isLoaded, isSignedIn, router, sessionClaims, invitationToken]);
+  }, [userId, isLoaded, isSignedIn, router, invitationToken, session?.user?.emailAddresses]);
 
   const handleAccept = async () => {
     if (!invitation) return;
