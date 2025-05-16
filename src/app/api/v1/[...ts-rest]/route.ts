@@ -1,6 +1,6 @@
 import { createNextHandler } from "@ts-rest/serverless/next";
 import { contract } from "../_contracts";
-import { appRouter } from "../_contracts/route";
+import { appRouter } from "../_contracts";
 
 const handler = createNextHandler(contract, appRouter, {
   basePath: "/api/v1",
