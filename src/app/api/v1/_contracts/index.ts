@@ -1,24 +1,20 @@
+// AUTO-GENERATED FILE — DO NOT EDIT MANUALLY
+// Generated on: 5/17/2025, 2:24:56 AM
+
 import { initContract } from "@ts-rest/core";
 import { tsr } from "@ts-rest/serverless/next";
 
-// contracts
-import { contract as onboardingQuestionsContract } from "./onboarding/onboardingQuestions";
-import { contract as accountContract } from "./account/contract";
-
-// actions
-import { action as onboardingQuestionsAction } from "./onboarding/onboardingQuestions";
-import { action as accountAction } from "./account/action";
+import { contract as accountContract, action as accountAction } from "./account/account";
+import { contract as onboardingQuestionsContract, action as onboardingQuestionsAction } from "./onboarding/onboardingQuestions";
 
 const c = initContract();
 
-// contract
 export const contract = c.router({
-  onboardingQuestions: onboardingQuestionsContract,
   account: accountContract,
+  onboardingQuestions: onboardingQuestionsContract,
 });
 
-// router
 export const appRouter = tsr.router(contract, {
-  onboardingQuestions: onboardingQuestionsAction,
   account: accountAction,
+  onboardingQuestions: onboardingQuestionsAction,
 });

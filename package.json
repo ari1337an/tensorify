@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
+    "dev": "concurrently \"npm run watch:tsrest\" \"next dev --turbopack\"",
+    "build": "npm run generate:tsrest && next build",
     "start": "next start",
     "lint": "next lint",
     "prisma": "npx prisma generate && npx prisma db push && npm run prisma:seed",
@@ -13,7 +13,9 @@
     "prisma:migrate": "npx prisma migrate dev",
     "prisma:generate": "npx prisma generate",
     "prisma:seed": "npm run seed",
-    "postinstall": "npm run prisma:generate && npm run prisma:seed"
+    "postinstall": "npm run prisma:generate && npm run prisma:seed",
+    "generate:tsrest": "node scripts/generate-tsrest-index.cjs",
+    "watch:tsrest": "node scripts/watch-tsrest.cjs"
   },
   "dependencies": {
     "@anatine/zod-openapi": "^2.2.8",
@@ -70,7 +72,7 @@
     "lucide-react": "^0.484.0",
     "next": "15.2.4",
     "next-themes": "^0.4.6",
-     "openapi3-ts": "^2.0.2",
+    "openapi3-ts": "^2.0.2",
     "prismjs": "^1.30.0",
     "react": "^19.0.0",
     "react-day-picker": "^8.10.1",
@@ -96,12 +98,14 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/swagger-ui-react": "^5.18.0",
+    "concurrently": "^9.1.2",
     "eslint": "^9",
     "eslint-config-next": "15.2.4",
     "prisma": "^6.5.0",
     "tailwindcss": "^4",
     "ts-node": "^10.9.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "chokidar": "^4.0.3"
   },
   "prisma": {
     "schema": "src/server/database/prisma/schema.prisma",

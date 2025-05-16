@@ -1,3 +1,4 @@
+import { ServerInferResponses } from "@ts-rest/core";
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
 
@@ -29,3 +30,17 @@ export const contract = c.router(
     strictStatusCodes: true,
   }
 );
+
+// type ContractRequest = ServerInferRequest<typeof contract.contract>;
+type ContractResponse = ServerInferResponses<typeof contract.contract>;
+
+export const action = {
+  contract: async (): Promise<ContractResponse> => {
+    return {
+      status: 200,
+      body: {
+        message: "Hello, world!",
+      },
+    };
+  },
+};
