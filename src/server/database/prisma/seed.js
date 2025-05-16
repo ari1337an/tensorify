@@ -86,16 +86,18 @@ async function main() {
   console.log("Permissions created successfully!");
 
   // Create super admin role with all org permissions
-  console.log("Creating Super Admin role...");
+  console.log("Creating or updating Super Admin role...");
 
-  // Step 1: Create the Super Admin role
-  const superAdminRole = await prisma.role.create({
-    data: {
+  // Step 1: Create or update the Super Admin role using upsert
+  const superAdminRole = await prisma.role.upsert({
+    where: { name: "Super Admin" },
+    update: {}, // No updates needed if it exists
+    create: {
       name: "Super Admin",
     },
   });
 
-  console.log(`Super Admin role created with ID: ${superAdminRole.id}`);
+  console.log(`Super Admin role with ID: ${superAdminRole.id}`);
 
   // Step 2: Query all organization permissions (permissions that start with "org:")
   const orgPermissions = await prisma.permission.findMany({
@@ -112,8 +114,15 @@ async function main() {
   console.log("Assigning organization permissions to Super Admin role...");
 
   for (const permission of orgPermissions) {
-    await prisma.rolePermission.create({
-      data: {
+    await prisma.rolePermission.upsert({
+      where: {
+        roleId_permissionId: {
+          roleId: superAdminRole.id,
+          permissionId: permission.id,
+        },
+      },
+      update: {}, // No updates needed if it exists
+      create: {
         roleId: superAdminRole.id,
         permissionId: permission.id,
       },
