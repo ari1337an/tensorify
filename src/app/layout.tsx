@@ -5,6 +5,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
+import { PostHogProvider } from "@/components/PostHogProvider";
+import { PrivacyBanner } from "@/components/privacy-banner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -182,22 +184,25 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen relative overscroll-none`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <div className="text-foreground min-h-screen flex flex-col">
-            <Header />
-            {/* Add padding-top to match header height */}
-            <main className="flex-1 pt-16 md:pt-20">
-              {children}
-            </main>
-            <Footer />
-            <NewsletterSignup />
-          </div>
-        </ThemeProvider>
+        <PostHogProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <div className="text-foreground min-h-screen flex flex-col">
+              <Header />
+              {/* Add padding-top to match header height */}
+              <main className="flex-1 pt-16 md:pt-20">
+                {children}
+              </main>
+              <Footer />
+              <NewsletterSignup />
+              <PrivacyBanner />
+            </div>
+          </ThemeProvider>
+        </PostHogProvider>
       </body>
     </html>
   );

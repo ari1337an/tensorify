@@ -21,11 +21,21 @@ import { Label } from "./ui/label";
 import { Checkbox } from "./ui/checkbox";
 import { validateNewsletterForm } from "@/lib/validation";
 import { motion, AnimatePresence } from "framer-motion";
+import { usePostHog } from "posthog-js/react";
+import { getFingerprint } from "@/lib/userIdentification";
+import { trackNewsletterSignup, trackNewsletterError, trackNewsletterView } from "@/lib/tracking-utils";
 
-// Import Role type from the hook file
 import type { Role } from "@/types/newsletter";
 
+// Add global type for window property
+declare global {
+  interface Window {
+    modalViewTracked?: boolean;
+  }
+}
+
 export function NewsletterSignup() {
+  const posthog = usePostHog();
   const {
     isOpen,
     closeNewsletterSignup,
@@ -45,9 +55,15 @@ export function NewsletterSignup() {
     Record<string, string>
   >({});
 
-  // Prevent body scroll when dialog is open
+  // Track only when the modal is opened (important for funnel analytics)
   useEffect(() => {
     if (isOpen) {
+      // Track modal view - only once
+      if (!window.modalViewTracked) {
+        trackNewsletterView();
+        window.modalViewTracked = true;
+      }
+
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -56,21 +72,27 @@ export function NewsletterSignup() {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen]);
+  }, [isOpen, posthog]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Get fingerprint for tracking
+    const fingerprint = getFingerprint();
 
     // Modified validation to make consent optional
     const validationResult = validateNewsletterForm(
       form.email,
       form.role,
       form.otherRole,
-      // Pass true here to skip consent validation - we're making it optional
       true
     );
 
     if (!validationResult.isValid) {
+      // Track validation errors (important to understand form issues)
+      trackNewsletterError("validation", Object.keys(validationResult.errors));
+
+
       setValidationErrors(validationResult.errors);
       return;
     }
@@ -91,7 +113,8 @@ export function NewsletterSignup() {
           email: form.email,
           role: form.role,
           otherRole: form.role === "other" ? form.otherRole : "",
-          consentGiven: form.consentGiven, // This is now optional
+          consentGiven: form.consentGiven,
+          fingerprint: fingerprint
         }),
       });
 
@@ -104,12 +127,25 @@ export function NewsletterSignup() {
       // Set success state
       setStatus("success");
 
+      // Track successful signup (critical conversion metric)
+      trackNewsletterSignup(form.email, {
+        role: form.role,
+        other_role: form.role === "other" ? form.otherRole : "",
+        consent_given: form.consentGiven
+      });
+
       // Reset and close after delay
       setTimeout(() => {
         closeNewsletterSignup();
         resetForm();
       }, 2000);
     } catch (error) {
+      // Track submission error (important for debugging)
+      // Only track serious errors to reduce noise
+      if (!(error instanceof Error && error.message.includes("Failed to sign up"))) {
+        trackNewsletterError("submission", [error instanceof Error ? error.message : "unknown_error"]);
+      }
+
       setStatus("error");
       setErrorMessage(
         error instanceof Error ? error.message : "An unknown error occurred"
@@ -120,7 +156,11 @@ export function NewsletterSignup() {
   return (
     <Dialog
       open={isOpen}
-      onOpenChange={(open) => !open && closeNewsletterSignup()}
+      onOpenChange={(open) => {
+        if (!open) {
+          closeNewsletterSignup();
+        }
+      }}
     >
       {/* Fixed positioning to center the dialog on all devices */}
       <DialogContent className="ring-2 ring-primary sm:max-w-[500px] rounded-xl border-primary/10 bg-background/95 backdrop-blur-lg p-3 sm:p-4 
@@ -146,7 +186,7 @@ export function NewsletterSignup() {
           </DialogDescription>
         </DialogHeader>
 
-        
+
         <form onSubmit={handleSubmit} className="space-y-3">
           {/* Email Input */}
           <div className="space-y-1">
