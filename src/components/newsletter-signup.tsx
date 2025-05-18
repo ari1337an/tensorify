@@ -24,6 +24,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { usePostHog } from "posthog-js/react";
 import { getFingerprint } from "@/lib/userIdentification";
 import { trackNewsletterSignup, trackNewsletterError, trackNewsletterView } from "@/lib/tracking-utils";
+import { sendTelegramNotification } from "@/lib/notification-utils";
 
 import type { Role } from "@/types/newsletter";
 
@@ -91,7 +92,9 @@ export function NewsletterSignup() {
     if (!validationResult.isValid) {
       // Track validation errors (important to understand form issues)
       trackNewsletterError("validation", Object.keys(validationResult.errors));
-
+      
+      // Send Telegram notification about validation errors
+      await sendTelegramNotification(`🚨 Newsletter form validation error: ${form.email} - ${Object.keys(validationResult.errors).join(', ')}`);
 
       setValidationErrors(validationResult.errors);
       return;
@@ -133,6 +136,9 @@ export function NewsletterSignup() {
         other_role: form.role === "other" ? form.otherRole : "",
         consent_given: form.consentGiven
       });
+      
+      // Send Telegram notification about successful signup
+      await sendTelegramNotification(`🎉 New waitlist signup: ${form.email} (${form.role}${form.role === "other" ? ` - ${form.otherRole}` : ''})`);
 
       // Reset and close after delay
       setTimeout(() => {
@@ -144,6 +150,9 @@ export function NewsletterSignup() {
       // Only track serious errors to reduce noise
       if (!(error instanceof Error && error.message.includes("Failed to sign up"))) {
         trackNewsletterError("submission", [error instanceof Error ? error.message : "unknown_error"]);
+        
+        // Send Telegram notification about submission error
+        await sendTelegramNotification(`❌ Newsletter submission error: ${form.email} - ${error instanceof Error ? error.message : "unknown error"}`);
       }
 
       setStatus("error");
