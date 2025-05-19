@@ -1,9 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
+// schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,213 +8,227 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  userId    String  @id @default(cuid()) @map("id")
-  firstName String
-  lastName  String
-  email     String  @unique
-  imageUrl  String?
+/// Enums
 
-  // Super-admin relations
-  superOrg      Organization? @relation("SuperAdmin")
-  superTeam     Team?         @relation("TeamAdmin")
-  superProject  Project?      @relation("ProjectAdmin")
-  superWorkflow Workflow?     @relation("WorkflowAdmin")
-
-  // Memberships
-  organization   Organization? @relation("OrganizationMembers", fields: [organizationId], references: [id])
-  organizationId String?
-
-  // Many-to-many relations through join tables
-  teamMembers     TeamMember[]
-  projectMembers  ProjectMember[]
-  workflowMembers WorkflowMember[]
-
-  // RBAC
-  roles UserRole[]
-
-  // Invitations sent by this user
-  sentInvitations Invitation[] @relation("SentInvitations")
-}
-
-model Organization {
-  id           String @id @default(cuid())
-  name         String
-  slug         String @unique
-  superAdminId String @unique
-  superAdmin   User   @relation("SuperAdmin", fields: [superAdminId], references: [userId], onDelete: Cascade)
-
-  members User[] @relation("OrganizationMembers")
-
-  teams      Team[]
-  projects   Project[]
-  workflows  Workflow[]
-  resource   Resource     @relation(fields: [id], references: [id])
-  Invitation Invitation[]
-}
-
-model Team {
-  id      String @id @default(cuid())
-  name    String
-  adminId String @unique
-  admin   User   @relation("TeamAdmin", fields: [adminId], references: [userId], onDelete: Cascade)
-
-  organization   Organization? @relation(fields: [organizationId], references: [id])
-  organizationId String?
-
-  members   TeamMember[]
-  projects  Project[]
-  workflows Workflow[]
-  resource  Resource     @relation(fields: [id], references: [id])
-}
-
-model Project {
-  id      String @id @default(cuid())
-  name    String
-  adminId String @unique
-  admin   User   @relation("ProjectAdmin", fields: [adminId], references: [userId], onDelete: Cascade)
-
-  organization   Organization? @relation(fields: [organizationId], references: [id])
-  organizationId String?
-  team           Team?         @relation(fields: [teamId], references: [id])
-  teamId         String?
-
-  members   ProjectMember[]
-  workflows Workflow[]
-  resource  Resource        @relation(fields: [id], references: [id])
-}
-
-model Workflow {
-  id      String @id @default(cuid())
-  name    String
-  code    Json
-  adminId String @unique
-  admin   User   @relation("WorkflowAdmin", fields: [adminId], references: [userId], onDelete: Cascade)
-
-  project   Project? @relation(fields: [projectId], references: [id])
-  projectId String?
-
-  members        WorkflowMember[]
-  plugins        PluginInstallation[]
-  resource       Resource             @relation(fields: [id], references: [id])
-  Organization   Organization?        @relation(fields: [organizationId], references: [id])
-  organizationId String?
-  Team           Team?                @relation(fields: [teamId], references: [id])
-  teamId         String?
-}
-
-model Plugin {
-  id            String               @id @default(cuid())
-  tag           String               @unique
-  installations PluginInstallation[]
-}
-
-model PluginInstallation {
-  id         String   @id @default(cuid())
-  workflow   Workflow @relation(fields: [workflowId], references: [id])
-  workflowId String
-  plugin     Plugin   @relation(fields: [pluginId], references: [id])
-  pluginId   String
-}
-
-model Role {
-  id              String           @id @default(cuid())
-  name            String           @unique
-  rolePermissions RolePermission[]
-  userRoles       UserRole[]
-}
-
-model Permission {
-  id              String           @id @default(cuid())
-  action          String
-  resourceType    String // The type of resource this permission applies to
-  rolePermissions RolePermission[]
-
-  @@unique([action, resourceType])
-}
-
-model Resource {
-  id           String         @id @default(cuid())
-  userRoles    UserRole[]
-  Organization Organization[]
-  Team         Team[]
-  Project      Project[]
-  Workflow     Workflow[]
-}
-
-// Join tables for memberships
-model TeamMember {
-  user   User   @relation(fields: [userId], references: [userId])
-  userId String
-  team   Team   @relation(fields: [teamId], references: [id])
-  teamId String
-
-  @@id([userId, teamId])
-}
-
-model ProjectMember {
-  user      User    @relation(fields: [userId], references: [userId])
-  userId    String
-  project   Project @relation(fields: [projectId], references: [id])
-  projectId String
-
-  @@id([userId, projectId])
-}
-
-model WorkflowMember {
-  user       User     @relation(fields: [userId], references: [userId])
-  userId     String
-  workflow   Workflow @relation(fields: [workflowId], references: [id])
-  workflowId String
-
-  @@id([userId, workflowId])
-}
-
-// RBAC join tables
-model UserRole {
-  id         String   @id @default(cuid())
-  user       User     @relation(fields: [userId], references: [userId])
-  userId     String
-  role       Role     @relation(fields: [roleId], references: [id])
-  roleId     String
-  resource   Resource @relation(fields: [resourceId], references: [id])
-  resourceId String
-
-  @@index([userId])
-  @@index([resourceId])
-}
-
-model RolePermission {
-  role         Role       @relation(fields: [roleId], references: [id])
-  roleId       String
-  permission   Permission @relation(fields: [permissionId], references: [id])
-  permissionId String
-
-  @@id([roleId, permissionId])
+enum ResourceType {
+  ORGANIZATION
+  TEAM
+  PROJECT
+  WORKFLOW
 }
 
 enum InvitationStatus {
   PENDING
   ACCEPTED
-  DECLINED
   EXPIRED
+  REVOKED
+}
+
+enum PermissionType {
+  ALLOW
+  DENY
+}
+
+enum MembershipRole {
+  MEMBER
+  ADMIN
+  OWNER
+}
+
+/// Models
+
+model User {
+  id            String           @id @default(uuid())
+  email         String           @unique
+  firstName     String?
+  lastName      String?
+  imageUrl      String?
+
+  /// Organizational memberships
+  createdOrgs   Organization[]   @relation("OrgCreator")
+  memberships   OrgMembership[]  @relation("UserMemberships")
+  teams         Team[]           @relation("TeamMembers")
+  projects      Project[]        @relation("ProjectMembers")
+  workflows     Workflow[]       @relation("WorkflowMembers")
+
+  userRoles     UserRole[]
+  invitations   Invitation[]     @relation("Inviter")
+  auditLogs     AuditLog[]
+  userResources UserResource[]   @relation("UserResourcesRelation")
+  
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+}
+
+model OrgMembership {
+  id             String         @id @default(uuid())
+  user           User           @relation("UserMemberships", fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  organization   Organization   @relation("OrgMemberships", fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  role           MembershipRole @default(MEMBER)
+  isDefault      Boolean        @default(false) // Indicates if this is the user's default organization
+  
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])  
+}
+
+model Organization {
+  id           String           @id @default(uuid())
+  name         String
+  slug         String           @unique
+  createdBy    User             @relation("OrgCreator", fields: [createdById], references: [id])
+  createdById  String
+
+  members      OrgMembership[]  @relation("OrgMemberships")
+  teams        Team[]           @relation("OrgTeams")
+  roles        Role[]           @relation("OrgRoles")
+
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+model Team {
+  id           String        @id @default(uuid())
+  name         String
+  org          Organization  @relation("OrgTeams", fields: [orgId], references: [id])
+  orgId        String
+
+  members      User[]        @relation("TeamMembers")
+  projects     Project[]     @relation("TeamProjects")
+  roles        Role[]        @relation("TeamRoles")
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Project {
+  id           String       @id @default(uuid())
+  name         String
+  team         Team         @relation("TeamProjects", fields: [teamId], references: [id])
+  teamId       String
+
+  members      User[]       @relation("ProjectMembers")
+  workflows    Workflow[]   @relation("ProjectWorkflows")
+  roles        Role[]       @relation("ProjectRoles")
+
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Workflow {
+  id           String       @id @default(uuid())
+  name         String
+  project      Project      @relation("ProjectWorkflows", fields: [projectId], references: [id])
+  projectId    String
+
+  members      User[]       @relation("WorkflowMembers")
+  roles        Role[]       @relation("WorkflowRoles")
+
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model PermissionDefinition {
+  id        String           @id @default(uuid())
+  action    String           @unique
+  roles     RolePermission[]
+}
+
+model Role {
+  id             String             @id @default(uuid())
+  name           String
+  description    String?
+  resourceType   ResourceType
+  resourceId     String?
+
+  // Scoped inverse relations
+  organization   Organization?      @relation("OrgRoles", fields: [organizationId], references: [id])
+  organizationId String?
+  team           Team?              @relation("TeamRoles", fields: [teamId], references: [id])
+  teamId         String?
+  project        Project?           @relation("ProjectRoles", fields: [projectId], references: [id])
+  projectId      String?
+  workflow       Workflow?          @relation("WorkflowRoles", fields: [workflowId], references: [id])
+  workflowId     String?
+
+  permissions    RolePermission[]
+  userRoles      UserRole[]
+  invitations    Invitation[]       @relation("RoleInvitations")
+  userResources  UserResource[]     @relation("RoleResources")
+
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+}
+
+model RolePermission {
+  id             String               @id @default(uuid())
+  role           Role                 @relation(fields: [roleId], references: [id])
+  roleId         String
+  permission     PermissionDefinition @relation(fields: [permissionId], references: [id])
+  permissionId   String
+  type           PermissionType       @default(ALLOW)
+
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+}
+
+model UserRole {
+  id         String   @id @default(uuid())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  role       Role     @relation(fields: [roleId], references: [id])
+  roleId     String
+  expiresAt  DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model Invitation {
-  id             String           @id @default(cuid())
-  email          String // Email of the invited user
-  organizationId String
-  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  roleIds        Json // Array of Role IDs to be assigned upon acceptance
+  id             String           @id @default(uuid())
+  email          String
+  token          String           @unique
+  resourcePath   String
+  propagateRoles Boolean          @default(false)
   status         InvitationStatus @default(PENDING)
-  expiresAt      DateTime
-  invitedById    String
-  invitedBy      User             @relation("SentInvitations", fields: [invitedById], references: [userId])
+  expiresAt      DateTime         @default(dbgenerated("now() + interval '72 hours'"))
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
-  @@unique([email, organizationId]) // A user can only be invited once per organization if the invitation is active
+  role           Role             @relation("RoleInvitations", fields: [roleId], references: [id])
+  roleId         String
+  inviter        User             @relation("Inviter", fields: [inviterId], references: [id])
+  inviterId      String
+
   @@index([status])
 }
 
-// Minor change to trigger regeneration
+model AuditLog {
+  id           String   @id @default(uuid())
+  action       String
+  details      Json?
+  outcome      String
+  resourcePath String
+  timestamp    DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id])
+  userId       String
+}
+
+model UserResource {
+  id            String   @id @default(uuid())
+  resourcePath  String
+  inheritedFrom String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation("UserResourcesRelation", fields: [userId], references: [id])
+  userId        String
+
+  role          Role?    @relation("RoleResources", fields: [roleId], references: [id])
+  roleId        String?
+}
