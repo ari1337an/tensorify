@@ -10,7 +10,7 @@ import { type Role as PrismaRole } from "@prisma/client";
 import {
   PeopleListEntry,
   RoleDisplayInfo,
-} from "@/app/(protected)/(enterprise)/_components/settings/group/people/columns";
+} from "@/app/(application)/(protected)/(enterprise)/_components/settings/group/people/columns";
 
 const SLUG_MIN_LENGTH = 3;
 const SLUG_MAX_LENGTH = 63; // Standard subdomain length limit

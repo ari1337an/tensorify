@@ -2,14 +2,14 @@
 
 import * as React from "react";
 import { Avatar } from "@/app/_components/ui/avatar";
-import { MenuItem } from "@/app/(protected)/(enterprise)/_components/sidebar/MenuItem";
+import { MenuItem } from "@/app/(application)/(protected)/(enterprise)/_components/sidebar/MenuItem";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/app/_components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
-import { ProjectDialog } from "@/app/(protected)/(enterprise)/_components/dialog";
+import { ProjectDialog } from "@/app/(application)/(protected)/(enterprise)/_components/dialog";
 import {
   DndContext,
   DragEndEvent,

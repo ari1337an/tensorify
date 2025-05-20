@@ -27,7 +27,7 @@ import {
   UserCheckIcon,
   UserPlusIcon,
 } from "lucide-react";
-import { fetchRoles as fetchAvailableRolesServer } from "@/app/(protected)/(enterprise)/_components/settings/group/rbac/server";
+import { fetchRoles as fetchAvailableRolesServer } from "@/app/(application)/(protected)/(enterprise)/_components/settings/group/rbac/server";
 import {
   updateInvitationRoles,
   revokeInvitation as revokeInvitationAction,

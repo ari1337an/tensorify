@@ -8,11 +8,11 @@ import {
   Unlock,
 } from "lucide-react";
 import { Button } from "@/app/_components/ui/button";
-import { CollaboratorAvatars } from "@/app/(protected)/(enterprise)/_components/navbar/CollaboratorAvatars";
+import { CollaboratorAvatars } from "@/app/(application)/(protected)/(enterprise)/_components/navbar/CollaboratorAvatars";
 import { useState } from "react";
 import { cn } from "@/app/_lib/utils";
-import { ExportDialog } from "@/app/(protected)/(enterprise)/_components/dialog/ExportDialog";
-import { ShareDialog } from "@/app/(protected)/(enterprise)/_components/dialog/ShareDialog";
+import { ExportDialog } from "@/app/(application)/(protected)/(enterprise)/_components/dialog/ExportDialog";
+import { ShareDialog } from "@/app/(application)/(protected)/(enterprise)/_components/dialog/ShareDialog";
 
 // Example collaborators data - in a real app, this would come from your collaboration system
 const collaborators = [

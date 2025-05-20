@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import db from "@/server/database/db";
-import { PeopleListEntry } from "@/app/(protected)/(enterprise)/_components/settings/group/people/columns";
+import { PeopleListEntry } from "@/app/(application)/(protected)/(enterprise)/_components/settings/group/people/columns";
 import { auth } from "@clerk/nextjs/server";
 
 const paginationSchema = z.object({

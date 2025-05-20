@@ -1,6 +1,6 @@
 "use client";
-import { NavbarLeft } from "@/app/(protected)/(enterprise)/_components/navbar/NavbarLeft";
-import { NavbarRight } from "@/app/(protected)/(enterprise)/_components/navbar/NavbarRight";
+import { NavbarLeft } from "@/app/(application)/(protected)/(enterprise)/_components/navbar/NavbarLeft";
+import { NavbarRight } from "@/app/(application)/(protected)/(enterprise)/_components/navbar/NavbarRight";
 
 export function Navbar() {
   return (

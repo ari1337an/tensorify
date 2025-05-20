@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE — DO NOT EDIT MANUALLY
-// Generated on: 5/17/2025, 2:24:56 AM
+// Generated on: 5/20/2025, 7:00:44 AM
 
 import { initContract } from "@ts-rest/core";
 import { tsr } from "@ts-rest/serverless/next";

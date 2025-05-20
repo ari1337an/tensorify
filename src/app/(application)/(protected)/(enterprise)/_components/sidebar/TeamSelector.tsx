@@ -22,8 +22,8 @@ import {
 } from "@/app/_components/ui/dropdown-menu";
 import { useSidebar } from "./SidebarContext";
 import { useAuth } from "@clerk/nextjs";
-import { TeamDialog } from "@/app/(protected)/(enterprise)/_components/dialog";
-import { useSettingsDialog } from "@/app/(protected)/(enterprise)/_components/settings";
+import { TeamDialog } from "@/app/(application)/(protected)/(enterprise)/_components/dialog";
+import { useSettingsDialog } from "@/app/(application)/(protected)/(enterprise)/_components/settings";
 import { Badge } from "@/app/_components/ui/badge";
 
 type Team = {

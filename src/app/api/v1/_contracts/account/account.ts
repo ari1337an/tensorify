@@ -1,4 +1,4 @@
-import { ServerInferResponses } from "@ts-rest/core";
+import { ServerInferRequest, ServerInferResponses } from "@ts-rest/core";
 import { initContract } from "@ts-rest/core";
 import { z } from "zod";
 
@@ -11,19 +11,22 @@ extendZodWithOpenApi(z);
 export const contract = c.router(
   {
     contract: {
-      method: "GET",
+      method: "POST",
       path: "/account",
       responses: {
-        200: z.object({
+        201: z.object({
           message: z.string(),
         }),
       },
+      body: z.object({
+        name: z.string(),
+      }),
       metadata: {
         openApiTags: ["account"],
         // openApiSecurity: [{ bearerAuth: [] }],
       },
-      summary: "another test",
-      description: "Test desc",
+      summary: "Create a new account",
+      description: "Create a new account",
     },
   },
   {
@@ -31,15 +34,15 @@ export const contract = c.router(
   }
 );
 
-// type ContractRequest = ServerInferRequest<typeof contract.contract>;
+type ContractRequest = ServerInferRequest<typeof contract.contract>;
 type ContractResponse = ServerInferResponses<typeof contract.contract>;
 
 export const action = {
-  contract: async (): Promise<ContractResponse> => {
+  contract: async ({ body }: ContractRequest): Promise<ContractResponse> => {
     return {
-      status: 200,
+      status: 201,
       body: {
-        message: "Hello, world!",
+        message: `Hello, ${body.name}!`,
       },
     };
   },

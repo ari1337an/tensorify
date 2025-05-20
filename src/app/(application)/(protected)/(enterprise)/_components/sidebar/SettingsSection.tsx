@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Settings, FileText, Trash2 } from "lucide-react";
 import { MenuItem } from "./MenuItem";
-import { useSettingsDialog } from "@/app/(protected)/(enterprise)/_components/settings";
+import { useSettingsDialog } from "@/app/(application)/(protected)/(enterprise)/_components/settings";
 
 type SettingsSectionProps = {
   activeItem: string;

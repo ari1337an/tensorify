@@ -35,6 +35,7 @@ async function generateIndex() {
     ignore: [
       "**/index.ts", // skip index.ts
       `${API_DIR}/*.ts`, // skip top-level .ts files in /api
+      "**/*.test.ts",
     ],
   });
 

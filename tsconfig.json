@@ -21,8 +21,8 @@
     "paths": {
       "@/*": ["./src/*"],
       "@canvas/*": ["./src/app/(protected)/(canvas)/*"],
-      "@onboarding/*": ["./src/app/(onboarding)/*"],
-      "@enterprise/*": ["./src/app/(protected)/(enterprise)/*"],
+      "@onboarding/*": ["./src/app/(application)/(onboarding)/*"],
+      "@enterprise/*": ["./src/app/(application)/(protected)/(enterprise)/*"],
       "@app/*": ["./src/app/*"]
     }
   },
