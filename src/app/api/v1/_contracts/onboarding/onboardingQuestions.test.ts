@@ -13,15 +13,19 @@ afterAll(async () => {
   await closeApiTestServer(server);
 });
 
-it("/onboarding/questions should return 200", async () => {
-  const res = await request(server).get("/onboarding/questions");
-  
-  // Check status code
-  expect(res.status).toBe(200);
+describe("GET /onboarding/questions", () => {
+  it("should return 200 OK", async () => {
+    const res = await request(server).get("/onboarding/questions");
+    expect(res.status).toBe(200);
+  });
 
-  // Full schema validation using Zod
-  expect(() => OnboardingVersion.parse(res.body)).not.toThrow(); 
+  it("should match the OnboardingVersion schema", async () => {
+    const res = await request(server).get("/onboarding/questions");
+    expect(() => OnboardingVersion.parse(res.body)).not.toThrow();
+  });
 
-  // Check if we fetched the correct tag
-  expect(res.body.tag).toBe(process.env.NEXT_PUBLIC_ONBOARDING_TAG);
-}, 15000); // Add timeout for this specific test
+  it("should return correct tag from environment", async () => {
+    const res = await request(server).get("/onboarding/questions");
+    expect(res.body.tag).toBe(process.env.NEXT_PUBLIC_ONBOARDING_TAG);
+  });
+}); 

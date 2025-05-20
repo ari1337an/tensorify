@@ -1,6 +1,6 @@
 import { initContract } from "@ts-rest/core";
 import { ServerInferResponses, TsRestResponseError } from "@ts-rest/core";
-import { z } from "zod";
+import { z, ZodIssue } from "zod";
 
 const c = initContract();
 
@@ -98,6 +98,17 @@ export const action = {
         })
       ),
     };
+    // validate the result against the schema
+    const validatedResult = OnboardingVersion.safeParse(result);
+    if (!validatedResult.success) {
+      throw new TsRestResponseError(contract, {
+        status: 500,
+        body: {
+          status: "failed",
+          message: validatedResult.error.issues.map((issue: ZodIssue) => issue.message).join(", "),
+        },
+      });
+    }
     return {
       status: 200,
       body: result,

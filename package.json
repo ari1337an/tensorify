@@ -16,7 +16,7 @@
     "postinstall": "npm run prisma:generate && npm run prisma:seed",
     "generate:tsrest": "node scripts/generate-tsrest-index.cjs",
     "watch:tsrest": "node scripts/watch-tsrest.cjs",
-    "test": "env-cmd -f .env.test.local jest"
+    "test": "env-cmd -f .env.test.local jest --runInBand --verbose"
   },
   "dependencies": {
     "@anatine/zod-openapi": "^2.2.8",
