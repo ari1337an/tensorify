@@ -3,7 +3,7 @@ const chokidar = require("chokidar");
 const { exec } = require("child_process");
 
 const watcher = chokidar.watch("src/app/api/v1/_contracts", {
-  ignored: ["src/app/api/v1/_contracts/index.ts", "src/app/api/v1/_contracts/schema.ts"],
+  ignored: ["src/app/api/v1/_contracts/index.ts", "src/app/api/v1/_contracts/schema.ts", "src/app/api/v1/_contracts/test-utils.ts", "src/app/api/v1/_contracts/auth-utils.ts"],
   ignoreInitial: true,
   awaitWriteFinish: true,
 });
