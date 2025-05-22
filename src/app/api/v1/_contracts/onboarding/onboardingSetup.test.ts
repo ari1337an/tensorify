@@ -158,7 +158,7 @@ describe("POST /onboarding/setup", () => {
     const requestBody = await generateRequestBodyFromClerkData(clerkData);
 
     // Initiate request with no Bearer Token
-    const res = await request(server).post("/onboarding/setup").send(requestBody);
+    const res = await request(server).post("/onboarding/setup").send(requestBody).set("Authorization", `Bearer ${clerkData.jwt}`);
 
     // Expect all goes well
     expect(res.status).toBe(201);

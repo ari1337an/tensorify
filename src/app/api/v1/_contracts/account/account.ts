@@ -5,6 +5,8 @@ import { z } from "zod";
 const c = initContract();
 
 import { extendZodWithOpenApi } from "@anatine/zod-openapi";
+import { tsr } from "@ts-rest/serverless/next";
+import { JwtPayloadSchema } from "../schema";
 
 extendZodWithOpenApi(z);
 
@@ -38,12 +40,17 @@ type ContractRequest = ServerInferRequest<typeof contract.contract>;
 type ContractResponse = ServerInferResponses<typeof contract.contract>;
 
 export const action = {
-  contract: async ({ body }: ContractRequest): Promise<ContractResponse> => {
-    return {
-      status: 201,
-      body: {
-        message: `Hello, ${body.name}!`,
-      },
-    };
-  },
+  contract: tsr.routeWithMiddleware(contract.contract)<
+    { decodedJwt: z.infer<typeof JwtPayloadSchema> },
+    Record<string, never> 
+  >({
+    handler: async ({ body }: ContractRequest): Promise<ContractResponse> => {
+      return {
+        status: 201,
+        body: {
+          message: `Hello, ${body.name}!`,
+        },
+      };
+    },
+  }),
 };

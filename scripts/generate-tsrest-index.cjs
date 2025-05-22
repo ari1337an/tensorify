@@ -61,6 +61,8 @@ async function generateIndex() {
 
 import { initContract } from "@ts-rest/core";
 import { tsr } from "@ts-rest/serverless/next";
+import { JwtPayloadSchema } from "./schema";
+import { z } from "zod";
 
 ${imports.join("\n")}
 
@@ -70,7 +72,9 @@ export const contract = c.router({
 ${contractEntries.join("\n")}
 });
 
-export const appRouter = tsr.router(contract, {
+export const appRouter = tsr.routerWithMiddleware(contract)<{
+  decodedJwt: z.infer<typeof JwtPayloadSchema>;
+}>({
 ${actionEntries.join("\n")}
 });
 `;
