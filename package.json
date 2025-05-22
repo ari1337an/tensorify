@@ -16,7 +16,10 @@
     "postinstall": "npm run prisma:generate && npm run prisma:seed",
     "generate:tsrest": "node scripts/generate-tsrest-index.cjs",
     "watch:tsrest": "node scripts/watch-tsrest.cjs",
-    "test": "env-cmd -f .env.test.local jest --runInBand --verbose"
+    "docker:up": "docker compose -f docker-compose.test.yml up -d",
+    "docker:down": "docker compose -f docker-compose.test.yml down",
+    "migrate:postgres:test": "dotenv -e .env.test -- npx prisma db push --force-reset",
+    "test": "npm run docker:up; npm run prisma:generate; npm run migrate:postgres:test; env-cmd -f .env.test jest --runInBand --verbose; npm run docker:down"
   },
   "dependencies": {
     "@anatine/zod-openapi": "^2.2.8",
@@ -69,6 +72,7 @@
     "cmdk": "^1.1.1",
     "cookies": "^0.9.1",
     "date-fns": "^4.1.0",
+    "dotenv-cli": "^8.0.0",
     "embla-carousel-react": "^8.5.2",
     "framer-motion": "^12.6.2",
     "input-otp": "^1.4.2",
