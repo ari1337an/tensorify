@@ -324,6 +324,7 @@ export const OnboardingSetupResponse = z.object({ // using
   workflowId: UUID,
   orgName: ORGNAME,
   orgUrl: SLUG,
+  responseId: UUID,
 });
 
 // Lists and Pagination

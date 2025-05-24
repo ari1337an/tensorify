@@ -160,6 +160,24 @@ export const action = {
           });
         }
 
+        // Submit onboarding data to controls
+        const onboardingResponse = await fetch(
+          `${process.env.CONTROLS_BASE_URL}/api/onboarding/responses`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              tag: process.env.NEXT_PUBLIC_ONBOARDING_TAG || "apptensorifyio-onboarding-beta-v01",
+              userId: userId,
+              email: request.decodedJwt.email,
+              clientFingerprint: body.clientFingerprint,
+              intentTag: body.usageSelection,
+              orgSizeBracket: body.orgSize,
+              answers: body.answers,
+            }),
+          }
+        );
+        const onboardingResponseJson = await onboardingResponse.json();
+
         return {
           status: 201,
           body: {
@@ -169,6 +187,7 @@ export const action = {
             workflowId: (workflow as Workflow).id,
             orgName: (organization as Organization).name,
             orgUrl: (organization as Organization).slug,
+            responseId: onboardingResponseJson.responseId,
           },
         };
       } catch (err: unknown) {

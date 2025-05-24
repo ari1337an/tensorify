@@ -7,6 +7,7 @@ import {
   signInTestAccount,
 } from "../test-utils";
 import {
+  OnboardingAnswer,
   OnboardingQuestion,
   OnboardingSetupRequest,
   OnboardingSetupResponse,
@@ -159,7 +160,10 @@ describe("POST /onboarding/setup", () => {
     const requestBody = await generateRequestBodyFromClerkData(clerkData);
 
     // Initiate request with no Bearer Token
-    const res = await request(server).post("/onboarding/setup").send(requestBody).set("Authorization", `Bearer ${clerkData.jwt}`);
+    const res = await request(server)
+      .post("/onboarding/setup")
+      .send(requestBody)
+      .set("Authorization", `Bearer ${clerkData.jwt}`);
 
     // Expect all goes well
     expect(res.status).toBe(201);
@@ -201,7 +205,9 @@ describe("POST /onboarding/setup", () => {
       where: { id: parsedResponseBody.data.teamId },
     });
     expect(team).toBeDefined();
-    expect(team?.name).toBe(`${clerkData.decoded.firstName.split(" ")[0]}'s Team`);
+    expect(team?.name).toBe(
+      `${clerkData.decoded.firstName.split(" ")[0]}'s Team`
+    );
     expect(team?.orgId).toBe(parsedResponseBody.data.orgId);
 
     // Expect the project to be created
@@ -209,7 +215,9 @@ describe("POST /onboarding/setup", () => {
       where: { id: parsedResponseBody.data.projectId },
     });
     expect(project).toBeDefined();
-    expect(project?.name).toBe(`${clerkData.decoded.firstName.split(" ")[0]}'s Project`);
+    expect(project?.name).toBe(
+      `${clerkData.decoded.firstName.split(" ")[0]}'s Project`
+    );
     expect(project?.teamId).toBe(parsedResponseBody.data.teamId);
 
     // Expect the workflow to be created
@@ -217,7 +225,57 @@ describe("POST /onboarding/setup", () => {
       where: { id: parsedResponseBody.data.workflowId },
     });
     expect(workflow).toBeDefined();
-    expect(workflow?.name).toBe(`${clerkData.decoded.firstName.split(" ")[0]}'s Workflow`);
+    expect(workflow?.name).toBe(
+      `${clerkData.decoded.firstName.split(" ")[0]}'s Workflow`
+    );
     expect(workflow?.projectId).toBe(parsedResponseBody.data.projectId);
+
+    // Check if the onboarding response is created
+    const controlsOrgSizeBracketMapper = {
+      // For the sake of testing, we need to map the org size bracket to the correct value
+      LT_20: "<20",
+      FROM_20_TO_99: "20-99",
+      FROM_100_TO_499: "100-499",
+      FROM_500_TO_999: "500-999",
+      GTE_1000: "1000+",
+      // For the sake of testing, we need to map the org size bracket to the correct value
+      "<20": "LT_20",
+      "20-99": "FROM_20_TO_99",
+      "100-499": "FROM_100_TO_499",
+      "500-999": "FROM_500_TO_999",
+      "1000+": "GTE_1000",
+    };
+    const onboardingResponse = await fetch(
+      `${process.env.CONTROLS_BASE_URL}/api/onboarding/responses/${parsedResponseBody.data.responseId}`
+    );
+    const onboardingResponseJson = await onboardingResponse.json();
+    expect(onboardingResponseJson.response.id).toBe(
+      parsedResponseBody.data.responseId
+    );
+    expect(onboardingResponseJson.response.userId).toBe(clerkData.decoded.sub);
+    expect(onboardingResponseJson.response.email).toBe(clerkData.decoded.email);
+    expect(onboardingResponseJson.response.clientFingerprint).toBe(
+      requestBody.clientFingerprint
+    );
+    expect(onboardingResponseJson.response.intentTag).toBe(
+      requestBody.usageSelection
+    );
+    expect(
+      controlsOrgSizeBracketMapper[
+        onboardingResponseJson.response
+          .orgSizeBracket as keyof typeof controlsOrgSizeBracketMapper
+      ]
+    ).toBe(requestBody.orgSize);
+
+    // check if the answers are correctly mapped individually
+    const answers = requestBody.answers;
+    expect(answers.length).toBe(requestBody.answers.length);
+    for (const answer of answers) {
+      const question = onboardingResponseJson.response.answers.find(
+        (q: z.infer<typeof OnboardingAnswer>) =>
+          q.questionId === answer.questionId
+      );
+      expect(question).toBeDefined();
+    }
   });
 });
