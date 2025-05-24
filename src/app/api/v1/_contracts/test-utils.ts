@@ -112,20 +112,23 @@ export async function closeApiTestServer(server: Server): Promise<void> {
  * @param expect - The expect object from Jest.
  */
 export async function flushDatabase(expect?: jest.Expect) {
-  const modelNames = Object.keys(db).filter(
-    (key) => !["_", "$"].includes(key[0]) && key !== "constructor"
-  );
+  const tablenames = await db.$queryRaw<
+    Array<{ tablename: string }>
+  >`SELECT tablename FROM pg_tables WHERE schemaname='public'`;
 
-  for (let i = 0; i < modelNames.length; i += 1) {
-    const name = modelNames[i];
-    try {
-      // @ts-expect-error https://github.com/prisma/docs/issues/451
-      await db[name].deleteMany();
-    } catch (e) {
-      console.error(`Error while deleting ${name}`);
-      throw e;
-    }
+  const tables = tablenames
+    .map(({ tablename }) => tablename)
+    .filter((name) => name !== "_prisma_migrations")
+    .map((name) => `"public"."${name}"`)
+    .join(", ");
+
+  try {
+    await db.$executeRawUnsafe(`TRUNCATE TABLE ${tables} CASCADE;`);
+  } catch (error) {
+    console.log({ error });
+    throw error;
   }
+
   const message = expect?.getState().currentTestName;
   if (message) {
     process.stdout.write(`Database flushed for ${message}\n`);
@@ -141,16 +144,20 @@ export async function flushDatabase(expect?: jest.Expect) {
  * @param falseJwt - Whether to return a false JWT that would fail the auth check.
  * @returns The session ID and JWT.
  */
-export async function signInTestAccount(botNum: number, revoke: boolean = true, falseJwt: boolean = false) {
+export async function signInTestAccount(
+  botNum: number,
+  revoke: boolean = true,
+  falseJwt: boolean = false
+) {
   const clerkClient = createClerkClient({
     secretKey: process.env.CLERK_SECRET_KEY,
   });
 
-  const botIds = ["user_2xLLWhUxEMd1EbDXsfAyfyCFXtE"] // integration_test_bot1
+  const botIds = ["user_2xLLWhUxEMd1EbDXsfAyfyCFXtE"]; // integration_test_bot1
 
   const session = await clerkClient.sessions.createSession({
     // for testing only
-    userId: botIds[botNum-1],
+    userId: botIds[botNum - 1],
   });
 
   const jwtObj = await clerkClient.sessions.getToken(session.id, "jwt"); // make sure "jwt" is in clerk
@@ -161,13 +168,17 @@ export async function signInTestAccount(botNum: number, revoke: boolean = true, 
     { algorithms: ["RS256"] }
   );
 
-  const result = { sessionId: session.id, jwt: jwtObj.jwt, decoded: decoded as {
-    sub: string;
-    email: string;
-    imageUrl: string;
-    firstName: string;
-    lastName: string;
-  }};
+  const result = {
+    sessionId: session.id,
+    jwt: jwtObj.jwt,
+    decoded: decoded as {
+      sub: string;
+      email: string;
+      imageUrl: string;
+      firstName: string;
+      lastName: string;
+    },
+  };
 
   if (revoke) {
     await clerkClient.sessions.revokeSession(session.id);

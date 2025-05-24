@@ -13,6 +13,7 @@ import {
 } from "../schema";
 import { z } from "zod";
 import { generateMock } from "@anatine/zod-mock";
+import db from "@/server/database/db";
 let server: ReturnType<typeof createServer>;
 
 async function generateRequestBodyFromClerkData(clerkData: {
@@ -176,5 +177,47 @@ describe("POST /onboarding/setup", () => {
     expect(parsedResponseBody.data.workflowId).toBeDefined();
     expect(parsedResponseBody.data.orgName).toBeDefined();
     expect(parsedResponseBody.data.orgUrl).toBeDefined();
+
+    // Expect the user to be created
+    const user = await db.user.findUnique({
+      where: { id: clerkData.decoded.sub },
+    });
+    expect(user).toBeDefined();
+    expect(user?.id).toBe(clerkData.decoded.sub);
+    expect(user?.firstName).toBe(clerkData.decoded.firstName);
+    expect(user?.lastName).toBe(clerkData.decoded.lastName);
+    expect(user?.email).toBe(clerkData.decoded.email);
+
+    // Expect the org to be created
+    const org = await db.organization.findUnique({
+      where: { id: parsedResponseBody.data.orgId },
+    });
+    expect(org).toBeDefined();
+    expect(org?.name).toBe(parsedResponseBody.data.orgName);
+    expect(org?.slug).toBe(parsedResponseBody.data.orgUrl);
+
+    // Expect the team to be created
+    const team = await db.team.findUnique({
+      where: { id: parsedResponseBody.data.teamId },
+    });
+    expect(team).toBeDefined();
+    expect(team?.name).toBe(`${clerkData.decoded.firstName.split(" ")[0]}'s Team`);
+    expect(team?.orgId).toBe(parsedResponseBody.data.orgId);
+
+    // Expect the project to be created
+    const project = await db.project.findUnique({
+      where: { id: parsedResponseBody.data.projectId },
+    });
+    expect(project).toBeDefined();
+    expect(project?.name).toBe(`${clerkData.decoded.firstName.split(" ")[0]}'s Project`);
+    expect(project?.teamId).toBe(parsedResponseBody.data.teamId);
+
+    // Expect the workflow to be created
+    const workflow = await db.workflow.findUnique({
+      where: { id: parsedResponseBody.data.workflowId },
+    });
+    expect(workflow).toBeDefined();
+    expect(workflow?.name).toBe(`${clerkData.decoded.firstName.split(" ")[0]}'s Workflow`);
+    expect(workflow?.projectId).toBe(parsedResponseBody.data.projectId);
   });
 });
