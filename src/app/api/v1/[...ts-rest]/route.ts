@@ -26,7 +26,7 @@ const handler = createNextHandler(contract, appRouter, {
           )
           .join(", ");
 
-        // console.log("\x1b[31m%s\x1b[0m", errorMessage);
+        console.log("\x1b[31m%s\x1b[0m", errorMessage);
 
         return TsRestResponse.fromJson(
           {

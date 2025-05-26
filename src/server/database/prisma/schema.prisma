@@ -40,9 +40,9 @@ enum MembershipRole {
 model User {
   id            String           @id @default(uuid())
   email         String           @unique
-  firstName     String?
-  lastName      String?
-  imageUrl      String?
+  firstName     String
+  lastName      String
+  imageUrl      String
 
   /// Organizational memberships
   createdOrgs   Organization[]   @relation("OrgCreator")

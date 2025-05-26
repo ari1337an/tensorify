@@ -6,6 +6,9 @@ import db from "@/server/database/db";
 import { createClerkClient } from "@clerk/backend";
 const API_PREFIX = `/api/${version.apiVersion}`;
 import jwt from "jsonwebtoken";
+import { OnboardingSetupRequest } from "./schema";
+import { OnboardingQuestion } from "./schema";
+import { z } from "zod";
 
 export async function createApiTestServer(): Promise<Server> {
   const server = createServer(async (req, res) => {
@@ -153,7 +156,7 @@ export async function signInTestAccount(
     secretKey: process.env.CLERK_SECRET_KEY,
   });
 
-  const botIds = ["user_2xLLWhUxEMd1EbDXsfAyfyCFXtE"]; // integration_test_bot1
+  const botIds = ["user_2xLLWhUxEMd1EbDXsfAyfyCFXtE", "user_2xdxI5ZwYaOqiDzy0FgQkVdsw5j"]; // integration_test_bot1, integration_test_bot2
 
   const session = await clerkClient.sessions.createSession({
     // for testing only
@@ -189,4 +192,69 @@ export async function signInTestAccount(
   }
 
   return result;
+}
+
+/**
+ * Revokes a session.
+ * @param sessionId - The ID of the session to revoke.
+ */
+export async function revokeSession(sessionId: string) {
+  const clerkClient = createClerkClient({
+    secretKey: process.env.CLERK_SECRET_KEY,
+  });
+
+  await clerkClient.sessions.revokeSession(sessionId);
+}
+
+/**
+ * Generates a request body from Clerk data.
+ * @param clerkData - The Clerk data to generate the request body from.
+ * @returns The request body.
+ */
+export async function generateRequestBodyFromClerkDataForOnboardingSetup(clerkData: {
+  jwt: string;
+  decoded: {
+    sub: string;
+    email: string;
+    imageUrl: string;
+    firstName: string;
+    lastName: string;
+  };
+}, givenQuestions: z.infer<typeof OnboardingQuestion>[]) {
+  // Get onboarding questions
+  const questions = givenQuestions;
+
+  const requestBody = {
+    userId: clerkData.decoded.sub,
+    email: clerkData.decoded?.email,
+    imageUrl: clerkData.decoded?.imageUrl,
+    firstName: clerkData.decoded?.firstName,
+    lastName: clerkData.decoded?.lastName,
+    orgUrl: "test-org-url",
+    orgName: "test org name",
+    answers: questions.map((question: z.infer<typeof OnboardingQuestion>) => {
+      if (question.type === "single_choice") {
+        return {
+          questionId: question.id,
+          selectedOptionIds: [question.options[0].id],
+        };
+      } else if (question.type === "multi_choice") {
+        return {
+          questionId: question.id,
+          selectedOptionIds: [question.options[0].id, question.options[1].id],
+        };
+      } else {
+        throw new Error(`Unsupported question type: ${question.type}`);
+      }
+    }),
+    usageSelection: "WILL_PAY_HOBBY",
+    orgSize: "<20",
+    clientFingerprint: "1234567890",
+  } as z.infer<typeof OnboardingSetupRequest>;
+  const parsedRequestBody = OnboardingSetupRequest.safeParse(requestBody);
+  if (!parsedRequestBody.success) {
+    throw new Error(`Invalid request body: ${parsedRequestBody.error}`);
+  }
+
+  return parsedRequestBody.data;
 }

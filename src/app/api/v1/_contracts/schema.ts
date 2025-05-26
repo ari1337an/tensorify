@@ -14,15 +14,26 @@ export const JwtPayloadSchema = z.object({
   name: z.string(),
   nbf: z.number(),
   sub: z.string(),
-})
+});
 
 // Reusable primitives
 export const UUID = z.string().uuid({ message: "Invalid UUID" });
-export const USERID = z.string().regex(/^user_[a-zA-Z0-9]+$/, { message: "Invalid user ID" }); // example user_2xLLWhUxEMd1EbDXsfAyfyCFXtE
-export const SLUG = z.string().regex(/^[a-z0-9-]+$/, { message: "Invalid slug" })
+export const USERID = z
+  .string()
+  .regex(/^user_[a-zA-Z0-9]+$/, { message: "Invalid user ID" }); // example user_2xLLWhUxEMd1EbDXsfAyfyCFXtE
+export const SLUG = z
+  .string()
+  .regex(/^[a-z0-9-]+$/, { message: "Invalid slug" });
 
-export const ORGURL = z.string().regex(/^[a-z0-9-]+$/, { message: "Invalid org URL" }).max(100, { message: "Org URL must be less than 100 characters" }).min(1, { message: "Org URL is required" })
-export const ORGNAME = z.string().max(100, { message: "Org name must be less than 100 characters" }).min(1, { message: "Org name is required" })
+export const ORGURL = z
+  .string()
+  .regex(/^[a-z0-9-]+$/, { message: "Invalid org URL" })
+  .max(100, { message: "Org URL must be less than 100 characters" })
+  .min(1, { message: "Org URL is required" });
+export const ORGNAME = z
+  .string()
+  .max(100, { message: "Org name must be less than 100 characters" })
+  .min(1, { message: "Org name is required" });
 
 export const Page = z.number().int().min(1).default(1);
 export const Size = z.number().int().min(1).max(100).default(20);
@@ -70,15 +81,19 @@ export const Session = z.object({
     .string()
     .ip({ version: "v4", message: "Invalid IPv4 address" })
     .or(z.string().ip({ version: "v6", message: "Invalid IPv6 address" }))
+    .or(z.literal("Unknown"))
     .optional(),
   location: z.string().optional(),
   lastActiveAt: z
     .string()
-    .refine((val) => !isNaN(Date.parse(val)), { message: "Invalid date-time" }),
+    .refine((date) => !isNaN(new Date(Number(date)).getTime()), {
+      message: "Invalid date",
+    }),
 });
 
 // Account
 export const AccountInfo = z.object({
+  userId: USERID,
   portraitUrl: z.string().url().optional(),
   firstName: z.string(),
   lastName: z.string(),
@@ -255,7 +270,8 @@ export const AuditLog = z.object({
 });
 
 // Onboarding
-export const OnboardingOption = z.object({ // using
+export const OnboardingOption = z.object({
+  // using
   id: UUID,
   questionId: UUID,
   value: z.string(),
@@ -264,13 +280,15 @@ export const OnboardingOption = z.object({ // using
   sortOrder: z.number().int(),
 });
 
-export const OnboardingAnswer = z.object({ // using 
+export const OnboardingAnswer = z.object({
+  // using
   questionId: UUID,
   customValue: z.string().nullable().optional(),
   selectedOptionIds: z.array(UUID).optional(),
 });
 
-export const OnboardingQuestion = z.object({ // using 
+export const OnboardingQuestion = z.object({
+  // using
   id: UUID,
   versionId: UUID,
   slug: z.string(),
@@ -286,7 +304,8 @@ export const OnboardingQuestion = z.object({ // using
   options: z.array(OnboardingOption),
 });
 
-export const OnboardingVersion = z.object({ // using 
+export const OnboardingVersion = z.object({
+  // using
   id: UUID,
   tag: z.string({ message: "Tag is required" }),
   title: z.string({ message: "Title is required" }),
@@ -294,15 +313,22 @@ export const OnboardingVersion = z.object({ // using
   status: z.string({ message: "Status is required" }),
   createdAt: z
     .string()
-    .refine((val) => !isNaN(Date.parse(val)), { message: "Invalid creation date-time" }),
+    .refine((val) => !isNaN(Date.parse(val)), {
+      message: "Invalid creation date-time",
+    }),
   publishedAt: z
     .string()
-    .refine((val) => !isNaN(Date.parse(val)), { message: "Invalid published date-time" }),
-  questions: z.array(OnboardingQuestion).min(1, { message: "At least 1 questions is required" }),
+    .refine((val) => !isNaN(Date.parse(val)), {
+      message: "Invalid published date-time",
+    }),
+  questions: z
+    .array(OnboardingQuestion)
+    .min(1, { message: "At least 1 questions is required" }),
 });
 
 export const OnboardingSetupRequest = z
-  .object({ // using
+  .object({
+    // using
     userId: USERID, // from clerk userId
     email: z.string().email(), // from clerk email
     imageUrl: z.string().url(), // from clerk imageUrl
@@ -311,14 +337,26 @@ export const OnboardingSetupRequest = z
     orgUrl: ORGURL,
     orgName: ORGNAME,
     answers: z.array(OnboardingAnswer),
-    usageSelection: z.string().regex(/^WILL_NOT_PAY|WILL_PAY_HOBBY|WILL_PAY_TEAM|ENTERPRISE_POTENTIAL$/, { message: "Invalid usage selection" }).optional(),
-    orgSize: z.string().regex(/^<20|20-99|100-499|500-999|1000+$/, { message: "Invalid org size" }).optional(),
+    usageSelection: z
+      .string()
+      .regex(
+        /^WILL_NOT_PAY|WILL_PAY_HOBBY|WILL_PAY_TEAM|ENTERPRISE_POTENTIAL$/,
+        { message: "Invalid usage selection" }
+      )
+      .optional(),
+    orgSize: z
+      .string()
+      .regex(/^<20|20-99|100-499|500-999|1000+$/, {
+        message: "Invalid org size",
+      })
+      .optional(),
     clientFingerprint: z.string().nullable().optional(),
   })
   .strict();
 
-export const OnboardingSetupResponse = z.object({ // using
-  orgId: UUID, 
+export const OnboardingSetupResponse = z.object({
+  // using
+  orgId: UUID,
   teamId: UUID,
   projectId: UUID,
   workflowId: UUID,
