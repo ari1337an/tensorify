@@ -10,6 +10,8 @@ import { OnboardingSetupRequest, OnboardingVersion } from "./schema";
 import { OnboardingQuestion } from "./schema";
 import { z } from "zod";
 import { randomUUID } from "crypto";
+import path from "path";
+import fs from "fs/promises";
 
 export async function createApiTestServer(): Promise<Server> {
   const server = createServer(async (req, res) => {
@@ -109,6 +111,35 @@ export async function closeApiTestServer(server: Server): Promise<void> {
   });
 }
 
+export async function upsertPermissionsForTest() {
+  try {
+    // Read permissions from JSON file
+    const permissionsFile = path.join(
+      process.cwd(),
+      "src",
+      "server",
+      "database",
+      "prisma",
+      "permissions.json"
+    );
+    const permissionsData = await fs.readFile(permissionsFile, "utf8");
+    const permissions = JSON.parse(permissionsData);
+
+    // Upsert each permission individually
+    for (const permission of permissions) {
+      await db.permissionDefinition.upsert({
+        where: { action: permission.action },
+        update: {}, // No update needed since we only ensure existence
+        create: {
+          action: permission.action,
+        },
+      });
+    }
+  } catch (error) {
+    console.error("Error upserting permissions:", error);
+  } 
+}
+
 /**
  * Flushes the database for the current test case.
  *
@@ -132,6 +163,8 @@ export async function flushDatabase(expect?: jest.Expect) {
     console.log({ error });
     throw error;
   }
+
+  await upsertPermissionsForTest();
 
   const message = expect?.getState().currentTestName;
   if (message) {
@@ -157,7 +190,10 @@ export async function signInTestAccount(
     secretKey: process.env.CLERK_SECRET_KEY,
   });
 
-  const botIds = ["user_2xLLWhUxEMd1EbDXsfAyfyCFXtE", "user_2xdxI5ZwYaOqiDzy0FgQkVdsw5j"]; // integration_test_bot1, integration_test_bot2
+  const botIds = [
+    "user_2xLLWhUxEMd1EbDXsfAyfyCFXtE",
+    "user_2xdxI5ZwYaOqiDzy0FgQkVdsw5j",
+  ]; // integration_test_bot1, integration_test_bot2
 
   const session = await clerkClient.sessions.createSession({
     // for testing only
@@ -212,13 +248,15 @@ export async function revokeSession(sessionId: string) {
  * @param clerkData - The Clerk data to generate the request body from.
  * @returns The request body.
  */
-export async function generateRequestBodyFromClerkDataForOnboardingSetup(givenQuestions: z.infer<typeof OnboardingVersion>[]) {
+export async function generateRequestBodyFromClerkDataForOnboardingSetup(
+  givenQuestions: z.infer<typeof OnboardingVersion>[]
+) {
   const parsedQuestions = OnboardingVersion.safeParse(givenQuestions);
-  
+
   if (!parsedQuestions.success) {
     throw new Error(`Invalid questions: ${parsedQuestions.error}`);
   }
-  
+
   // Get onboarding questions
   const questions = parsedQuestions.data.questions;
 
