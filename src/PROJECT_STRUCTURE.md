@@ -27,7 +27,7 @@ The application is structured using route groups for logical code organization w
         - `route.ts` - Route handler for generating OpenAPI specification from ts-rest contracts.
       - `_contracts/` - Type-safe API contracts and actions using ts-rest.
         - `index.ts` - Main contract router that combines all API endpoints and their actions.
-        - `schema.ts` - Zod schemas for API request/response validation including JWT payload, user types, account schemas, and error responses.
+        - `schema.ts` - Zod schemas for API request/response validation including JWT payload, user types, account schemas, organization schemas, and error responses.
         - `auth-utils.ts` - Authentication utilities and middleware for securing API endpoints.
         - `test-utils.ts` - Utilities for testing API endpoints including test server setup and helper functions.
         - `version.json` - API version information file.
@@ -39,6 +39,9 @@ The application is structured using route groups for logical code organization w
           - `getTestJwt.ts` - Utility endpoint for generating test JWTs for development and testing purposes.
           - `uploadPortrait.ts` - POST endpoint for uploading user portrait images with multipart/form-data support, file validation (type, size), and automatic file storage to public/portraits directory.
           - `uploadPortrait.test.ts` - Comprehensive test suite for the POST portrait upload endpoint covering authentication (Bearer token and cookie), authorization, user existence validation, file validation (type, size, empty files), successful uploads with imageUrl database updates, support for multiple image formats (JPEG, PNG, GIF, WebP), imageUrl change verification, maximum file size handling, unsupported format rejection, and error handling. Includes 17 test cases with proper setup/teardown, database management, and file upload simulation using test_avatar.jpeg.
+        - `organization/` - Organization management API endpoints.
+          - `getOrganization.ts` - GET endpoint for retrieving user's organization information including organizations created by the authenticated user. Returns array of organization objects with id, name, and slug properties.
+          - `getOrganization.test.ts` - Comprehensive test suite for the GET organization endpoint covering authentication (Bearer token and cookie), authorization, user existence validation, organization retrieval scenarios, multiple organizations support, proper data structure validation, and error handling. Includes 10 test cases with proper setup/teardown and database management following established testing patterns.
         - `onboarding/` - Onboarding process API endpoints.
           - `onboardingQuestions.ts` - GET endpoint for fetching onboarding questions from external API.
           - `onboardingQuestions.test.ts` - Tests for the onboarding questions endpoint.

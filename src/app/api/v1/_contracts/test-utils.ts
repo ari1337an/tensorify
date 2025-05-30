@@ -9,6 +9,7 @@ import jwt from "jsonwebtoken";
 import { OnboardingSetupRequest, OnboardingVersion } from "./schema";
 import { OnboardingQuestion } from "./schema";
 import { z } from "zod";
+import { randomUUID } from "crypto";
 
 export async function createApiTestServer(): Promise<Server> {
   const server = createServer(async (req, res) => {
@@ -222,8 +223,8 @@ export async function generateRequestBodyFromClerkDataForOnboardingSetup(givenQu
   const questions = parsedQuestions.data.questions;
 
   const requestBody = {
-    orgUrl: "test-org-url",
-    orgName: "test org name",
+    orgUrl: `test-org-url-${randomUUID()}`,
+    orgName: `test org name ${randomUUID()}`,
     answers: questions.map((question: z.infer<typeof OnboardingQuestion>) => {
       if (question.type === "single_choice") {
         return {

@@ -119,7 +119,7 @@ export const Organization = z.object({
   slug: z.string().regex(/^[a-z0-9-]+$/),
 });
 
-export const OrgInfo = z.object({ org: Organization });
+export const OrgInfo = z.array(Organization);
 export const OrgUpdate = z
   .object({
     orgName: z.string(),
