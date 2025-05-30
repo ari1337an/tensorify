@@ -17,26 +17,12 @@ import { generateMock } from "@anatine/zod-mock";
 import db from "@/server/database/db";
 let server: ReturnType<typeof createServer>;
 
-async function generateRequestBodyFromClerkData(clerkData: {
-  jwt: string;
-  decoded: {
-    sub: string;
-    email: string;
-    imageUrl: string;
-    firstName: string;
-    lastName: string;
-  };
-}) {
+async function generateRequestBody() {
   // Get onboarding questions
   const questions = (await request(server).get("/onboarding/questions")).body
     .questions;
 
   const requestBody = {
-    userId: clerkData.decoded.sub,
-    email: clerkData.decoded?.email,
-    imageUrl: clerkData.decoded?.imageUrl,
-    firstName: clerkData.decoded?.firstName,
-    lastName: clerkData.decoded?.lastName,
     orgUrl: "test-org-url",
     orgName: "test org name",
     answers: questions.map((question: z.infer<typeof OnboardingQuestion>) => {
@@ -83,7 +69,7 @@ describe("POST /onboarding/setup", () => {
     const clerkData = await signInTestAccount(1);
 
     // Prepare request body
-    const requestBody = await generateRequestBodyFromClerkData(clerkData);
+    const requestBody = await generateRequestBody();
 
     // Initiate
     const res = await request(server)
@@ -103,7 +89,7 @@ describe("POST /onboarding/setup", () => {
     const clerkData = await signInTestAccount(1);
 
     // Prepare request body
-    const requestBody = await generateRequestBodyFromClerkData(clerkData);
+    const requestBody = await generateRequestBody();
 
     // Initiate
     const res = await request(server)
@@ -157,7 +143,7 @@ describe("POST /onboarding/setup", () => {
     const clerkData = await signInTestAccount(1);
 
     // Prepare request body
-    const requestBody = await generateRequestBodyFromClerkData(clerkData);
+    const requestBody = await generateRequestBody();
 
     // Initiate request with no Bearer Token
     const res = await request(server)

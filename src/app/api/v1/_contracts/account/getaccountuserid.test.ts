@@ -25,10 +25,8 @@ describe("/account/:userId", () => {
 
     const userData = await signInTestAccount(1, true, false);
     const questions = (await request(server).get("/onboarding/questions")).body
-      .questions;
     const requestBody =
       await generateRequestBodyFromClerkDataForOnboardingSetup(
-        userData,
         questions
       );
 
@@ -47,10 +45,8 @@ describe("/account/:userId", () => {
 
     const userData = await signInTestAccount(1, false, false);
     const questions = (await request(server).get("/onboarding/questions")).body
-      .questions;
     const requestBody =
       await generateRequestBodyFromClerkDataForOnboardingSetup(
-        userData,
         questions
       );
 
@@ -79,11 +75,9 @@ describe("/account/:userId", () => {
 
     const userData1 = await signInTestAccount(1, false, false);
     const userData2 = await signInTestAccount(2, false, false);
-    const questions = (await request(server).get("/onboarding/questions")).body
-      .questions;
+    const questions = (await request(server).get("/onboarding/questions")).body;
     const requestBody =
       await generateRequestBodyFromClerkDataForOnboardingSetup(
-        userData1,
         questions
       );
 

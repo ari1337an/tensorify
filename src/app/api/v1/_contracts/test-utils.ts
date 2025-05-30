@@ -6,7 +6,7 @@ import db from "@/server/database/db";
 import { createClerkClient } from "@clerk/backend";
 const API_PREFIX = `/api/${version.apiVersion}`;
 import jwt from "jsonwebtoken";
-import { OnboardingSetupRequest } from "./schema";
+import { OnboardingSetupRequest, OnboardingVersion } from "./schema";
 import { OnboardingQuestion } from "./schema";
 import { z } from "zod";
 
@@ -211,25 +211,17 @@ export async function revokeSession(sessionId: string) {
  * @param clerkData - The Clerk data to generate the request body from.
  * @returns The request body.
  */
-export async function generateRequestBodyFromClerkDataForOnboardingSetup(clerkData: {
-  jwt: string;
-  decoded: {
-    sub: string;
-    email: string;
-    imageUrl: string;
-    firstName: string;
-    lastName: string;
-  };
-}, givenQuestions: z.infer<typeof OnboardingQuestion>[]) {
+export async function generateRequestBodyFromClerkDataForOnboardingSetup(givenQuestions: z.infer<typeof OnboardingVersion>[]) {
+  const parsedQuestions = OnboardingVersion.safeParse(givenQuestions);
+  
+  if (!parsedQuestions.success) {
+    throw new Error(`Invalid questions: ${parsedQuestions.error}`);
+  }
+  
   // Get onboarding questions
-  const questions = givenQuestions;
+  const questions = parsedQuestions.data.questions;
 
   const requestBody = {
-    userId: clerkData.decoded.sub,
-    email: clerkData.decoded?.email,
-    imageUrl: clerkData.decoded?.imageUrl,
-    firstName: clerkData.decoded?.firstName,
-    lastName: clerkData.decoded?.lastName,
     orgUrl: "test-org-url",
     orgName: "test org name",
     answers: questions.map((question: z.infer<typeof OnboardingQuestion>) => {

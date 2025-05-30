@@ -18,6 +18,32 @@ The application is structured using route groups for logical code organization w
     - `send-invite-email.ts` - API route for sending organization invite emails using Resend and React email template.
     - `roles/` - API routes for managing roles and permissions.
       - `route.ts` - API handler for creating and listing roles with CRUD operations.
+    - `v1/` - Version 1 API endpoints using ts-rest framework for type-safe API contracts.
+      - `page.tsx` - Swagger UI page for API documentation with dark theme support.
+      - `swagger-ui-dark.css` - Dark theme styles for the Swagger UI documentation.
+      - `[...ts-rest]/` - Catch-all route for ts-rest API router.
+        - `route.ts` - Main ts-rest router handler for all v1 API endpoints.
+      - `openapi.json/` - OpenAPI JSON specification generation.
+        - `route.ts` - Route handler for generating OpenAPI specification from ts-rest contracts.
+      - `_contracts/` - Type-safe API contracts and actions using ts-rest.
+        - `index.ts` - Main contract router that combines all API endpoints and their actions.
+        - `schema.ts` - Zod schemas for API request/response validation including JWT payload, user types, account schemas, and error responses.
+        - `auth-utils.ts` - Authentication utilities and middleware for securing API endpoints.
+        - `test-utils.ts` - Utilities for testing API endpoints including test server setup and helper functions.
+        - `version.json` - API version information file.
+        - `account/` - Account management API endpoints.
+          - `getaccountuserid.ts` - GET endpoint for retrieving user account information including sessions for authenticated users.
+          - `getaccountuserid.test.ts` - Comprehensive tests for the GET account endpoint covering authentication, authorization, and data retrieval scenarios.
+          - `patchAccount.ts` - PATCH endpoint for updating user account information (firstName, lastName) and managing sessions with session retention functionality. Supports both Bearer token and cookie authentication, validates request bodies, and handles session revocation while keeping specified sessions active.
+          - `patchAccount.test.ts` - Comprehensive test suite for the PATCH account endpoint covering authentication (Bearer token and cookie), authorization, user existence validation, request body validation, profile updates (firstName, lastName), session management (revocation and retention), combined operations, error handling (Clerk API errors, database failures), and edge cases (undefined values, empty strings, special characters, multiple sessions). Includes 24 test cases organized into logical groups with proper setup/teardown and database management.
+          - `getTestJwt.ts` - Utility endpoint for generating test JWTs for development and testing purposes.
+          - `uploadPortrait.ts` - POST endpoint for uploading user portrait images with multipart/form-data support, file validation (type, size), and automatic file storage to public/portraits directory.
+          - `uploadPortrait.test.ts` - Comprehensive test suite for the POST portrait upload endpoint covering authentication (Bearer token and cookie), authorization, user existence validation, file validation (type, size, empty files), successful uploads with imageUrl database updates, support for multiple image formats (JPEG, PNG, GIF, WebP), imageUrl change verification, maximum file size handling, unsupported format rejection, and error handling. Includes 17 test cases with proper setup/teardown, database management, and file upload simulation using test_avatar.jpeg.
+        - `onboarding/` - Onboarding process API endpoints.
+          - `onboardingQuestions.ts` - GET endpoint for fetching onboarding questions from external API.
+          - `onboardingQuestions.test.ts` - Tests for the onboarding questions endpoint.
+          - `onboardingSetup.ts` - POST endpoint for submitting onboarding data and setting up user accounts.
+          - `onboardingSetup.test.ts` - Tests for the onboarding setup process.
 
 ### Global Providers
 
@@ -224,6 +250,7 @@ The application is structured using route groups for logical code organization w
   - `onboarding-actions.ts` - Server actions for handling onboarding data submission to the external API.
   - `email-actions.ts` - Server actions for sending emails using Resend, like organization invites.
   - `invitation-actions.ts` - New server actions for managing the lifecycle of user invitations. Includes creating new invitations (now with robust error handling for email sending), fetching pending invitations for a user, processing accepted invitations (upserting user, assigning roles, and updating invitation status within a transaction), declining invitations, checking if a user can be invited (verifies against existing members and pending invites), updating roles for pending invitations, and revoking pending invitations.
+  - `file-upload.ts` - Utilities for handling file uploads with validation, storage to public directory, and support for image files with size/type restrictions.
 - `src/server/flows/` - Server-side flows for complex operations.
   - `onboarding/` - Flows related to user onboarding.
     - `setup-account.ts` - Creates a complete account setup with organizational structure in a single transaction, including organization, team, project, and workflow creation with proper access controls. Extracts organization slug from the provided organization URL.

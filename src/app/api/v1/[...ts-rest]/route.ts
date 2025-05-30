@@ -15,6 +15,29 @@ const handler = createNextHandler(contract, appRouter, {
   errorHandler: (error: unknown, request: TsRestRequest) => {
     if (
       (error as { constructor: { name: string } }).constructor.name ==
+      "RequestValidationError"
+    ) {
+      const validationError = error as { error: ZodError };
+
+      if (validationError.error instanceof ZodError) {
+        const errorMessage = validationError.error.issues
+          .map(
+            (issue) => `${issue.path.join(".") || "field"}: ${issue.message}`
+          )
+          .join(", ");
+
+        console.log("\x1b[31m%s\x1b[0m", errorMessage);
+
+        return TsRestResponse.fromJson(
+          {
+            type: "RequestValidationError",
+            errors: errorMessage,
+          },
+          { status: 400 }
+        );
+      }
+    } else if (
+      (error as { constructor: { name: string } }).constructor.name ==
       "ResponseValidationError"
     ) {
       const validationError = error as { error: ZodError };
@@ -36,12 +59,12 @@ const handler = createNextHandler(contract, appRouter, {
           { status: 400 }
         );
       }
+    } else {
+      return TsRestResponse.fromJson(
+        { message: "Internal Server Error." },
+        { status: 500 }
+      );
     }
-
-    return TsRestResponse.fromJson(
-      { message: "Internal Server Error." },
-      { status: 500 }
-    );
   },
   handlerType: "app-router",
 });

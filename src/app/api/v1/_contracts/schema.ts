@@ -105,10 +105,12 @@ export const AccountUpdate = z
   .object({
     firstName: z.string().optional(),
     lastName: z.string().optional(),
-    portraitUrl: z.string().url().optional(),
-    sessionId: z.string().optional(),
+    sessionId: z.array(z.string()).optional(),
   })
-  .strict();
+  .strict()
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "Request validation failed",
+  });
 
 // Organization
 export const Organization = z.object({
@@ -311,16 +313,12 @@ export const OnboardingVersion = z.object({
   title: z.string({ message: "Title is required" }),
   description: z.string().nullable(),
   status: z.string({ message: "Status is required" }),
-  createdAt: z
-    .string()
-    .refine((val) => !isNaN(Date.parse(val)), {
-      message: "Invalid creation date-time",
-    }),
-  publishedAt: z
-    .string()
-    .refine((val) => !isNaN(Date.parse(val)), {
-      message: "Invalid published date-time",
-    }),
+  createdAt: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Invalid creation date-time",
+  }),
+  publishedAt: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Invalid published date-time",
+  }),
   questions: z
     .array(OnboardingQuestion)
     .min(1, { message: "At least 1 questions is required" }),
@@ -329,11 +327,11 @@ export const OnboardingVersion = z.object({
 export const OnboardingSetupRequest = z
   .object({
     // using
-    userId: USERID, // from clerk userId
-    email: z.string().email(), // from clerk email
-    imageUrl: z.string().url(), // from clerk imageUrl
-    firstName: z.string(), // from clerk firstName
-    lastName: z.string(), // from clerk lastName
+    // userId: USERID, // from clerk userId
+    // email: z.string().email(), // from clerk email
+    // imageUrl: z.string().url(), // from clerk imageUrl
+    // firstName: z.string(), // from clerk firstName
+    // lastName: z.string(), // from clerk lastName
     orgUrl: ORGURL,
     orgName: ORGNAME,
     answers: z.array(OnboardingAnswer),

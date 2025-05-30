@@ -5,6 +5,7 @@ import { JwtPayloadSchema } from "./schema";
 import * as cookie from "cookie";
 import { tsr, TsRestResponse } from "@ts-rest/serverless/next";
 import { z } from "zod";
+import { format } from "timeago.js";
 
 export const secureByAuthentication = tsr.middleware<{
   decodedJwt: z.infer<typeof JwtPayloadSchema>;
@@ -19,7 +20,7 @@ export const secureByAuthentication = tsr.middleware<{
 
   if (!tokenSameOrigin && !tokenCrossOrigin) {
     return TsRestResponse.fromJson(
-      { message: "Unauthorized" },
+      { message: "Unauthorized: No bearer token or cookie provided!" },
       { status: 401 }
     );
   }
@@ -42,7 +43,7 @@ export const secureByAuthentication = tsr.middleware<{
     const currentTime = Math.floor(Date.now() / 1000);
     if (decoded.exp < currentTime || decoded.nbf > currentTime) {
       return TsRestResponse.fromJson(
-        { message: "Unauthorized" },
+        { message: "Unauthorized: Token expired or not yet valid!" },
         { status: 401 }
       );
     }
@@ -50,10 +51,25 @@ export const secureByAuthentication = tsr.middleware<{
     request.decodedJwt = decoded;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
-    // MUST throw an error to be caught by the error handler as the try body is leveraing the try catch block to throw a single error
-    return TsRestResponse.fromJson(
-      { message: "Unauthorized" },
-      { status: 401 }
-    );
+    if (error instanceof jwt.TokenExpiredError) {
+      return TsRestResponse.fromJson(
+        {
+          message:
+            "Unauthorized: Token expired " +
+            format(new Date(error.expiredAt).toISOString()),
+        },
+        { status: 401 }
+      );
+    } else if (error instanceof jwt.JsonWebTokenError) {
+      return TsRestResponse.fromJson(
+        { message: "Unauthorized: Invalid token!" },
+        { status: 401 }
+      );
+    } else {
+      return TsRestResponse.fromJson(
+        { message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
   }
 });
