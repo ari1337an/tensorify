@@ -6,15 +6,46 @@ import { tsr } from "@ts-rest/serverless/next";
 import { JwtPayloadSchema } from "./schema";
 import { z } from "zod";
 
-import { contract as getAccountUserIdContract, action as getAccountUserIdAction } from "./account/getAccountUserId";
-import { contract as getTestJwtContract, action as getTestJwtAction } from "./account/getTestJwt";
-import { contract as patchAccountContract, action as patchAccountAction } from "./account/patchAccount";
-import { contract as uploadPortraitContract, action as uploadPortraitAction } from "./account/uploadPortrait";
-import { contract as onboardingQuestionsContract, action as onboardingQuestionsAction } from "./onboarding/onboardingQuestions";
-import { contract as onboardingSetupContract, action as onboardingSetupAction } from "./onboarding/onboardingSetup";
-import { contract as getOrganizationContract, action as getOrganizationAction } from "./organization/getOrganization";
-import { contract as getPermissionsContract, action as getPermissionsAction } from "./permissions/getPermissions";
-import { contract as postRolesContract, action as postRolesAction } from "./roles/postRoles";
+import {
+  contract as getAccountUserIdContract,
+  action as getAccountUserIdAction,
+} from "./account/getAccountUserId";
+import {
+  contract as getTestJwtContract,
+  action as getTestJwtAction,
+} from "./account/getTestJwt";
+import {
+  contract as patchAccountContract,
+  action as patchAccountAction,
+} from "./account/patchAccount";
+import {
+  contract as uploadPortraitContract,
+  action as uploadPortraitAction,
+} from "./account/uploadPortrait";
+import {
+  contract as onboardingQuestionsContract,
+  action as onboardingQuestionsAction,
+} from "./onboarding/onboardingQuestions";
+import {
+  contract as onboardingSetupContract,
+  action as onboardingSetupAction,
+} from "./onboarding/onboardingSetup";
+import {
+  contract as getOrganizationContract,
+  action as getOrganizationAction,
+} from "./organization/getOrganization";
+import {
+  contract as getPermissionsContract,
+  action as getPermissionsAction,
+} from "./permissions/getPermissions";
+import {
+  contract as postRolesContract,
+  action as postRolesAction,
+} from "./roles/postRoles";
+import {
+  contract as getRolesContract,
+  action as getRolesAction,
+} from "./roles/getRoles";
 
 const c = initContract();
 
@@ -28,6 +59,7 @@ export const contract = c.router({
   getOrganization: getOrganizationContract,
   getPermissions: getPermissionsContract,
   postRoles: postRolesContract,
+  getRoles: getRolesContract,
 });
 
 export const appRouter = tsr.routerWithMiddleware(contract)<{
@@ -42,4 +74,5 @@ export const appRouter = tsr.routerWithMiddleware(contract)<{
   getOrganization: getOrganizationAction,
   getPermissions: getPermissionsAction,
   postRoles: postRolesAction,
+  getRoles: getRolesAction,
 });

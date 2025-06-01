@@ -49,7 +49,6 @@ export const secureByAuthentication = tsr.middleware<{
     }
 
     request.decodedJwt = decoded;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
       return TsRestResponse.fromJson(
