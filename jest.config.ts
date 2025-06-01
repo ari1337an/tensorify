@@ -64,7 +64,7 @@ const config: Config = {
   // globalSetup: "./scripts/test/global-beforeAll-testing-setup.cjs",
 
   // A path to a module which exports an async function that is triggered once after all test suites
-  // globalTeardown: undefined,
+  globalTeardown: "./scripts/test/global-afterAll-testing-setup.cjs",
 
   // A set of global variables that need to be available in all test environments
   // globals: {},
