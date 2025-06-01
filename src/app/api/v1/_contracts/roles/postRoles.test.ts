@@ -128,8 +128,6 @@ describe("POST /roles", () => {
       ],
     };
 
-    console.dir(createRolePayload, { depth: null });
-
     const res = await request(server)
       .post("/roles")
       .set("Authorization", `Bearer ${jwt}`)
