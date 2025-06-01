@@ -28,9 +28,13 @@ describe("GET /permissions", () => {
     expect(res.status).toBe(200);
     expect(res.body.length).toBe(permissionsJson.length);
 
-    const permissions = res.body as z.infer<typeof Permission>[];
-    permissions.forEach((permission) => {
-      expect(permissionsJson).toContainEqual(permission);
-    });
+    const parsedRes = z.array(Permission).safeParse(res.body);
+
+    expect(parsedRes.success).toBe(true);
+
+    const resPermsButOnlyActions = parsedRes.data?.map((p) => p.action);
+    const seedPermsButOnlyActions = permissionsJson.map((p) => p.action);
+
+    expect(resPermsButOnlyActions).toEqual(seedPermsButOnlyActions);
   });
 });

@@ -47,6 +47,12 @@ The application is structured using route groups for logical code organization w
           - `onboardingQuestions.test.ts` - Tests for the onboarding questions endpoint.
           - `onboardingSetup.ts` - POST endpoint for submitting onboarding data and setting up user accounts.
           - `onboardingSetup.test.ts` - Tests for the onboarding setup process.
+        - `roles/` - Role management API endpoints.
+          - `postRoles.ts` - POST endpoint for creating new roles with associated permissions. Validates permission existence before role creation, creates the role record, and establishes RolePermission links through the intermediate table. Includes comprehensive error handling for invalid permissions and proper response validation.
+          - `postRoles.test.ts` - Comprehensive test suite for the POST roles endpoint covering authentication, authorization, request validation, permission existence validation, role creation scenarios, and error handling.
+        - `permissions/` - Permission management API endpoints.
+          - `getPermissions.ts` - GET endpoint for retrieving all system permissions from the PermissionDefinition table. Returns a list of available permissions with their IDs and actions for use in role creation and management.
+          - `getPermissions.test.ts` - Test suite for the GET permissions endpoint covering authentication, data retrieval, and response validation.
 
 ### Global Providers
 

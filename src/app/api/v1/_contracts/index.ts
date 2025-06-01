@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE — DO NOT EDIT MANUALLY
-// Generated on: 5/31/2025, 11:02:29 AM
+// Generated on: 6/1/2025, 2:17:34 PM
 
 import { initContract } from "@ts-rest/core";
 import { tsr } from "@ts-rest/serverless/next";
@@ -12,8 +12,9 @@ import { contract as patchAccountContract, action as patchAccountAction } from "
 import { contract as uploadPortraitContract, action as uploadPortraitAction } from "./account/uploadPortrait";
 import { contract as onboardingQuestionsContract, action as onboardingQuestionsAction } from "./onboarding/onboardingQuestions";
 import { contract as onboardingSetupContract, action as onboardingSetupAction } from "./onboarding/onboardingSetup";
-import { contract as getPermissionsContract, action as getPermissionsAction } from "./permissions/getPermissions";
 import { contract as getOrganizationContract, action as getOrganizationAction } from "./organization/getOrganization";
+import { contract as getPermissionsContract, action as getPermissionsAction } from "./permissions/getPermissions";
+import { contract as postRolesContract, action as postRolesAction } from "./roles/postRoles";
 
 const c = initContract();
 
@@ -24,8 +25,9 @@ export const contract = c.router({
   uploadPortrait: uploadPortraitContract,
   onboardingQuestions: onboardingQuestionsContract,
   onboardingSetup: onboardingSetupContract,
-  getPermissions: getPermissionsContract,
   getOrganization: getOrganizationContract,
+  getPermissions: getPermissionsContract,
+  postRoles: postRolesContract,
 });
 
 export const appRouter = tsr.routerWithMiddleware(contract)<{
@@ -37,6 +39,7 @@ export const appRouter = tsr.routerWithMiddleware(contract)<{
   uploadPortrait: uploadPortraitAction,
   onboardingQuestions: onboardingQuestionsAction,
   onboardingSetup: onboardingSetupAction,
-  getPermissions: getPermissionsAction,
   getOrganization: getOrganizationAction,
+  getPermissions: getPermissionsAction,
+  postRoles: postRolesAction,
 });

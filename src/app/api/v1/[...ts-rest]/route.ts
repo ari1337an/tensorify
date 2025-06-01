@@ -1,11 +1,13 @@
 import {
   createNextHandler,
+  RequestValidationError,
+  ResponseValidationError,
+  TsRestHttpError,
   TsRestRequest,
   TsRestResponse,
 } from "@ts-rest/serverless/next";
 import { contract } from "../_contracts";
 import { appRouter } from "../_contracts";
-import { ZodError } from "zod";
 
 const handler = createNextHandler(contract, appRouter, {
   basePath: "/api/v1",
@@ -13,57 +15,64 @@ const handler = createNextHandler(contract, appRouter, {
   responseValidation: true,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   errorHandler: (error: unknown, request: TsRestRequest) => {
-    if (
-      (error as { constructor: { name: string } }).constructor.name ==
-      "RequestValidationError"
-    ) {
-      const validationError = error as { error: ZodError };
-
-      if (validationError.error instanceof ZodError) {
-        const errorMessage = validationError.error.issues
-          .map(
-            (issue) => `${issue.path.join(".") || "field"}: ${issue.message}`
-          )
-          .join(", ");
-
-        console.log("\x1b[31m%s\x1b[0m", errorMessage);
-
-        return TsRestResponse.fromJson(
-          {
-            type: "RequestValidationError",
-            errors: errorMessage,
-          },
-          { status: 400 }
-        );
+    const debug = true;
+    if (error instanceof RequestValidationError) {
+      const errorMessages: string[] = [];
+      if (error.pathParamsError) {
+        errorMessages.push(...error.pathParamsError.issues.map(issue => `Path parameter '${issue.path.join('.') || 'unknown'}': ${issue.message}`));
       }
-    } else if (
-      (error as { constructor: { name: string } }).constructor.name ==
-      "ResponseValidationError"
-    ) {
-      const validationError = error as { error: ZodError };
-
-      if (validationError.error instanceof ZodError) {
-        const errorMessage = validationError.error.issues
-          .map(
-            (issue) => `${issue.path.join(".") || "field"}: ${issue.message}`
-          )
-          .join(", ");
-
-        console.log("\x1b[31m%s\x1b[0m", errorMessage);
-
-        return TsRestResponse.fromJson(
-          {
-            type: "ResponseValidationError",
-            errors: errorMessage,
-          },
-          { status: 400 }
-        );
+      if (error.headersError) {
+        errorMessages.push(...error.headersError.issues.map(issue => `Header '${issue.path.join('.') || 'unknown'}': ${issue.message}`));
       }
+      if (error.queryError) {
+        errorMessages.push(...error.queryError.issues.map(issue => `Query parameter '${issue.path.join('.') || 'unknown'}': ${issue.message}`));
+      }
+      if (error.bodyError) {
+        errorMessages.push(...error.bodyError.issues.map(issue => `Body '${issue.path.join('.') || 'unknown'}': ${issue.message}`));
+      }
+
+      const errorMessage = errorMessages.join(', ');
+      const responseBody = {
+        type: "RequestValidationError",
+        message: errorMessage,
+      };
+      const status = 400;
+      if (debug) {
+        console.log('\x1b[31m%s\x1b[0m', JSON.stringify({ status, body: responseBody }, null, 2));
+      }
+      return TsRestResponse.fromJson(responseBody, { status });
+    } else if (error instanceof ResponseValidationError) {
+      const errorMessage = error.error.issues.map(issue => `Response '${issue.path.join('.') || 'unknown'}': ${issue.message}`).join(', ');
+      const responseBody = {
+        type: "ResponseValidationError",
+        message: errorMessage,
+      };
+      const status = 500;
+      if (debug) {
+        console.log('\x1b[31m%s\x1b[0m', JSON.stringify({ status, body: responseBody }, null, 2));
+      }
+      return TsRestResponse.fromJson(responseBody, { status });
+    } else if (error instanceof TsRestHttpError) {
+      const responseBody = {
+        type: "HttpError",
+        message: error.message,
+      };
+      const status = error.statusCode;
+      if (debug) {
+        console.log('\x1b[31m%s\x1b[0m', JSON.stringify({ status, body: responseBody }, null, 2));
+      }
+      return TsRestResponse.fromJson(responseBody, { status });
     } else {
-      return TsRestResponse.fromJson(
-        { message: "Internal Server Error." },
-        { status: 500 }
-      );
+      const responseBody = {
+        type: "InternalServerError",
+        message: "Internal Server Error.",
+      };
+      const status = 500;
+      if (debug) {
+        console.log('\x1b[31m%s\x1b[0m', JSON.stringify({ status, body: responseBody }, null, 2));
+        console.error('Unhandled error:', error);
+      }
+      return TsRestResponse.fromJson(responseBody, { status });
     }
   },
   handlerType: "app-router",
