@@ -188,7 +188,7 @@ export const AssignRoleRequest = z
 export const UserRole = z.object({
   id: UUID,
   roleId: UUID,
-  userId: UUID,
+  userId: USERID,
   expiresAt: z
     .string()
     .refine((val) => !isNaN(Date.parse(val)), { message: "Invalid date-time" })
@@ -197,7 +197,7 @@ export const UserRole = z.object({
 
 export const PermissionCheckRequest = z
   .object({
-    userId: UUID,
+    userId: USERID,
     action: z.string(),
     resourcePath: z.string(),
   })
@@ -261,7 +261,7 @@ export const Invitation = z.object({
 // Audit Log
 export const AuditLog = z.object({
   id: UUID,
-  userId: UUID,
+  userId: USERID,
   action: z.string(),
   resourcePath: z.string(),
   outcome: z.enum(["SUCCESS", "DENIED", "ERROR", "EXPIRED"]),
@@ -372,7 +372,7 @@ export const PaginationMeta = z.object({
 });
 
 export const UserListItem = z.object({
-  userId: UUID,
+  userId: USERID,
   email: z.string().email(),
   roles: z.array(z.lazy(() => RoleResponse)),
   status: z.enum(["active", "invited"]),
@@ -386,7 +386,7 @@ export const UserListResponse = z.object({
 export const TeamUserListItem = z.object({
   teamId: UUID,
   teamName: z.string(),
-  userId: UUID,
+  userId: USERID,
   email: z.string().email(),
   roles: z.array(z.lazy(() => RoleResponse)),
   status: z.enum(["active", "invited"]),
@@ -407,7 +407,7 @@ export const NewProject = z.object({ name: z.string() }).strict();
 export const ProjectUserListItem = z.object({
   projectId: UUID,
   projectName: z.string(),
-  userId: UUID,
+  userId: USERID,
   email: z.string().email(),
   roles: z.array(z.lazy(() => RoleResponse)),
   status: z.enum(["active", "invited"]),
@@ -429,7 +429,7 @@ export const Workflow = z.object({
 export const WorkflowUserListItem = z.object({
   workflowId: UUID,
   workflowName: z.string(),
-  userId: UUID,
+  userId: USERID,
   email: z.string().email(),
   roles: z.array(z.lazy(() => RoleResponse)),
   status: z.enum(["active", "invited"]),

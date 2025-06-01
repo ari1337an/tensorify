@@ -50,6 +50,10 @@ import {
   contract as patchRoleContract,
   action as patchRoleAction,
 } from "./roles/patchRole";
+import {
+  contract as postUserRoleContract,
+  action as postUserRoleAction,
+} from "./user-roles/postUserRole";
 
 const c = initContract();
 
@@ -65,6 +69,7 @@ export const contract = c.router({
   postRoles: postRolesContract,
   getRoles: getRolesContract,
   patchRole: patchRoleContract,
+  postUserRole: postUserRoleContract,
 });
 
 export const appRouter = tsr.routerWithMiddleware(contract)<{
@@ -81,4 +86,5 @@ export const appRouter = tsr.routerWithMiddleware(contract)<{
   postRoles: postRolesAction,
   getRoles: getRolesAction,
   patchRole: patchRoleAction,
+  postUserRole: postUserRoleAction,
 });

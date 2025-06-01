@@ -18,6 +18,8 @@ The application is structured using route groups for logical code organization w
     - `send-invite-email.ts` - API route for sending organization invite emails using Resend and React email template.
     - `roles/` - API routes for managing roles and permissions.
       - `route.ts` - API handler for creating and listing roles with CRUD operations.
+    - `permissions/` - API routes for managing permissions.
+      - `route.ts` - API handler for retrieving permissions data.
     - `v1/` - Version 1 API endpoints using ts-rest framework for type-safe API contracts.
       - `page.tsx` - Swagger UI page for API documentation with dark theme support.
       - `swagger-ui-dark.css` - Dark theme styles for the Swagger UI documentation.
@@ -26,8 +28,8 @@ The application is structured using route groups for logical code organization w
       - `openapi.json/` - OpenAPI JSON specification generation.
         - `route.ts` - Route handler for generating OpenAPI specification from ts-rest contracts.
       - `_contracts/` - Type-safe API contracts and actions using ts-rest.
-        - `index.ts` - Main contract router that combines all API endpoints and their actions.
-        - `schema.ts` - Zod schemas for API request/response validation including JWT payload, user types, account schemas, organization schemas, and error responses.
+        - `index.ts` - Main contract router that combines all API endpoints and their actions including user role assignments.
+        - `schema.ts` - Zod schemas for API request/response validation including JWT payload, user types, account schemas, organization schemas, role schemas (AssignRoleRequest, UserRole), and error responses.
         - `auth-utils.ts` - Authentication utilities and middleware for securing API endpoints.
         - `test-utils.ts` - Utilities for testing API endpoints including test server setup and helper functions.
         - `version.json` - API version information file.
@@ -50,9 +52,15 @@ The application is structured using route groups for logical code organization w
         - `roles/` - Role management API endpoints.
           - `postRoles.ts` - POST endpoint for creating new roles with associated permissions. Validates permission existence before role creation, creates the role record, and establishes RolePermission links through the intermediate table. Includes comprehensive error handling for invalid permissions and proper response validation.
           - `postRoles.test.ts` - Comprehensive test suite for the POST roles endpoint covering authentication, authorization, request validation, permission existence validation, role creation scenarios, and error handling.
+          - `getRoles.ts` - GET endpoint for retrieving roles with hierarchical resource path validation. Supports ORGANIZATION, TEAM, PROJECT, and WORKFLOW resource types with proper path format validation (org:id/team:id/project:id/workflow:id) and database hierarchy validation ensuring parent resources exist.
+          - `getRoles.test.ts` - Comprehensive test suite for the GET roles endpoint with 23 test cases covering authentication, query parameter validation, hierarchical path format validation, resource hierarchy validation, all resource types, and proper error handling.
+          - `patchRole.ts` - PATCH endpoint for updating role metadata (name, description) while preserving permissions. Validates role existence, updates only provided fields, and returns properly formatted Role objects with standardized permission structure.
+          - `patchRole.test.ts` - Comprehensive test suite for the PATCH role endpoint with 17 test cases covering authentication, path parameter validation, request body validation, role updates, permission preservation, and error handling.
         - `permissions/` - Permission management API endpoints.
           - `getPermissions.ts` - GET endpoint for retrieving all system permissions from the PermissionDefinition table. Returns a list of available permissions with their IDs and actions for use in role creation and management.
           - `getPermissions.test.ts` - Test suite for the GET permissions endpoint covering authentication, data retrieval, and response validation.
+        - `user-roles/` - User role assignment API endpoints.
+          - `postUserRole.ts` - POST endpoint for assigning roles to users with path parameter validation (userId), request body validation (roleId, optional expiresAt), user and role existence validation, duplicate assignment prevention, and proper UserRole response formatting. Includes comprehensive error handling for 400, 404, and 500 status codes with authentication middleware integration.
 
 ### Global Providers
 
