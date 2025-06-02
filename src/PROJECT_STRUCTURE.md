@@ -10,6 +10,8 @@ The application is structured using route groups for logical code organization w
   - `layout.tsx` - Main layout that defines page structure, fonts, and providers wrapper for theme, user state, and fingerprinting.
   - `globals.css` - Global CSS styles including Tailwind directives and custom variables.
   - `middleware.ts` - Auth middleware for protected routes, handling authentication with Clerk.
+  - `_utils/` - General utility functions for the application.
+    - `getToken.ts` - Placeholder utility function for retrieving authentication tokens. Designed to be replaced with actual token logic (e.g., from Clerk or another auth provider).
   - `api/` - API routes for internal data handling.
     - `onboarding/` - API routes related to onboarding.
       - `route.ts` - Proxy API handler for fetching onboarding questions to avoid CORS issues. Uses `NEXT_PUBLIC_ONBOARDING_TAG` environment variable for configuration and `CONTROLS_BASE_URL` for API endpoint.
@@ -27,8 +29,10 @@ The application is structured using route groups for logical code organization w
         - `route.ts` - Main ts-rest router handler for all v1 API endpoints.
       - `openapi.json/` - OpenAPI JSON specification generation.
         - `route.ts` - Route handler for generating OpenAPI specification from ts-rest contracts.
+      - `_client/` - Client-side utilities for interacting with the v1 API.
+        - `client.ts` - Auto-generated TS-REST client (via `scripts/generate-tsrest-client.cjs`) for making type-safe API calls to v1 endpoints. Provides individual functions for each API contract.
       - `_contracts/` - Type-safe API contracts and actions using ts-rest.
-        - `index.ts` - Main contract router that combines all API endpoints and their actions including user role assignments.
+        - `index.ts` - Auto-generated main contract router (via `scripts/generate-tsrest-index.cjs`) that combines all API endpoints and their actions including user role assignments.
         - `schema.ts` - Zod schemas for API request/response validation including JWT payload, user types, account schemas, organization schemas, role schemas (AssignRoleRequest, UserRole), and error responses.
         - `auth-utils.ts` - Authentication utilities and middleware for securing API endpoints.
         - `test-utils.ts` - Utilities for testing API endpoints including test server setup and helper functions.

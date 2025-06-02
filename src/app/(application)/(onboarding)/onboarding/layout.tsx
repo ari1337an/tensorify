@@ -12,15 +12,21 @@ async function getRedirectUrl(userId: string): Promise<string | null> {
   try {
     // Check if user already has an organization
     const user = await db.user.findUnique({
-      where: { userId },
-      include: {
-        organization: true,
+      where: { id: userId },
+      select: {
+        createdOrgs: {
+          select: {
+            slug: true,
+          },
+        },
       },
     });
-
+    if (!user) {
+      return null;
+    }
     // If user has an organization, redirect to their org subdomain
-    if (user?.organization) {
-      const organizationSlug = user.organization.slug;
+    if (user.createdOrgs.length > 0) {
+      const organizationSlug = user.createdOrgs[0].slug;
       const host = (await headers()).get("host") || "";
 
       if (process.env.NODE_ENV === "production") {

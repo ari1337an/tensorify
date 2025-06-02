@@ -45,7 +45,6 @@ export const action = {
     Record<string, never>
   >({
     handler: async (): Promise<ContractResponse> => {
-      "use server";
       const response = await fetch(
         `https://controls.tensorify.io/api/onboarding?tag=${process.env.NEXT_PUBLIC_ONBOARDING_TAG}`,
         {
