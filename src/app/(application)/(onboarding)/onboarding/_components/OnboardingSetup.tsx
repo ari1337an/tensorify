@@ -3,10 +3,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
-import { submitOnboardingData } from "@/server/actions/onboarding-actions";
 import { useClientFingerprint } from "@/app/_utils/clientFingerprint";
-import useStore from "@/app/_store/store";
-import { setupInitialTensorifyAccountWithDefaults } from "@/server/flows/onboarding/setup-account";
+import { onboardingSetup } from "@/app/api/v1/_client/client";
+import { OnboardingSetupRequest } from "@/app/api/v1/_contracts/schema";
 
 type OnboardingAnswer = {
   questionId: string;
@@ -37,54 +36,46 @@ export function OnboardingSetup({
   >("submitting_data");
   const { fingerprint, isLoading: isFingerprintLoading } =
     useClientFingerprint();
-  const { currentUser } = useStore();
 
   // Create a function for the submission process so it can be called again on retry
   const processOnboarding = useCallback(async () => {
     try {
-      // Get user id and email from store
-      const userId = currentUser?.id || "";
-      const email = currentUser?.email || "";
-      const firstName =
-        currentUser?.firstName || orgName.split(" ")[0] || "User";
-      const lastName = currentUser?.lastName || "";
-      const imageUrl = currentUser?.imageUrl || "";
-
       setCurrentStep("submitting_data");
       setError(null);
 
-      // Step 1: Submit onboarding data
-      const result = await submitOnboardingData({
-        userId,
-        email,
+      const body = {
+        orgUrl,
+        orgName,
         answers: apiAnswers,
         usageSelection,
         orgSize,
         clientFingerprint: fingerprint,
+      };
+
+      const parsedBody = OnboardingSetupRequest.safeParse(body);
+
+      if (!parsedBody.success) {
+        setError(parsedBody.error.message);
+        return;
+      }
+
+      // Setup account with onboarding data
+      const response = await onboardingSetup({
+        body: parsedBody.data,
       });
 
-      if (!result.success) {
-        setError(result.error || "Failed to submit onboarding data");
+      if (response.status !== 201) {
+        setError(
+          response.status === 400 ||
+            response.status === 500 ||
+            response.status === 401
+            ? response.body.message
+            : "Failed to setup account"
+        );
         return;
       }
 
       setCurrentStep("setting_up_account");
-
-      // Step 2: Setup account with Tensorify defaults
-      const accountSetupResult = await setupInitialTensorifyAccountWithDefaults(
-        userId,
-        email,
-        imageUrl,
-        firstName,
-        lastName,
-        orgUrl,
-        orgName
-      );
-
-      if (!accountSetupResult.success) {
-        setError(accountSetupResult.error || "Failed to setup account");
-        return;
-      }
 
       setCurrentStep("completed");
 
@@ -98,7 +89,6 @@ export function OnboardingSetup({
     }
   }, [
     apiAnswers,
-    currentUser,
     fingerprint,
     onNext,
     orgName,
@@ -147,8 +137,7 @@ export function OnboardingSetup({
     <div className="flex flex-col items-center justify-center space-y-8 py-4">
       {error ? (
         <div className="text-red-500 text-center space-y-4">
-          <p>Something went wrong:</p>
-          <p className="font-medium">{error}</p>
+          <p className="font-medium pb-2">{error}</p>
           <button
             onClick={handleRetry}
             className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"

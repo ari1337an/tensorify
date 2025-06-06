@@ -18,6 +18,9 @@ async function getRedirectUrl(userId: string): Promise<string | null> {
           select: {
             slug: true,
           },
+          orderBy: {
+            createdAt: "asc", // older first
+          },
         },
       },
     });

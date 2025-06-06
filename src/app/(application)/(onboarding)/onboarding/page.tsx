@@ -8,58 +8,15 @@ import { OnboardingUsage } from "./_components/OnboardingUsage";
 import { OnboardingOrg } from "./_components/OnboardingOrg";
 import { OnboardingSetup } from "./_components/OnboardingSetup";
 import { OnboardingApiQuestion } from "./_components/OnboardingApiQuestion";
+import { onboardingQuestions } from "@/app/api/v1/_client/client";
+import {
+  OnboardingQuestion as OnboardingQuestionSchema,
+  OnboardingAnswer as OnboardingAnswerSchema,
+} from "@/app/api/v1/_contracts/schema";
+import { z } from "zod";
 
-// Define types for the API data
-interface OnboardingOption {
-  id: string;
-  questionId: string;
-  value: string;
-  label: string;
-  iconSlug: string | null;
-  sortOrder: number;
-}
-
-interface OnboardingQuestion {
-  id: string;
-  versionId: string;
-  slug: string;
-  type: "single_choice" | "multi_choice";
-  title: string;
-  iconSlug: string | null;
-  isActive: boolean;
-  sortOrder: number;
-  allowOtherOption: boolean;
-  options: OnboardingOption[];
-}
-
-interface OnboardingVersion {
-  id: string;
-  tag: string;
-  title: string;
-  description: string | null;
-  status: string;
-  createdAt: string;
-  publishedAt: string;
-  questions: OnboardingQuestion[];
-}
-
-interface OnboardingResponse {
-  version: OnboardingVersion;
-}
-
-// Record answers for API questions
-interface SingleChoiceAnswer {
-  questionId: string;
-  customValue?: string;
-  selectedOptionIds?: string[];
-}
-
-interface MultiChoiceAnswer {
-  questionId: string;
-  selectedOptionIds: string[];
-}
-
-type OnboardingAnswer = SingleChoiceAnswer | MultiChoiceAnswer;
+type OnboardingQuestion = z.infer<typeof OnboardingQuestionSchema>;
+type OnboardingAnswer = z.infer<typeof OnboardingAnswerSchema>;
 
 // Define organizational data
 interface OrgData {
@@ -101,20 +58,19 @@ export default function OnboardingPage() {
   useEffect(() => {
     const fetchOnboardingQuestions = async () => {
       try {
-        const onboardingTag =
-          process.env.NEXT_PUBLIC_ONBOARDING_TAG ||
-          "apptensorifyio-onboarding-beta-v01";
-        const response = await fetch(`/api/onboarding?tag=${onboardingTag}`);
+        const response = await onboardingQuestions({});
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch onboarding questions");
+        if (response.status === 200) {
+          const data = response.body;
+          setApiQuestions(data.questions);
+        } else {
+          throw new Error(response.body.message);
         }
 
-        const data: OnboardingResponse = await response.json();
-        setApiQuestions(data.version.questions);
+        const data = response.body;
 
         // Generate steps based on API questions + existing steps
-        const apiSteps: ApiStep[] = data.version.questions.map((_, index) => ({
+        const apiSteps: ApiStep[] = data.questions.map((_, index) => ({
           type: "api",
           questionIndex: index,
         }));
@@ -252,7 +208,10 @@ export default function OnboardingPage() {
               <OnboardingSetup
                 usageSelection={usageSelection}
                 orgSize={orgData?.orgSize || "xs"}
-                apiAnswers={apiAnswers}
+                apiAnswers={apiAnswers.map((answer) => ({
+                  ...answer,
+                  customValue: answer.customValue ?? undefined,
+                }))}
                 orgName={orgData?.orgName || ""}
                 onNext={handleNext}
                 orgUrl={orgData?.orgUrl || ""}

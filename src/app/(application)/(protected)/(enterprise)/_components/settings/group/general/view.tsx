@@ -13,9 +13,9 @@ import {
   CardTitle,
 } from "@/app/_components/ui/card";
 import useStore from "@/app/_store/store";
-import { updateOrganization } from "@/server/actions/organization-actions";
+// import { updateOrganization } from "@/server/actions/organization-actions";
 import { useRouter } from "next/navigation";
-import { Organization } from "@prisma/client";
+// import { Organization } from "@prisma/client";
 import { AlertCircle, CheckCircle2, Link } from "lucide-react";
 import { Alert, AlertDescription } from "@/app/_components/ui/alert";
 
@@ -25,6 +25,7 @@ const SLUG_MAX_LENGTH = 63; // Standard subdomain length limit
 export function OrganizationSettingsView() {
   const router = useRouter();
   const currentOrg = useStore((state) => state.currentOrg);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const setCurrentOrg = useStore((state) => state.setCurrentOrg);
 
   const [isLoading, setIsLoading] = React.useState(false);
@@ -76,19 +77,19 @@ export function OrganizationSettingsView() {
       setError(null);
       setSuccess(false);
 
-      const result = await updateOrganization({
-        name: organizationName,
-        slug: organizationSlug,
-      });
+      // const result = await updateOrganization({
+      //   name: organizationName,
+      //   slug: organizationSlug,
+      // });
 
-      if (!result.success) {
-        throw new Error(result.error);
-      }
+      // if (!result.success) {
+      //   throw new Error(result.error);
+      // }
 
-      if (result.data) {
-        setCurrentOrg(result.data as Organization);
-        setSuccess(true);
-      }
+      // if (result.data) {
+      //   setCurrentOrg(result.data as Organization);
+      //   setSuccess(true);
+      // }
 
       router.refresh();
     } catch (error) {

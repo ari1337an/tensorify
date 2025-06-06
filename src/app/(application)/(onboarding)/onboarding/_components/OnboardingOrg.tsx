@@ -34,11 +34,11 @@ type Props = {
 };
 
 const orgSizes = [
-  { value: "xs", label: "Less than 20 people" },
-  { value: "sm", label: "20-99 people" },
-  { value: "md", label: "100-499 people" },
-  { value: "lg", label: "500-999 people" },
-  { value: "xl", label: "1000+ people" },
+  { value: "<20", label: "Less than 20 people" },
+  { value: "20-99", label: "20-99 people" },
+  { value: "100-499", label: "100-499 people" },
+  { value: "500-999", label: "500-999 people" },
+  { value: "1000+", label: "1000+ people" },
 ] as const;
 
 export function OnboardingOrg({ onOrgDataChange, onNext }: Props) {

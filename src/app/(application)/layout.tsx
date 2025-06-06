@@ -30,6 +30,9 @@ export default async function RootLayout({
       name: true,
       slug: true,
     },
+    orderBy: {
+      createdAt: "asc", // first organization is the default organization
+    },
   });
 
   return (

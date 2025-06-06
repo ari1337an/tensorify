@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { getTeams, type PaginatedTeams } from "@/server/actions/team-actions";
+// import { getTeams, type PaginatedTeams } from "@/server/actions/team-actions";
 import useStore from "@/app/_store/store";
 
 export function useTeamspacesLogic() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [teams, setTeams] = useState<PaginatedTeams | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  const [teams, setTeams] = useState<any>(null);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [isEmpty, setIsEmpty] = useState(false);
@@ -30,22 +31,22 @@ export function useTeamspacesLogic() {
       setError(null);
       setIsEmpty(false);
 
-      const result = await getTeams({
-        page,
-        limit,
-        organizationId,
-      });
+      // const result = await getTeams({
+      //   page,
+      //   limit,
+      //   organizationId,
+      // });
 
-      // Check if the result has a totalCount property and set accordingly
-      if (result && typeof result.totalCount === "number") {
-        // Only set isEmpty if there are no teams at all in the database
-        setIsEmpty(result.totalCount === 0);
-        setTeams(result);
-      } else {
-        // Handle malformed response
-        setError("Received invalid data format from server");
-        setIsEmpty(true);
-      }
+      // // Check if the result has a totalCount property and set accordingly
+      // if (result && typeof result.totalCount === "number") {
+      //   // Only set isEmpty if there are no teams at all in the database
+      //   setIsEmpty(result.totalCount === 0);
+      //   setTeams(result);
+      // } else {
+      //   // Handle malformed response
+      //   setError("Received invalid data format from server");
+      //   setIsEmpty(true);
+      // }
 
       setLoading(false);
     } catch (err) {
@@ -53,6 +54,7 @@ export function useTeamspacesLogic() {
       setError(err instanceof Error ? err.message : "Failed to load teams");
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, limit, organizationId]);
 
   // Load teams when currentOrg, page or limit changes

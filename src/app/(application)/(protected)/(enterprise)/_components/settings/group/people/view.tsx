@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { DataTable } from "./data-table";
-import { getOrganizationMembersAndInvites } from "@/server/actions/organization-actions";
+// import { getOrganizationMembersAndInvites } from "@/server/actions/organization-actions";
 import { getPeopleTableColumns, PeopleListEntry } from "./columns";
 import { Button } from "@/app/_components/ui/button";
 import { Loader2, UserPlus, Check, ChevronsUpDown, X } from "lucide-react";
@@ -33,10 +33,10 @@ import {
 import { Badge } from "@/app/_components/ui/badge";
 import { cn } from "@/app/_lib/utils";
 import { fetchRoles } from "../rbac/server";
-import {
-  createInvitation,
-  canInviteUser,
-} from "@/server/actions/invitation-actions";
+// import {
+//   createInvitation,
+//   canInviteUser,
+// } from "@/server/actions/invitation-actions";
 import { EditPersonDialog } from "./EditPersonDialog";
 
 type Role = {
@@ -119,8 +119,8 @@ export default function PeopleView({
     }
     try {
       setLoading(true);
-      const data = await getOrganizationMembersAndInvites(organizationId);
-      setMembers(data);
+      // const data = await getOrganizationMembersAndInvites(organizationId);
+      // setMembers(data);
       setError(null);
     } catch (err) {
       const errorMessage =
@@ -160,14 +160,14 @@ export default function PeopleView({
         setInviteCheckMessage("Organization information is missing.");
         return;
       }
-      const result = await canInviteUser(inviteEmail, organizationId);
-      if (result.canInvite) {
-        setCanSendInvite(true);
-        setInviteCheckMessage(null);
-      } else {
-        setCanSendInvite(false);
-        setInviteCheckMessage(result.reason || "This email cannot be invited.");
-      }
+      // const result = await canInviteUser(inviteEmail, organizationId);
+      // if (result.canInvite) {
+      //   setCanSendInvite(true);
+      //   setInviteCheckMessage(null);
+      // } else {
+      //   setCanSendInvite(false);
+      //   setInviteCheckMessage(result.reason || "This email cannot be invited.");
+      // }
     };
 
     const handler = setTimeout(() => {
@@ -186,22 +186,22 @@ export default function PeopleView({
 
     try {
       setIsInviting(true);
-      const result = await createInvitation({
-        email: inviteEmail,
-        organizationId,
-        roleIds: selectedRoles.map((role) => role.id),
-      });
+      // const result = await createInvitation({
+      //   email: inviteEmail,
+      //   organizationId,
+      //   roleIds: selectedRoles.map((role) => role.id),
+      // });
 
-      if (result.success) {
-        setInviteEmail("");
-        setSelectedRoles([]);
-        setIsInviteDialogOpen(false);
-        fetchAndSetMembers();
-        setInviteCheckMessage("Invitation sent successfully!");
-        setTimeout(() => setInviteCheckMessage(null), 3000);
-      } else {
-        setInviteCheckMessage(result.error || "Failed to send invitation.");
-      }
+      // if (result.success) {
+        // setInviteEmail("");
+        // setSelectedRoles([]);
+        // setIsInviteDialogOpen(false);
+        // fetchAndSetMembers();
+        // setInviteCheckMessage("Invitation sent successfully!");
+        // setTimeout(() => setInviteCheckMessage(null), 3000);
+      // } else {
+      //   setInviteCheckMessage(result.error || "Failed to send invitation.");
+      // }
     } catch (err) {
       console.error("Failed to invite member:", err);
       setInviteCheckMessage("An unexpected error occurred.");

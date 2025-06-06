@@ -28,10 +28,6 @@ import {
   UserPlusIcon,
 } from "lucide-react";
 import { fetchRoles as fetchAvailableRolesServer } from "@/app/(application)/(protected)/(enterprise)/_components/settings/group/rbac/server";
-import {
-  updateInvitationRoles,
-  revokeInvitation as revokeInvitationAction,
-} from "@/server/actions/invitation-actions";
 import { toast } from "sonner";
 import { cn } from "@/app/_lib/utils";
 import {
@@ -185,6 +181,7 @@ export function EditPersonDialog({
   personId,
   personType,
   organizationId,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onUpdate,
   personData,
 }: EditPersonDialogProps) {
@@ -285,7 +282,7 @@ export function EditPersonDialog({
 
             if (rolesResult.success && rolesResult.data) {
               console.log(`Loaded ${rolesResult.data.length} roles`);
-              setAvailableRoles(rolesResult.data);
+              // setAvailableRoles(rolesResult.data);
             } else {
               console.error("Failed to load roles:", rolesResult.error);
               setError(rolesResult.error || "Failed to load roles.");
@@ -381,42 +378,42 @@ export function EditPersonDialog({
         newRoleIds: Array.from(selectedRoleIds),
       });
 
-      const result = await updateInvitationRoles({
-        invitationId: personId,
-        organizationId,
-        newRoleIds: Array.from(selectedRoleIds),
-      });
+      // const result = await updateInvitationRoles({
+      //   invitationId: personId,
+      //   organizationId,
+      //   newRoleIds: Array.from(selectedRoleIds),
+      // });
 
-      console.log("Role update result:", result);
+      // console.log("Role update result:", result);
 
-      if (result.success) {
-        toast.success("Roles updated", {
-          description: "The invitation roles have been updated successfully.",
-        });
+      // if (result.success) {
+      //   toast.success("Roles updated", {
+      //     description: "The invitation roles have been updated successfully.",
+      //   });
 
-        if (onUpdate) onUpdate();
+      //   if (onUpdate) onUpdate();
 
-        // Update local state
-        const updatedRoles = availableRoles.filter((role) =>
-          selectedRoleIds.has(role.id)
-        );
-        console.log("Updating local state with new roles:", updatedRoles);
+      //   // Update local state
+      //   const updatedRoles = availableRoles.filter((role) =>
+      //     selectedRoleIds.has(role.id)
+      //   );
+      //   console.log("Updating local state with new roles:", updatedRoles);
 
-        setDetails((prev) =>
-          prev
-            ? {
-                ...prev,
-                roles: updatedRoles,
-                detailedRoles: updatedRoles,
-              }
-            : null
-        );
-      } else {
-        console.error("Failed to update roles:", result.error);
-        toast.error("Update failed", {
-          description: result.error || "Failed to update roles.",
-        });
-      }
+      //   setDetails((prev) =>
+      //     prev
+      //       ? {
+      //           ...prev,
+      //           roles: updatedRoles,
+      //           detailedRoles: updatedRoles,
+      //         }
+      //       : null
+      //   );
+      // } else {
+      //   console.error("Failed to update roles:", result.error);
+      //   toast.error("Update failed", {
+      //     description: result.error || "Failed to update roles.",
+      //   });
+      // }
     } catch (err) {
       console.error("Error updating roles:", err);
       toast.error("An error occurred", {
@@ -480,38 +477,38 @@ export function EditPersonDialog({
         organizationId,
       });
 
-      const result = await revokeInvitationAction({
-        invitationId: personId,
-        organizationId,
-      });
+      // const result = await revokeInvitationAction({
+      //   invitationId: personId,
+      //   organizationId,
+      // });
 
-      console.log("Revoke invitation result:", result);
+      // console.log("Revoke invitation result:", result);
 
-      if (result.success) {
-        toast.success("Invitation revoked", {
-          description:
-            result.message || "The invitation has been successfully revoked.",
-        });
+      // if (result.success) {
+      //   toast.success("Invitation revoked", {
+      //     description:
+      //       result.message || "The invitation has been successfully revoked.",
+      //   });
 
-        if (onUpdate) onUpdate();
+      //   if (onUpdate) onUpdate();
 
-        // Update local state with the new status - now safely typed
-        console.log("Updating local state with Revoked status");
-        setDetails((prev) => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            status: "Revoked",
-          };
-        });
+      //   // Update local state with the new status - now safely typed
+      //   console.log("Updating local state with Revoked status");
+      //   setDetails((prev) => {
+      //     if (!prev) return null;
+      //     return {
+      //       ...prev,
+      //       status: "Revoked",
+      //     };
+      //   });
 
-        handleClose();
-      } else {
-        console.error("Failed to revoke invitation:", result.error);
-        toast.error("Revoke failed", {
-          description: result.error || "Failed to revoke invitation.",
-        });
-      }
+      //   handleClose();
+      // } else {
+      //   console.error("Failed to revoke invitation:", result.error);
+      //   toast.error("Revoke failed", {
+      //     description: result.error || "Failed to revoke invitation.",
+      //   });
+      // }
     } catch (err) {
       console.error("Error revoking invitation:", err);
       toast.error("An error occurred", {

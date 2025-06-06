@@ -7,31 +7,31 @@ import { Compass, Beaker, FlaskConical, Users, Building } from "lucide-react";
 
 const usageOptions = [
   {
-    id: "exploring",
+    id: "WILL_NOT_PAY",
     label: "Just exploring what's possible with AI pipelines.",
     icon: Compass,
     gradient: "from-blue-500 to-cyan-500",
   },
   {
-    id: "personal",
+    id: "WILL_NOT_PAY",
     label: "Testing it for a personal or academic project.",
     icon: Beaker,
     gradient: "from-purple-500 to-pink-500",
   },
   {
-    id: "individual",
+    id: "WILL_PAY_HOBBY",
     label: "Running individual experiments or publishing research using it.",
     icon: FlaskConical,
     gradient: "from-green-500 to-emerald-500",
   },
   {
-    id: "team",
+    id: "WILL_PAY_TEAM",
     label: "Using it in a team or research lab project.",
     icon: Users,
     gradient: "from-amber-500 to-orange-500",
   },
   {
-    id: "company",
+    id: "ENTERPRISE_POTENTIAL",
     label:
       "Evaluating it for integration into our company's AI or R&D infrastructure.",
     icon: Building,

@@ -26,11 +26,11 @@ import {
 } from "@/app/_components/ui/dialog";
 import { DataTable as PeopleDataTable } from "../people/data-table";
 import { getPeopleTableColumns, PeopleListEntry } from "../people/columns";
-import {
-  getTeamMembers,
-  inviteToTeam,
-  canInviteUserToTeam,
-} from "@/server/actions/team-actions";
+// import {
+//   getTeamMembers,
+//   inviteToTeam,
+//   canInviteUserToTeam,
+// } from "@/server/actions/team-actions";
 import { Input } from "@/app/_components/ui/input";
 import { Label } from "@/app/_components/ui/label";
 import { Badge } from "@/app/_components/ui/badge";
@@ -127,8 +127,8 @@ export function TeamspacesView() {
     setOpenDialog(true);
     setMembersLoading(true);
     try {
-      const data = await getTeamMembers(team.id);
-      setMembers(data);
+      // const data = await getTeamMembers(team.id);
+      // setMembers(data);
     } catch {
       setMembers([]);
     } finally {
@@ -158,33 +158,33 @@ export function TeamspacesView() {
 
     try {
       setIsInviting(true);
-      const result = await inviteToTeam(
-        inviteEmail,
-        selectedTeam.id,
-        selectedRoles.map((role) => role.id)
-      );
+      // const result = await inviteToTeam(
+      //   inviteEmail,
+      //   selectedTeam.id,
+      //   selectedRoles.map((role) => role.id)
+      // );
 
-      if (result.success) {
-        setInviteEmail("");
-        setSelectedRoles([]);
-        setInviteDialogOpen(false);
+      // if (result.success) {
+      //   setInviteEmail("");
+      //   setSelectedRoles([]);
+      //   setInviteDialogOpen(false);
 
-        // Refresh the team members list
-        setMembersLoading(true);
-        try {
-          const data = await getTeamMembers(selectedTeam.id);
-          setMembers(data);
-        } catch {
-          // Handle error silently
-        } finally {
-          setMembersLoading(false);
-        }
+      //   // Refresh the team members list
+      //   setMembersLoading(true);
+      //   try {
+      //     const data = await getTeamMembers(selectedTeam.id);
+      //     setMembers(data);
+      //   } catch {
+      //     // Handle error silently
+      //   } finally {
+      //     setMembersLoading(false);
+      //   }
 
-        setInviteCheckMessage("User added to team successfully!");
-        setTimeout(() => setInviteCheckMessage(null), 3000);
-      } else {
-        setInviteCheckMessage(result.error || "Failed to add user to team.");
-      }
+      //   setInviteCheckMessage("User added to team successfully!");
+      //   setTimeout(() => setInviteCheckMessage(null), 3000);
+      // } else {
+      //   setInviteCheckMessage(result.error || "Failed to add user to team.");
+      // }
     } catch (err) {
       console.error("Failed to invite member to team:", err);
       setInviteCheckMessage("An unexpected error occurred.");
@@ -216,16 +216,16 @@ export function TeamspacesView() {
         return;
       }
 
-      const result = await canInviteUserToTeam(inviteEmail, selectedTeam.id);
-      if (result.canInvite) {
-        setCanSendInvite(true);
-        setInviteCheckMessage(null);
-      } else {
-        setCanSendInvite(false);
-        setInviteCheckMessage(
-          result.reason || "This email cannot be invited to this team."
-        );
-      }
+      // const result = await canInviteUserToTeam(inviteEmail, selectedTeam.id);
+      // if (result.canInvite) {
+      //   setCanSendInvite(true);
+      //   setInviteCheckMessage(null);
+      // } else {
+      //   setCanSendInvite(false);
+      //   setInviteCheckMessage(
+      //     result.reason || "This email cannot be invited to this team."
+      //   );
+      // }
     };
 
     const handler = setTimeout(() => {
