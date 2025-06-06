@@ -71,7 +71,8 @@ async function generateClient() {
       }
       return `
 export async function ${key}(args: Parameters<typeof client.${key}.contract>[0]): Promise<ReturnType<typeof client.${key}.contract>> {
-  return await client.${key}.contract(args);
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.${key}.contract(args);
 }
 `;
     })
@@ -83,12 +84,33 @@ export async function ${key}(args: Parameters<typeof client.${key}.contract>[0])
 
 import { initClient } from '@ts-rest/core';
 import { contract } from '${RELATIVE_CONTRACTS_PATH}';
+import { headers } from 'next/headers';
+import version from '${RELATIVE_CONTRACTS_PATH}/version.json';
 
+// Initialize client without baseUrl (or with a default)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const client = initClient(contract, {
-  baseUrl: 'http://localhost:3000/api/v1',
+  baseUrl: '', // Will override in each server action
   baseHeaders: {},
   credentials: "include",
 });
+
+// Function to get baseUrl dynamically
+const getBaseUrl = async () => {
+  const headersList = await headers();
+  const host = headersList.get('host');
+  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+  return \`\${protocol}://\${host}/api/\${version.apiVersion}\`;
+};
+
+// Helper to create a client with dynamic baseUrl
+const getClientWithBaseUrl = async () => {
+  return initClient(contract, {
+    baseUrl: await getBaseUrl(),
+    baseHeaders: {},
+    credentials: "include",
+  });
+};
 
 /**
  * ------------------------------------------------------------------------------------------------

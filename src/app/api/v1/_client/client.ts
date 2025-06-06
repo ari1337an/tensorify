@@ -1,15 +1,36 @@
 // AUTO-GENERATED FILE — DO NOT EDIT MANUALLY
-// Generated on: 6/2/2025, 2:26:42 PM
+// Generated on: 6/2/2025, 3:23:07 PM
 "use server";
 
 import { initClient } from '@ts-rest/core';
 import { contract } from '../_contracts';
+import { headers } from 'next/headers';
+import version from '../_contracts/version.json';
 
+// Initialize client without baseUrl (or with a default)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const client = initClient(contract, {
-  baseUrl: 'http://localhost:3000/api/v1',
+  baseUrl: '', // Will override in each server action
   baseHeaders: {},
   credentials: "include",
 });
+
+// Function to get baseUrl dynamically
+const getBaseUrl = async () => {
+  const headersList = await headers();
+  const host = headersList.get('host');
+  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+  return `${protocol}://${host}/api/${version.apiVersion}`;
+};
+
+// Helper to create a client with dynamic baseUrl
+const getClientWithBaseUrl = async () => {
+  return initClient(contract, {
+    baseUrl: await getBaseUrl(),
+    baseHeaders: {},
+    credentials: "include",
+  });
+};
 
 /**
  * ------------------------------------------------------------------------------------------------
@@ -92,61 +113,73 @@ const client = initClient(contract, {
  */
 
 export async function getAccountUserId(args: Parameters<typeof client.getAccountUserId.contract>[0]): Promise<ReturnType<typeof client.getAccountUserId.contract>> {
-  return await client.getAccountUserId.contract(args);
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.getAccountUserId.contract(args);
 }
 
 
 export async function patchAccount(args: Parameters<typeof client.patchAccount.contract>[0]): Promise<ReturnType<typeof client.patchAccount.contract>> {
-  return await client.patchAccount.contract(args);
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.patchAccount.contract(args);
 }
 
 
 export async function uploadPortrait(args: Parameters<typeof client.uploadPortrait.contract>[0]): Promise<ReturnType<typeof client.uploadPortrait.contract>> {
-  return await client.uploadPortrait.contract(args);
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.uploadPortrait.contract(args);
 }
 
 
 export async function onboardingQuestions(args: Parameters<typeof client.onboardingQuestions.contract>[0]): Promise<ReturnType<typeof client.onboardingQuestions.contract>> {
-  return await client.onboardingQuestions.contract(args);
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.onboardingQuestions.contract(args);
 }
 
 
 export async function onboardingSetup(args: Parameters<typeof client.onboardingSetup.contract>[0]): Promise<ReturnType<typeof client.onboardingSetup.contract>> {
-  return await client.onboardingSetup.contract(args);
-}
-
-
-export async function getOrganization(args: Parameters<typeof client.getOrganization.contract>[0]): Promise<ReturnType<typeof client.getOrganization.contract>> {
-  return await client.getOrganization.contract(args);
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.onboardingSetup.contract(args);
 }
 
 
 export async function getRoles(args: Parameters<typeof client.getRoles.contract>[0]): Promise<ReturnType<typeof client.getRoles.contract>> {
-  return await client.getRoles.contract(args);
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.getRoles.contract(args);
 }
 
 
 export async function patchRole(args: Parameters<typeof client.patchRole.contract>[0]): Promise<ReturnType<typeof client.patchRole.contract>> {
-  return await client.patchRole.contract(args);
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.patchRole.contract(args);
 }
 
 
 export async function postRoles(args: Parameters<typeof client.postRoles.contract>[0]): Promise<ReturnType<typeof client.postRoles.contract>> {
-  return await client.postRoles.contract(args);
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.postRoles.contract(args);
+}
+
+
+export async function getOrganization(args: Parameters<typeof client.getOrganization.contract>[0]): Promise<ReturnType<typeof client.getOrganization.contract>> {
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.getOrganization.contract(args);
 }
 
 
 export async function getPermissions(args: Parameters<typeof client.getPermissions.contract>[0]): Promise<ReturnType<typeof client.getPermissions.contract>> {
-  return await client.getPermissions.contract(args);
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.getPermissions.contract(args);
 }
 
 
 export async function getUserRole(args: Parameters<typeof client.getUserRole.contract>[0]): Promise<ReturnType<typeof client.getUserRole.contract>> {
-  return await client.getUserRole.contract(args);
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.getUserRole.contract(args);
 }
 
 
 export async function postUserRole(args: Parameters<typeof client.postUserRole.contract>[0]): Promise<ReturnType<typeof client.postUserRole.contract>> {
-  return await client.postUserRole.contract(args);
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.postUserRole.contract(args);
 }
 
