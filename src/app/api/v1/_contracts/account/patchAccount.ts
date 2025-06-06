@@ -109,6 +109,12 @@ export const action = {
               ...(lastName !== undefined && { lastName }),
             },
           });
+
+          // update the firstName or lastName in clerk if they are provided
+          await clerkClient.users.updateUser(userId, {
+            ...(firstName !== undefined && { firstName: firstName }),
+            ...(lastName !== undefined && { lastName: lastName }),
+          });
         }
 
         // Handle session management if sessionId is provided
@@ -118,7 +124,7 @@ export const action = {
             userId: userId, // Assume userId is derived from the JWT or request context
             status: "active",
           });
-        
+
           // Handle case where session fetch fails
           if (!sessionsResponse.data) {
             throw new TsRestResponseError(contract, {
@@ -129,13 +135,17 @@ export const action = {
               },
             });
           }
-        
+
           const activeSessions = sessionsResponse.data;
-        
+
           // Validate sessionIds if provided
           if (sessionId.length > 0) {
-            const activeSessionIds = activeSessions.map(session => session.id);
-            const allSessionsExist = sessionId.every(id => activeSessionIds.includes(id));
+            const activeSessionIds = activeSessions.map(
+              (session) => session.id
+            );
+            const allSessionsExist = sessionId.every((id) =>
+              activeSessionIds.includes(id)
+            );
             if (!allSessionsExist) {
               throw new TsRestResponseError(contract, {
                 status: 404,
@@ -146,12 +156,15 @@ export const action = {
               });
             }
           }
-        
+
           // Determine sessions to revoke
-          const sessionsToRevoke = sessionId.length === 0
-            ? activeSessions // Revoke all if sessionId is empty
-            : activeSessions.filter(session => !sessionId.includes(session.id)); // Revoke sessions not in sessionId
-        
+          const sessionsToRevoke =
+            sessionId.length === 0
+              ? activeSessions // Revoke all if sessionId is empty
+              : activeSessions.filter(
+                  (session) => !sessionId.includes(session.id)
+                ); // Revoke sessions not in sessionId
+
           // Revoke sessions in parallel
           await Promise.all(
             sessionsToRevoke.map(async (session) => {

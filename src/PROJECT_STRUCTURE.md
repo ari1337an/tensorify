@@ -149,9 +149,9 @@ The application is structured using route groups for logical code organization w
           - `icon.tsx` - Icon component for the notifications section in the sidebar.
           - `meta.tsx` - Metadata for the notifications section (label, ID, group).
           - `index.ts` - Export file for the notifications module.
-        - `general/` - General workspace settings module.
-          - `view.tsx` - UI component for the general section.
-          - `logic.tsx` - Logic and state management for the general section.
+        - `general/` - General organization settings module.
+          - `view.tsx` - UI component for organization settings including name and slug management with real-time validation, loading states, and success/error feedback. Integrates with the ts-rest client system.
+          - `logic.tsx` - Logic and state management for organization settings with ts-rest client integration for fetching organization data via getOrganization API. Includes slug validation, form state management, and preparation for organization updates. Handles API response mapping to global state.
           - `icon.tsx` - Icon component for the general section in the sidebar.
           - `meta.tsx` - Metadata for the general section (label, ID, group).
           - `index.ts` - Export file for the general module.

@@ -12,106 +12,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/app/_components/ui/card";
-import useStore from "@/app/_store/store";
-// import { updateOrganization } from "@/server/actions/organization-actions";
-import { useRouter } from "next/navigation";
-// import { Organization } from "@prisma/client";
 import { AlertCircle, CheckCircle2, Link } from "lucide-react";
 import { Alert, AlertDescription } from "@/app/_components/ui/alert";
-
-const SLUG_MIN_LENGTH = 3;
-const SLUG_MAX_LENGTH = 63; // Standard subdomain length limit
+import { useGeneralLogic } from "./logic";
 
 export function OrganizationSettingsView() {
-  const router = useRouter();
-  const currentOrg = useStore((state) => state.currentOrg);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const setCurrentOrg = useStore((state) => state.setCurrentOrg);
-
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [organizationName, setOrganizationName] = React.useState(
-    currentOrg?.name || ""
-  );
-  const [organizationSlug, setOrganizationSlug] = React.useState(
-    currentOrg?.slug || ""
-  );
-  const [error, setError] = React.useState<string | null>(null);
-  const [success, setSuccess] = React.useState(false);
-  const [isValidSlug, setIsValidSlug] = React.useState(true);
-  const [slugError, setSlugError] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    if (currentOrg) {
-      setOrganizationName(currentOrg.name);
-      setOrganizationSlug(currentOrg.slug);
-      validateSlug(currentOrg.slug);
-    }
-  }, [currentOrg]);
-
-  const validateSlug = (slug: string) => {
-    if (slug.length < SLUG_MIN_LENGTH) {
-      setSlugError(`URL must be at least ${SLUG_MIN_LENGTH} characters`);
-      setIsValidSlug(false);
-      return false;
-    }
-    if (slug.length > SLUG_MAX_LENGTH) {
-      setSlugError(`URL cannot exceed ${SLUG_MAX_LENGTH} characters`);
-      setIsValidSlug(false);
-      return false;
-    }
-    if (!/^[a-z0-9-]+$/.test(slug)) {
-      setSlugError(
-        "URL can only contain lowercase letters, numbers, and hyphens"
-      );
-      setIsValidSlug(false);
-      return false;
-    }
-    setSlugError(null);
-    setIsValidSlug(true);
-    return true;
-  };
-
-  const handleSave = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      setSuccess(false);
-
-      // const result = await updateOrganization({
-      //   name: organizationName,
-      //   slug: organizationSlug,
-      // });
-
-      // if (!result.success) {
-      //   throw new Error(result.error);
-      // }
-
-      // if (result.data) {
-      //   setCurrentOrg(result.data as Organization);
-      //   setSuccess(true);
-      // }
-
-      router.refresh();
-    } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Failed to update organization settings"
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.toLowerCase();
-    // Only allow lowercase letters, numbers, and hyphens
-    const sanitizedValue = value.replace(/[^a-z0-9-]/g, "");
-    setOrganizationSlug(sanitizedValue);
-    validateSlug(sanitizedValue);
-  };
-
-  const isFormValid = organizationName.length > 0 && isValidSlug;
+  const {
+    organizationName,
+    organizationSlug,
+    setOrganizationName,
+    setOrganizationSlug,
+    handleSave,
+    isLoading,
+    error,
+    success,
+    isValidSlug,
+    slugError,
+    isFormValid,
+  } = useGeneralLogic();
 
   return (
     <div className="space-y-6">
@@ -173,7 +91,7 @@ export function OrganizationSettingsView() {
                   <Input
                     id="organizationSlug"
                     value={organizationSlug}
-                    onChange={handleSlugChange}
+                    onChange={(e) => setOrganizationSlug(e.target.value)}
                     placeholder="your-organization"
                     className={`h-11 pr-10 font-mono ${
                       isValidSlug ? "border-green-500/50" : "border-red-500/50"

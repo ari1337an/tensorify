@@ -4,6 +4,7 @@ import { ProvidersWrapper } from "@/app/_providers/providers-wrapper";
 import "../globals.css";
 import { auth } from "@clerk/nextjs/server";
 import db from "@/server/database/db";
+import { Toaster } from "@/app/_components/ui/sonner";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -40,6 +41,7 @@ export default async function RootLayout({
       sessionClaims={JSON.stringify(sessionClaims)}
       organization={JSON.stringify(organization)}
     >
+      <Toaster />
       {children}
     </ProvidersWrapper>
   );

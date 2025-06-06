@@ -32,12 +32,14 @@ interface ClerkUser {
   id: string;
   update: (data: { firstName?: string; lastName?: string }) => Promise<unknown>;
   setProfileImage: (options: { file: File }) => Promise<unknown>;
+  reload: () => Promise<unknown>;
 }
 
 export function useAccountLogic() {
   const { user } = useUser();
   const { session: currentSession } = useSession();
   const currentUser = useStore((state) => state.currentUser);
+  const setCurrentUser = useStore((state) => state.setCurrentUser);
   const [firstName, setFirstName] = React.useState(
     currentUser?.firstName || ""
   );
@@ -106,6 +108,15 @@ export function useAccountLogic() {
           try {
             setIsSaving(true);
             await userData.update({ firstName: value });
+
+            // Update the first name in the store
+            if (currentUser) {
+              setCurrentUser({
+                ...currentUser,
+                firstName: value,
+              });
+            }
+
             toast.success("First name updated successfully");
           } catch (error) {
             console.error("Error updating first name:", error);
@@ -116,7 +127,7 @@ export function useAccountLogic() {
         },
         1000
       ),
-    []
+    [currentUser, setCurrentUser]
   );
 
   // Create a debounced function outside useCallback
@@ -132,6 +143,15 @@ export function useAccountLogic() {
           try {
             setIsSaving(true);
             await userData.update({ lastName: value });
+
+            // Update the last name in the store
+            if (currentUser) {
+              setCurrentUser({
+                ...currentUser,
+                lastName: value,
+              });
+            }
+
             toast.success("Last name updated successfully");
           } catch (error) {
             console.error("Error updating last name:", error);
@@ -142,7 +162,7 @@ export function useAccountLogic() {
         },
         1000
       ),
-    []
+    [currentUser, setCurrentUser]
   );
 
   const debouncedSaveFirstName = React.useCallback(
@@ -178,9 +198,28 @@ export function useAccountLogic() {
   const handleProfileImageUpload = async (file: File) => {
     if (!file) return;
 
+    // Check file size (10MB = 10 * 1024 * 1024 bytes)
+    const maxFileSize = 10 * 1024 * 1024; // 10MB in bytes
+    if (file.size > maxFileSize) {
+      toast.error("File size must be less than 10MB");
+      return;
+    }
+
     try {
       setIsUploading(true);
       await (user as ClerkUser)?.setProfileImage({ file });
+
+      // Force reload the user data to refresh the avatar
+      await user?.reload();
+
+      // Update the current user in the store
+      if (currentUser) {
+        setCurrentUser({
+          ...currentUser,
+          imageUrl: user?.imageUrl || currentUser.imageUrl,
+        });
+      }
+
       toast.success("Profile image updated successfully");
     } catch (error) {
       console.error("Error uploading profile image:", error);
