@@ -105,9 +105,13 @@ const getBaseUrl = async () => {
 
 // Helper to create a client with dynamic baseUrl
 const getClientWithBaseUrl = async () => {
+  const {getToken} = await auth();
+  const token = await getToken();
   return initClient(contract, {
     baseUrl: await getBaseUrl(),
-    baseHeaders: {},
+    baseHeaders: {
+      authorization: \`Bearer ${token}\`,
+    },
     credentials: "include",
   });
 };

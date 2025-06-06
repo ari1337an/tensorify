@@ -236,5 +236,39 @@ describe("GET /organization", () => {
 
     await revokeSession(userData1.sessionId);
     await revokeSession(userData2.sessionId);
-  });
+  }, 20000);
+
+  it("should return organizations that the user is a member of", async () => {
+    await flushDatabase(expect);
+
+    const userData1 = await setupUser(1, false);
+    const userData2 = await setupUser(2, false);
+
+    // Create an additional organization for user 2
+    const org = await db.organization.create({
+      data: {
+        name: "User 2 Org additional",
+        slug: "user2-org-additional",
+        createdById: userData2.decoded.sub,
+      },
+    });
+
+    // Add user 1 as a member of the organization
+    await db.orgMembership.create({
+      data: {
+        userId: userData1.decoded.sub,
+        organizationId: org.id,
+      },
+    });
+
+    const res = await request(server)
+      .get("/organization")
+      .set("Authorization", `Bearer ${userData1.jwt}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.length).toBe(2);
+
+    await revokeSession(userData1.sessionId);
+    await revokeSession(userData2.sessionId);
+  }, 20000);
 });

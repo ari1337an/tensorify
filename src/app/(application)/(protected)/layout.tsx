@@ -3,19 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import AppWrapper from "@enterprise/_components/layout/AppWrapper";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-
-// Helper function to extract the current subdomain/slug based on environment
-async function getCurrentSlug(host: string): Promise<string | null> {
-  if (process.env.NODE_ENV === "production") {
-    if (host === "app.tensorify.io") return null; // Main domain, no subdomain
-    const parts = host.split(".app.tensorify.io");
-    return parts.length > 1 ? parts[0] : null;
-  } else {
-    if (!host.includes(".localhost")) return null; // No subdomain in dev
-    const parts = host.split(".localhost");
-    return parts.length > 1 ? parts[0] : null;
-  }
-}
+import { getCurrentSlugFromHost } from "@/server/utils/getCurrentSlugFromHost";
 
 // Helper function to generate redirect URL based on environment
 async function generateRedirectUrl(slug: string): Promise<string> {
@@ -60,7 +48,7 @@ async function checkUserOnboarded(): Promise<{ redirect?: string } | null> {
     });
 
     const host = (await headers()).get("host") || "";
-    const currentSlug = await getCurrentSlug(host);
+    const currentSlug = await getCurrentSlugFromHost(host);
 
     // Check if user is onboarded
     const createdOrgs = user?.createdOrgs || [];

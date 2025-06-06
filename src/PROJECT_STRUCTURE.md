@@ -150,8 +150,8 @@ The application is structured using route groups for logical code organization w
           - `meta.tsx` - Metadata for the notifications section (label, ID, group).
           - `index.ts` - Export file for the notifications module.
         - `general/` - General organization settings module.
-          - `view.tsx` - UI component for organization settings including name and slug management with real-time validation, loading states, and success/error feedback. Integrates with the ts-rest client system.
-          - `logic.tsx` - Logic and state management for organization settings with ts-rest client integration for fetching organization data via getOrganization API. Includes slug validation, form state management, and preparation for organization updates. Handles API response mapping to global state.
+          - `view.tsx` - Multi-card UI component for organization management featuring a prominently displayed current organization edit form at the top with name and slug editing, real-time validation, and success/error feedback. Below are navigation cards for other organizations the user has access to, each with "Open" buttons that redirect to organization-specific URLs (slug.app.tensorify.io in production, slug.localhost:3000 in development). Includes modern visual design with loading states, error handling, and responsive grid layout.
+          - `logic.tsx` - Comprehensive logic for organization management with ts-rest client integration. Handles current organization editing with slug validation and form state management, plus fetches and manages the complete list of user's organizations via getOrganization API. Includes navigation functionality for opening other organizations in new tabs based on environment configuration, and maintains synchronized state between current organization and organizations list.
           - `icon.tsx` - Icon component for the general section in the sidebar.
           - `meta.tsx` - Metadata for the general section (label, ID, group).
           - `index.ts` - Export file for the general module.

@@ -52,7 +52,24 @@ export const action = {
           id: userId,
         },
         include: {
-          createdOrgs: true,
+          createdOrgs: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+          memberships: {
+            include: {
+              organization: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                },
+              },
+            },
+          },
         },
       });
 
@@ -66,7 +83,7 @@ export const action = {
         });
       }
 
-      if (user.createdOrgs.length === 0) {
+      if (user.createdOrgs.length === 0 && user.memberships.length === 0) {
         throw new TsRestResponseError(contract, {
           status: 404,
           body: {
@@ -76,11 +93,21 @@ export const action = {
         });
       }
 
-      const responseBody = user.createdOrgs.map((org) => ({
-        id: org.id,
-        name: org.name,
-        slug: org.slug,
-      }));
+      const responseBody = [...user.createdOrgs, ...user.memberships].map((org) => {
+        if ("organization" in org) {
+          return {
+            id: org.organization.id,
+            name: org.organization.name,
+            slug: org.organization.slug,
+          };
+        } else {
+          return {
+            id: org.id,
+            name: org.name,
+            slug: org.slug,
+          };
+        }
+      });
 
       const parsedBody = OrgInfo.safeParse(responseBody);
 

@@ -4,10 +4,17 @@ import * as React from "react";
 import { getOrganization } from "@/app/api/v1/_client/client";
 import useStore from "@/app/_store/store";
 
+type Organization = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
 export function useGeneralLogic() {
   const currentOrg = useStore((state) => state.currentOrg);
   const setCurrentOrg = useStore((state) => state.setCurrentOrg);
 
+  // Current org editing states
   const [organizationName, setOrganizationName] = React.useState("");
   const [organizationSlug, setOrganizationSlug] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
@@ -16,32 +23,42 @@ export function useGeneralLogic() {
   const [isValidSlug, setIsValidSlug] = React.useState(true);
   const [slugError, setSlugError] = React.useState<string | null>(null);
 
+  // Organizations list states
+  const [organizations, setOrganizations] = React.useState<Organization[]>([]);
+  const [loadingOrganizations, setLoadingOrganizations] = React.useState(false);
+  const [organizationsError, setOrganizationsError] = React.useState<
+    string | null
+  >(null);
+
   // Initialize from current org or fetch data
   React.useEffect(() => {
     if (currentOrg) {
       setOrganizationName(currentOrg.name);
       setOrganizationSlug(currentOrg.slug);
       validateSlug(currentOrg.slug);
-    } else {
-      fetchOrganizationData();
     }
+    // Always fetch organizations list
+    fetchOrganizations();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentOrg]);
 
-  const fetchOrganizationData = async () => {
+  const fetchOrganizations = async () => {
     try {
-      setIsLoading(true);
-      setError(null);
+      setLoadingOrganizations(true);
+      setOrganizationsError(null);
 
       const response = await getOrganization({});
 
       if (response.status === 200) {
-        const organizations = response.body;
-        if (organizations.length > 0) {
-          const firstOrg = organizations[0];
-          // Create a proper Organization object for the store
+        const organizationsData = response.body;
+        setOrganizations(organizationsData);
+
+        // If no current org is set, set the first one as current
+        if (!currentOrg && organizationsData.length > 0) {
+          const firstOrg = organizationsData[0];
           const fullOrg = {
             ...firstOrg,
-            createdById: "", // These fields are not provided by the API but required by Prisma model
+            createdById: "",
             createdAt: new Date(),
             updatedAt: new Date(),
           };
@@ -51,16 +68,14 @@ export function useGeneralLogic() {
           validateSlug(firstOrg.slug);
         }
       } else {
-        setError("Failed to fetch organization data");
+        setOrganizationsError("Failed to fetch organizations");
       }
     } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch organization data"
+      setOrganizationsError(
+        error instanceof Error ? error.message : "Failed to fetch organizations"
       );
     } finally {
-      setIsLoading(false);
+      setLoadingOrganizations(false);
     }
   };
 
@@ -104,10 +119,10 @@ export function useGeneralLogic() {
 
       // TODO: Implement organization update endpoint
       // For now, we'll simulate a successful update
-      console.log("Saving organization details:", {
-        name: organizationName,
-        slug: organizationSlug,
-      });
+      // console.log("Saving organization details:", {
+      //   name: organizationName,
+      //   slug: organizationSlug,
+      // });
 
       // Simulate API call delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -121,6 +136,15 @@ export function useGeneralLogic() {
           updatedAt: new Date(),
         };
         setCurrentOrg(updatedOrg);
+
+        // Update organizations list as well
+        setOrganizations((prev) =>
+          prev.map((org) =>
+            org.id === currentOrg.id
+              ? { ...org, name: organizationName, slug: organizationSlug }
+              : org
+          )
+        );
       }
 
       setSuccess(true);
@@ -138,9 +162,24 @@ export function useGeneralLogic() {
     }
   };
 
+  const handleOpenOrganization = (slug: string) => {
+    const baseUrl =
+      process.env.NODE_ENV === "development"
+        ? `${slug}.localhost:3000`
+        : `${slug}.app.tensorify.io`;
+
+    window.open(`http${process.env.NODE_ENV === "development" ? "" : "s"}://${baseUrl}`, "_blank");
+  };
+
+  // Get organizations excluding the current one
+  const otherOrganizations = organizations.filter((org) =>
+    currentOrg ? org.id !== currentOrg.id : true
+  );
+
   const isFormValid = organizationName.length > 0 && isValidSlug;
 
   return {
+    // Current org editing
     organizationName,
     organizationSlug,
     setOrganizationName,
@@ -154,6 +193,14 @@ export function useGeneralLogic() {
     isFormValid,
     setError,
     setSuccess,
+
+    // Organizations list
+    organizations,
+    otherOrganizations,
+    loadingOrganizations,
+    organizationsError,
+    handleOpenOrganization,
+    currentOrg,
   };
 }
 

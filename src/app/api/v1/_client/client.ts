@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE — DO NOT EDIT MANUALLY
-// Generated on: 6/2/2025, 3:23:07 PM
+// Generated on: 6/6/2025, 8:59:57 PM
 "use server";
 
 import { initClient } from "@ts-rest/core";
@@ -12,6 +12,7 @@ import { auth } from "@clerk/nextjs/server";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const client = initClient(contract, {
   baseUrl: "", // Will override in each server action
+  baseHeaders: {},
   credentials: "include",
 });
 
@@ -25,13 +26,14 @@ const getBaseUrl = async () => {
 
 // Helper to create a client with dynamic baseUrl
 const getClientWithBaseUrl = async () => {
-  const { getToken } = await auth();
+  const {getToken} = await auth();
   const token = await getToken();
   return initClient(contract, {
     baseUrl: await getBaseUrl(),
     baseHeaders: {
-      Authorization: `Bearer ${token}`,
+      authorization: `Bearer ${token}`,
     },
+    credentials: "include",
   });
 };
 
@@ -150,6 +152,20 @@ export async function onboardingSetup(
   return await dynamicClient.onboardingSetup.contract(args);
 }
 
+export async function getOrganization(
+  args: Parameters<typeof client.getOrganization.contract>[0]
+): Promise<ReturnType<typeof client.getOrganization.contract>> {
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.getOrganization.contract(args);
+}
+
+export async function getPermissions(
+  args: Parameters<typeof client.getPermissions.contract>[0]
+): Promise<ReturnType<typeof client.getPermissions.contract>> {
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.getPermissions.contract(args);
+}
+
 export async function getRoles(
   args: Parameters<typeof client.getRoles.contract>[0]
 ): Promise<ReturnType<typeof client.getRoles.contract>> {
@@ -169,20 +185,6 @@ export async function postRoles(
 ): Promise<ReturnType<typeof client.postRoles.contract>> {
   const dynamicClient = await getClientWithBaseUrl();
   return await dynamicClient.postRoles.contract(args);
-}
-
-export async function getOrganization(
-  args: Parameters<typeof client.getOrganization.contract>[0]
-): Promise<ReturnType<typeof client.getOrganization.contract>> {
-  const dynamicClient = await getClientWithBaseUrl();
-  return await dynamicClient.getOrganization.contract(args);
-}
-
-export async function getPermissions(
-  args: Parameters<typeof client.getPermissions.contract>[0]
-): Promise<ReturnType<typeof client.getPermissions.contract>> {
-  const dynamicClient = await getClientWithBaseUrl();
-  return await dynamicClient.getPermissions.contract(args);
 }
 
 export async function getUserRole(

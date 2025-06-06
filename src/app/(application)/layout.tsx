@@ -5,6 +5,8 @@ import "../globals.css";
 import { auth } from "@clerk/nextjs/server";
 import db from "@/server/database/db";
 import { Toaster } from "@/app/_components/ui/sonner";
+import { getCurrentSlugFromHost } from "@/server/utils/getCurrentSlugFromHost";
+import { headers } from "next/headers";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -21,18 +23,18 @@ export default async function RootLayout({
 }) {
   const { sessionClaims } = await auth();
 
+  const host = (await headers()).get("host") || "";
+  const currentSlug = await getCurrentSlugFromHost(host);
+
   // Fetch organization data for the current user
-  const organization = await db.organization.findFirst({
+  const organization = await db.organization.findUnique({
     where: {
-      createdById: sessionClaims?.sub as string,
+      slug: currentSlug || undefined,
     },
     select: {
       id: true,
       name: true,
       slug: true,
-    },
-    orderBy: {
-      createdAt: "asc", // first organization is the default organization
     },
   });
 
