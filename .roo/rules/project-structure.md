@@ -14,7 +14,7 @@ Follow the following rules strictly.
 - (Step 1) At the begining of your task, you must first understand the whole [PROJECT_STRUCTURE.md](mdc:src/PROJECT_STRUCTURE.md) file and then run the following command (denoted in tripple double quotation mark) to make sure the [PROJECT_STRUCTURE.md](mdc:src/PROJECT_STRUCTURE.md) is up to date with the help of any chat context (if present) """find ./src \( \
   -name '.env' -o \
   -name '.clerk' -o \
-  -name '.cursor' -o \
+  -name '.roo' -o \
   -name '.next' -o \
   -name '.git' -o \
   -name 'node_modules' \
@@ -32,7 +32,7 @@ Follow the following rules strictly.
 - (Step 4) After making any changes run the following command : """find ./src \( \
   -name '.env' -o \
   -name '.clerk' -o \
-  -name '.cursor' -o \
+  -name '.roo' -o \
   -name '.next' -o \
   -name '.git' -o \
   -name 'node_modules' \

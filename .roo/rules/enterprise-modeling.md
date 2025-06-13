@@ -3,7 +3,7 @@ description:
 globs: 
 alwaysApply: false
 ---
-# cursor.md
+# roo.md
 
 # 🧠 High-Level Architecture
 Tensorify is a B2B SaaS platform structured as:
