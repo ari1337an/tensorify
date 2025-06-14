@@ -1,0 +1,51 @@
+# Task ID: 1
+# Title: Initialize Next.js Project with Core Dependencies
+# Status: done
+# Dependencies: None
+# Priority: high
+# Description: Set up the Next.js project with React Flow, Tailwind UI, Shadcn UI, Zustand, Prisma ORM, PostgreSQL, and Clerk authentication. Configure the basic project structure, install dependencies, and initialize Clerk for user authentication.
+# Details:
+1. Create a new Next.js project using `create-next-app`.
+2. Install React Flow, Tailwind UI, Shadcn UI, Zustand, Prisma, and Clerk.
+3. Configure Tailwind CSS and Shadcn UI.
+4. Set up Prisma with PostgreSQL.
+5. Initialize Clerk for user authentication, but disable Clerk's organization signup feature.
+6. Create basic folder structure (components, pages, utils, api).
+
+# Test Strategy:
+1. Verify that the Next.js application starts without errors.
+2. Ensure that all dependencies are installed correctly.
+3. Check that Clerk authentication is initialized and working.
+4. Confirm that Prisma can connect to the PostgreSQL database.
+
+# Subtasks:
+## 1. Create Next.js Project and Install Core Dependencies [done]
+### Dependencies: None
+### Description: Initialize a new Next.js project using `create-next-app` and install React Flow, Tailwind UI, Shadcn UI, Zustand, Prisma, and Clerk as dependencies.
+### Details:
+Use `create-next-app` to scaffold the project. Install the necessary packages using npm or yarn. Verify successful installation by checking the `package.json` file.
+
+## 2. Configure Tailwind CSS and Shadcn UI [done]
+### Dependencies: 1.1
+### Description: Set up Tailwind CSS and Shadcn UI within the Next.js project, including necessary configurations and customizations.
+### Details:
+Follow the official documentation for Tailwind CSS and Shadcn UI to configure them within the Next.js project. This includes setting up the `tailwind.config.js` and `postcss.config.js` files, and configuring Shadcn UI components.
+
+## 3. Set up Prisma with PostgreSQL [done]
+### Dependencies: 1.1
+### Description: Configure Prisma ORM to connect to a PostgreSQL database. Define the database schema and generate the Prisma client.
+### Details:
+Install the Prisma CLI and client. Configure the `.env` file with the PostgreSQL database connection string. Define the database schema in `schema.prisma`. Generate the Prisma client using `prisma generate` and migrate the database using `prisma migrate dev`.
+
+## 4. Initialize Clerk Authentication (Disable Organization Signup) [done]
+### Dependencies: 1.1
+### Description: Set up Clerk for user authentication, ensuring that the organization signup feature is disabled.
+### Details:
+Install the Clerk SDK. Configure Clerk authentication in the Next.js application, following the Clerk documentation. Ensure that the organization signup feature is explicitly disabled in the Clerk dashboard or configuration.
+
+## 5. Create Basic Project Folder Structure [done]
+### Dependencies: 1.1
+### Description: Establish a basic folder structure for the project, including directories for components, pages, utils, and API routes.
+### Details:
+Create the following directories: `components`, `pages`, `utils`, and `api` in the project's root directory. This structure will help organize the project's code and assets.
+

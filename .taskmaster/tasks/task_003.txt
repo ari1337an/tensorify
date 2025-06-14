@@ -1,0 +1,48 @@
+# Task ID: 3
+# Title: Implement Dark Mode and Light Mode
+# Status: done
+# Dependencies: 2
+# Priority: medium
+# Description: Implement dark mode and light mode support using CSS variables and Zustand for state management. Provide a toggle in the settings dialog to switch between themes.
+# Details:
+1. Define CSS variables for light and dark themes.
+2. Use Zustand to manage the theme state.
+3. Create a theme toggle component in the settings dialog.
+4. Apply the selected theme to the application using CSS variables.
+
+# Test Strategy:
+1. Verify that the theme can be switched between light and dark modes.
+2. Check that all components are styled correctly in both themes.
+3. Ensure that the theme preference is persisted across sessions.
+
+# Subtasks:
+## 1. Define Light and Dark Theme CSS Variables [done]
+### Dependencies: None
+### Description: Define CSS variables for both light and dark themes, covering colors for background, text, borders, and other UI elements.
+### Details:
+Create a CSS file (e.g., `themes.css`) and define CSS variables within `:root` for light mode and use a `[data-theme='dark']` selector to override these variables for dark mode. Ensure comprehensive coverage of all UI elements.
+
+## 2. Implement Zustand Theme Store [done]
+### Dependencies: None
+### Description: Create a Zustand store to manage the current theme state (light or dark).
+### Details:
+Use Zustand to create a store with a `theme` state variable (initially set to 'light') and a `setTheme` action to update the theme. Persist the theme to local storage to maintain the user's preference across sessions.
+
+## 3. Create Theme Toggle Component [done]
+### Dependencies: 3.2
+### Description: Develop a toggle component within the settings dialog to switch between light and dark themes.
+### Details:
+Create a React component (e.g., `ThemeToggle`) that uses the Zustand store to access the current theme and the `setTheme` action. Implement a toggle switch (e.g., using a library like `react-switch`) that calls `setTheme` when toggled. Integrate this component into the settings dialog.
+
+## 4. Apply Theme Using CSS Variables [done]
+### Dependencies: 3.2, 3.1
+### Description: Apply the selected theme to the application by setting the `data-theme` attribute on the root element based on the Zustand theme state.
+### Details:
+Create a component (e.g., `ThemeProvider`) that subscribes to the Zustand theme store. When the theme changes, update the `data-theme` attribute of the `<html>` element to either 'light' or 'dark'. This will trigger the CSS variables defined in `themes.css` to apply the corresponding theme.
+
+## 5. Integrate Theme Toggle into Settings Dialog [done]
+### Dependencies: 3.3, 3.4
+### Description: Ensure the theme toggle component is correctly integrated into the settings dialog and functions as expected.
+### Details:
+Place the `ThemeToggle` component within the settings dialog's UI. Verify that the settings dialog correctly displays the current theme and allows the user to switch between themes. Ensure the settings dialog is accessible and user-friendly.
+

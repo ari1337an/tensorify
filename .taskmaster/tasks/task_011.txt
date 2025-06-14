@@ -1,0 +1,47 @@
+# Task ID: 11
+# Title: Integrate Tensorify Transpiler Backend
+# Status: pending
+# Dependencies: 8
+# Priority: high
+# Description: Integrate the Tensorify Transpiler backend with the export button in the workflow UI. When the user clicks the export button, send the workflow JSON to the transpiler backend and display the generated Python code.
+# Details:
+1. Implement an API endpoint to send the workflow JSON to the transpiler backend.
+2. Display the generated Python code in a dialog or some sort.
+3. Handle network failures and schema mismatches.
+
+# Test Strategy:
+1. Verify that the workflow JSON is sent to the transpiler backend.
+2. Check that the generated Python code is displayed correctly.
+3. Ensure that network failures and schema mismatches are handled gracefully.
+
+# Subtasks:
+## 1. Implement API Endpoint for Transpilation [pending]
+### Dependencies: None
+### Description: Create a new API endpoint in the workflow UI backend that accepts a workflow JSON as input and forwards it to the Tensorify Transpiler backend.
+### Details:
+The endpoint should handle POST requests with a JSON payload. It should also include error handling for invalid JSON and network issues when communicating with the transpiler.
+
+## 2. Connect Export Button to API Endpoint [pending]
+### Dependencies: None
+### Description: Modify the export button's functionality to send the current workflow JSON to the newly created API endpoint when clicked.
+### Details:
+The export button's click handler should serialize the workflow data into JSON format and send it as a POST request to the API endpoint. Display a loading indicator while waiting for the response.
+
+## 3. Display Generated Python Code [pending]
+### Dependencies: 11.2
+### Description: Create a dialog or modal to display the Python code received from the Tensorify Transpiler backend.
+### Details:
+The dialog should be able to display multi-line text and provide options for copying the code to the clipboard. It should open automatically when the API endpoint returns the generated Python code.
+
+## 4. Handle Network Failures [pending]
+### Dependencies: 11.1, 11.2
+### Description: Implement error handling for network failures when communicating with the Tensorify Transpiler backend.
+### Details:
+Display an informative error message to the user if the API request fails due to network issues. Provide options for retrying the request.
+
+## 5. Handle Schema Mismatches [pending]
+### Dependencies: 11.1, 11.2
+### Description: Implement error handling for schema mismatches between the workflow JSON and the Tensorify Transpiler backend's expected input format.
+### Details:
+If the Tensorify Transpiler backend returns an error indicating a schema mismatch, display an informative error message to the user, explaining the issue and suggesting possible solutions (e.g., updating the workflow or contacting support).
+

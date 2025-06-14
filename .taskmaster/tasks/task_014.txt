@@ -1,0 +1,68 @@
+# Task ID: 14
+# Title: Implement Plugin Installation per Workflow
+# Status: pending
+# Dependencies: 8
+# Priority: high
+# Description: Implement the ability to install plugins into a specific workflow by providing the plugin's slug, including UI, API endpoint, and database changes.
+# Details:
+1.  **Database Schema Update:** Modify the database schema to include a many-to-many relationship between workflows and plugins. This will likely involve creating a new table to store the associations.
+2.  **API Endpoint Implementation:** Create a new API endpoint (`/api/workflows/[workflowId]/plugins`) that handles the installation and uninstallation of plugins for a given workflow. This endpoint should:
+    *   Accept a `pluginSlug` in the request body.
+    *   Validate that the `workflowId` exists.
+    *   Validate that the `pluginSlug` exists in the plugins table.
+    *   Create or delete the association between the workflow and the plugin in the database.
+    *   Return a success or error message.
+3.  **UI Component Development:** Create a UI component within the workflow canvas that allows users to:
+    *   Search for available plugins by slug.
+    *   View installed plugins.
+    *   Install or uninstall plugins for the current workflow.
+    *   Display appropriate error messages if plugin installation fails.
+4.  **Error Handling:** Implement robust error handling throughout the process, including:
+    *   Handling invalid `workflowId` or `pluginSlug` values.
+    *   Handling database errors.
+    *   Providing informative error messages to the user.
+5.  **Security Considerations:** Ensure that the API endpoint is properly authenticated and authorized to prevent unauthorized plugin installations.
+6.  **Workflow Context:** Ensure the UI component correctly retrieves and displays the plugins associated with the currently selected workflow.
+7.  **Plugin Activation:** Consider whether plugins should be automatically activated upon installation, or if a separate activation step is required. Implement the chosen approach.
+8.  **Slug Validation:** Implement validation to ensure the plugin slug is in the correct format.
+
+# Test Strategy:
+1.  **Unit Tests:** Write unit tests for the API endpoint to ensure that it correctly handles valid and invalid requests.
+2.  **Integration Tests:** Write integration tests to verify that the API endpoint correctly interacts with the database.
+3.  **UI Tests:** Manually test the UI component to ensure that it correctly displays available and installed plugins, and that the installation/uninstallation process works as expected.
+4.  **Database Verification:** Verify that the database schema has been updated correctly and that the associations between workflows and plugins are being created and deleted as expected.
+5.  **Error Handling Verification:** Test all error handling scenarios to ensure that appropriate error messages are displayed to the user.
+6.  **Security Audit:** Review the API endpoint and UI component for potential security vulnerabilities.
+7.  **Workflow Functionality:** Create a workflow, install a plugin, and verify that the plugin's functionality is correctly integrated into the workflow.
+
+# Subtasks:
+## 1. Database Schema Modification [pending]
+### Dependencies: None
+### Description: Update the database schema to include a many-to-many relationship between workflows and plugins.
+### Details:
+Create a new table to store the associations between workflows and plugins. Include workflow ID and plugin ID as foreign keys.
+
+## 2. API Endpoint Implementation for Plugin Management [pending]
+### Dependencies: 14.1
+### Description: Create a new API endpoint (`/api/workflows/[workflowId]/plugins`) to handle plugin installation and uninstallation.
+### Details:
+Implement the API endpoint to accept a `pluginSlug` in the request body. Validate `workflowId` and `pluginSlug` existence. Create or delete the association in the database. Return appropriate success or error messages.
+
+## 3. UI Component Development for Plugin Management [pending]
+### Dependencies: 14.2
+### Description: Develop a UI component within the workflow canvas for plugin search, installation, and uninstallation.
+### Details:
+Create a UI component that allows users to search for plugins by slug, view installed plugins, and install/uninstall plugins for the current workflow. Display appropriate error messages.
+
+## 4. Implement Error Handling and Validation [pending]
+### Dependencies: 14.2, 14.3
+### Description: Implement robust error handling and validation throughout the plugin installation process.
+### Details:
+Handle invalid `workflowId` or `pluginSlug` values, database errors, and provide informative error messages to the user. Implement slug validation to ensure the plugin slug is in the correct format.
+
+## 5. Implement Security and Plugin Activation Logic [pending]
+### Dependencies: 14.2
+### Description: Ensure API endpoint security and implement plugin activation logic.
+### Details:
+Authenticate and authorize the API endpoint to prevent unauthorized plugin installations. Determine whether plugins should be automatically activated upon installation or require a separate activation step and implement the chosen approach.
+
