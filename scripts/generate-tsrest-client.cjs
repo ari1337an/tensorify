@@ -96,11 +96,14 @@ const client = initClient(contract, {
 });
 
 // Function to get baseUrl dynamically
-const getBaseUrl = async () => {
-  const headersList = await headers();
-  const host = headersList.get('host');
-  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-  return \`\${protocol}://\${host}/api/\${version.apiVersion}\`;
+const getBaseUrl = () => {
+  const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
+  if (process.env.NODE_ENV === "production") {
+    return \`${protocol}://app.tensorify.io/api/${version.apiVersion}\`;
+  } else {
+    const port = process.env.PORT || "3000";
+    return \`${protocol}://localhost:${port}/api/${version.apiVersion}\`;
+  }
 };
 
 // Helper to create a client with dynamic baseUrl
@@ -108,7 +111,7 @@ const getClientWithBaseUrl = async () => {
   const {getToken} = await auth();
   const token = await getToken();
   return initClient(contract, {
-    baseUrl: await getBaseUrl(),
+    baseUrl: getBaseUrl(),
     baseHeaders: {
       authorization: \`Bearer ${token}\`,
     },
