@@ -23,9 +23,7 @@
           "id": 2,
           "title": "Configure Tailwind CSS and Shadcn UI",
           "description": "Set up Tailwind CSS and Shadcn UI within the Next.js project, including necessary configurations and customizations.",
-          "dependencies": [
-            1
-          ],
+          "dependencies": [1],
           "details": "Follow the official documentation for Tailwind CSS and Shadcn UI to configure them within the Next.js project. This includes setting up the `tailwind.config.js` and `postcss.config.js` files, and configuring Shadcn UI components.",
           "status": "done",
           "testStrategy": "Verify Tailwind CSS styles are applied correctly to elements. Test Shadcn UI components render as expected."
@@ -34,9 +32,7 @@
           "id": 3,
           "title": "Set up Prisma with PostgreSQL",
           "description": "Configure Prisma ORM to connect to a PostgreSQL database. Define the database schema and generate the Prisma client.",
-          "dependencies": [
-            1
-          ],
+          "dependencies": [1],
           "details": "Install the Prisma CLI and client. Configure the `.env` file with the PostgreSQL database connection string. Define the database schema in `schema.prisma`. Generate the Prisma client using `prisma generate` and migrate the database using `prisma migrate dev`.",
           "status": "done",
           "testStrategy": "Verify Prisma can connect to the PostgreSQL database. Test basic CRUD operations using the Prisma client."
@@ -45,9 +41,7 @@
           "id": 4,
           "title": "Initialize Clerk Authentication (Disable Organization Signup)",
           "description": "Set up Clerk for user authentication, ensuring that the organization signup feature is disabled.",
-          "dependencies": [
-            1
-          ],
+          "dependencies": [1],
           "details": "Install the Clerk SDK. Configure Clerk authentication in the Next.js application, following the Clerk documentation. Ensure that the organization signup feature is explicitly disabled in the Clerk dashboard or configuration.",
           "status": "done",
           "testStrategy": "Verify user authentication flow works correctly. Confirm that the organization signup feature is disabled and not accessible to users."
@@ -56,9 +50,7 @@
           "id": 5,
           "title": "Create Basic Project Folder Structure",
           "description": "Establish a basic folder structure for the project, including directories for components, pages, utils, and API routes.",
-          "dependencies": [
-            1
-          ],
+          "dependencies": [1],
           "details": "Create the following directories: `components`, `pages`, `utils`, and `api` in the project's root directory. This structure will help organize the project's code and assets.",
           "status": "done",
           "testStrategy": "Verify that the specified directories exist in the project's root directory."
@@ -72,9 +64,7 @@
       "details": "1. Create a `Layout` component that includes the sidebar, top bar, and canvas area.\n2. Implement the collapsible sidebar using Tailwind CSS and React state.\n3. Design the top bar with breadcrumbs, collaborator avatars, and action buttons (lock, history, comments, share, export).\n4. Integrate React Flow for the canvas area.\n5. Ensure the layout is responsive using Tailwind CSS's responsive utilities.",
       "testStrategy": "1. Verify that the layout is displayed correctly on different screen sizes.\n2. Check that the sidebar can be collapsed and expanded.\n3. Ensure that all elements in the top bar are visible and functional.\n4. Confirm that the React Flow canvas is rendered correctly.",
       "priority": "high",
-      "dependencies": [
-        1
-      ],
+      "dependencies": [1],
       "status": "pending",
       "subtasks": [
         {
@@ -90,9 +80,7 @@
           "id": 2,
           "title": "Implement Collapsible Sidebar",
           "description": "Implement the collapsible sidebar functionality using React state and Tailwind CSS for styling and animations.",
-          "dependencies": [
-            1
-          ],
+          "dependencies": [1],
           "details": "Use a React state variable to control the sidebar's visibility. Implement a button to toggle the state. Use Tailwind CSS classes for styling the sidebar and creating the collapse/expand animation.",
           "status": "done",
           "testStrategy": "Test the sidebar's collapse/expand functionality by clicking the toggle button and verifying the animation and visibility changes."
@@ -101,23 +89,10 @@
           "id": 3,
           "title": "Design Top Bar",
           "description": "Design the top bar with breadcrumbs, collaborator avatars, and action buttons (lock, history, comments, share, export).",
-          "dependencies": [
-            1
-          ],
+          "dependencies": [1],
           "details": "Create a `TopBar` component and include elements for breadcrumbs (using a placeholder for now), collaborator avatars (using dummy data), and action buttons. Style the top bar using Tailwind CSS.",
           "status": "done",
           "testStrategy": "Visually inspect the top bar to ensure all elements are present and styled correctly. Verify the layout and alignment of elements."
-        },
-        {
-          "id": 4,
-          "title": "Integrate React Flow Canvas",
-          "description": "Integrate React Flow into the canvas area of the layout.",
-          "dependencies": [
-            1
-          ],
-          "details": "Install the `react-flow-renderer` library. Import the library and render a basic React Flow component within the canvas area of the `Layout` component. Initialize React Flow with an empty graph.",
-          "status": "pending",
-          "testStrategy": "Verify that the React Flow canvas is rendered correctly within the layout. Ensure that the basic React Flow functionality (e.g., adding nodes) is working."
         }
       ]
     },
@@ -128,9 +103,7 @@
       "details": "1. Define CSS variables for light and dark themes.\n2. Use Zustand to manage the theme state.\n3. Create a theme toggle component in the settings dialog.\n4. Apply the selected theme to the application using CSS variables.",
       "testStrategy": "1. Verify that the theme can be switched between light and dark modes.\n2. Check that all components are styled correctly in both themes.\n3. Ensure that the theme preference is persisted across sessions.",
       "priority": "medium",
-      "dependencies": [
-        2
-      ],
+      "dependencies": [2],
       "status": "done",
       "subtasks": [
         {
@@ -155,9 +128,7 @@
           "id": 3,
           "title": "Create Theme Toggle Component",
           "description": "Develop a toggle component within the settings dialog to switch between light and dark themes.",
-          "dependencies": [
-            2
-          ],
+          "dependencies": [2],
           "details": "Create a React component (e.g., `ThemeToggle`) that uses the Zustand store to access the current theme and the `setTheme` action. Implement a toggle switch (e.g., using a library like `react-switch`) that calls `setTheme` when toggled. Integrate this component into the settings dialog.",
           "status": "done",
           "testStrategy": "Manually test the theme toggle in the settings dialog to ensure it correctly switches between light and dark themes and that the theme is persisted across page reloads."
@@ -166,10 +137,7 @@
           "id": 4,
           "title": "Apply Theme Using CSS Variables",
           "description": "Apply the selected theme to the application by setting the `data-theme` attribute on the root element based on the Zustand theme state.",
-          "dependencies": [
-            2,
-            1
-          ],
+          "dependencies": [2, 1],
           "details": "Create a component (e.g., `ThemeProvider`) that subscribes to the Zustand theme store. When the theme changes, update the `data-theme` attribute of the `<html>` element to either 'light' or 'dark'. This will trigger the CSS variables defined in `themes.css` to apply the corresponding theme.",
           "status": "done",
           "testStrategy": "Manually inspect the application in both light and dark modes to ensure that all UI elements are styled correctly according to the defined CSS variables. Use browser developer tools to verify that the `data-theme` attribute is being updated correctly."
@@ -178,10 +146,7 @@
           "id": 5,
           "title": "Integrate Theme Toggle into Settings Dialog",
           "description": "Ensure the theme toggle component is correctly integrated into the settings dialog and functions as expected.",
-          "dependencies": [
-            3,
-            4
-          ],
+          "dependencies": [3, 4],
           "details": "Place the `ThemeToggle` component within the settings dialog's UI. Verify that the settings dialog correctly displays the current theme and allows the user to switch between themes. Ensure the settings dialog is accessible and user-friendly.",
           "status": "done",
           "testStrategy": "Manually test the settings dialog to ensure the theme toggle is present, functional, and visually consistent with the rest of the dialog. Verify that changing the theme through the toggle updates the application's theme correctly."
@@ -195,9 +160,7 @@
       "details": "1. Create a `SettingsDialog` component with tabs for Account, Organization, and Access Control.\n2. Implement the UI for user profile management (name, portrait, email).\n3. Add a theme preference toggle.\n4. Implement the organization settings UI (name, slug).\n5. Develop the user management UI with a data table for organization users.\n6. Implement the role-based access control UI with role creation form.",
       "testStrategy": "1. Verify that the settings dialog is displayed correctly.\n2. Check that all UI elements are functional.\n3. Ensure that user profile information can be updated.\n4. Confirm that organization settings can be modified.\n5. Verify that users can be managed and roles can be created.",
       "priority": "high",
-      "dependencies": [
-        3
-      ],
+      "dependencies": [3],
       "status": "pending",
       "subtasks": [
         {
@@ -245,9 +208,7 @@
       "details": "1. Create an onboarding page (`/onboarding`) with questions fetched from the onboarding questions API.\n2. Implement a form for the user to name their organization and specify its size.\n3. Create an API endpoint to handle the onboarding data.\n4. Store the onboarding responses in the database.\n5. Set up the necessary database rows for the user and organization.",
       "testStrategy": "1. Verify that the onboarding page is displayed correctly.\n2. Check that the onboarding questions are fetched from the API.\n3. Ensure that the organization is created successfully.\n4. Confirm that the necessary database rows are created.",
       "priority": "high",
-      "dependencies": [
-        1
-      ],
+      "dependencies": [1],
       "status": "done",
       "subtasks": [
         {
@@ -263,9 +224,7 @@
           "id": 2,
           "title": "Implement Organization Name and Size Form",
           "description": "Create a form on the `/onboarding` page for the user to enter the organization name and select the organization size.",
-          "dependencies": [
-            1
-          ],
+          "dependencies": [1],
           "details": "Include input fields for organization name (text) and organization size (dropdown or radio buttons). Implement client-side validation to ensure the organization name is not empty.",
           "status": "done",
           "testStrategy": "Verify that the organization name and size form elements are displayed correctly. Test client-side validation to ensure the organization name is not empty."
@@ -283,9 +242,7 @@
           "id": 4,
           "title": "Store Onboarding Responses in Database",
           "description": "Store the user's responses to the onboarding questions in the database.",
-          "dependencies": [
-            3
-          ],
+          "dependencies": [3],
           "details": "Create a database table to store the onboarding responses. Map the questions and answers to the appropriate columns in the table. Ensure data integrity and security.",
           "status": "done",
           "testStrategy": "Verify that the onboarding responses are stored correctly in the database. Check data types and relationships between tables."
@@ -294,10 +251,7 @@
           "id": 5,
           "title": "Set Up User and Organization Database Rows",
           "description": "Create the necessary database rows for the user and organization, linking them together.",
-          "dependencies": [
-            3,
-            4
-          ],
+          "dependencies": [3, 4],
           "details": "Create a new organization record in the database, using the organization name and size provided by the user. Update the user record to associate them with the newly created organization.",
           "status": "done",
           "testStrategy": "Verify that the user and organization records are created correctly in the database. Check the relationships between the user and organization tables."
@@ -311,9 +265,7 @@
       "details": "1. Create a UI component for creating teams.\n2. Implement an API endpoint to handle the team creation request.\n3. Store the team information in the database.",
       "testStrategy": "1. Verify that the team creation UI is displayed correctly.\n2. Check that the team is created successfully.\n3. Ensure that the team information is stored in the database.",
       "priority": "medium",
-      "dependencies": [
-        5
-      ],
+      "dependencies": [5],
       "status": "pending",
       "subtasks": [
         {
@@ -347,10 +299,7 @@
           "id": 4,
           "title": "Implement Database Storage Logic",
           "description": "Implement the logic to store the team information in the database using the defined data model.",
-          "dependencies": [
-            2,
-            3
-          ],
+          "dependencies": [2, 3],
           "details": "Use an appropriate database access library or ORM to interact with the database. Implement proper error handling and transaction management.",
           "status": "pending",
           "testStrategy": "Integration tests to verify that team information is stored correctly in the database. Performance tests to ensure the database storage logic is efficient."
@@ -359,10 +308,7 @@
           "id": 5,
           "title": "Integrate UI Component with API Endpoint",
           "description": "Integrate the team creation UI component with the API endpoint to allow users to create new teams.",
-          "dependencies": [
-            1,
-            2
-          ],
+          "dependencies": [1, 2],
           "details": "Implement the necessary JavaScript code to send the team creation request to the API endpoint and handle the response. Display appropriate feedback to the user.",
           "status": "pending",
           "testStrategy": "End-to-end tests to verify that users can create new teams successfully through the UI. User acceptance testing to ensure the team creation flow meets the user's needs."
@@ -376,9 +322,7 @@
       "details": "1. Create a UI component for creating projects.\n2. Implement an API endpoint to handle the project creation request.\n3. Store the project information in the database.",
       "testStrategy": "1. Verify that the project creation UI is displayed correctly.\n2. Check that the project is created successfully.\n3. Ensure that the project information is stored in the database.",
       "priority": "medium",
-      "dependencies": [
-        6
-      ],
+      "dependencies": [6],
       "status": "pending",
       "subtasks": [
         {
@@ -394,9 +338,7 @@
           "id": 2,
           "title": "Implement Project Creation UI Logic",
           "description": "Implement the client-side logic for the project creation UI component, including form validation and submission handling.",
-          "dependencies": [
-            1
-          ],
+          "dependencies": [1],
           "details": "Use JavaScript or a front-end framework (e.g., React, Angular, Vue.js) to handle form submission and validation. Implement error handling and display appropriate messages to the user.",
           "status": "pending",
           "testStrategy": "Unit tests for form validation logic and integration tests for UI component behavior."
@@ -414,9 +356,7 @@
           "id": 4,
           "title": "Implement Project Creation API Endpoint",
           "description": "Implement the API endpoint to handle project creation requests, including data validation, database interaction, and error handling.",
-          "dependencies": [
-            3
-          ],
+          "dependencies": [3],
           "details": "Use a server-side framework (e.g., Node.js with Express, Python with Flask/Django) to implement the API endpoint. Validate the request data and store the project information in the database.",
           "status": "pending",
           "testStrategy": "Unit tests for API endpoint logic and integration tests for database interaction."
@@ -425,10 +365,7 @@
           "id": 5,
           "title": "Integrate UI with API Endpoint",
           "description": "Integrate the project creation UI component with the API endpoint to create new projects.",
-          "dependencies": [
-            2,
-            4
-          ],
+          "dependencies": [2, 4],
           "details": "Send the project data from the UI to the API endpoint and handle the response. Display success or error messages to the user.",
           "status": "pending",
           "testStrategy": "End-to-end testing of the project creation flow, including UI interaction, API request, and database storage."
@@ -442,9 +379,7 @@
       "details": "1. Create a UI component for creating workflows.\n2. Implement an API endpoint to handle the workflow creation request.\n3. Store the workflow information in the database.",
       "testStrategy": "1. Verify that the workflow creation UI is displayed correctly.\n2. Check that the workflow is created successfully.\n3. Ensure that the workflow information is stored in the database.",
       "priority": "medium",
-      "dependencies": [
-        7
-      ],
+      "dependencies": [7],
       "status": "pending",
       "subtasks": [
         {
@@ -478,10 +413,7 @@
           "id": 4,
           "title": "Implement Workflow Data Persistence",
           "description": "Implement the logic to store the workflow information received from the API endpoint into the database, using the defined schema.",
-          "dependencies": [
-            2,
-            3
-          ],
+          "dependencies": [2, 3],
           "details": "Use an ORM (e.g., Hibernate, SQLAlchemy) or a database access library to interact with the database. Implement proper transaction management to ensure data consistency.",
           "status": "pending",
           "testStrategy": "Create workflows through the UI and verify that the data is correctly stored in the database. Test different scenarios, including error cases and edge cases."
@@ -490,11 +422,7 @@
           "id": 5,
           "title": "Integrate UI Component with API Endpoint",
           "description": "Connect the workflow creation UI component to the API endpoint, allowing users to submit workflow creation requests and receive feedback.",
-          "dependencies": [
-            1,
-            2,
-            4
-          ],
+          "dependencies": [1, 2, 4],
           "details": "Use asynchronous communication (e.g., AJAX, Fetch API) to send requests to the API endpoint. Display appropriate feedback to the user based on the API response (e.g., success message, error message).",
           "status": "pending",
           "testStrategy": "Create workflows through the UI and verify that the data is correctly stored in the database and the user receives appropriate feedback. Test different scenarios, including error cases and edge cases."
@@ -508,12 +436,7 @@
       "details": "1. Implement middleware to check user permissions before accessing resources.\n2. Use the RBAC model to determine if the user has the necessary permissions.\n3. Implement the `hasPermission(UserObj, ResourceObj, actionString)` function.\n4. Enforce access control on all CRUD operations for organizations, teams, projects, and workflows.",
       "testStrategy": "1. Verify that access control is enforced on all CRUD operations.\n2. Check that users can only access resources they have permission to access.\n3. Ensure that the `hasPermission` function returns the correct result.",
       "priority": "high",
-      "dependencies": [
-        5,
-        6,
-        7,
-        8
-      ],
+      "dependencies": [5, 6, 7, 8],
       "status": "pending",
       "subtasks": [
         {
@@ -529,9 +452,7 @@
           "id": 2,
           "title": "Implement `hasPermission` Function",
           "description": "Implement the `hasPermission(UserObj, ResourceObj, actionString)` function to determine if a user has the required permission to perform a specific action on a resource. This function should use the defined RBAC roles and permissions.",
-          "dependencies": [
-            1
-          ],
+          "dependencies": [1],
           "details": "The function should take the user object, resource object, and action string as input. It should check the user's roles and the resource's permissions to determine if the user has the necessary permission. Handle cases where the user has multiple roles.",
           "status": "pending",
           "testStrategy": "Write unit tests to verify that the `hasPermission` function returns the correct result for different users, resources, and actions. Test with different role combinations."
@@ -540,9 +461,7 @@
           "id": 3,
           "title": "Implement Access Control Middleware",
           "description": "Implement middleware that intercepts all CRUD requests for organizations, teams, projects, and workflows. The middleware should call the `hasPermission` function to check if the user has the necessary permissions before allowing access to the resource.",
-          "dependencies": [
-            2
-          ],
+          "dependencies": [2],
           "details": "The middleware should extract the user object, resource object, and action string from the request. It should then call the `hasPermission` function to check if the user has the necessary permissions. If the user does not have the necessary permissions, the middleware should return an error response.",
           "status": "pending",
           "testStrategy": "Test the middleware with different users and resources to ensure that it correctly enforces access control. Verify that unauthorized users are denied access to resources."
@@ -551,9 +470,7 @@
           "id": 4,
           "title": "Enforce Access Control on Organization CRUD Operations",
           "description": "Integrate the access control middleware into the CRUD operations for organizations. Ensure that only authorized users can create, read, update, and delete organizations.",
-          "dependencies": [
-            3
-          ],
+          "dependencies": [3],
           "details": "Apply the middleware to the organization endpoints. Test all CRUD operations to ensure that access control is enforced correctly.",
           "status": "pending",
           "testStrategy": "Test each CRUD operation (create, read, update, delete) with different user roles to verify that access control is enforced correctly. Verify that unauthorized users are denied access."
@@ -562,10 +479,7 @@
           "id": 5,
           "title": "Enforce Access Control on Teams, Projects, and Workflows CRUD Operations",
           "description": "Integrate the access control middleware into the CRUD operations for teams, projects, and workflows. Ensure that only authorized users can create, read, update, and delete these resources.",
-          "dependencies": [
-            3,
-            4
-          ],
+          "dependencies": [3, 4],
           "details": "Apply the middleware to the team, project, and workflow endpoints. Test all CRUD operations to ensure that access control is enforced correctly.",
           "status": "pending",
           "testStrategy": "Test each CRUD operation (create, read, update, delete) for teams, projects, and workflows with different user roles to verify that access control is enforced correctly. Verify that unauthorized users are denied access."
@@ -579,9 +493,7 @@
       "details": "1. Create a UI component for inviting new members.\n2. Implement an API endpoint to send email-based token invites.\n3. Handle invitation acceptance and revocation.\n4. Store the invitation information in the database.",
       "testStrategy": "1. Verify that the invitation UI is displayed correctly.\n2. Check that email-based token invites are sent successfully.\n3. Ensure that invitations can be accepted and revoked.\n4. Confirm that the invitation information is stored in the database.",
       "priority": "high",
-      "dependencies": [
-        9
-      ],
+      "dependencies": [9],
       "status": "pending",
       "subtasks": [
         {
@@ -606,9 +518,7 @@
           "id": 3,
           "title": "Implement Invitation Acceptance Handler",
           "description": "Develop the logic to handle invitation acceptance when a user clicks the link in the email. This includes verifying the token, creating a new user account (if necessary), and adding the user to the organization, team, or project.",
-          "dependencies": [
-            2
-          ],
+          "dependencies": [2],
           "details": "The acceptance handler should handle expired or invalid tokens gracefully. It should also ensure that the user is not already a member of the organization, team, or project.",
           "status": "pending",
           "testStrategy": "End-to-end test the entire invitation flow, from sending the invite to accepting it and verifying the user's membership."
@@ -617,9 +527,7 @@
           "id": 4,
           "title": "Implement Invitation Revocation Functionality",
           "description": "Implement the ability for administrators or the inviter to revoke pending invitations. This should invalidate the token and prevent the invitee from accepting the invitation.",
-          "dependencies": [
-            2
-          ],
+          "dependencies": [2],
           "details": "The revocation process should update the invitation status in the database and potentially notify the invitee that the invitation has been revoked.",
           "status": "pending",
           "testStrategy": "Test the revocation process and verify that the invitee can no longer accept the invitation after it has been revoked."
@@ -642,9 +550,7 @@
       "details": "1. Implement an API endpoint to send the workflow JSON to the transpiler backend.\n2. Display the generated Python code in a dialog or some sort.\n3. Handle network failures and schema mismatches.",
       "testStrategy": "1. Verify that the workflow JSON is sent to the transpiler backend.\n2. Check that the generated Python code is displayed correctly.\n3. Ensure that network failures and schema mismatches are handled gracefully.",
       "priority": "high",
-      "dependencies": [
-        8
-      ],
+      "dependencies": [8],
       "status": "pending",
       "subtasks": [
         {
@@ -669,9 +575,7 @@
           "id": 3,
           "title": "Display Generated Python Code",
           "description": "Create a dialog or modal to display the Python code received from the Tensorify Transpiler backend.",
-          "dependencies": [
-            2
-          ],
+          "dependencies": [2],
           "details": "The dialog should be able to display multi-line text and provide options for copying the code to the clipboard. It should open automatically when the API endpoint returns the generated Python code.",
           "status": "pending",
           "testStrategy": "Click the export button and verify that the dialog opens with the generated Python code displayed correctly."
@@ -680,10 +584,7 @@
           "id": 4,
           "title": "Handle Network Failures",
           "description": "Implement error handling for network failures when communicating with the Tensorify Transpiler backend.",
-          "dependencies": [
-            1,
-            2
-          ],
+          "dependencies": [1, 2],
           "details": "Display an informative error message to the user if the API request fails due to network issues. Provide options for retrying the request.",
           "status": "pending",
           "testStrategy": "Simulate network failures (e.g., by disconnecting the network or using a proxy to block the request) and verify that the correct error message is displayed."
@@ -692,10 +593,7 @@
           "id": 5,
           "title": "Handle Schema Mismatches",
           "description": "Implement error handling for schema mismatches between the workflow JSON and the Tensorify Transpiler backend's expected input format.",
-          "dependencies": [
-            1,
-            2
-          ],
+          "dependencies": [1, 2],
           "details": "If the Tensorify Transpiler backend returns an error indicating a schema mismatch, display an informative error message to the user, explaining the issue and suggesting possible solutions (e.g., updating the workflow or contacting support).",
           "status": "pending",
           "testStrategy": "Send a workflow JSON with an invalid schema to the API endpoint and verify that the correct error message is displayed."
@@ -709,9 +607,7 @@
       "details": "1. Create an audit page with a paginated table.\n2. Display the audit logs in the table.\n3. Implement filtering and sorting options.\n4. Optimize queries for large audit tables.",
       "testStrategy": "1. Verify that the audit page is displayed correctly.\n2. Check that the audit logs are displayed in the table.\n3. Ensure that filtering and sorting options are working correctly.\n4. Confirm that the queries are optimized for large audit tables.",
       "priority": "medium",
-      "dependencies": [
-        9
-      ],
+      "dependencies": [9],
       "status": "pending",
       "subtasks": [
         {
@@ -727,9 +623,7 @@
           "id": 2,
           "title": "Implement Audit Log Retrieval and Pagination",
           "description": "Implement the API endpoint to retrieve audit logs from the database, applying pagination to handle large datasets efficiently.",
-          "dependencies": [
-            1
-          ],
+          "dependencies": [1],
           "details": "Use database queries with LIMIT and OFFSET clauses for pagination. Implement error handling for invalid page numbers or page sizes. Ensure the API returns the total number of audit logs for pagination controls on the front end.",
           "status": "pending",
           "testStrategy": "Integration tests to verify pagination functionality. Performance tests to measure API response time with varying page sizes."
@@ -738,10 +632,7 @@
           "id": 3,
           "title": "Implement Filtering and Sorting Functionality",
           "description": "Implement filtering and sorting options in the API endpoint to allow users to narrow down the audit logs based on specific criteria.",
-          "dependencies": [
-            1,
-            2
-          ],
+          "dependencies": [1, 2],
           "details": "Implement filtering based on user, action, entity, and date range. Implement sorting based on timestamp and other relevant fields. Use database indexes to optimize query performance for filtering and sorting.",
           "status": "pending",
           "testStrategy": "Integration tests to verify filtering and sorting functionality. Performance tests to measure API response time with different filter and sort combinations."
@@ -759,11 +650,7 @@
           "id": 5,
           "title": "Integrate UI with API and Test End-to-End",
           "description": "Integrate the audit page UI with the API endpoint to retrieve and display audit logs. Test the complete functionality of the audit page, including pagination, filtering, and sorting.",
-          "dependencies": [
-            2,
-            3,
-            4
-          ],
+          "dependencies": [2, 3, 4],
           "details": "Connect the UI components to the API endpoint to fetch audit logs. Handle API responses and display data in the table. Implement error handling for API errors. Test the complete workflow from user interaction to data display.",
           "status": "pending",
           "testStrategy": "End-to-end tests to verify the complete functionality of the audit page. User acceptance testing to gather feedback from auditors."
@@ -777,10 +664,7 @@
       "details": "1.  **UI Development:**\n    *   Create a new section in the admin panel for billing management.\n    *   Design and implement a billing overview page displaying key metrics like total users, active subscriptions, outstanding invoices, and payment status.\n    *   Develop UI components for viewing invoice details, managing payment methods (add, update, delete), and accessing billing history.\n2.  **Payment Gateway Integration:**\n    *   Integrate with a payment gateway (e.g., Stripe, PayPal) to process payments.\n    *   Implement secure storage of payment method details.\n    *   Handle payment processing, including successful payments and failed payment scenarios.\n3.  **User Seat Tracking:**\n    *   Track user seat usage based on accepted invitations.\n    *   Ensure that only users who have accepted invitations are included in the billing calculations.\n    *   Implement logic to reconcile user invitations with billing data.\n4.  **Billing Logic:**\n    *   Implement the core billing logic to calculate charges based on user seat usage and subscription plans.\n    *   Generate invoices automatically at predefined intervals (e.g., monthly, quarterly).\n    *   Handle prorated charges for users added or removed during a billing cycle.\n5.  **Notification System:**\n    *   Implement a notification system to alert admins about billing issues, such as failed payments or expiring payment methods.\n    *   Send email notifications to users regarding invoices and payment confirmations.\n6.  **Error Handling and Reconciliation:**\n    *   Implement robust error handling to manage failed payments and other billing-related issues.\n    *   Provide tools for admins to reconcile billing discrepancies and resolve payment errors.\n7.  **Security:**\n    *   Ensure secure handling of sensitive payment information.\n    *   Implement appropriate access controls to restrict billing management features to authorized admins only.",
       "testStrategy": "1.  **UI Testing:**\n    *   Verify that the billing overview page displays accurate metrics.\n    *   Test the functionality of the invoice viewing, payment method management, and billing history components.\n    *   Ensure that the UI is responsive and user-friendly.\n2.  **Payment Gateway Integration Testing:**\n    *   Test the payment processing flow with both successful and failed payment scenarios.\n    *   Verify that payment method details are stored securely.\n    *   Test the handling of refunds and chargebacks.\n3.  **User Seat Tracking Testing:**\n    *   Verify that user seat usage is tracked accurately based on accepted invitations.\n    *   Test the logic for reconciling user invitations with billing data.\n    *   Ensure that only accepted users are included in billing calculations.\n4.  **Billing Logic Testing:**\n    *   Test the billing logic with various scenarios, including different subscription plans, user seat counts, and billing cycles.\n    *   Verify that invoices are generated automatically at the correct intervals.\n    *   Test the handling of prorated charges.\n5.  **Notification System Testing:**\n    *   Verify that admins receive notifications about billing issues, such as failed payments.\n    *   Test the email notifications sent to users regarding invoices and payment confirmations.\n6.  **Error Handling and Reconciliation Testing:**\n    *   Simulate failed payment scenarios and verify that the system handles them gracefully.\n    *   Test the tools for reconciling billing discrepancies and resolving payment errors.\n7.  **Security Testing:**\n    *   Perform security testing to ensure that sensitive payment information is handled securely.\n    *   Verify that access controls are enforced correctly.",
       "status": "pending",
-      "dependencies": [
-        9,
-        10
-      ],
+      "dependencies": [9, 10],
       "priority": "high",
       "subtasks": [
         {
@@ -814,9 +698,7 @@
           "id": 4,
           "title": "Implement Core Billing Logic and Invoice Generation",
           "description": "Implement the core billing logic to calculate charges, generate invoices automatically, and handle prorated charges.",
-          "dependencies": [
-            3
-          ],
+          "dependencies": [3],
           "details": "Implement the core billing logic to calculate charges based on user seat usage and subscription plans. Generate invoices automatically at predefined intervals (e.g., monthly, quarterly). Handle prorated charges for users added or removed during a billing cycle.",
           "status": "pending",
           "testStrategy": "Unit and integration tests to verify accurate billing calculations, invoice generation, and prorated charge handling."
@@ -825,10 +707,7 @@
           "id": 5,
           "title": "Implement Billing Notification System and Error Handling",
           "description": "Implement a notification system for billing issues and robust error handling for payment failures and discrepancies.",
-          "dependencies": [
-            2,
-            4
-          ],
+          "dependencies": [2, 4],
           "details": "Implement a notification system to alert admins about billing issues, such as failed payments or expiring payment methods. Send email notifications to users regarding invoices and payment confirmations. Implement robust error handling to manage failed payments and other billing-related issues. Provide tools for admins to reconcile billing discrepancies and resolve payment errors.",
           "status": "pending",
           "testStrategy": "Integration tests to verify notification delivery and error handling in various billing scenarios."
@@ -842,9 +721,7 @@
       "details": "1.  **Database Schema Update:** Modify the database schema to include a many-to-many relationship between workflows and plugins. This will likely involve creating a new table to store the associations.\n2.  **API Endpoint Implementation:** Create a new API endpoint (`/api/workflows/[workflowId]/plugins`) that handles the installation and uninstallation of plugins for a given workflow. This endpoint should:\n    *   Accept a `pluginSlug` in the request body.\n    *   Validate that the `workflowId` exists.\n    *   Validate that the `pluginSlug` exists in the plugins table.\n    *   Create or delete the association between the workflow and the plugin in the database.\n    *   Return a success or error message.\n3.  **UI Component Development:** Create a UI component within the workflow canvas that allows users to:\n    *   Search for available plugins by slug.\n    *   View installed plugins.\n    *   Install or uninstall plugins for the current workflow.\n    *   Display appropriate error messages if plugin installation fails.\n4.  **Error Handling:** Implement robust error handling throughout the process, including:\n    *   Handling invalid `workflowId` or `pluginSlug` values.\n    *   Handling database errors.\n    *   Providing informative error messages to the user.\n5.  **Security Considerations:** Ensure that the API endpoint is properly authenticated and authorized to prevent unauthorized plugin installations.\n6.  **Workflow Context:** Ensure the UI component correctly retrieves and displays the plugins associated with the currently selected workflow.\n7.  **Plugin Activation:** Consider whether plugins should be automatically activated upon installation, or if a separate activation step is required. Implement the chosen approach.\n8.  **Slug Validation:** Implement validation to ensure the plugin slug is in the correct format.",
       "testStrategy": "1.  **Unit Tests:** Write unit tests for the API endpoint to ensure that it correctly handles valid and invalid requests.\n2.  **Integration Tests:** Write integration tests to verify that the API endpoint correctly interacts with the database.\n3.  **UI Tests:** Manually test the UI component to ensure that it correctly displays available and installed plugins, and that the installation/uninstallation process works as expected.\n4.  **Database Verification:** Verify that the database schema has been updated correctly and that the associations between workflows and plugins are being created and deleted as expected.\n5.  **Error Handling Verification:** Test all error handling scenarios to ensure that appropriate error messages are displayed to the user.\n6.  **Security Audit:** Review the API endpoint and UI component for potential security vulnerabilities.\n7.  **Workflow Functionality:** Create a workflow, install a plugin, and verify that the plugin's functionality is correctly integrated into the workflow.",
       "status": "pending",
-      "dependencies": [
-        8
-      ],
+      "dependencies": [8],
       "priority": "high",
       "subtasks": [
         {
@@ -860,9 +737,7 @@
           "id": 2,
           "title": "API Endpoint Implementation for Plugin Management",
           "description": "Create a new API endpoint (`/api/workflows/[workflowId]/plugins`) to handle plugin installation and uninstallation.",
-          "dependencies": [
-            1
-          ],
+          "dependencies": [1],
           "details": "Implement the API endpoint to accept a `pluginSlug` in the request body. Validate `workflowId` and `pluginSlug` existence. Create or delete the association in the database. Return appropriate success or error messages.",
           "status": "pending",
           "testStrategy": "Use API testing tools to send requests to the endpoint with valid and invalid `workflowId` and `pluginSlug` values. Verify the correct database operations are performed and the expected responses are returned."
@@ -871,9 +746,7 @@
           "id": 3,
           "title": "UI Component Development for Plugin Management",
           "description": "Develop a UI component within the workflow canvas for plugin search, installation, and uninstallation.",
-          "dependencies": [
-            2
-          ],
+          "dependencies": [2],
           "details": "Create a UI component that allows users to search for plugins by slug, view installed plugins, and install/uninstall plugins for the current workflow. Display appropriate error messages.",
           "status": "pending",
           "testStrategy": "Manually test the UI component by searching for plugins, installing and uninstalling them. Verify that the UI updates correctly and displays appropriate messages."
@@ -882,10 +755,7 @@
           "id": 4,
           "title": "Implement Error Handling and Validation",
           "description": "Implement robust error handling and validation throughout the plugin installation process.",
-          "dependencies": [
-            2,
-            3
-          ],
+          "dependencies": [2, 3],
           "details": "Handle invalid `workflowId` or `pluginSlug` values, database errors, and provide informative error messages to the user. Implement slug validation to ensure the plugin slug is in the correct format.",
           "status": "pending",
           "testStrategy": "Simulate various error scenarios, such as invalid input values and database connection errors. Verify that the application handles these errors gracefully and provides informative error messages to the user."
@@ -894,9 +764,7 @@
           "id": 5,
           "title": "Implement Security and Plugin Activation Logic",
           "description": "Ensure API endpoint security and implement plugin activation logic.",
-          "dependencies": [
-            2
-          ],
+          "dependencies": [2],
           "details": "Authenticate and authorize the API endpoint to prevent unauthorized plugin installations. Determine whether plugins should be automatically activated upon installation or require a separate activation step and implement the chosen approach.",
           "status": "pending",
           "testStrategy": "Test the API endpoint with unauthorized requests to ensure that access is denied. Test the plugin activation logic to ensure that plugins are activated or deactivated as expected."
@@ -910,60 +778,60 @@
       "details": "1.  **Node Registration:** Upon plugin installation (Task 14), register the plugin's node component with React Flow. This involves creating a mapping between the plugin's slug and the corresponding React component.\n2.  **Drag Source Implementation:** Implement a drag source using a library like `react-dnd` or a similar drag-and-drop solution. This drag source will be associated with the plugin node in the sidebar.\n3.  **Canvas Drop Target:** Configure the React Flow canvas as a drop target. When a plugin node is dragged onto the canvas, create a new node element in the React Flow graph.\n4.  **Node Rendering:** Render the dragged plugin node on the canvas using the registered React component. Pass any necessary plugin configuration data to the node component.\n5.  **Connection Handling:** Ensure that the newly created node can be connected to other nodes on the canvas. Implement the necessary logic to handle connections between nodes, including validation and data flow.\n6.  **Workflow JSON Update:** Update the workflow's JSON representation to reflect the addition of the new node and its connections. This involves modifying the `nodes` and `edges` arrays in the workflow's JSON data.\n7.  **State Management:** Use Zustand to manage the state of the React Flow canvas and the workflow's JSON representation. Ensure that changes to the canvas are reflected in the state and vice versa.\n8.  **Error Handling:** Implement error handling to gracefully handle cases where a plugin node cannot be dragged or dropped onto the canvas. Provide informative error messages to the user.",
       "testStrategy": "1.  **Install a plugin:** Install a plugin using the plugin installation functionality (Task 14).\n2.  **Drag and Drop:** Drag the plugin's node from the sidebar onto the React Flow canvas.\n3.  **Node Rendering Verification:** Verify that the node is rendered correctly on the canvas with the expected UI and functionality.\n4.  **Connection Verification:** Connect the newly created node to other nodes on the canvas. Verify that the connection is established correctly and that data can flow between the nodes.\n5.  **JSON Update Verification:** Inspect the workflow's JSON representation to ensure that the new node and its connections are correctly reflected in the `nodes` and `edges` arrays.\n6.  **Error Handling Verification:** Attempt to drag and drop a node onto an invalid area of the canvas. Verify that an appropriate error message is displayed to the user.\n7.  **Persistence Verification:** Save the workflow and reload it. Verify that the dragged and dropped nodes are still present and connected correctly.",
       "status": "pending",
-      "dependencies": [
-        2,
-        14
-      ],
+      "dependencies": [2, 14],
       "priority": "high",
       "subtasks": [
         {
           "id": 1,
+          "title": "Integrate React Flow Canvas",
+          "description": "Integrate React Flow into the canvas area of the layout.",
+          "dependencies": [],
+          "details": "Install the `react-flow-renderer` library. Import the library and render a basic React Flow component within the canvas area of the `Layout` component. Initialize React Flow with an empty graph.",
+          "status": "pending",
+          "testStrategy": "Verify that the React Flow canvas is rendered correctly within the layout. Ensure that the basic React Flow functionality (e.g., adding nodes) is working.",
+          "parentTaskId": 15
+        },
+        {
+          "id": 2,
           "title": "Implement Drag Source for Plugin Nodes",
           "description": "Implement a drag source for plugin nodes in the sidebar using react-dnd or a similar library. This allows users to initiate the drag-and-drop action.",
-          "dependencies": [],
-          "details": "Configure the drag source to carry the necessary data about the plugin node (e.g., plugin slug, default configuration) during the drag operation.",
+          "dependencies": [1],
+          "details": "Configure the drag source to carry the necessary data about the plugin node (e.g., plugin slug, default configuration) during the drag operation.\n<info added on 2025-06-14T11:49:34.496Z>\nThis subtask is the foundational step for Task 15 and has no dependencies on other subtasks within this parent task. It is the first step.\n</info added on 2025-06-14T11:49:34.496Z>",
           "status": "pending",
           "testStrategy": "Verify that dragging a plugin node from the sidebar initiates a drag operation and that the correct data is being transferred."
         },
         {
-          "id": 2,
+          "id": 3,
           "title": "Configure Canvas as Drop Target",
           "description": "Configure the React Flow canvas as a drop target to receive dragged plugin nodes. This involves setting up the drop target to handle the drop event.",
-          "dependencies": [],
+          "dependencies": [1, 2],
           "details": "Define the drop target's behavior when a plugin node is dropped onto it, including preventing default browser behavior and extracting the plugin node data.",
           "status": "pending",
           "testStrategy": "Verify that the React Flow canvas accepts dragged plugin nodes and that the drop event is triggered."
         },
         {
-          "id": 3,
+          "id": 4,
           "title": "Create and Render New Node on Drop",
           "description": "Upon a successful drop, create a new node element in the React Flow graph and render it on the canvas using the registered React component.",
-          "dependencies": [
-            1,
-            2
-          ],
+          "dependencies": [1, 2, 3],
           "details": "Use the plugin slug from the drag data to retrieve the corresponding React component from the node registration mapping. Instantiate the component with any default configuration data. Update Zustand state with the new node.",
           "status": "pending",
           "testStrategy": "Verify that a new node is created on the canvas when a plugin node is dropped, and that the node is rendered correctly using the registered React component."
         },
         {
-          "id": 4,
+          "id": 5,
           "title": "Update Workflow JSON and State",
           "description": "Update the workflow's JSON representation and Zustand state to reflect the addition of the new node, including its position and any default configuration.",
-          "dependencies": [
-            3
-          ],
+          "dependencies": [1, 4],
           "details": "Modify the `nodes` array in the workflow's JSON data to include the new node's information. Ensure that the state is updated to reflect the changes in the JSON data.",
           "status": "pending",
           "testStrategy": "Verify that the workflow's JSON data is updated correctly when a new node is added, and that the state reflects the changes."
         },
         {
-          "id": 5,
+          "id": 6,
           "title": "Implement Basic Connection Handling",
           "description": "Implement basic connection handling to allow the newly created node to be connected to other nodes on the canvas.",
-          "dependencies": [
-            3
-          ],
+          "dependencies": [1, 4],
           "details": "Ensure that the new node has input and output handles that can be connected to other nodes. Implement the necessary logic to handle the creation of edges between nodes.",
           "status": "pending",
           "testStrategy": "Verify that the newly created node can be connected to other nodes on the canvas by creating edges between them."

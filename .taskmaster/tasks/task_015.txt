@@ -24,32 +24,41 @@
 7.  **Persistence Verification:** Save the workflow and reload it. Verify that the dragged and dropped nodes are still present and connected correctly.
 
 # Subtasks:
-## 1. Implement Drag Source for Plugin Nodes [pending]
+## 1. Integrate React Flow Canvas [pending]
 ### Dependencies: None
+### Description: Integrate React Flow into the canvas area of the layout.
+### Details:
+Install the `react-flow-renderer` library. Import the library and render a basic React Flow component within the canvas area of the `Layout` component. Initialize React Flow with an empty graph.
+
+## 2. Implement Drag Source for Plugin Nodes [pending]
+### Dependencies: 15.1
 ### Description: Implement a drag source for plugin nodes in the sidebar using react-dnd or a similar library. This allows users to initiate the drag-and-drop action.
 ### Details:
 Configure the drag source to carry the necessary data about the plugin node (e.g., plugin slug, default configuration) during the drag operation.
+<info added on 2025-06-14T11:49:34.496Z>
+This subtask is the foundational step for Task 15 and has no dependencies on other subtasks within this parent task. It is the first step.
+</info added on 2025-06-14T11:49:34.496Z>
 
-## 2. Configure Canvas as Drop Target [pending]
-### Dependencies: None
+## 3. Configure Canvas as Drop Target [pending]
+### Dependencies: 15.1, 15.2
 ### Description: Configure the React Flow canvas as a drop target to receive dragged plugin nodes. This involves setting up the drop target to handle the drop event.
 ### Details:
 Define the drop target's behavior when a plugin node is dropped onto it, including preventing default browser behavior and extracting the plugin node data.
 
-## 3. Create and Render New Node on Drop [pending]
-### Dependencies: 15.1, 15.2
+## 4. Create and Render New Node on Drop [pending]
+### Dependencies: 15.1, 15.2, 15.3
 ### Description: Upon a successful drop, create a new node element in the React Flow graph and render it on the canvas using the registered React component.
 ### Details:
 Use the plugin slug from the drag data to retrieve the corresponding React component from the node registration mapping. Instantiate the component with any default configuration data. Update Zustand state with the new node.
 
-## 4. Update Workflow JSON and State [pending]
-### Dependencies: 15.3
+## 5. Update Workflow JSON and State [pending]
+### Dependencies: 15.1, 15.4
 ### Description: Update the workflow's JSON representation and Zustand state to reflect the addition of the new node, including its position and any default configuration.
 ### Details:
 Modify the `nodes` array in the workflow's JSON data to include the new node's information. Ensure that the state is updated to reflect the changes in the JSON data.
 
-## 5. Implement Basic Connection Handling [pending]
-### Dependencies: 15.3
+## 6. Implement Basic Connection Handling [pending]
+### Dependencies: 15.1, 15.4
 ### Description: Implement basic connection handling to allow the newly created node to be connected to other nodes on the canvas.
 ### Details:
 Ensure that the new node has input and output handles that can be connected to other nodes. Implement the necessary logic to handle the creation of edges between nodes.

@@ -36,9 +36,3 @@ Use a React state variable to control the sidebar's visibility. Implement a butt
 ### Details:
 Create a `TopBar` component and include elements for breadcrumbs (using a placeholder for now), collaborator avatars (using dummy data), and action buttons. Style the top bar using Tailwind CSS.
 
-## 4. Integrate React Flow Canvas [pending]
-### Dependencies: 2.1
-### Description: Integrate React Flow into the canvas area of the layout.
-### Details:
-Install the `react-flow-renderer` library. Import the library and render a basic React Flow component within the canvas area of the `Layout` component. Initialize React Flow with an empty graph.
-
