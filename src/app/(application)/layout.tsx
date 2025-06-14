@@ -27,16 +27,18 @@ export default async function RootLayout({
   const currentSlug = await getCurrentSlugFromHost(host);
 
   // Fetch organization data for the current user
-  const organization = await db.organization.findUnique({
-    where: {
-      slug: currentSlug || undefined,
-    },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-    },
-  });
+  const organization = currentSlug
+    ? await db.organization.findUnique({
+        where: {
+          slug: currentSlug,
+        },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+        },
+      })
+    : null;
 
   return (
     <ProvidersWrapper

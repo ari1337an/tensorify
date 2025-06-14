@@ -13,43 +13,79 @@ const handler = createNextHandler(contract, appRouter, {
   basePath: "/api/v1",
   jsonQuery: true,
   responseValidation: true,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   errorHandler: (error: unknown, request: TsRestRequest) => {
     const debug = true;
+    if (debug) {
+      console.log(
+        "\x1b[31m%s\x1b[0m",
+        JSON.stringify({ body: request.body, headers: request.headers, query: request.query }, null, 2)
+      );
+    }
     if (error instanceof RequestValidationError) {
       const errorMessages: string[] = [];
       if (error.pathParamsError) {
-        errorMessages.push(...error.pathParamsError.issues.map(issue => `Path parameter '${issue.path.join('.') || 'unknown'}': ${issue.message}`));
+        errorMessages.push(
+          ...error.pathParamsError.issues.map(
+            (issue) =>
+              `Path parameter '${issue.path.join(".") || "unknown"}': ${issue.message}`
+          )
+        );
       }
       if (error.headersError) {
-        errorMessages.push(...error.headersError.issues.map(issue => `Header '${issue.path.join('.') || 'unknown'}': ${issue.message}`));
+        errorMessages.push(
+          ...error.headersError.issues.map(
+            (issue) =>
+              `Header '${issue.path.join(".") || "unknown"}': ${issue.message}`
+          )
+        );
       }
       if (error.queryError) {
-        errorMessages.push(...error.queryError.issues.map(issue => `Query parameter '${issue.path.join('.') || 'unknown'}': ${issue.message}`));
+        errorMessages.push(
+          ...error.queryError.issues.map(
+            (issue) =>
+              `Query parameter '${issue.path.join(".") || "unknown"}': ${issue.message}`
+          )
+        );
       }
       if (error.bodyError) {
-        errorMessages.push(...error.bodyError.issues.map(issue => `Body '${issue.path.join('.') || 'unknown'}': ${issue.message}`));
+        errorMessages.push(
+          ...error.bodyError.issues.map(
+            (issue) =>
+              `Body '${issue.path.join(".") || "unknown"}': ${issue.message}`
+          )
+        );
       }
 
-      const errorMessage = errorMessages.join(', ');
+      const errorMessage = errorMessages.join(", ");
       const responseBody = {
         type: "RequestValidationError",
         message: errorMessage,
       };
       const status = 400;
       if (debug) {
-        console.log('\x1b[31m%s\x1b[0m', JSON.stringify({ status, body: responseBody }, null, 2));
+        console.log(
+          "\x1b[31m%s\x1b[0m",
+          JSON.stringify({ status, body: responseBody }, null, 2)
+        );
       }
       return TsRestResponse.fromJson(responseBody, { status });
     } else if (error instanceof ResponseValidationError) {
-      const errorMessage = error.error.issues.map(issue => `Response '${issue.path.join('.') || 'unknown'}': ${issue.message}`).join(', ');
+      const errorMessage = error.error.issues
+        .map(
+          (issue) =>
+            `Response '${issue.path.join(".") || "unknown"}': ${issue.message}`
+        )
+        .join(", ");
       const responseBody = {
         type: "ResponseValidationError",
         message: errorMessage,
       };
       const status = 500;
       if (debug) {
-        console.log('\x1b[31m%s\x1b[0m', JSON.stringify({ status, body: responseBody }, null, 2));
+        console.log(
+          "\x1b[31m%s\x1b[0m",
+          JSON.stringify({ status, body: responseBody }, null, 2)
+        );
       }
       return TsRestResponse.fromJson(responseBody, { status });
     } else if (error instanceof TsRestHttpError) {
@@ -59,7 +95,10 @@ const handler = createNextHandler(contract, appRouter, {
       };
       const status = error.statusCode;
       if (debug) {
-        console.log('\x1b[31m%s\x1b[0m', JSON.stringify({ status, body: responseBody }, null, 2));
+        console.log(
+          "\x1b[31m%s\x1b[0m",
+          JSON.stringify({ status, body: responseBody }, null, 2)
+        );
       }
       return TsRestResponse.fromJson(responseBody, { status });
     } else {
@@ -69,8 +108,11 @@ const handler = createNextHandler(contract, appRouter, {
       };
       const status = 500;
       if (debug) {
-        console.log('\x1b[31m%s\x1b[0m', JSON.stringify({ status, body: responseBody }, null, 2));
-        console.error('Unhandled error:', error);
+        console.log(
+          "\x1b[31m%s\x1b[0m",
+          JSON.stringify({ status, body: responseBody }, null, 2)
+        );
+        console.error("Unhandled error:", error);
       }
       return TsRestResponse.fromJson(responseBody, { status });
     }

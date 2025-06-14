@@ -63,7 +63,12 @@ async function checkUserOnboarded(): Promise<{ redirect?: string } | null> {
         // Validate current subdomain
         const org = allOrgs.find((o) => o.slug === currentSlug);
         if (!org) {
-          return { redirect: "/404" }; // No access to this subdomain
+          if (process.env.NODE_ENV === "production") {
+            return { redirect: "https://app.tensorify.io" };
+          } else {
+            const port = process.env.PORT || "3000";
+            return { redirect: `http://localhost:${port}` };
+          }
         }
         // Correct subdomain, proceed without redirect
         return null;

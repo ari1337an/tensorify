@@ -130,6 +130,7 @@ export function OnboardingSetup({
   };
 
   const handleRetry = () => {
+    console.log("Retrying onboarding...");
     processOnboarding();
   };
 

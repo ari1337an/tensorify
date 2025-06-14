@@ -166,7 +166,9 @@ export const action = {
           {
             method: "POST",
             body: JSON.stringify({
-              tag: process.env.NEXT_PUBLIC_ONBOARDING_TAG || "apptensorifyio-onboarding-beta-v01",
+              tag:
+                process.env.NEXT_PUBLIC_ONBOARDING_TAG ||
+                "apptensorifyio-onboarding-beta-v01",
               userId: userId,
               email: request.decodedJwt.email,
               clientFingerprint: body.clientFingerprint,
@@ -191,14 +193,17 @@ export const action = {
           },
         };
       } catch (err: unknown) {
-        console.error(err);
-        throw new TsRestResponseError(contract, {
-          status: 500,
-          body: {
-            status: "failed",
-            message: "Internal server error",
-          },
-        });
+        if (err instanceof TsRestResponseError) {
+          throw err;
+        } else {
+          throw new TsRestResponseError(contract, {
+            status: 500,
+            body: {
+              status: "failed",
+              message: "Internal server error",
+            },
+          });
+        }
       }
     },
   }),

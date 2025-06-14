@@ -344,7 +344,7 @@ export const OnboardingSetupRequest = z
       .optional(),
     orgSize: z
       .string()
-      .regex(/^<20|20-99|100-499|500-999|1000+$/, {
+      .regex(/^<20|20-99|100-499|500-999|1000\+$/, {
         message: "Invalid org size",
       })
       .optional(),
