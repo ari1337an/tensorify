@@ -110,10 +110,9 @@ export const action = {
             },
           });
 
-          // update the firstName or lastName in clerk if they are provided
           await clerkClient.users.updateUser(userId, {
-            ...(firstName !== undefined && { firstName: firstName }),
-            ...(lastName !== undefined && { lastName: lastName }),
+            ...(firstName !== undefined && { firstName }),
+            ...(lastName !== undefined && { lastName }),
           });
         }
 
@@ -185,6 +184,7 @@ export const action = {
           },
         };
       } catch (error) {
+        console.error(error);
         if (error instanceof TsRestResponseError) {
           throw error;
         }

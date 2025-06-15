@@ -32,12 +32,13 @@ import {
 } from "@/app/_components/ui/popover";
 import { Badge } from "@/app/_components/ui/badge";
 import { cn } from "@/app/_lib/utils";
-import { fetchRoles } from "../rbac/server";
+
 // import {
 //   createInvitation,
 //   canInviteUser,
 // } from "@/server/actions/invitation-actions";
 import { EditPersonDialog } from "./EditPersonDialog";
+import { getRoles } from "@/app/api/v1/_client/client";
 
 type Role = {
   id: string;
@@ -88,10 +89,15 @@ export default function PeopleView({
     async function loadRoles() {
       try {
         setRolesLoading(true);
-        const response = await fetchRoles();
-        if (response.success && response.data) {
+        const response = await getRoles({
+          query: {
+            resourceType: "ORGANIZATION",
+            resourcePath: organizationId,
+          },
+        });
+        if (response.status === 200 && response.body) {
           setRoles(
-            response.data.map((role) => ({
+            response.body.map((role) => ({
               id: role.id,
               name: role.name,
             }))

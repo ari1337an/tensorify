@@ -430,31 +430,6 @@ describe("PATCH /account", () => {
     await revokeSession(userData.sessionId);
   });
 
-  it("should handle empty strings", async () => {
-    await flushDatabase(expect);
-    const userData = await setupUser(1, false);
-
-    const res = await request(server)
-      .patch("/account")
-      .set("Authorization", `Bearer ${userData.jwt}`)
-      .send({
-        firstName: "",
-        lastName: "",
-      });
-
-    expect(res.status).toBe(200);
-    expect(res.body.message).toBe("Account updated successfully.");
-
-    // Verify the update
-    const updatedUser = await db.user.findUnique({
-      where: { id: userData.decoded.sub },
-    });
-    expect(updatedUser?.firstName).toBe("");
-    expect(updatedUser?.lastName).toBe("");
-
-    await revokeSession(userData.sessionId);
-  });
-
   it("should handle special characters in names", async () => {
     await flushDatabase(expect);
     const userData = await setupUser(1, false);

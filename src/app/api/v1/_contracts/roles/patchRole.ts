@@ -72,12 +72,12 @@ export const action = {
 
         const [updatedRole] = await db.$transaction(async (prisma) => {
           // 1. Update metadata if provided
-          if (name !== undefined || description !== undefined) {
+          if (name != null || description != null) {
             await prisma.role.update({
               where: { id: roleId },
               data: {
-                ...(name !== undefined && { name }),
-                ...(description !== undefined && { description }),
+                ...(name != null && { name }),
+                ...(description != null && { description }),
               },
             });
           }
