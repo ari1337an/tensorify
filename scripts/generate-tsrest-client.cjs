@@ -84,8 +84,8 @@ export async function ${key}(args: Parameters<typeof client.${key}.contract>[0])
 
 import { initClient } from '@ts-rest/core';
 import { contract } from '${RELATIVE_CONTRACTS_PATH}';
-import { headers } from 'next/headers';
 import version from '${RELATIVE_CONTRACTS_PATH}/version.json';
+import { auth } from '@clerk/nextjs/server';
 
 // Initialize client without baseUrl (or with a default)
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -99,10 +99,10 @@ const client = initClient(contract, {
 const getBaseUrl = () => {
   const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
   if (process.env.NODE_ENV === "production") {
-    return \`${protocol}://app.tensorify.io/api/${version.apiVersion}\`;
+    return \`\${protocol}://app.tensorify.io/api/\${version.apiVersion}\`;
   } else {
     const port = process.env.PORT || "3000";
-    return \`${protocol}://localhost:${port}/api/${version.apiVersion}\`;
+    return \`\${protocol}://localhost:\${port}/api/\${version.apiVersion}\`;
   }
 };
 
@@ -113,7 +113,7 @@ const getClientWithBaseUrl = async () => {
   return initClient(contract, {
     baseUrl: getBaseUrl(),
     baseHeaders: {
-      authorization: \`Bearer ${token}\`,
+      authorization: \`Bearer \${token}\`,
     },
     credentials: "include",
   });

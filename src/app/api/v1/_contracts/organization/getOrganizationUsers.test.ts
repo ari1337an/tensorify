@@ -150,6 +150,9 @@ describe("GET /organization/:orgId/users", () => {
       const user = res.body.items[0];
       expect(user.userId).toBe(decoded.sub);
       expect(user.email).toBe(decoded.email);
+      expect(typeof user.firstName).toBe("string");
+      expect(typeof user.lastName).toBe("string");
+      expect(user.imageUrl).toBeDefined(); // Can be string or null
       expect(user.status).toBe("active");
       expect(Array.isArray(user.roles)).toBe(true);
 
@@ -349,12 +352,17 @@ describe("GET /organization/:orgId/users", () => {
 
       // Verify items structure
       expect(res.body.items).toBeInstanceOf(Array);
-      res.body.items.forEach((user: z.infer<typeof UserListResponse>["items"][number]) => {
-        expect(typeof user.userId).toBe("string");
-        expect(typeof user.email).toBe("string");
-        expect(user.status).toBe("active");
-        expect(Array.isArray(user.roles)).toBe(true);
-      });
+      res.body.items.forEach(
+        (user: z.infer<typeof UserListResponse>["items"][number]) => {
+          expect(typeof user.userId).toBe("string");
+          expect(typeof user.email).toBe("string");
+          expect(typeof user.firstName).toBe("string");
+          expect(typeof user.lastName).toBe("string");
+          expect(user.imageUrl).toBeDefined(); // Can be string or null
+          expect(user.status).toBe("active");
+          expect(Array.isArray(user.roles)).toBe(true);
+        }
+      );
 
       // Verify meta structure
       expect(typeof res.body.meta.totalCount).toBe("number");
@@ -364,6 +372,29 @@ describe("GET /organization/:orgId/users", () => {
 
       await revokeSession(sessionId);
     }, 30000);
+
+    it("should return user profile information correctly", async () => {
+      await flushDatabase(expect);
+      const { jwt, sessionId, orgId, decoded } = await setupUserAndOrg(1);
+
+      const res = await request(server)
+        .get(`/organization/${orgId}/users`)
+        .set("Authorization", `Bearer ${jwt}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.items.length).toBe(1);
+
+      const user = res.body.items[0];
+
+      // Verify user profile fields are present and match expected values
+      expect(user.firstName).toBe(decoded.firstName);
+      expect(user.lastName).toBe(decoded.lastName);
+      expect(user.imageUrl).toBe(decoded.imageUrl);
+      expect(user.email).toBe(decoded.email);
+      expect(user.userId).toBe(decoded.sub);
+
+      await revokeSession(sessionId);
+    });
 
     it("should handle organization with no users (edge case)", async () => {
       await flushDatabase(expect);

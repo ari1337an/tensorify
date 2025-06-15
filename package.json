@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run watch:tsrest\" \"npm run watch:tsrest:client\" \"next dev --turbopack\"",
+    "dev": "concurrently \"npm run watch:tsrest\" \"npm run watch:tsrest:client\" \"npm run generate:tsrest; npm run generate:tsrest:client; next dev --turbopack\"",
     "build": "npm run generate:tsrest && npm run generate:tsrest:client && next build",
     "start": "next start",
     "lint": "next lint",

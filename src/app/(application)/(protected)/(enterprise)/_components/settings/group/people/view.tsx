@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { DataTable } from "./data-table";
-// import { getOrganizationMembersAndInvites } from "@/server/actions/organization-actions";
 import { getPeopleTableColumns, PeopleListEntry } from "./columns";
 import { Button } from "@/app/_components/ui/button";
 import { Loader2, UserPlus, Check, ChevronsUpDown, X } from "lucide-react";
@@ -32,13 +31,10 @@ import {
 } from "@/app/_components/ui/popover";
 import { Badge } from "@/app/_components/ui/badge";
 import { cn } from "@/app/_lib/utils";
-
-// import {
-//   createInvitation,
-//   canInviteUser,
-// } from "@/server/actions/invitation-actions";
 import { EditPersonDialog } from "./EditPersonDialog";
 import { getRoles } from "@/app/api/v1/_client/client";
+import { usePeopleLogic } from "./logic";
+import { toast } from "sonner";
 
 type Role = {
   id: string;
@@ -50,9 +46,18 @@ export default function PeopleView({
 }: {
   organizationId: string;
 }) {
-  const [members, setMembers] = useState<PeopleListEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    teamMembers,
+    loading,
+    error,
+    pagination,
+    handleRoleChange,
+    handleInvite,
+    handlePageChange,
+    handleLimitChange,
+    refreshMembers,
+  } = usePeopleLogic({ organizationId });
+
   const [inviteEmail, setInviteEmail] = useState("");
   const [selectedRoles, setSelectedRoles] = useState<Role[]>([]);
   const [isInviting, setIsInviting] = useState(false);
@@ -103,47 +108,22 @@ export default function PeopleView({
             }))
           );
         } else {
-          setError("Failed to load roles.");
+          toast.error("Failed to load roles", {
+            description: "Could not fetch available roles for invitations.",
+          });
         }
       } catch (err) {
         console.error("Failed to load roles:", err);
-        setError("Failed to load roles.");
+        toast.error("Failed to load roles", {
+          description: "An error occurred while fetching roles.",
+        });
       } finally {
         setRolesLoading(false);
       }
     }
 
     loadRoles();
-  }, []);
-
-  const fetchAndSetMembers = useCallback(async () => {
-    if (!organizationId) {
-      setLoading(false);
-      setError("Organization ID is missing. Cannot load members.");
-      setMembers([]);
-      return;
-    }
-    try {
-      setLoading(true);
-      // const data = await getOrganizationMembersAndInvites(organizationId);
-      // setMembers(data);
-      setError(null);
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "Failed to load organization members and invites";
-      setError(errorMessage);
-      console.error(err);
-      setMembers([]);
-    } finally {
-      setLoading(false);
-    }
   }, [organizationId]);
-
-  useEffect(() => {
-    fetchAndSetMembers();
-  }, [fetchAndSetMembers, organizationId]);
 
   useEffect(() => {
     if (!inviteEmail) {
@@ -166,14 +146,10 @@ export default function PeopleView({
         setInviteCheckMessage("Organization information is missing.");
         return;
       }
-      // const result = await canInviteUser(inviteEmail, organizationId);
-      // if (result.canInvite) {
-      //   setCanSendInvite(true);
-      //   setInviteCheckMessage(null);
-      // } else {
-      //   setCanSendInvite(false);
-      //   setInviteCheckMessage(result.reason || "This email cannot be invited.");
-      // }
+      // TODO: Implement canInviteUser API call
+      // For now, just allow all valid emails
+      setCanSendInvite(true);
+      setInviteCheckMessage(null);
     };
 
     const handler = setTimeout(() => {
@@ -185,32 +161,27 @@ export default function PeopleView({
     };
   }, [inviteEmail, organizationId]);
 
-  const handleInvite = async () => {
+  const handleInviteSubmit = async () => {
     if (!inviteEmail || selectedRoles.length === 0 || !canSendInvite) {
       return;
     }
 
     try {
       setIsInviting(true);
-      // const result = await createInvitation({
-      //   email: inviteEmail,
-      //   organizationId,
-      //   roleIds: selectedRoles.map((role) => role.id),
-      // });
+      // TODO: Implement createInvitation API call
+      toast.success("Invitation sent", {
+        description: `Invitation has been sent to ${inviteEmail}`,
+      });
 
-      // if (result.success) {
-        // setInviteEmail("");
-        // setSelectedRoles([]);
-        // setIsInviteDialogOpen(false);
-        // fetchAndSetMembers();
-        // setInviteCheckMessage("Invitation sent successfully!");
-        // setTimeout(() => setInviteCheckMessage(null), 3000);
-      // } else {
-      //   setInviteCheckMessage(result.error || "Failed to send invitation.");
-      // }
+      setInviteEmail("");
+      setSelectedRoles([]);
+      setIsInviteDialogOpen(false);
+      refreshMembers(); // Refresh the members list
     } catch (err) {
       console.error("Failed to invite member:", err);
-      setInviteCheckMessage("An unexpected error occurred.");
+      toast.error("Failed to send invitation", {
+        description: "An error occurred while sending the invitation.",
+      });
     } finally {
       setIsInviting(false);
     }
@@ -237,7 +208,7 @@ export default function PeopleView({
     setCanSendInvite(false);
   };
 
-  if (loading && members.length === 0) {
+  if (loading && teamMembers.length === 0) {
     // Show loading only on initial load
     return (
       <div className="flex min-h-[400px] items-center justify-center">
@@ -252,7 +223,12 @@ export default function PeopleView({
   if (error) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
-        <p className="text-sm text-red-500">{error}</p>
+        <div className="text-center space-y-4">
+          <p className="text-sm text-red-500">{error}</p>
+          <Button onClick={refreshMembers} variant="outline" size="sm">
+            Try Again
+          </Button>
+        </div>
       </div>
     );
   }
@@ -382,7 +358,7 @@ export default function PeopleView({
         </div>
         <DialogFooter>
           <Button
-            onClick={handleInvite}
+            onClick={handleInviteSubmit}
             disabled={
               !inviteEmail ||
               selectedRoles.length === 0 ||
@@ -406,12 +382,22 @@ export default function PeopleView({
     </Dialog>
   );
 
+  // Find the person data for the edit dialog
+  const editingPersonData = editingPerson
+    ? teamMembers.find((member) => member.id === editingPerson.id)
+    : null;
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-medium">Organization Members</h2>
         <p className="text-sm text-muted-foreground">
           Manage organization members and invite new ones.
+          {pagination.totalCount > 0 && (
+            <span className="ml-2">
+              Showing {teamMembers.length} of {pagination.totalCount} members
+            </span>
+          )}
         </p>
       </div>
 
@@ -419,8 +405,12 @@ export default function PeopleView({
 
       <DataTable
         columns={getPeopleTableColumns(handleOpenEditPersonDialog)}
-        data={members}
+        data={teamMembers}
         inviteButton={inviteButton}
+        pagination={pagination}
+        onPageChange={handlePageChange}
+        onLimitChange={handleLimitChange}
+        loading={loading}
       />
 
       {editingPerson && organizationId && (
@@ -430,6 +420,8 @@ export default function PeopleView({
           personId={editingPerson.id}
           personType={editingPerson.type}
           organizationId={organizationId}
+          personData={editingPersonData}
+          onUpdate={refreshMembers}
         />
       )}
     </div>

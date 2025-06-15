@@ -6,7 +6,6 @@ import {
   flexRender,
   getCoreRowModel,
   useReactTable,
-  getPaginationRowModel,
   SortingState,
   getSortedRowModel,
   ColumnFiltersState,
@@ -30,18 +29,40 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/app/_components/ui/dropdown-menu";
-import { Filter } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/app/_components/ui/select";
+import { Filter, Loader2 } from "lucide-react";
+
+interface PaginationInfo {
+  page: number;
+  limit: number;
+  totalCount: number;
+  totalPages: number;
+}
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   inviteButton?: React.ReactNode;
+  pagination?: PaginationInfo;
+  onPageChange?: (page: number) => void;
+  onLimitChange?: (limit: number) => void;
+  loading?: boolean;
 }
 
 export function DataTable<TData, TValue>({
   columns: defaultColumns,
   data,
   inviteButton,
+  pagination,
+  onPageChange,
+  onLimitChange,
+  loading = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -54,7 +75,6 @@ export function DataTable<TData, TValue>({
     data,
     columns: defaultColumns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
@@ -65,7 +85,28 @@ export function DataTable<TData, TValue>({
       columnFilters,
       columnVisibility,
     },
+    // Disable built-in pagination since we're using server-side pagination
+    manualPagination: true,
+    pageCount: pagination?.totalPages ?? 0,
   });
+
+  const handlePreviousPage = () => {
+    if (pagination && onPageChange && pagination.page > 1) {
+      onPageChange(pagination.page - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (pagination && onPageChange && pagination.page < pagination.totalPages) {
+      onPageChange(pagination.page + 1);
+    }
+  };
+
+  const handleLimitChange = (newLimit: string) => {
+    if (onLimitChange) {
+      onLimitChange(parseInt(newLimit, 10));
+    }
+  };
 
   return (
     <div>
@@ -78,13 +119,19 @@ export function DataTable<TData, TValue>({
               table.getColumn("email")?.setFilterValue(event.target.value)
             }
             className="max-w-sm"
+            disabled={loading}
           />
         </div>
         <div className="flex space-x-2">
           {inviteButton}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="ml-auto flex h-8">
+              <Button
+                variant="outline"
+                size="sm"
+                className="ml-auto flex h-8"
+                disabled={loading}
+              >
                 <Filter className="mr-2 h-4 w-4" />
                 View
               </Button>
@@ -111,7 +158,12 @@ export function DataTable<TData, TValue>({
           </DropdownMenu>
         </div>
       </div>
-      <div>
+      <div className="relative">
+        {loading && (
+          <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10">
+            <Loader2 className="h-6 w-6 animate-spin" />
+          </div>
+        )}
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -154,31 +206,66 @@ export function DataTable<TData, TValue>({
                   colSpan={defaultColumns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  {loading ? "Loading..." : "No results."}
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Next
-        </Button>
-      </div>
+
+      {pagination && (
+        <div className="flex items-center justify-between space-x-2 py-4">
+          <div className="flex items-center space-x-2">
+            <p className="text-sm text-muted-foreground">
+              Showing {data.length} of {pagination.totalCount} results
+            </p>
+            <div className="flex items-center space-x-2">
+              <p className="text-sm text-muted-foreground">Rows per page</p>
+              <Select
+                value={pagination.limit.toString()}
+                onValueChange={handleLimitChange}
+                disabled={loading}
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[10, 20, 30, 50, 100].map((pageSize) => (
+                    <SelectItem key={pageSize} value={pageSize.toString()}>
+                      {pageSize}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <p className="text-sm text-muted-foreground">
+              Page {pagination.page} of {pagination.totalPages}
+            </p>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePreviousPage}
+                disabled={pagination.page <= 1 || loading}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNextPage}
+                disabled={pagination.page >= pagination.totalPages || loading}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

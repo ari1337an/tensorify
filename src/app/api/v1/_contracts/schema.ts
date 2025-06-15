@@ -392,6 +392,9 @@ export const PaginationMeta = z.object({
 export const UserListItem = z.object({
   userId: USERID,
   email: z.string().email(),
+  firstName: z.string(),
+  lastName: z.string(),
+  imageUrl: z.string().url().nullable(),
   roles: z.array(z.lazy(() => RoleResponse)),
   status: z.enum(["active", "invited"]),
 });

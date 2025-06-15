@@ -143,6 +143,9 @@ export const action = {
         {
           id: string;
           email: string;
+          firstName: string;
+          lastName: string;
+          imageUrl: string;
           userRoles: Array<{
             role: {
               id: string;
@@ -180,6 +183,9 @@ export const action = {
       const items = paginatedUsers.map((user) => ({
         userId: user.id,
         email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        imageUrl: user.imageUrl,
         roles: user.userRoles.map((userRole) => ({
           id: userRole.role.id,
           name: userRole.role.name,
