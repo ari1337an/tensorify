@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE — DO NOT EDIT MANUALLY
-// Generated on: 6/14/2025, 2:17:49 PM
+// Generated on: 6/15/2025, 6:49:59 PM
 
 import { initContract } from "@ts-rest/core";
 import { tsr } from "@ts-rest/serverless/next";
@@ -11,8 +11,8 @@ import { contract as patchAccountContract, action as patchAccountAction } from "
 import { contract as uploadPortraitContract, action as uploadPortraitAction } from "./account/uploadPortrait";
 import { contract as onboardingQuestionsContract, action as onboardingQuestionsAction } from "./onboarding/onboardingQuestions";
 import { contract as onboardingSetupContract, action as onboardingSetupAction } from "./onboarding/onboardingSetup";
-import { contract as getOrganizationContract, action as getOrganizationAction } from "./organization/getOrganization";
 import { contract as getPermissionsContract, action as getPermissionsAction } from "./permissions/getPermissions";
+import { contract as getOrganizationContract, action as getOrganizationAction } from "./organization/getOrganization";
 import { contract as getRolesContract, action as getRolesAction } from "./roles/getRoles";
 import { contract as patchRoleContract, action as patchRoleAction } from "./roles/patchRole";
 import { contract as postRolesContract, action as postRolesAction } from "./roles/postRoles";
@@ -27,8 +27,8 @@ export const contract = c.router({
   uploadPortrait: uploadPortraitContract,
   onboardingQuestions: onboardingQuestionsContract,
   onboardingSetup: onboardingSetupContract,
-  getOrganization: getOrganizationContract,
   getPermissions: getPermissionsContract,
+  getOrganization: getOrganizationContract,
   getRoles: getRolesContract,
   patchRole: patchRoleContract,
   postRoles: postRolesContract,
@@ -44,8 +44,8 @@ export const appRouter = tsr.routerWithMiddleware(contract)<{
   uploadPortrait: uploadPortraitAction,
   onboardingQuestions: onboardingQuestionsAction,
   onboardingSetup: onboardingSetupAction,
-  getOrganization: getOrganizationAction,
   getPermissions: getPermissionsAction,
+  getOrganization: getOrganizationAction,
   getRoles: getRolesAction,
   patchRole: patchRoleAction,
   postRoles: postRolesAction,

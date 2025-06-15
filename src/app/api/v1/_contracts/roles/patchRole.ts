@@ -4,20 +4,16 @@ import { z } from "zod";
 import { extendZodWithOpenApi } from "@anatine/zod-openapi";
 import { tsr } from "@ts-rest/serverless/next";
 import { secureByAuthentication } from "../auth-utils";
-import { ErrorResponse, JwtPayloadSchema, Role } from "../schema";
+import {
+  ErrorResponse,
+  JwtPayloadSchema,
+  Role,
+  UpdateRoleRequest,
+} from "../schema";
 import db from "@/server/database/db";
 
 extendZodWithOpenApi(z);
 
-// Define UpdateRoleRequest schema
-const UpdateRoleRequest = z
-  .object({
-    name: z.string().min(1, "Name is required").optional(),
-    description: z.string().nullable().optional(),
-  })
-  .refine((data) => data.name !== undefined || data.description !== undefined, {
-    message: "At least one field (name or description) must be provided",
-  });
 
 const c = initContract();
 
@@ -61,12 +57,11 @@ export const action = {
     handler: async ({ params, body }): Promise<ContractResponse> => {
       try {
         const { roleId } = params;
-        const { name, description } = body;
+        const { name, description, addPermissions, removePermissions } = body;
 
         // Check if role exists
         const existingRole = await db.role.findUnique({
           where: { id: roleId },
-          include: { permissions: { include: { permission: true } } },
         });
 
         if (!existingRole) {
@@ -76,14 +71,49 @@ export const action = {
           });
         }
 
-        // Update role
-        const updatedRole = await db.role.update({
-          where: { id: roleId },
-          data: {
-            ...(name !== undefined && { name }),
-            ...(description !== undefined && { description }),
-          },
-          include: { permissions: { include: { permission: true } } },
+        const [updatedRole] = await db.$transaction(async (prisma) => {
+          // 1. Update metadata if provided
+          if (name !== undefined || description !== undefined) {
+            await prisma.role.update({
+              where: { id: roleId },
+              data: {
+                ...(name !== undefined && { name }),
+                ...(description !== undefined && { description }),
+              },
+            });
+          }
+
+          // 2. Remove permissions if provided
+          if (removePermissions && removePermissions.length > 0) {
+            await prisma.rolePermission.deleteMany({
+              where: {
+                roleId: roleId,
+                permissionId: {
+                  in: removePermissions.map((p) => p.permissionId),
+                },
+              },
+            });
+          }
+
+          // 3. Add permissions if provided
+          if (addPermissions && addPermissions.length > 0) {
+            await prisma.rolePermission.createMany({
+              data: addPermissions.map((p) => ({
+                roleId: roleId,
+                permissionId: p.permissionId,
+                type: p.type,
+              })),
+              skipDuplicates: true, // Prevents errors if permission already exists
+            });
+          }
+
+          // 4. Fetch the final updated role
+          const finalRole = await prisma.role.findUniqueOrThrow({
+            where: { id: roleId },
+            include: { permissions: { include: { permission: true } } },
+          });
+
+          return [finalRole];
         });
 
         // Format response to match Role schema

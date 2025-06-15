@@ -1,19 +1,20 @@
 "use client";
 
 import * as React from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, MinusCircle, CheckCircle2, Pencil, Loader2 } from "lucide-react";
+import { Controller } from "react-hook-form";
+import { MinusCircle, CheckCircle2, Pencil, Loader2 } from "lucide-react";
 import { Button } from "@/app/_components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/app/_components/ui/form";
 import { Input } from "@/app/_components/ui/input";
+import { Textarea } from "@/app/_components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -47,490 +48,259 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/app/_components/ui/dialog";
-import useRBACLogic, { RoleFormValues } from "./logic";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/app/_components/ui/tooltip";
+import useRBACLogic, {
+  RoleFormValues,
+  RoleType,
+  PermissionType,
+} from "./logic";
 import { useCallback } from "react";
-
-interface Role {
-  id: string;
-  name: string;
-  rolePermissions?: Array<{
-    permission: {
-      id: string;
-      action: string;
-      resourceType: string;
-    };
-  }>;
-}
-
-interface Permission {
-  id: string;
-  action: string;
-  resourceType: string;
-}
+import { Label } from "@/app/_components/ui/label";
 
 type ResourcePermissions = {
-  [key: string]: Permission[];
+  [key: string]: PermissionType[];
+};
+
+type PermissionAssignmentType = {
+  permissionId: string;
+  type: "ALLOW" | "DENY";
 };
 
 export default function RBACView() {
-  const { isLoading: isLogicLoading, roleSchema } = useRBACLogic();
-  const [roles, setRoles] = React.useState<Role[]>([]);
-  const [permissions, setPermissions] = React.useState<Permission[]>([]);
+  const {
+    form,
+    roles,
+    permissions,
+    isLoading,
+    isSubmitting,
+    createRole,
+    updateRole,
+  } = useRBACLogic();
+
+  const watchedPermissions = form.watch("permissions");
+
   const [resourcePermissions, setResourcePermissions] =
     React.useState<ResourcePermissions>({});
-  const [selectedPermissions, setSelectedPermissions] = React.useState<
-    string[]
-  >([]);
-  const [isLoadingRoles, setIsLoadingRoles] = React.useState(true);
-  const [isLoadingPermissions, setIsLoadingPermissions] = React.useState(true);
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [editingRole, setEditingRole] = React.useState<Role | null>(null);
+  const [editingRole, setEditingRole] = React.useState<RoleType | null>(null);
+  const [editingName, setEditingName] = React.useState("");
+  const [editingDescription, setEditingDescription] = React.useState("");
   const [editDialogOpen, setEditDialogOpen] = React.useState(false);
-  const [editingPermissions, setEditingPermissions] = React.useState<string[]>(
-    []
-  );
+  const [editingPermissions, setEditingPermissions] = React.useState<
+    PermissionAssignmentType[]
+  >([]);
 
-  const form = useForm<RoleFormValues>({
-    resolver: zodResolver(roleSchema),
-    defaultValues: {
-      name: "",
-    },
-  });
-
-  // Group permissions by resource based on the prefixed format
   const groupPermissionsByResource = useCallback(
-    (permissions: Permission[]): ResourcePermissions => {
-      const grouped: ResourcePermissions = {};
-
-      permissions.forEach((permission) => {
-        const resourceType =
-          permission.resourceType || getResourceLabel(permission.action);
-
-        if (!grouped[resourceType]) {
-          grouped[resourceType] = [];
-        }
-
-        grouped[resourceType].push(permission);
-      });
-
-      return grouped;
+    (permissionsList: PermissionType[]): ResourcePermissions => {
+      return permissionsList.reduce((acc, p: PermissionType) => {
+        const resource = p.action.split(":")[0] || "General";
+        if (!acc[resource]) acc[resource] = [];
+        acc[resource].push(p);
+        return acc;
+      }, {} as ResourcePermissions);
     },
     []
   );
 
-  // Fetch all permissions
   React.useEffect(() => {
-    const fetchPermissions = async () => {
-      try {
-        const response = await fetch("/api/permissions");
-        const result = await response.json();
-
-        if (result.success) {
-          const permissionsData = result.data;
-          setPermissions(permissionsData);
-
-          // Group permissions by resource type using our new function
-          setResourcePermissions(groupPermissionsByResource(permissionsData));
-        }
-      } catch (error) {
-        console.error("Failed to fetch permissions:", error);
-      } finally {
-        setIsLoadingPermissions(false);
-      }
-    };
-
-    fetchPermissions();
-  }, [groupPermissionsByResource]);
-
-  // Fetch all roles
-  React.useEffect(() => {
-    const fetchRoles = async () => {
-      try {
-        const response = await fetch("/api/roles");
-        const result = await response.json();
-
-        if (result.success) {
-          setRoles(result.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch roles:", error);
-      } finally {
-        setIsLoadingRoles(false);
-      }
-    };
-
-    fetchRoles();
-  }, []);
-
-  const togglePermission = (permissionId: string) => {
-    setSelectedPermissions((prev) => {
-      if (prev.includes(permissionId)) {
-        return prev.filter((id) => id !== permissionId);
-      } else {
-        return [...prev, permissionId];
-      }
-    });
-  };
+    if (permissions.length > 0) {
+      setResourcePermissions(groupPermissionsByResource(permissions));
+    }
+  }, [permissions, groupPermissionsByResource]);
 
   const handleSelectAllForResource = (
     resourceType: string,
-    isSelected: boolean
+    isSelected: boolean,
+    isEditMode = false
   ) => {
-    const permissionsForResource = resourcePermissions[resourceType] || [];
-    const permissionIds = permissionsForResource.map((p) => p.id);
+    const permissionIdsForResource = (
+      resourcePermissions[resourceType] || []
+    ).map((p: PermissionType) => ({
+      permissionId: p.id,
+      type: "ALLOW" as const,
+    }));
 
-    if (isSelected) {
-      // Add all permissions for this resource that aren't already selected
-      setSelectedPermissions((prev) => [
-        ...new Set([...prev, ...permissionIds]),
-      ]);
+    if (isEditMode) {
+      const currentPermissions = editingPermissions;
+      if (isSelected) {
+        const newPermissions = [
+          ...currentPermissions,
+          ...permissionIdsForResource,
+        ].filter(
+          (value, index, self) =>
+            index ===
+            self.findIndex((t) => t.permissionId === value.permissionId)
+        );
+        setEditingPermissions(newPermissions);
+      } else {
+        const newPermissions = currentPermissions.filter(
+          (p: PermissionAssignmentType) =>
+            !permissionIdsForResource.some(
+              (resP) => resP.permissionId === p.permissionId
+            )
+        );
+        setEditingPermissions(newPermissions);
+      }
     } else {
-      // Remove all permissions for this resource
-      setSelectedPermissions((prev) =>
-        prev.filter((id) => !permissionIds.includes(id))
-      );
-    }
-  };
-
-  const isResourceFullySelected = (resourceType: string): boolean => {
-    const permissionsForResource = resourcePermissions[resourceType] || [];
-    if (permissionsForResource.length === 0) return false;
-
-    return permissionsForResource.every((p) =>
-      selectedPermissions.includes(p.id)
-    );
-  };
-
-  const isResourcePartiallySelected = (resourceType: string): boolean => {
-    const permissionsForResource = resourcePermissions[resourceType] || [];
-    if (permissionsForResource.length === 0) return false;
-
-    const hasSelected = permissionsForResource.some((p) =>
-      selectedPermissions.includes(p.id)
-    );
-
-    return hasSelected && !isResourceFullySelected(resourceType);
-  };
-
-  const getResourceLabel = (action: string): string => {
-    // Extract resource type from the prefixed format (e.g., "org:create" -> "Organization")
-    const parts = action.split(":");
-
-    if (parts.length === 2) {
-      const resourcePrefix = parts[0].toLowerCase();
-
-      switch (resourcePrefix) {
-        case "org":
-          return "Organization";
-        case "team":
-          return "Team";
-        case "project":
-          return "Project";
-        case "workflow":
-          return "Workflow";
-        case "global":
-          return "Global";
-        default:
-          return (
-            resourcePrefix.charAt(0).toUpperCase() + resourcePrefix.slice(1)
-          );
+      const currentPermissions = form.getValues("permissions") || [];
+      if (isSelected) {
+        const newPermissions = [
+          ...currentPermissions,
+          ...permissionIdsForResource,
+        ].filter(
+          (value, index, self) =>
+            index ===
+            self.findIndex((t) => t.permissionId === value.permissionId)
+        );
+        form.setValue("permissions", newPermissions, { shouldDirty: true });
+      } else {
+        const newPermissions = currentPermissions.filter(
+          (p: PermissionAssignmentType) =>
+            !permissionIdsForResource.some(
+              (resP) => resP.permissionId === p.permissionId
+            )
+        );
+        form.setValue("permissions", newPermissions, { shouldDirty: true });
       }
     }
+  };
 
-    // Fallback
-    return "Unknown";
+  const isResourceFullySelected = (
+    resourceType: string,
+    isEditMode = false
+  ): boolean => {
+    const permissionIds = (resourcePermissions[resourceType] || []).map(
+      (p: PermissionType) => p.id
+    );
+    const selectedIds = (
+      isEditMode ? editingPermissions : watchedPermissions || []
+    ).map((p: PermissionAssignmentType) => p.permissionId);
+    if (permissionIds.length === 0) return false;
+    return permissionIds.every((id) => selectedIds.includes(id));
+  };
+
+  const isResourcePartiallySelected = (
+    resourceType: string,
+    isEditMode = false
+  ): boolean => {
+    const permissionIds = (resourcePermissions[resourceType] || []).map(
+      (p: PermissionType) => p.id
+    );
+    const selectedIds = (
+      isEditMode ? editingPermissions : watchedPermissions || []
+    ).map((p: PermissionAssignmentType) => p.permissionId);
+    if (permissionIds.length === 0) return false;
+    const hasSelected = permissionIds.some((id) => selectedIds.includes(id));
+    return hasSelected && !isResourceFullySelected(resourceType, isEditMode);
   };
 
   const onSubmit = async (values: RoleFormValues) => {
-    if (selectedPermissions.length === 0) {
-      toast.error("Please select at least one permission");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const response = await fetch("/api/roles", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...values,
-          permissions: selectedPermissions,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setRoles((prev) => [...prev, result.data]);
-        form.reset();
-        setSelectedPermissions([]);
-        toast.success("Role created successfully");
-      } else {
-        toast.error(result.error || "Failed to create role");
-      }
-    } catch (error) {
-      console.error("Failed to create role:", error);
-      toast.error("An unexpected error occurred");
-    } finally {
-      setIsSubmitting(false);
-    }
+    await createRole(values);
   };
 
   const getPermissionLabel = (action: string) => {
-    // Handle the new prefixed format (e.g., "org:create" -> "Create")
-    const parts = action.split(":");
-
-    if (parts.length === 2) {
-      // Just show the action part without the resource prefix
-      const actionPart = parts[1];
-      return actionPart
-        .replace(/([A-Z])/g, " $1")
-        .replace(/^./, (str) => str.toUpperCase());
-    }
-
-    // Fallback to the old format
-    return action
+    const actionName = action.split(":").pop() || action;
+    return actionName
       .replace(/([A-Z])/g, " $1")
       .replace(/^./, (str) => str.toUpperCase());
   };
 
-  // Group permissions by resource type for display
   const groupRolePermissionsByResource = (
-    rolePermissions?: Array<{ permission: Permission }>
+    rolePermissions: PermissionAssignmentType[]
   ) => {
-    if (!rolePermissions || rolePermissions.length === 0) return {};
-
-    const grouped: Record<string, string[]> = {};
-
-    rolePermissions.forEach((rp) => {
-      const resourceType = rp.permission.resourceType || "Global";
-      if (!grouped[resourceType]) {
-        grouped[resourceType] = [];
-      }
-      grouped[resourceType].push(rp.permission.action);
-    });
-
-    return grouped;
-  };
-
-  // Custom Resource Header with Selection Status
-  const ResourceHeader = ({ resourceType }: { resourceType: string }) => {
-    const isFullySelected = isResourceFullySelected(resourceType);
-    const isPartiallySelected = isResourcePartiallySelected(resourceType);
-
-    return (
-      <div className="flex items-center gap-2">
-        <div className="flex h-4 w-4 items-center justify-center">
-          {isFullySelected ? (
-            <CheckCircle2
-              className="h-4 w-4 text-primary"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleSelectAllForResource(resourceType, false);
-              }}
-            />
-          ) : isPartiallySelected ? (
-            <MinusCircle
-              className="h-4 w-4 text-muted-foreground"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleSelectAllForResource(resourceType, true);
-              }}
-            />
-          ) : (
-            <div
-              className="h-4 w-4 rounded-sm border border-primary"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleSelectAllForResource(resourceType, true);
-              }}
-            />
-          )}
-        </div>
-        <span>{getResourceTypeLabel(resourceType)}</span>
-        <Badge variant="outline" className="ml-2">
-          {resourcePermissions[resourceType].length}
-        </Badge>
-      </div>
+    return rolePermissions.reduce(
+      (acc, p: PermissionAssignmentType) => {
+        const permDetail = permissions.find((pd) => pd.id === p.permissionId);
+        if (permDetail) {
+          const resource = permDetail.action.split(":")[0] || "General";
+          if (!acc[resource]) {
+            acc[resource] = [];
+          }
+          acc[resource].push(permDetail);
+        }
+        return acc;
+      },
+      {} as { [key: string]: PermissionType[] }
     );
   };
 
-  // Format resource type for display (e.g., "ResourceType" -> "Resource Type")
-  const getResourceTypeLabel = (type: string): string => {
-    return type === "Global"
-      ? "Global Permissions"
-      : type.replace(/([A-Z])/g, " $1").trim();
-  };
-
-  // Set up editing for a role
-  const setupRoleEdit = (role: Role) => {
-    // Prevent editing of super admin role
+  const setupRoleEdit = (role: RoleType) => {
     if (role.name.toLowerCase() === "super admin") {
-      toast.error("Super Admin role cannot be edited");
+      toast.error("Super Admin role cannot be edited.");
       return;
     }
     setEditingRole(role);
-    setEditingPermissions(
-      role.rolePermissions?.map((rp) => rp.permission.id) || []
-    );
+    setEditingName(role.name);
+    setEditingDescription(role.description || "");
+    setEditingPermissions(role.permissions || []);
     setEditDialogOpen(true);
   };
 
-  // Toggle permission in edit mode
+  const saveRolePermissions = async () => {
+    if (!editingRole) return;
+
+    const nameChanged = editingName !== editingRole.name;
+    const descriptionChanged =
+      editingDescription !== (editingRole.description || "");
+
+    const originalPermissions = new Set(
+      editingRole.permissions.map(
+        (p: PermissionAssignmentType) => p.permissionId
+      )
+    );
+    const newPermissions = new Set(
+      editingPermissions.map((p: PermissionAssignmentType) => p.permissionId)
+    );
+
+    const addPermissions = editingPermissions.filter(
+      (p: PermissionAssignmentType) => !originalPermissions.has(p.permissionId)
+    );
+    const removePermissions = editingRole.permissions.filter(
+      (p: PermissionAssignmentType) => !newPermissions.has(p.permissionId)
+    );
+    const permissionsChanged =
+      addPermissions.length > 0 || removePermissions.length > 0;
+
+    if (!nameChanged && !descriptionChanged && !permissionsChanged) {
+      toast.info("No changes to save.");
+      setEditDialogOpen(false);
+      return;
+    }
+
+    await updateRole(editingRole.id, {
+      name: nameChanged ? editingName : undefined,
+      description: descriptionChanged ? editingDescription : undefined,
+      addPermissions: addPermissions.length > 0 ? addPermissions : undefined,
+      removePermissions:
+        removePermissions.length > 0 ? removePermissions : undefined,
+    });
+
+    setEditDialogOpen(false);
+  };
+
   const toggleEditPermission = (permissionId: string) => {
     setEditingPermissions((prev) => {
-      if (prev.includes(permissionId)) {
-        return prev.filter((id) => id !== permissionId);
+      const exists = prev.some(
+        (p: PermissionAssignmentType) => p.permissionId === permissionId
+      );
+      if (exists) {
+        return prev.filter(
+          (p: PermissionAssignmentType) => p.permissionId !== permissionId
+        );
       } else {
-        return [...prev, permissionId];
+        return [...prev, { permissionId, type: "ALLOW" }];
       }
     });
   };
 
-  // Select all permissions for a resource in edit mode
-  const handleEditSelectAllForResource = (
-    resourceType: string,
-    isSelected: boolean
-  ) => {
-    const permissionsForResource = resourcePermissions[resourceType] || [];
-    const permissionIds = permissionsForResource.map((p) => p.id);
-
-    if (isSelected) {
-      // Add all permissions for this resource that aren't already selected
-      setEditingPermissions((prev) => [
-        ...new Set([...prev, ...permissionIds]),
-      ]);
-    } else {
-      // Remove all permissions for this resource
-      setEditingPermissions((prev) =>
-        prev.filter((id) => !permissionIds.includes(id))
-      );
-    }
-  };
-
-  // Check if resource is fully selected in edit mode
-  const isResourceEditFullySelected = (resourceType: string): boolean => {
-    const permissionsForResource = resourcePermissions[resourceType] || [];
-    if (permissionsForResource.length === 0) return false;
-
-    return permissionsForResource.every((p) =>
-      editingPermissions.includes(p.id)
-    );
-  };
-
-  // Check if resource is partially selected in edit mode
-  const isResourceEditPartiallySelected = (resourceType: string): boolean => {
-    const permissionsForResource = resourcePermissions[resourceType] || [];
-    if (permissionsForResource.length === 0) return false;
-
-    const hasSelected = permissionsForResource.some((p) =>
-      editingPermissions.includes(p.id)
-    );
-
-    return hasSelected && !isResourceEditFullySelected(resourceType);
-  };
-
-  // Custom Resource Header for Edit Dialog
-  const ResourceEditHeader = ({ resourceType }: { resourceType: string }) => {
-    const isFullySelected = isResourceEditFullySelected(resourceType);
-    const isPartiallySelected = isResourceEditPartiallySelected(resourceType);
-
+  if (isLoading) {
     return (
-      <div className="flex items-center gap-2">
-        <div className="flex h-4 w-4 items-center justify-center">
-          {isFullySelected ? (
-            <CheckCircle2
-              className="h-4 w-4 text-primary"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleEditSelectAllForResource(resourceType, false);
-              }}
-            />
-          ) : isPartiallySelected ? (
-            <MinusCircle
-              className="h-4 w-4 text-muted-foreground"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleEditSelectAllForResource(resourceType, true);
-              }}
-            />
-          ) : (
-            <div
-              className="h-4 w-4 rounded-sm border border-primary"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleEditSelectAllForResource(resourceType, true);
-              }}
-            />
-          )}
-        </div>
-        <span>{getResourceTypeLabel(resourceType)}</span>
-        <Badge variant="outline" className="ml-2">
-          {resourcePermissions[resourceType].length}
-        </Badge>
-      </div>
-    );
-  };
-
-  // Save updated permissions
-  const saveRolePermissions = async () => {
-    if (!editingRole) return;
-
-    try {
-      setIsSubmitting(true);
-      console.log(
-        `Updating role: ${editingRole.id} with ${editingPermissions.length} permissions`
-      );
-
-      const response = await fetch(`/api/roles/${editingRole.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          permissions: editingPermissions,
-        }),
-        credentials: "include", // Include credentials for authentication
-      });
-
-      console.log(`Response status: ${response.status}`);
-      const result = await response.json();
-      console.log("Response data:", result);
-
-      if (result.success) {
-        // Update the role in the roles state
-        setRoles((prev) =>
-          prev.map((role) => (role.id === editingRole.id ? result.data : role))
-        );
-        setEditDialogOpen(false);
-        setEditingRole(null);
-        toast.success("Role permissions updated successfully");
-      } else {
-        toast.error(result.error || "Failed to update role permissions");
-        console.error("API error details:", result.details);
-      }
-    } catch (error) {
-      console.error("Failed to update role permissions:", error);
-      toast.error("An unexpected error occurred");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const isInitialLoading =
-    isLoadingPermissions || isLoadingRoles || isLogicLoading;
-
-  if (isInitialLoading) {
-    return (
-      <div className="flex h-[50vh] w-full items-center justify-center">
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">
-            Loading RBAC settings...
-          </p>
-        </div>
+      <div className="flex justify-center items-center h-40">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
@@ -538,265 +308,379 @@ export default function RBACView() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">
-          Role Based Access Control
-        </h2>
-        <p className="text-muted-foreground">
-          Manage roles and permissions for resources in your organization
+        <h3 className="text-xl font-semibold">Role Based Access Control</h3>
+        <p className="text-sm text-muted-foreground">
+          Manage roles and permissions for resources in your organization.
         </p>
+        <Separator className="my-4" />
       </div>
 
-      <Separator />
+      <Card>
+        <CardHeader>
+          <CardTitle>Create a New Role</CardTitle>
+          <CardDescription>
+            Define a new role and assign permissions to it.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Role Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Content Editor" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="A brief description of the role's purpose."
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-      <div className="grid grid-cols-1 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Create New Role</CardTitle>
-            <CardDescription>
-              Add a new role with permissions for specific resources
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-6"
-              >
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Role Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="e.g. Admin, Editor, Viewer"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="space-y-3">
-                  <FormLabel>Resource Permissions</FormLabel>
-
-                  {/* Display permissions grouped by resource */}
-                  <Accordion type="multiple" className="w-full">
-                    {Object.keys(resourcePermissions).length > 0 ? (
-                      Object.keys(resourcePermissions).map((resourceType) => (
-                        <AccordionItem key={resourceType} value={resourceType}>
-                          <AccordionTrigger className="hover:no-underline">
-                            <ResourceHeader resourceType={resourceType} />
-                          </AccordionTrigger>
-                          <AccordionContent>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-6 pt-2">
-                              {resourcePermissions[resourceType].map(
-                                (permission) => (
-                                  <div
-                                    key={permission.id}
-                                    className="flex items-center space-x-2"
-                                  >
-                                    <Checkbox
-                                      id={permission.id}
-                                      checked={selectedPermissions.includes(
-                                        permission.id
-                                      )}
-                                      onCheckedChange={() =>
-                                        togglePermission(permission.id)
-                                      }
-                                    />
-                                    <label
-                                      htmlFor={permission.id}
-                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                    >
-                                      {getPermissionLabel(permission.action)}
-                                    </label>
-                                  </div>
-                                )
+              <FormItem>
+                <FormLabel>Permissions</FormLabel>
+                <FormDescription>
+                  Select the permissions to assign to this role.
+                </FormDescription>
+                <Accordion type="multiple" className="w-full">
+                  {Object.entries(resourcePermissions).map(
+                    ([resource, perms]: [string, PermissionType[]]) => (
+                      <AccordionItem key={resource} value={resource}>
+                        <AccordionTrigger>
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="flex h-5 w-5 items-center justify-center"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSelectAllForResource(
+                                  resource,
+                                  !isResourceFullySelected(resource, false),
+                                  false
+                                );
+                              }}
+                            >
+                              {isResourceFullySelected(resource, false) ? (
+                                <CheckCircle2 className="h-5 w-5 text-primary" />
+                              ) : isResourcePartiallySelected(
+                                  resource,
+                                  false
+                                ) ? (
+                                <MinusCircle className="h-5 w-5 text-muted-foreground" />
+                              ) : (
+                                <div className="h-4 w-4 rounded-sm border border-primary" />
                               )}
                             </div>
-                          </AccordionContent>
-                        </AccordionItem>
-                      ))
-                    ) : (
-                      <div className="text-muted-foreground text-sm py-3 border rounded-md p-4">
-                        No permissions available. Please check database setup.
-                      </div>
-                    )}
-                  </Accordion>
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={
-                    isLogicLoading || isSubmitting || permissions.length === 0
-                  }
-                  className="w-full md:w-auto"
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Role
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Roles</CardTitle>
-            <CardDescription>
-              Existing roles in your organization
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoadingRoles ? (
-              <div className="flex items-center justify-center py-8">
-                <p className="text-muted-foreground">Loading roles...</p>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Role Name</TableHead>
-                    <TableHead>Permissions</TableHead>
-                    <TableHead className="w-[100px]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {roles.length > 0 ? (
-                    roles.map((role) => {
-                      const groupedPermissions = groupRolePermissionsByResource(
-                        role.rolePermissions
-                      );
-
-                      return (
-                        <TableRow key={role.id}>
-                          <TableCell className="font-medium">
-                            {role.name}
-                          </TableCell>
-                          <TableCell>
-                            {Object.keys(groupedPermissions).length > 0 ? (
-                              <div className="space-y-2">
-                                {Object.entries(groupedPermissions).map(
-                                  ([resourceType, actions]) => (
-                                    <div
-                                      key={resourceType}
-                                      className="space-y-1"
+                            <span className="font-medium">
+                              {resource.charAt(0).toUpperCase() +
+                                resource.slice(1)}
+                            </span>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+                            <Controller
+                              name="permissions"
+                              control={form.control}
+                              render={({ field }) => (
+                                <>
+                                  {perms.map((p: PermissionType) => (
+                                    <FormItem
+                                      key={p.id}
+                                      className="flex flex-row items-start space-x-3 space-y-0"
                                     >
-                                      <div className="text-xs font-medium text-muted-foreground">
-                                        {getResourceTypeLabel(resourceType)}:
-                                      </div>
-                                      <div className="flex flex-wrap gap-1.5">
-                                        {actions.map((action) => (
+                                      <FormControl>
+                                        <Checkbox
+                                          checked={(field.value || []).some(
+                                            (val: PermissionAssignmentType) =>
+                                              val.permissionId === p.id
+                                          )}
+                                          onCheckedChange={(checked) => {
+                                            const currentValues =
+                                              field.value || [];
+                                            const newValues = checked
+                                              ? [
+                                                  ...currentValues,
+                                                  {
+                                                    permissionId: p.id,
+                                                    type: "ALLOW" as const,
+                                                  },
+                                                ]
+                                              : currentValues.filter(
+                                                  (
+                                                    val: PermissionAssignmentType
+                                                  ) => val.permissionId !== p.id
+                                                );
+                                            field.onChange(newValues);
+                                          }}
+                                        />
+                                      </FormControl>
+                                      <FormLabel className="font-normal">
+                                        {getPermissionLabel(p.action)}
+                                      </FormLabel>
+                                    </FormItem>
+                                  ))}
+                                </>
+                              )}
+                            />
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    )
+                  )}
+                </Accordion>
+                <FormMessage />
+              </FormItem>
+
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                Create Role
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+
+      <div>
+        <h3 className="text-xl font-semibold">Manage Roles</h3>
+        <Separator className="my-4" />
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Existing Roles</CardTitle>
+          <CardDescription>
+            View and manage existing roles and their permissions.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <TooltipProvider>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Role Name</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Permissions</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {roles.map((role) => (
+                  <TableRow key={role.id}>
+                    <TableCell className="font-medium">{role.name}</TableCell>
+                    <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
+                      <Tooltip>
+                        <TooltipTrigger>
+                          {role.description
+                            ? role.description.length > 30
+                              ? `${role.description.substring(0, 30)}...`
+                              : role.description
+                            : "No description"}
+                        </TooltipTrigger>
+                        {role.description && role.description.length > 30 && (
+                          <TooltipContent>
+                            <p>{role.description}</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge
+                            variant="secondary"
+                            className="cursor-pointer hover:bg-accent"
+                          >
+                            {role.permissions?.length || 0} permissions
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent className="w-90 p-4">
+                          <div className="space-y-4">
+                            <div className="space-y-1">
+                              <h3 className="font-bold leading-none text-lg">
+                                {role.name}
+                              </h3>
+                              <p className="text-sm text-muted-foreground">
+                                All permissions assigned to this role.
+                              </p>
+                            </div>
+                            <Separator />
+                            <div className="space-y-3 max-h-60 overflow-y-auto">
+                              {role.permissions &&
+                              role.permissions.length > 0 ? (
+                                Object.entries(
+                                  groupRolePermissionsByResource(
+                                    role.permissions
+                                  )
+                                ).map(
+                                  ([resource, perms]: [
+                                    string,
+                                    PermissionType[],
+                                  ]) => (
+                                    <div key={resource}>
+                                      <h4 className="font-semibold text-sm mb-2 capitalize">
+                                        {resource}
+                                      </h4>
+                                      <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                                        {perms.map((perm: PermissionType) => (
                                           <span
-                                            key={`${resourceType}-${action}`}
-                                            className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-1 text-xs"
+                                            key={perm.id}
+                                            className="text-xs text-muted-foreground"
                                           >
-                                            {getPermissionLabel(action)}
+                                            {getPermissionLabel(perm.action)}
                                           </span>
                                         ))}
                                       </div>
                                     </div>
                                   )
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">
-                                No permissions assigned
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setupRoleEdit(role)}
-                              disabled={
-                                role.name.toLowerCase() === "super admin"
-                              }
-                            >
-                              <Pencil className="h-4 w-4" />
-                              <span className="sr-only">Edit</span>
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={3} className="text-center py-4">
-                        No roles found. Create your first role above.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                                )
+                              ) : (
+                                <p className="text-sm text-muted-foreground">
+                                  No permissions assigned.
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setupRoleEdit(role)}
+                        disabled={role.name.toLowerCase() === "super admin"}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TooltipProvider>
+        </CardContent>
+      </Card>
 
-      {/* Edit Role Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="sm:max-w-[525px]">
           <DialogHeader>
-            <DialogTitle>Edit Role Permissions</DialogTitle>
+            <DialogTitle>Edit Role: {editingRole?.name}</DialogTitle>
             <DialogDescription>
-              Update permissions for {editingRole?.name}
+              Modify the name, description, and permissions for this role.
             </DialogDescription>
           </DialogHeader>
-
-          <div className="py-4 max-h-[60vh] overflow-y-auto">
-            <Accordion type="multiple" className="w-full">
-              {Object.keys(resourcePermissions).length > 0 ? (
-                Object.keys(resourcePermissions).map((resourceType) => (
-                  <AccordionItem key={resourceType} value={resourceType}>
-                    <AccordionTrigger className="hover:no-underline">
-                      <ResourceEditHeader resourceType={resourceType} />
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="role-name">Role Name</Label>
+              <Input
+                id="role-name"
+                value={editingName}
+                onChange={(e) => setEditingName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="role-description">Description</Label>
+              <Textarea
+                id="role-description"
+                value={editingDescription}
+                onChange={(e) => setEditingDescription(e.target.value)}
+              />
+            </div>
+          </div>
+          <Separator />
+          <div className="py-2 max-h-[45vh] overflow-y-auto">
+            <Accordion
+              type="multiple"
+              className="w-full"
+              defaultValue={Object.keys(resourcePermissions)}
+            >
+              {Object.entries(resourcePermissions).map(
+                ([resource, perms]: [string, PermissionType[]]) => (
+                  <AccordionItem key={`edit-${resource}`} value={resource}>
+                    <AccordionTrigger>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="flex h-5 w-5 items-center justify-center"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSelectAllForResource(
+                              resource,
+                              !isResourceFullySelected(resource, true),
+                              true
+                            );
+                          }}
+                        >
+                          {isResourceFullySelected(resource, true) ? (
+                            <CheckCircle2 className="h-5 w-5 text-primary" />
+                          ) : isResourcePartiallySelected(resource, true) ? (
+                            <MinusCircle className="h-5 w-5 text-muted-foreground" />
+                          ) : (
+                            <div className="h-4 w-4 rounded-sm border border-primary" />
+                          )}
+                        </div>
+                        <span className="font-medium">
+                          {resource.charAt(0).toUpperCase() + resource.slice(1)}
+                        </span>
+                      </div>
                     </AccordionTrigger>
                     <AccordionContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-6 pt-2">
-                        {resourcePermissions[resourceType].map((permission) => (
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4">
+                        {perms.map((p: PermissionType) => (
                           <div
-                            key={permission.id}
-                            className="flex items-center space-x-2"
+                            key={`edit-${p.id}`}
+                            className="flex flex-row items-center space-x-3 space-y-0"
                           >
                             <Checkbox
-                              id={`edit-${permission.id}`}
-                              checked={editingPermissions.includes(
-                                permission.id
+                              checked={editingPermissions.some(
+                                (val: PermissionAssignmentType) =>
+                                  val.permissionId === p.id
                               )}
-                              onCheckedChange={() =>
-                                toggleEditPermission(permission.id)
-                              }
+                              onCheckedChange={() => toggleEditPermission(p.id)}
+                              id={`edit-checkbox-${p.id}`}
                             />
                             <label
-                              htmlFor={`edit-${permission.id}`}
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              htmlFor={`edit-checkbox-${p.id}`}
+                              className="font-normal"
                             >
-                              {getPermissionLabel(permission.action)}
+                              {getPermissionLabel(p.action)}
                             </label>
                           </div>
                         ))}
                       </div>
                     </AccordionContent>
                   </AccordionItem>
-                ))
-              ) : (
-                <div className="text-muted-foreground text-sm py-3 border rounded-md p-4">
-                  No permissions available.
-                </div>
+                )
               )}
             </Accordion>
           </div>
-
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
               Cancel
             </Button>
             <Button onClick={saveRolePermissions} disabled={isSubmitting}>
+              {isSubmitting && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
               Save Changes
             </Button>
           </DialogFooter>

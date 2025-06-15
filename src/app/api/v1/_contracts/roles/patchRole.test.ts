@@ -405,6 +405,72 @@ describe("PATCH /roles/:roleId", () => {
     await revokeSession(sessionId);
   });
 
+  it("should successfully add and remove permissions", async () => {
+    await flushDatabase(expect);
+    const { jwt, sessionId, orgId } = await setupUserAndOrg(1);
+    const testPermissions = await getTestPermissions();
+    expect(testPermissions.length).toBeGreaterThanOrEqual(3);
+
+    // Create a role with initial permissions (perm 0 and 1)
+    const initialPermissions = [
+      { permissionId: testPermissions[0].id, type: "ALLOW" as const },
+      { permissionId: testPermissions[1].id, type: "ALLOW" as const },
+    ];
+    const createRes = await request(server)
+      .post("/roles")
+      .set("Authorization", `Bearer ${jwt}`)
+      .send({
+        name: "Permission Test Role",
+        resourceType: ResourceType.enum.ORGANIZATION,
+        resourceId: orgId,
+        permissions: initialPermissions,
+      });
+
+    expect(createRes.status).toBe(201);
+    const createdRole = createRes.body;
+
+    // Send PATCH to remove perm 1 and add perm 2
+    const updatePayload = {
+      removePermissions: [
+        { permissionId: testPermissions[1].id, type: "ALLOW" as const },
+      ],
+      addPermissions: [
+        { permissionId: testPermissions[2].id, type: "ALLOW" as const },
+      ],
+    };
+
+    const res = await request(server)
+      .patch(`/roles/${createdRole.id}`)
+      .set("Authorization", `Bearer ${jwt}`)
+      .send(updatePayload);
+
+    expect(res.status).toBe(200);
+    const updatedRole = res.body as PatchRoleResponseType;
+
+    // Verify response body
+    expect(updatedRole.permissions.length).toBe(2);
+    const finalPermissionIds = new Set(
+      updatedRole.permissions.map((p) => p.permissionId)
+    );
+    expect(finalPermissionIds.has(testPermissions[0].id)).toBe(true); // Should still be there
+    expect(finalPermissionIds.has(testPermissions[1].id)).toBe(false); // Should be removed
+    expect(finalPermissionIds.has(testPermissions[2].id)).toBe(true); // Should be added
+
+    // Verify in database
+    const dbRolePermissions = await db.rolePermission.findMany({
+      where: { roleId: createdRole.id },
+    });
+    const dbPermissionIds = new Set(
+      dbRolePermissions.map((p) => p.permissionId)
+    );
+    expect(dbPermissionIds.size).toBe(2);
+    expect(dbPermissionIds.has(testPermissions[0].id)).toBe(true);
+    expect(dbPermissionIds.has(testPermissions[1].id)).toBe(false);
+    expect(dbPermissionIds.has(testPermissions[2].id)).toBe(true);
+
+    await revokeSession(sessionId);
+  });
+
   it("should handle special characters in name and description", async () => {
     await flushDatabase(expect);
     const { jwt, sessionId, orgId } = await setupUserAndOrg(1);

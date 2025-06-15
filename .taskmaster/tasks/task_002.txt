@@ -1,6 +1,6 @@
 # Task ID: 2
 # Title: Implement Main Application Layout
-# Status: pending
+# Status: done
 # Dependencies: 1
 # Priority: high
 # Description: Implement the main application layout with a collapsible sidebar, top bar, and an empty React Flow canvas. Ensure the layout is responsive and adapts to different screen sizes.

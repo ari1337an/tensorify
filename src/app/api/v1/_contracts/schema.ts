@@ -157,12 +157,30 @@ export const CreateRoleRequest = z
 
 export const UpdateRoleRequest = z
   .object({
-    name: z.string().optional(),
-    description: z.string().optional(),
+    name: z
+      .string()
+      .min(1, "Name is required")
+      .max(50, "Name must be less than 50 characters")
+      .optional(),
+    description: z
+      .string()
+      .min(1, "Description is required")
+      .max(100, "Description must be less than 100 characters")
+      .optional(),
     addPermissions: z.array(PermissionAssignment).optional(),
     removePermissions: z.array(PermissionAssignment).optional(),
   })
-  .strict();
+  .refine(
+    (data) =>
+      data.name !== undefined ||
+      data.description !== undefined ||
+      (data.addPermissions && data.addPermissions.length > 0) ||
+      (data.removePermissions && data.removePermissions.length > 0),
+    {
+      message:
+        "At least one field (name, description, addPermissions, or removePermissions) must be provided",
+    }
+  );
 
 export const Role = z.object({
   id: UUID,
