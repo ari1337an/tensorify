@@ -227,6 +227,31 @@ describe("GET /organization/:orgId/users", () => {
 
       await revokeSession(sessionId);
     });
+
+    it("should assign 'Super Admin' role to the organization creator", async () => {
+      await flushDatabase(expect);
+      const { jwt, sessionId, orgId } = await setupUserAndOrg(1);
+
+      const res = await request(server)
+        .get(`/organization/${orgId}/users`)
+        .set("Authorization", `Bearer ${jwt}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.items.length).toBe(1);
+
+      const creatorUser = res.body.items[0];
+      const superAdminRole = creatorUser.roles.find(
+        (role: z.infer<typeof UserListResponse>["items"][number]["roles"][number]) =>
+          role.name === "Super Admin"
+      );
+
+      expect(superAdminRole).toBeDefined();
+      expect(superAdminRole.id).toBe("98ef4090-9bc0-4554-a025-1ec7e830f28b");
+      expect(superAdminRole.name).toBe("Super Admin");
+      // Add more assertions if the hardcoded role has permissions or resourceType
+
+      await revokeSession(sessionId);
+    });
   });
 
   // === Pagination Tests ===

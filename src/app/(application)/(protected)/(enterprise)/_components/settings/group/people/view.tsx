@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { DataTable } from "./data-table";
-import { getPeopleTableColumns, PeopleListEntry } from "./columns";
+import { getPeopleTableColumns } from "./columns";
 import { Button } from "@/app/_components/ui/button";
 import { Loader2, UserPlus, Check, ChevronsUpDown, X } from "lucide-react";
 import { Separator } from "@/app/_components/ui/separator";
@@ -35,6 +35,7 @@ import { EditPersonDialog } from "./EditPersonDialog";
 import { getRoles } from "@/app/api/v1/_client/client";
 import { usePeopleLogic } from "./logic";
 import { toast } from "sonner";
+import useStore from "@/app/_store/store";
 
 type Role = {
   id: string;
@@ -46,13 +47,13 @@ export default function PeopleView({
 }: {
   organizationId: string;
 }) {
+  const { currentUser } = useStore();
+
   const {
     teamMembers,
     loading,
     error,
     pagination,
-    handleRoleChange,
-    handleInvite,
     handlePageChange,
     handleLimitChange,
     refreshMembers,
@@ -404,7 +405,7 @@ export default function PeopleView({
       <Separator />
 
       <DataTable
-        columns={getPeopleTableColumns(handleOpenEditPersonDialog)}
+        columns={getPeopleTableColumns(handleOpenEditPersonDialog, currentUser)}
         data={teamMembers}
         inviteButton={inviteButton}
         pagination={pagination}

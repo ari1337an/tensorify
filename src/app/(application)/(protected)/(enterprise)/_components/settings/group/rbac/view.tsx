@@ -109,7 +109,7 @@ export default function RBACView() {
   React.useEffect(() => {
     if (permissions.length > 0) {
       setResourcePermissions(groupPermissionsByResource(permissions));
-    }
+        }
   }, [permissions, groupPermissionsByResource]);
 
   const handleSelectAllForResource = (
@@ -126,7 +126,7 @@ export default function RBACView() {
 
     if (isEditMode) {
       const currentPermissions = editingPermissions;
-      if (isSelected) {
+    if (isSelected) {
         const newPermissions = [
           ...currentPermissions,
           ...permissionIdsForResource,
@@ -293,7 +293,7 @@ export default function RBACView() {
         );
       } else {
         return [...prev, { permissionId, type: "ALLOW" }];
-      }
+    }
     });
   };
 
@@ -315,23 +315,23 @@ export default function RBACView() {
         <Separator className="my-4" />
       </div>
 
-      <Card>
-        <CardHeader>
+        <Card>
+          <CardHeader>
           <CardTitle>Create a New Role</CardTitle>
-          <CardDescription>
+            <CardDescription>
             Define a new role and assign permissions to it.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Role Name</FormLabel>
-                    <FormControl>
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Role Name</FormLabel>
+                      <FormControl>
                       <Input placeholder="e.g., Content Editor" {...field} />
                     </FormControl>
                     <FormMessage />
@@ -347,20 +347,20 @@ export default function RBACView() {
                     <FormControl>
                       <Textarea
                         placeholder="A brief description of the role's purpose."
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
               <FormItem>
                 <FormLabel>Permissions</FormLabel>
                 <FormDescription>
                   Select the permissions to assign to this role.
                 </FormDescription>
-                <Accordion type="multiple" className="w-full">
+                  <Accordion type="multiple" className="w-full">
                   {Object.entries(resourcePermissions).map(
                     ([resource, perms]: [string, PermissionType[]]) => (
                       <AccordionItem key={resource} value={resource}>
@@ -393,8 +393,8 @@ export default function RBACView() {
                                 resource.slice(1)}
                             </span>
                           </div>
-                        </AccordionTrigger>
-                        <AccordionContent>
+                          </AccordionTrigger>
+                          <AccordionContent>
                           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
                             <Controller
                               name="permissions"
@@ -405,13 +405,13 @@ export default function RBACView() {
                                     <FormItem
                                       key={p.id}
                                       className="flex flex-row items-start space-x-3 space-y-0"
-                                    >
+                                  >
                                       <FormControl>
                                         <Checkbox
                                           checked={(field.value || []).some(
                                             (val: PermissionAssignmentType) =>
                                               val.permissionId === p.id
-                                          )}
+                                      )}
                                           onCheckedChange={(checked) => {
                                             const currentValues =
                                               field.value || [];
@@ -440,12 +440,12 @@ export default function RBACView() {
                                 </>
                               )}
                             />
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
                     )
-                  )}
-                </Accordion>
+                    )}
+                  </Accordion>
                 <FormMessage />
               </FormItem>
 
@@ -453,39 +453,39 @@ export default function RBACView() {
                 {isSubmitting && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                Create Role
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+                  Create Role
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
 
       <div>
         <h3 className="text-xl font-semibold">Manage Roles</h3>
         <Separator className="my-4" />
       </div>
 
-      <Card>
-        <CardHeader>
+        <Card>
+          <CardHeader>
           <CardTitle>Existing Roles</CardTitle>
-          <CardDescription>
+            <CardDescription>
             View and manage existing roles and their permissions.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
           <TooltipProvider>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Role Name</TableHead>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Role Name</TableHead>
                   <TableHead>Description</TableHead>
-                  <TableHead>Permissions</TableHead>
+                    <TableHead>Permissions</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                 {roles.map((role) => (
-                  <TableRow key={role.id}>
+                        <TableRow key={role.id}>
                     <TableCell className="font-medium">{role.name}</TableCell>
                     <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
                       <Tooltip>
@@ -502,8 +502,8 @@ export default function RBACView() {
                           </TooltipContent>
                         )}
                       </Tooltip>
-                    </TableCell>
-                    <TableCell>
+                          </TableCell>
+                          <TableCell>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Badge
@@ -522,7 +522,7 @@ export default function RBACView() {
                               <p className="text-sm text-muted-foreground">
                                 All permissions assigned to this role.
                               </p>
-                            </div>
+                                      </div>
                             <Separator />
                             <div className="space-y-3 max-h-60 overflow-y-auto">
                               {role.permissions &&
@@ -557,29 +557,29 @@ export default function RBACView() {
                                 <p className="text-sm text-muted-foreground">
                                   No permissions assigned.
                                 </p>
-                              )}
-                            </div>
+                                )}
+                              </div>
                           </div>
                         </TooltipContent>
                       </Tooltip>
-                    </TableCell>
+                          </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setupRoleEdit(role)}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setupRoleEdit(role)}
                         disabled={role.name.toLowerCase() === "super admin"}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
                 ))}
-              </TableBody>
-            </Table>
+                </TableBody>
+              </Table>
           </TooltipProvider>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="sm:max-w-[525px]">

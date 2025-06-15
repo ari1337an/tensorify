@@ -859,7 +859,11 @@ export function EditPersonDialog({
                                   <TooltipTrigger asChild>
                                     <Badge
                                       variant="secondary"
-                                      className="cursor-default"
+                                      className={
+                                        role.name === "Super Admin"
+                                          ? "bg-green-500 text-white cursor-default"
+                                          : "cursor-default"
+                                      }
                                     >
                                       {role.name}
                                     </Badge>
@@ -888,7 +892,11 @@ export function EditPersonDialog({
                                   <TooltipTrigger asChild>
                                     <Badge
                                       variant="outline"
-                                      className="cursor-default"
+                                      className={
+                                        role.name === "Super Admin"
+                                          ? "bg-green-500 text-white cursor-default"
+                                          : "cursor-default"
+                                      }
                                     >
                                       {role.name}
                                     </Badge>

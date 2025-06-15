@@ -163,7 +163,20 @@ export const action = {
 
       // Add creator
       if (orgWithUsers.createdBy) {
-        userMap.set(orgWithUsers.createdBy.id, orgWithUsers.createdBy);
+        userMap.set(orgWithUsers.createdBy.id, {
+          ...orgWithUsers.createdBy,
+          userRoles: [
+            ...orgWithUsers.createdBy.userRoles,
+            {
+              role: {
+                id: "98ef4090-9bc0-4554-a025-1ec7e830f28b",
+                name: "Super Admin",
+                resourceType: "ORGANIZATION", // Assuming it's an organization-level role
+                permissions: [], // No specific permissions for this hardcoded role, adjust if needed
+              },
+            },
+          ],
+        });
       }
 
       // Add members
