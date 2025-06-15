@@ -14,11 +14,8 @@ import {
 import {
   CreateRoleRequest,
   Permission,
-  Role,
-  UpdateRoleRequest,
   PermissionAssignment,
-  roleSchema,
-  permissionSchema,
+  Role,
 } from "@/app/api/v1/_contracts/schema";
 import useStore from "@/app/_store/store";
 
@@ -28,8 +25,9 @@ const roleFormSchema = CreateRoleRequest.omit({
   resourceType: true,
 });
 export type RoleFormValues = z.infer<typeof roleFormSchema>;
-export type RoleType = z.infer<typeof roleSchema>;
-export type PermissionType = z.infer<typeof permissionSchema>;
+export type RoleType = z.infer<typeof Role>;
+export type PermissionType = z.infer<typeof Permission>;
+export type PermissionAssignmentType = z.infer<typeof PermissionAssignment>;
 
 // --- Custom Hook for RBAC Logic ---
 export default function useRBACLogic() {
@@ -125,8 +123,8 @@ export default function useRBACLogic() {
     payload: {
       name?: string;
       description?: string | null;
-      addPermissions?: PermissionAssignment[];
-      removePermissions?: PermissionAssignment[];
+      addPermissions?: PermissionAssignmentType[];
+      removePermissions?: PermissionAssignmentType[];
     }
   ) => {
     setIsSubmitting(true);
@@ -135,7 +133,7 @@ export default function useRBACLogic() {
         params: { roleId },
         body: {
           name: payload.name,
-          description: payload.description,
+          description: payload.description ?? undefined,
           addPermissions: payload.addPermissions,
           removePermissions: payload.removePermissions,
         },

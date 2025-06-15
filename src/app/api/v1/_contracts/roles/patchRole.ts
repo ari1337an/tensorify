@@ -14,7 +14,6 @@ import db from "@/server/database/db";
 
 extendZodWithOpenApi(z);
 
-
 const c = initContract();
 
 export const contract = c.router(
