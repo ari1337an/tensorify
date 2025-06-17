@@ -7,12 +7,10 @@ import { ArrowUpDown, Eye } from "lucide-react";
 export type TeamspaceEntry = {
   id: string;
   name: string;
-  admin: {
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
+  description: string | null;
+  organizationId: string;
   memberCount: number;
+  createdAt: string;
 };
 
 export const getTeamspacesTableColumns = (
@@ -32,13 +30,13 @@ export const getTeamspacesTableColumns = (
     cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
   },
   {
-    accessorKey: "admin",
-    header: "Admin",
+    accessorKey: "description",
+    header: "Description",
     cell: ({ row }) => {
-      const admin = row.original.admin;
+      const description = row.original.description;
       return (
-        <span>
-          {admin.firstName} {admin.lastName}
+        <span className="text-muted-foreground">
+          {description || "No description"}
         </span>
       );
     },

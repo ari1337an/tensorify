@@ -470,6 +470,20 @@ export const Team = z.object({
   organizationId: UUID,
 });
 
+export const TeamListItem = z.object({
+  id: UUID,
+  name: z.string(),
+  description: z.string().nullable(),
+  organizationId: UUID,
+  memberCount: z.number().int(),
+  createdAt: z.string(),
+});
+
+export const TeamListResponse = z.object({
+  items: z.array(TeamListItem),
+  meta: PaginationMeta,
+});
+
 export const PermissionItem = z.object({
   action: z.string(),
   resourceType: z.string(),

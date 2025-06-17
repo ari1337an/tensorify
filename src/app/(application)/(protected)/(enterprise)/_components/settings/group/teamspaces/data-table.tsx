@@ -30,16 +30,38 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/app/_components/ui/dropdown-menu";
-import { Filter } from "lucide-react";
+import { Filter, UserPlus } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/app/_components/ui/select";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  onCreateTeam?: () => void;
+  pagination?: {
+    page: number;
+    size: number;
+    totalCount: number;
+    totalPages: number;
+  };
+  onPageChange?: (page: number) => void;
+  onLimitChange?: (limit: number) => void;
+  loading?: boolean;
 }
 
 export function TeamspacesDataTable<TData, TValue>({
   columns: defaultColumns,
   data,
+  onCreateTeam,
+  pagination,
+  onPageChange,
+  onLimitChange,
+  loading = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -79,9 +101,15 @@ export function TeamspacesDataTable<TData, TValue>({
           />
         </div>
         <div className="flex space-x-2">
+          {onCreateTeam && (
+            <Button onClick={onCreateTeam} size="sm" className="h-8">
+              <UserPlus className="mr-2 h-4 w-4" />
+              Create New Team
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="ml-auto flex h-8">
+              <Button variant="outline" size="sm" className="flex h-8">
                 <Filter className="mr-2 h-4 w-4" />
                 View
               </Button>
@@ -158,23 +186,68 @@ export function TeamspacesDataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Next
-        </Button>
+      <div className="flex items-center justify-between space-x-2 py-4">
+        {pagination && (
+          <div className="flex-1 text-sm text-muted-foreground">
+            {pagination.totalCount > 0
+              ? `Showing ${Math.min(
+                  (pagination.page - 1) * pagination.size + 1,
+                  pagination.totalCount
+                )} to ${Math.min(
+                  pagination.page * pagination.size,
+                  pagination.totalCount
+                )} of ${pagination.totalCount} results`
+              : "No results"}
+          </div>
+        )}
+        <div className="flex items-center space-x-6 lg:space-x-8">
+          <div className="flex items-center space-x-2">
+            <p className="text-sm text-muted-foreground">
+              Page {pagination?.page || 0} of {pagination?.totalPages || 0}
+            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <p className="text-sm font-medium">Rows per page</p>
+            <Select
+              value={pagination?.size.toString()}
+              onValueChange={(value) => onLimitChange?.(Number(value))}
+              disabled={loading}
+            >
+              <SelectTrigger className="h-8 w-[70px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent side="top">
+                {[5, 10, 20, 30, 40, 50].map((pageSize) => (
+                  <SelectItem key={pageSize} value={pageSize.toString()}>
+                    {pageSize}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange?.(pagination?.page - 1)}
+              disabled={!pagination || pagination.page <= 1 || loading}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange?.(pagination?.page + 1)}
+              disabled={
+                !pagination ||
+                pagination.page >= pagination.totalPages ||
+                loading
+              }
+            >
+              Next
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

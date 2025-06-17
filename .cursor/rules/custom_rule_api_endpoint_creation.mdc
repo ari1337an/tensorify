@@ -1,0 +1,212 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# TS-REST API Endpoint Rule
+
+## Purpose of this Rule
+This Markdown file provides a standardized template and detailed guide for writing API endpoints using TS-REST in your TypeScript project. It ensures consistency, type safety, and maintainability across all endpoints by following a clear structure for defining API contracts, applying middleware (e.g., authentication), validating data with Zod, handling requests and responses, and managing errors uniformly. This rule supports both protected (authenticated) and unprotected endpoints, with specific instructions for each component. Replace placeholders with your specific endpoint details (e.g., HTTP method, path, schemas) to create a fully functional endpoint aligned with the project’s standards.
+
+## What to Think Before Writing an API Endpoint
+Before writing an API endpoint, consider the following aspects to ensure it is well-designed, secure, and efficient:
+
+1. **Define the Purpose and Scope**  
+   - What is the endpoint’s goal (e.g., retrieve data, create a resource)?  
+   - Who will use it (internal, public, specific roles)? This affects security and access.  
+   - What data is involved (inputs like request body/parameters, outputs like response data)?  
+
+2. **Determine the HTTP Method**  
+   - Use GET for retrieval, POST for creation, PATCH for partial updates, DELETE for removal.  
+   - Align with RESTful principles for consistency.  
+
+3. **Design the URL Path**  
+   - Make it intuitive and hierarchical (e.g., `/users/:id`).  
+   - Use path parameters for dynamic parts and avoid overly complex paths.  
+
+4. **Plan for Authentication and Authorization**  
+   - Does it need authentication? If so, apply middleware like `[secureByAuthentication]`.  
+   - Are specific roles/permissions required? Plan to check these in the handler.  
+
+5. **Define Input and Output Schemas**  
+   - Specify Zod schemas for request body, path parameters, query parameters, and responses.  
+   - Store schemas in `src/app/api/v1/_contracts/schema.ts` for consistency.  
+
+6. **Consider Data Validation and Sanitization**  
+   - Use Zod’s `safeParse` to validate all inputs and handle errors gracefully.  
+
+7. **Think About Database Interactions**  
+   - Identify involved models (e.g., `db.user`) and whether transactions are needed.  
+   - Optimize queries for performance (e.g., indexing).  
+
+8. **Handle Errors and Edge Cases**  
+   - Plan for common errors (e.g., not found, invalid input) and use `TsRestResponseError`.  
+   - Avoid exposing sensitive details in unexpected errors.  
+
+9. **Consider Performance and Scalability**  
+   - Add caching for read-heavy endpoints, rate limiting for abuse prevention, and pagination for large datasets.  
+
+10. **Document the Endpoint**  
+    - Provide a clear summary, description, and metadata (e.g., OpenAPI tags, security).  
+
+11. **Testability**  
+    - Plan for unit and integration tests, covering edge cases.  
+
+12. **Compliance and Security**  
+    - Follow security best practices and comply with regulations (e.g., GDPR) if handling personal data.  
+
+## How to Use This Rule
+- Replace placeholders like `/* HTTP method */`, `/* API path */`, etc., with your endpoint-specific values (e.g., "GET", "/users/:id").  
+- **Apply middleware**:  
+  - For protected endpoints (requiring authentication), use `[secureByAuthentication]` in the middleware array.  
+  - For unprotected endpoints, leave the middleware array empty (`[]`).  
+- Define Zod schemas for request bodies, path parameters, and responses in `src/app/api/v1/_contracts/schema.ts` to enforce type safety and generate OpenAPI documentation.  
+- Implement the handler logic to process requests, interact with the database using Prisma, and return validated responses.  
+- Handle errors consistently using `TsRestResponseError` for predictable error responses.
+
+## Key Features
+- Type-safe API contracts with TS-REST and Zod.  
+- Support for authenticated routes via JWT payloads.  
+- Consistent error handling and response validation.  
+- OpenAPI metadata for automatic documentation generation.
+
+## Dependencies
+- `@ts-rest/core`: Core library for defining API contracts and inferring types.  
+- `@ts-rest/serverless/next`: Integration for serverless Next.js API routes.  
+- `@anatine/zod-openapi`: Extends Zod for OpenAPI spec generation.  
+- `zod`: Schema validation library for request/response data.  
+- **Custom utilities**:  
+  - `secureByAuthentication`: Middleware to enforce bearer token authentication.  
+  - `JwtPayloadSchema`: Zod schema for validating JWT payloads.  
+  - `ErrorResponse`: Shared schema for error responses.
+
+## Database Interactions
+All database operations must be performed using Prisma. Import the database client with:  
+```ts
+import db from "@/server/database/db";
+```
+Use `db.ModelName.action` for Prisma calls (e.g., `db.user.findUnique()`, `db.organization.create()`).
+
+## Schema Definitions
+All schemas for request bodies, path parameters, and responses must be defined in `src/app/api/v1/_contracts/schema.ts` and must be Zod schemas. This ensures consistent validation using Zod’s `safeParse` method. Do not use other schema types, as `safeParse` is required for validation.
+
+## API Endpoint Template
+Below is the code template for defining a TS-REST API endpoint. Replace the placeholders with your specific details and follow the instructions in the comments.
+
+```ts
+import { initContract, ServerInferRequest, ServerInferResponses, TsRestResponseError } from "@ts-rest/core";
+import { z } from "zod";
+import { extendZodWithOpenApi } from "@anatine/zod-openapi";
+import { tsr } from "@ts-rest/serverless/next";
+import { secureByAuthentication } from "../auth-utils"; // Custom middleware for authentication
+import { JwtPayloadSchema, ErrorResponse /* other schemas */ } from "../schema"; // Shared schemas (JWT, errors, etc.)
+import db from "@/server/database/db"; // Prisma database client
+
+extendZodWithOpenApi(z); // Enable OpenAPI support for Zod schemas
+const c = initContract(); // Initialize TS-REST contract object
+
+// Contract Definition
+// This section defines the API contract, specifying the endpoint’s method, path, inputs, and outputs.
+// The contract ensures the client and server agree on the API’s structure and is used for type inference.
+export const contract = c.router(
+  {
+    contract: {
+      method: "/* HTTP method: GET, POST, PATCH, DELETE, etc. */", // e.g., "GET" for retrieval, "POST" for creation
+      path: "/* API path */", // e.g., "/users/:id", "/products"
+      body: /* Zod schema for request body, omit if no body (e.g., GET) */, // e.g., z.object({ name: z.string() })
+      pathParams: /* Zod schema for path parameters, omit if none */, // e.g., z.object({ id: z.string() })
+      responses: {
+        /* statusCode: Zod schema for each possible response */
+        // e.g., 200: z.object({ id: z.string(), name: z.string() }), 400: ErrorResponse
+      },
+      metadata: {
+        openApiTags: ["/* tag */"], // e.g., ["Users"], ["Products"]
+        openApiSecurity: /* [{ bearerAuth: [] }] for protected endpoints, omit for unprotected */, // Required for authenticated routes
+      },
+      summary: "/* Brief summary of the endpoint */", // e.g., "Fetch user details"
+      description: "/* Detailed description of the endpoint's purpose */", // e.g., "Retrieves user data by ID"
+    },
+  },
+  { strictStatusCodes: true } // Ensures only defined status codes are returned
+);
+
+// Type Inference
+// These types are automatically inferred from the contract, providing type safety in the handler.
+type ContractRequest = ServerInferRequest<typeof contract.contract>; // Inferred type for request (body, params, query)
+type ContractResponse = ServerInferResponses<typeof contract.contract>; // Inferred type for responses (status, body)
+
+// Action with Handler
+// This section defines the endpoint’s logic, including middleware and the request handler.
+// The handler processes requests, performs business logic, and returns responses.
+export const action = {
+  contract: tsr.routeWithMiddleware(contract.contract)<
+    { decodedJwt: z.infer<typeof JwtPayloadSchema> }, // Context type for middleware; includes decoded JWT for authenticated routes
+    Record<string, never> // Additional context; typically empty unless custom middleware is used
+  >({
+    middleware: /* [secureByAuthentication] for protected endpoints, [] for unprotected */, // Use secureByAuthentication for auth
+    handler: async ({ body, params /* add query if needed */ }, { request }): Promise<ContractResponse> => {
+      try {
+        // Authentication Handling (for protected endpoints)
+        // If `secureByAuthentication` is applied, the decoded JWT is available in `request.decodedJwt`.
+        const userId = request.decodedJwt?.id; // Extract user ID from JWT (optional chaining for unprotected routes)
+        const email = request.decodedJwt?.email; // Extract other JWT fields as needed (e.g., email, role)
+
+        // Input Validation
+        // Validate request data (body, params, query) against their respective Zod schemas.
+        if (body) {
+          const parsedBody = /* BodySchema */.safeParse(body); // Replace with your body schema (e.g., UserCreateSchema.safeParse(body))
+          if (!parsedBody.success) {
+            // If validation fails, throw a 400 error with a descriptive message
+            throw new TsRestResponseError(contract, {
+              status: 400,
+              body: { status: "failed", message: "Invalid request body" },
+            });
+          }
+        }
+
+        // Business Logic
+        // Implement the endpoint’s core functionality here (e.g., database queries, service calls).
+        // Use `db.ModelName.action` for database interactions (e.g., db.user.findUnique({ where: { id: userId } }))
+        const responseBody = /* construct the response based on the contract */; // Build the response (e.g., { id: "123", name: "Example" })
+
+        // Response Validation
+        // Ensure the response matches the contract’s schema before sending it.
+        const validatedResponse = /* ResponseSchema */.safeParse(responseBody); // Replace with your response schema
+        if (!validatedResponse.success) {
+          // If the response doesn’t match the schema, throw a 500 error (server-side issue)
+          throw new TsRestResponseError(contract, {
+            status: 500,
+            body: { status: "failed", message: "Invalid response data" },
+          });
+        }
+
+        // Successful Response
+        // Return the validated response with the appropriate status code.
+        return { status: /* success code, e.g., 200, 201 */, body: responseBody };
+      } catch (error) {
+        // Error Handling
+        // Catch and handle all errors to ensure consistent error responses.
+        console.error(error); // Log the error for debugging purposes
+        if (error instanceof TsRestResponseError) {
+          // Re-throw TS-REST errors as-is (e.g., validation or custom errors)
+          throw error;
+        }
+        // For unexpected errors, return a generic 500 response
+        throw new TsRestResponseError(contract, {
+          status: 500,
+          body: { status: "failed", message: "Internal server error" },
+        });
+      }
+    },
+  }),
+};
+```
+
+## Important Notes
+- **Database Interactions**: Always use `import db from "@/server/database/db";` for database operations. Perform actions like `db.user.findUnique()`, `db.organization.create()`, etc., to interact with the database via Prisma.  
+- **Schema Definitions**: All schemas must be defined in `src/app/api/v1/_contracts/schema.ts` and must be Zod schemas. Use `safeParse` for validation; other schema types are not supported.  
+- **Protected vs. Unprotected Endpoints**: For endpoints requiring authentication, include `openApiSecurity: [{ bearerAuth: [] }]` in the contract metadata and use `[secureByAuthentication]` in the middleware array. For unprotected endpoints, omit these.  
+- **Validation**: Always validate both incoming requests and outgoing responses using Zod’s `safeParse` to ensure data integrity and type safety.  
+- **Error Handling**: Use `TsRestResponseError` to throw errors with appropriate status codes and messages for consistent error responses.
+
+By following this template and instructions, you can create API endpoints that are consistent, maintainable, and aligned with the project’s standards.

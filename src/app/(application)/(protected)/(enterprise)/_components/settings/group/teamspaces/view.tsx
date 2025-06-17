@@ -55,7 +55,15 @@ type Role = {
 };
 
 export function TeamspacesView() {
-  const { teams, loading, error, isEmpty, refresh } = useTeamspacesLogic();
+  const {
+    teams,
+    loading,
+    error,
+    isEmpty,
+    refresh,
+    handlePageChange,
+    handleLimitChange,
+  } = useTeamspacesLogic();
 
   // Dialog state
   const [openDialog, setOpenDialog] = React.useState(false);
@@ -243,14 +251,14 @@ export function TeamspacesView() {
   }, [inviteEmail, selectedTeam]);
 
   // Prepare data for the table
-  const tableData: TeamspaceEntry[] = teams?.teams || [];
+  const tableData: TeamspaceEntry[] = teams?.items || [];
   const columns = React.useMemo(
     () => getTeamspacesTableColumns(handleOpenDialog),
     []
   );
 
   // Full-page loading spinner (like @people)
-  if (loading && (!teams || teams.teams.length === 0)) {
+  if (loading && (!teams || teams.items.length === 0)) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <div className="flex flex-col items-center gap-2 text-muted-foreground">
@@ -270,10 +278,6 @@ export function TeamspacesView() {
             Manage your organization&apos;s teamspaces and their members.
           </p>
         </div>
-        <Button onClick={() => setIsCreateTeamFormOpen(true)}>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Create New Team
-        </Button>
       </div>
 
       <Separator />
@@ -319,7 +323,15 @@ export function TeamspacesView() {
           </Button>
         </div>
       ) : (
-        <TeamspacesDataTable columns={columns} data={tableData} />
+        <TeamspacesDataTable
+          columns={columns}
+          data={tableData}
+          onCreateTeam={() => setIsCreateTeamFormOpen(true)}
+          pagination={teams?.meta}
+          onPageChange={handlePageChange}
+          onLimitChange={handleLimitChange}
+          loading={loading}
+        />
       )}
 
       <CreateTeamForm
@@ -333,8 +345,7 @@ export function TeamspacesView() {
           <DialogHeader>
             <DialogTitle>{selectedTeam?.name}</DialogTitle>
             <DialogDescription>
-              Admin: {selectedTeam?.admin.firstName}{" "}
-              {selectedTeam?.admin.lastName}
+              {selectedTeam?.description || "No description available"}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end mb-4">

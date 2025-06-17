@@ -132,13 +132,7 @@ export function CreateTeamForm({
                 </FormItem>
               )}
             />
-            {/* Placeholder for Add Members section */}
-            <div className="border-t pt-4">
-              <h3 className="text-lg font-semibold">Members</h3>
-              <p className="text-sm text-muted-foreground">
-                You can add members to your team after it has been created.
-              </p>
-            </div>
+
             <DialogFooter>
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Creating..." : "Create Team"}

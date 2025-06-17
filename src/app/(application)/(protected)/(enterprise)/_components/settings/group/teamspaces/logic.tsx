@@ -1,14 +1,32 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-// import { getTeams, type PaginatedTeams } from "@/server/actions/team-actions";
+import { getTeam } from "@/app/api/v1/_client/client";
 import useStore from "@/app/_store/store";
+
+type TeamListItem = {
+  id: string;
+  name: string;
+  description: string | null;
+  organizationId: string;
+  memberCount: number;
+  createdAt: string;
+};
+
+type TeamListResponse = {
+  items: TeamListItem[];
+  meta: {
+    totalCount: number;
+    page: number;
+    size: number;
+    totalPages: number;
+  };
+};
 
 export function useTeamspacesLogic() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
-  const [teams, setTeams] = useState<any>(null);
+  const [teams, setTeams] = useState<TeamListResponse | null>(null);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [isEmpty, setIsEmpty] = useState(false);
@@ -31,22 +49,20 @@ export function useTeamspacesLogic() {
       setError(null);
       setIsEmpty(false);
 
-      // const result = await getTeams({
-      //   page,
-      //   limit,
-      //   organizationId,
-      // });
+      const result = await getTeam({
+        params: { orgId: organizationId },
+        query: { page, limit },
+      });
 
-      // // Check if the result has a totalCount property and set accordingly
-      // if (result && typeof result.totalCount === "number") {
-      //   // Only set isEmpty if there are no teams at all in the database
-      //   setIsEmpty(result.totalCount === 0);
-      //   setTeams(result);
-      // } else {
-      //   // Handle malformed response
-      //   setError("Received invalid data format from server");
-      //   setIsEmpty(true);
-      // }
+      if (result.status === 200) {
+        // Only set isEmpty if there are no teams at all in the database
+        setIsEmpty(result.body.meta.totalCount === 0);
+        setTeams(result.body);
+      } else {
+        // Handle error response
+        setError(result.body.message || "Failed to load teams");
+        setIsEmpty(true);
+      }
 
       setLoading(false);
     } catch (err) {
@@ -54,7 +70,6 @@ export function useTeamspacesLogic() {
       setError(err instanceof Error ? err.message : "Failed to load teams");
       setLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, limit, organizationId]);
 
   // Load teams when currentOrg, page or limit changes

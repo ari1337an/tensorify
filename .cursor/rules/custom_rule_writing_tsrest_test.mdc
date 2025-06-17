@@ -1,7 +1,7 @@
 ---
 description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 
 Sample Good TS-REST Test files are [onboardingSetup.test.ts](mdc:src/app/api/v1/_contracts/onboarding/onboardingSetup.test.ts) [onboardingQuestions.test.ts](mdc:src/app/api/v1/_contracts/onboarding/onboardingQuestions.test.ts) [getRoles.test.ts](mdc:src/app/api/v1/_contracts/roles/getRoles.test.ts)  [postRoles.test.ts](mdc:src/app/api/v1/_contracts/roles/postRoles.test.ts) [patchRole.test.ts](mdc:src/app/api/v1/_contracts/roles/patchRole.test.ts) (While you are in thinking stage, analyze these good test files to learn how to write tests for this project in what way to be consistent with the project)

@@ -216,12 +216,25 @@ export function DataTable<TData, TValue>({
 
       {pagination && (
         <div className="flex items-center justify-between space-x-2 py-4">
-          <div className="flex items-center space-x-2">
-            <p className="text-sm text-muted-foreground">
-              Showing {data.length} of {pagination.totalCount} results
-            </p>
+          <div className="flex-1 text-sm text-muted-foreground">
+            {pagination.totalCount > 0
+              ? `Showing ${Math.min(
+                  (pagination.page - 1) * pagination.limit + 1,
+                  pagination.totalCount
+                )} to ${Math.min(
+                  pagination.page * pagination.limit,
+                  pagination.totalCount
+                )} of ${pagination.totalCount} results`
+              : "No results"}
+          </div>
+          <div className="flex items-center space-x-6 lg:space-x-8">
             <div className="flex items-center space-x-2">
-              <p className="text-sm text-muted-foreground">Rows per page</p>
+              <p className="text-sm text-muted-foreground">
+                Page {pagination.page} of {pagination.totalPages}
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <p className="text-sm font-medium">Rows per page</p>
               <Select
                 value={pagination.limit.toString()}
                 onValueChange={handleLimitChange}
@@ -231,7 +244,7 @@ export function DataTable<TData, TValue>({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent side="top">
-                  {[10, 20, 30, 50, 100].map((pageSize) => (
+                  {[10, 20, 30, 40, 50].map((pageSize) => (
                     <SelectItem key={pageSize} value={pageSize.toString()}>
                       {pageSize}
                     </SelectItem>
@@ -239,12 +252,6 @@ export function DataTable<TData, TValue>({
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <p className="text-sm text-muted-foreground">
-              Page {pagination.page} of {pagination.totalPages}
-            </p>
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
