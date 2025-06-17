@@ -107,6 +107,13 @@ export const action = {
                     id: user.id,
                   },
                 },
+                members: {
+                  create: {
+                    userId: user.id,
+                    role: "OWNER",
+                    isDefault: true,
+                  },
+                },
               },
             });
 

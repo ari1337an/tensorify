@@ -27,7 +27,6 @@ import {
   UserCheckIcon,
   UserPlusIcon,
 } from "lucide-react";
-import { fetchRoles as fetchAvailableRolesServer } from "@/app/(application)/(protected)/(enterprise)/_components/settings/group/rbac/server";
 import { toast } from "sonner";
 import { cn } from "@/app/_lib/utils";
 import {
@@ -278,7 +277,17 @@ export function EditPersonDialog({
           // Fetch available roles
           try {
             console.log("Fetching available roles");
-            const rolesResult = await fetchAvailableRolesServer();
+            const rolesResult = {
+              success: true,
+              data: [
+                {
+                  id: "1",
+                  name: "Admin",
+                  description: "Admin role",
+                },
+              ],
+              error: null,
+            };
 
             if (rolesResult.success && rolesResult.data) {
               console.log(`Loaded ${rolesResult.data.length} roles`);

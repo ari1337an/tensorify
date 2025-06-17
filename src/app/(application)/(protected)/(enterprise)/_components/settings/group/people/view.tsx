@@ -98,7 +98,7 @@ export default function PeopleView({
         const response = await getRoles({
           query: {
             resourceType: "ORGANIZATION",
-            resourcePath: organizationId,
+            resourcePath: `org:${organizationId}`,
           },
         });
         if (response.status === 200 && response.body) {
