@@ -9,8 +9,6 @@ import {
   generateRequestBodyFromClerkDataForOnboardingSetup,
 } from "../test-utils";
 import db from "@/server/database/db";
-import { z } from "zod";
-import { contract } from "./postTeam";
 
 let server: ReturnType<typeof createServer>;
 
@@ -78,7 +76,7 @@ describe("POST /team", () => {
     await flushDatabase(expect);
     const { jwt, sessionId, orgId } = await setupUserAndOrg(1);
 
-    const payload: z.infer<typeof contract.postTeam.body> = {
+    const payload = {
       description: "Test team description",
       orgId: orgId,
     };
@@ -200,7 +198,7 @@ describe("POST /team", () => {
     await flushDatabase(expect);
     const { jwt, sessionId, orgId } = await setupUserAndOrg(1);
 
-    const createTeamPayload: z.infer<typeof contract.postTeam.body> = {
+    const createTeamPayload = {
       name: "My New Team",
       description: "A team for testing purposes.",
       orgId: orgId,
@@ -234,7 +232,7 @@ describe("POST /team", () => {
     await flushDatabase(expect);
     const { jwt, sessionId, orgId } = await setupUserAndOrg(1);
 
-    const createTeamPayload: z.infer<typeof contract.postTeam.body> = {
+    const createTeamPayload = {
       name: "Team Without Description",
       orgId: orgId,
     };
