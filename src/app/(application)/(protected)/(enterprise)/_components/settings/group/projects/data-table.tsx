@@ -6,7 +6,6 @@ import {
   flexRender,
   getCoreRowModel,
   useReactTable,
-  getPaginationRowModel,
   SortingState,
   getSortedRowModel,
   ColumnFiltersState,
@@ -32,13 +31,21 @@ import {
 } from "@/app/_components/ui/dropdown-menu";
 import { Filter, Loader2 } from "lucide-react";
 import { ProjectEntry } from "./columns";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/app/_components/ui/select";
 
 interface ProjectsDataTableProps {
   columns: ColumnDef<ProjectEntry>[];
   data: ProjectEntry[];
+  onCreateProject?: () => void;
   pagination?: {
     page: number;
-    limit: number;
+    size: number;
     totalCount: number;
     totalPages: number;
   };
@@ -50,6 +57,7 @@ interface ProjectsDataTableProps {
 export function ProjectsDataTable({
   columns,
   data,
+  onCreateProject,
   pagination,
   onPageChange,
   onLimitChange,
@@ -94,38 +102,45 @@ export function ProjectsDataTable({
             disabled={loading}
           />
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="ml-auto flex h-8"
-              disabled={loading}
-            >
-              <Filter className="mr-2 h-4 w-4" />
-              View
+        <div className="flex space-x-2">
+          {onCreateProject && (
+            <Button onClick={onCreateProject} size="sm" className="h-8">
+              Create New Project
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex h-8"
+                disabled={loading}
+              >
+                <Filter className="mr-2 h-4 w-4" />
+                View
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => {
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) =>
+                        column.toggleVisibility(!!value)
+                      }
+                    >
+                      {column.id}
+                    </DropdownMenuCheckboxItem>
+                  );
+                })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
       <div className="relative">
         {loading && (
@@ -181,6 +196,73 @@ export function ProjectsDataTable({
             )}
           </TableBody>
         </Table>
+      </div>
+      <div className="flex items-center justify-between space-x-2 py-4">
+        {pagination && (
+          <div className="flex-1 text-sm text-muted-foreground">
+            {pagination.totalCount > 0
+              ? `Showing ${Math.min(
+                  (pagination.page - 1) * pagination.size + 1,
+                  pagination.totalCount
+                )} to ${Math.min(
+                  pagination.page * pagination.size,
+                  pagination.totalCount
+                )} of ${pagination.totalCount} results`
+              : "No results"}
+          </div>
+        )}
+        <div className="flex items-center space-x-6 lg:space-x-8">
+          <div className="flex items-center space-x-2">
+            <p className="text-sm text-muted-foreground">
+              Page {pagination?.page ?? 0} of {pagination?.totalPages ?? 0}
+            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <p className="text-sm font-medium">Rows per page</p>
+            <Select
+              value={pagination?.size.toString()}
+              onValueChange={(value) => onLimitChange?.(Number(value))}
+              disabled={loading}
+            >
+              <SelectTrigger className="h-8 w-[70px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent side="top">
+                {[5, 10, 20, 30, 40, 50].map((pageSize) => (
+                  <SelectItem key={pageSize} value={pageSize.toString()}>
+                    {pageSize}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                onPageChange?.(pagination?.page ? pagination.page - 1 : 0)
+              }
+              disabled={!pagination || pagination.page <= 1 || loading}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                onPageChange?.(pagination?.page ? pagination.page + 1 : 2)
+              }
+              disabled={
+                !pagination ||
+                pagination.page >= pagination.totalPages ||
+                loading
+              }
+            >
+              Next
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
