@@ -108,11 +108,11 @@ model Team {
 }
 
 model Project {
-  id     String @id @default(uuid())
-  name   String
+  id          String  @id @default(uuid())
+  name        String
   description String?
-  team   Team   @relation("TeamProjects", fields: [teamId], references: [id])
-  teamId String
+  team        Team    @relation("TeamProjects", fields: [teamId], references: [id])
+  teamId      String
 
   members   User[]     @relation("ProjectMembers")
   workflows Workflow[] @relation("ProjectWorkflows")
@@ -125,6 +125,7 @@ model Project {
 model Workflow {
   id        String  @id @default(uuid())
   name      String
+  description String
   project   Project @relation("ProjectWorkflows", fields: [projectId], references: [id])
   projectId String
 
