@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE — DO NOT EDIT MANUALLY
-// Generated on: 6/19/2025, 8:26:57 PM
+// Generated on: 6/20/2025, 2:32:48 AM
 
 import { initContract } from "@ts-rest/core";
 import { tsr } from "@ts-rest/serverless/next";
@@ -17,12 +17,14 @@ import { contract as getPermissionsContract, action as getPermissionsAction } fr
 import { contract as getRolesContract, action as getRolesAction } from "./roles/getRoles";
 import { contract as patchRoleContract, action as patchRoleAction } from "./roles/patchRole";
 import { contract as postRolesContract, action as postRolesAction } from "./roles/postRoles";
-import { contract as getTeamContract, action as getTeamAction } from "./team/getTeam";
-import { contract as postTeamContract, action as postTeamAction } from "./team/postTeam";
 import { contract as getProjectContract, action as getProjectAction } from "./project/getProject";
 import { contract as postProjectContract, action as postProjectAction } from "./project/postProject";
+import { contract as getTeamContract, action as getTeamAction } from "./team/getTeam";
+import { contract as postTeamContract, action as postTeamAction } from "./team/postTeam";
 import { contract as getUserRoleContract, action as getUserRoleAction } from "./user-roles/getUserRole";
 import { contract as postUserRoleContract, action as postUserRoleAction } from "./user-roles/postUserRole";
+import { contract as getWorkflowContract, action as getWorkflowAction } from "./workflow/getWorkflow";
+import { contract as postWorkflowContract, action as postWorkflowAction } from "./workflow/postWorkflow";
 
 const c = initContract();
 
@@ -38,12 +40,14 @@ export const contract = c.router({
   getRoles: getRolesContract,
   patchRole: patchRoleContract,
   postRoles: postRolesContract,
-  getTeam: getTeamContract,
-  postTeam: postTeamContract,
   getProject: getProjectContract,
   postProject: postProjectContract,
+  getTeam: getTeamContract,
+  postTeam: postTeamContract,
   getUserRole: getUserRoleContract,
   postUserRole: postUserRoleContract,
+  getWorkflow: getWorkflowContract,
+  postWorkflow: postWorkflowContract,
 });
 
 export const appRouter = tsr.routerWithMiddleware(contract)<{
@@ -60,10 +64,12 @@ export const appRouter = tsr.routerWithMiddleware(contract)<{
   getRoles: getRolesAction,
   patchRole: patchRoleAction,
   postRoles: postRolesAction,
-  getTeam: getTeamAction,
-  postTeam: postTeamAction,
   getProject: getProjectAction,
   postProject: postProjectAction,
+  getTeam: getTeamAction,
+  postTeam: postTeamAction,
   getUserRole: getUserRoleAction,
   postUserRole: postUserRoleAction,
+  getWorkflow: getWorkflowAction,
+  postWorkflow: postWorkflowAction,
 });

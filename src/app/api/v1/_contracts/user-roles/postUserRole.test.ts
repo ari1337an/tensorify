@@ -66,6 +66,7 @@ describe("POST /users/:userId/roles", () => {
     const workflow = await db.workflow.create({
       data: {
         name: "Test Workflow",
+        description: "Test Workflow Description",
         projectId: project.id,
       },
     });

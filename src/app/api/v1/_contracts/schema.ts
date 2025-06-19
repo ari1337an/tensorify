@@ -455,7 +455,30 @@ export const ProjectListResponse = z.object({
 export const Workflow = z.object({
   id: UUID,
   name: z.string(),
+  description: z.string(),
   projectId: UUID,
+});
+export const CreateWorkflowRequest = z.object({
+  name: z
+    .string()
+    .min(2, { message: "Workflow name must be at least 2 characters." })
+    .max(100, { message: "Workflow name must be less than 100 characters." }),
+  description: z
+    .string()
+    .max(500, { message: "Description must be less than 500 characters." }),
+  projectId: z.string().uuid({ message: "Invalid project ID format." }),
+});
+export const WorkflowListItem = z.object({
+  id: UUID,
+  name: z.string(),
+  description: z.string(),
+  projectId: UUID,
+  projectName: z.string(),
+  teamId: UUID,
+  teamName: z.string(),
+  organizationId: UUID,
+  memberCount: z.number().int(),
+  createdAt: z.string(),
 });
 export const WorkflowUserListItem = z.object({
   workflowId: UUID,
@@ -470,7 +493,7 @@ export const WorkflowUserListResponse = z.object({
   meta: PaginationMeta,
 });
 export const WorkflowListResponse = z.object({
-  items: z.array(Workflow),
+  items: z.array(WorkflowListItem),
   meta: PaginationMeta,
 });
 

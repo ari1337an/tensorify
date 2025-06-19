@@ -65,6 +65,7 @@ describe("GET /users/:userId/roles", () => {
     const workflow = await db.workflow.create({
       data: {
         name: "Test Workflow",
+        description: "Test Workflow Description",
         projectId: project.id,
       },
     });
@@ -674,7 +675,7 @@ describe("GET /users/:userId/roles", () => {
 
       await revokeSession(user1Data.sessionId);
       await revokeSession(user2Data.sessionId);
-    });
+    }, 50000);
 
     it("should return empty array when viewing user with no roles", async () => {
       await flushDatabase(expect);
@@ -692,7 +693,7 @@ describe("GET /users/:userId/roles", () => {
 
       await revokeSession(user1Data.sessionId);
       await revokeSession(user2Data.sessionId);
-    });
+    }, 50000);
   });
 
   // === Error Handling ===

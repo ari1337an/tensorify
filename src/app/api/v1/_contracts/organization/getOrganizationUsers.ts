@@ -161,6 +161,13 @@ export const action = {
         }
       >();
 
+      // Add members
+      if (orgWithUsers.members) {
+        orgWithUsers.members.forEach((membership) => {
+          userMap.set(membership.user.id, membership.user);
+        });
+      }
+
       // Add creator
       if (orgWithUsers.createdBy) {
         userMap.set(orgWithUsers.createdBy.id, {
@@ -176,13 +183,6 @@ export const action = {
               },
             },
           ],
-        });
-      }
-
-      // Add members
-      if (orgWithUsers.members) {
-        orgWithUsers.members.forEach((membership) => {
-          userMap.set(membership.user.id, membership.user);
         });
       }
 

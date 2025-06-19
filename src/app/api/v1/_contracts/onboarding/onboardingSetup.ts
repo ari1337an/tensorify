@@ -142,6 +142,7 @@ export const action = {
             workflow = await tx.workflow.create({
               data: {
                 name: `${firstName.split(" ")[0]}'s Workflow`,
+                description: `Default workflow for ${firstName.split(" ")[0]}'s project`,
                 project: {
                   connect: {
                     id: project.id,

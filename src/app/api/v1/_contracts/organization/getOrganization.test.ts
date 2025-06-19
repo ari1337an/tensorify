@@ -72,7 +72,7 @@ describe("GET /organization", () => {
 
     expect(res.status).toBe(404);
     expect(res.body.status).toBe("failed");
-    expect(res.body.message).toBe("User not found in database");
+    expect(res.body.message).toBe("User is not onboarded");
 
     await revokeSession(userData.sessionId);
   });

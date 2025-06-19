@@ -51,27 +51,58 @@ export const action = {
         where: {
           id: userId,
         },
-        include: {
-          createdOrgs: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-            },
+      });
+
+      if (!user) {
+        throw new TsRestResponseError(contract, {
+          status: 404,
+          body: {
+            status: "failed",
+            message: "User is not onboarded",
           },
-          memberships: {
-            include: {
-              organization: {
-                select: {
-                  id: true,
-                  name: true,
-                  slug: true,
-                },
-              },
-            },
-          },
+        });
+      }
+
+      // Either membership or createdOrg
+      const memberships = await db.organization.findMany({
+        where: {
+          OR: [
+            { createdById: userId },
+            { members: { some: { userId } } }, // members is the OrgMembership relation
+          ],
+        },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
         },
       });
+
+      // const user = await db.user.findUnique({
+      //   where: {
+      //     id: userId,
+      //   },
+      //   include: {
+      //     createdOrgs: {
+      //       select: {
+      //         id: true,
+      //         name: true,
+      //         slug: true,
+      //       },
+      //     },
+      //     memberships: {
+      //       include: {
+      //         organization: {
+      //           select: {
+      //             id: true,
+      //             name: true,
+      //             slug: true,
+      //           },
+      //         },
+      //       },
+      //     },
+      //   },
+      // });
 
       if (!user) {
         throw new TsRestResponseError(contract, {
@@ -83,7 +114,7 @@ export const action = {
         });
       }
 
-      if (user.createdOrgs.length === 0 && user.memberships.length === 0) {
+      if (memberships.length === 0) {
         throw new TsRestResponseError(contract, {
           status: 404,
           body: {
@@ -93,20 +124,12 @@ export const action = {
         });
       }
 
-      const responseBody = [...user.createdOrgs, ...user.memberships].map((org) => {
-        if ("organization" in org) {
-          return {
-            id: org.organization.id,
-            name: org.organization.name,
-            slug: org.organization.slug,
-          };
-        } else {
-          return {
-            id: org.id,
-            name: org.name,
-            slug: org.slug,
-          };
-        }
+      const responseBody = memberships.map((org) => {
+        return {
+          id: org.id,
+          name: org.name,
+          slug: org.slug,
+        };
       });
 
       const parsedBody = OrgInfo.safeParse(responseBody);

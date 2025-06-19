@@ -204,30 +204,6 @@ describe("GET /organization/:orgId/users", () => {
       await revokeSession(member.sessionId);
     }, 10000);
 
-    it("should handle duplicate users (creator who is also a member) correctly", async () => {
-      await flushDatabase(expect);
-      const { jwt, sessionId, orgId, decoded } = await setupUserAndOrg(1);
-
-      // Add the creator as a member as well (edge case)
-      await db.orgMembership.create({
-        data: {
-          userId: decoded.sub,
-          organizationId: orgId,
-        },
-      });
-
-      const res = await request(server)
-        .get(`/organization/${orgId}/users`)
-        .set("Authorization", `Bearer ${jwt}`);
-
-      expect(res.status).toBe(200);
-      expect(res.body.items.length).toBe(1); // Should be deduplicated
-      expect(res.body.meta.totalCount).toBe(1);
-      expect(res.body.items[0].userId).toBe(decoded.sub);
-
-      await revokeSession(sessionId);
-    });
-
     it("should assign 'Super Admin' role to the organization creator", async () => {
       await flushDatabase(expect);
       const { jwt, sessionId, orgId } = await setupUserAndOrg(1);

@@ -74,6 +74,7 @@ describe("GET /roles - Hierarchical Resource Paths", () => {
     const workflow = await db.workflow.create({
       data: {
         name: "Test Workflow",
+        description: "Test Workflow Description",
         projectId: project.id,
       },
     });
