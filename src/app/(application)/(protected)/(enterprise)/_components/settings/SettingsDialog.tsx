@@ -34,6 +34,9 @@ import {
   ProjectsView,
   ProjectsIcon,
   useProjectsMeta,
+  WorkflowsView,
+  WorkflowsIcon,
+  useWorkflowsMeta,
 } from "./group";
 
 // Types for sections
@@ -63,6 +66,7 @@ export function SettingsDialog() {
   const teamspacesMeta = useTeamspacesMeta();
   const rbacMeta = useRBACMeta();
   const projectsMeta = useProjectsMeta();
+  const workflowsMeta = useWorkflowsMeta();
 
   const sections: SectionsType & { accessControl: SectionItem[] } = {
     account: [
@@ -98,6 +102,11 @@ export function SettingsDialog() {
         label: projectsMeta.label,
         icon: ProjectsIcon,
       },
+      {
+        id: workflowsMeta.id,
+        label: workflowsMeta.label,
+        icon: WorkflowsIcon,
+      },
     ],
     accessControl: [
       {
@@ -129,6 +138,8 @@ export function SettingsDialog() {
         return <TeamspacesView />;
       case "projects":
         return <ProjectsView />;
+      case "workflows":
+        return <WorkflowsView />;
       case "rbac":
         return <RBACView />;
       default:
@@ -148,7 +159,7 @@ export function SettingsDialog() {
         if (!open) closeSettings();
       }}
     >
-      <DialogContent className="sm:max-w-6xl p-0 gap-0">
+      <DialogContent className="sm:max-w-6xl p-0 gap-0 overflow-hidden">
         <VisuallyHidden>
           <DialogTitle>Settings</DialogTitle>
         </VisuallyHidden>
@@ -246,7 +257,9 @@ export function SettingsDialog() {
           </div>
 
           {/* Right Content Area */}
-          <div className="flex-1 p-6 overflow-y-auto">{renderContent()}</div>
+          <div className="flex-1 overflow-hidden">
+            <div className="h-full overflow-auto p-6">{renderContent()}</div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

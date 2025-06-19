@@ -465,6 +465,7 @@ export const CreateWorkflowRequest = z.object({
     .max(100, { message: "Workflow name must be less than 100 characters." }),
   description: z
     .string()
+    .min(1, { message: "Description is required" })
     .max(500, { message: "Description must be less than 500 characters." }),
   projectId: z.string().uuid({ message: "Invalid project ID format." }),
 });

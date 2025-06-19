@@ -30,7 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/app/_components/ui/dropdown-menu";
 import { Filter, Loader2 } from "lucide-react";
-import { ProjectEntry } from "./columns";
+import { WorkflowEntry } from "./columns";
 import {
   Select,
   SelectContent,
@@ -39,10 +39,10 @@ import {
   SelectValue,
 } from "@/app/_components/ui/select";
 
-interface ProjectsDataTableProps {
-  columns: ColumnDef<ProjectEntry>[];
-  data: ProjectEntry[];
-  onCreateProject?: () => void;
+interface WorkflowsDataTableProps {
+  columns: ColumnDef<WorkflowEntry>[];
+  data: WorkflowEntry[];
+  onCreateWorkflow?: () => void;
   pagination?: {
     page: number;
     size: number;
@@ -54,15 +54,15 @@ interface ProjectsDataTableProps {
   loading?: boolean;
 }
 
-export function ProjectsDataTable({
+export function WorkflowsDataTable({
   columns,
   data,
-  onCreateProject,
+  onCreateWorkflow,
   pagination,
   onPageChange,
   onLimitChange,
   loading = false,
-}: ProjectsDataTableProps) {
+}: WorkflowsDataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -93,7 +93,7 @@ export function ProjectsDataTable({
       <div className="flex items-center justify-between py-4">
         <div className="flex flex-1 items-center space-x-2">
           <Input
-            placeholder="Filter projects..."
+            placeholder="Filter workflows..."
             value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
               table.getColumn("name")?.setFilterValue(event.target.value)
@@ -103,9 +103,9 @@ export function ProjectsDataTable({
           />
         </div>
         <div className="flex space-x-2">
-          {onCreateProject && (
-            <Button onClick={onCreateProject} size="sm" className="h-8">
-              Create New Project
+          {onCreateWorkflow && (
+            <Button onClick={onCreateWorkflow} size="sm" className="h-8">
+              Create New Workflow
             </Button>
           )}
           <DropdownMenu>
@@ -148,7 +148,7 @@ export function ProjectsDataTable({
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
         )}
-        <Table>
+        <Table className="min-w-full">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -268,4 +268,4 @@ export function ProjectsDataTable({
   );
 }
 
-export default ProjectsDataTable;
+export default WorkflowsDataTable;

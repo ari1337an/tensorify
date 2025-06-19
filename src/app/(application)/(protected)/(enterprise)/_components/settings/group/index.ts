@@ -5,3 +5,4 @@ export * from "./people";
 export * from "./teamspaces";
 export * from "./rbac";
 export * from "./projects";
+export * from "./workflows";

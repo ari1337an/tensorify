@@ -88,7 +88,7 @@ export function TeamspacesDataTable<TData, TValue>({
   });
 
   return (
-    <div>
+    <div className="w-[95%]">
       <div className="flex items-center justify-between py-4">
         <div className="flex flex-1 items-center space-x-2">
           <Input
@@ -229,7 +229,7 @@ export function TeamspacesDataTable<TData, TValue>({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onPageChange?.(pagination?.page - 1)}
+              onClick={() => onPageChange?.(pagination?.page ?? 1 - 1)}
               disabled={!pagination || pagination.page <= 1 || loading}
             >
               Previous
@@ -237,7 +237,7 @@ export function TeamspacesDataTable<TData, TValue>({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onPageChange?.(pagination?.page + 1)}
+              onClick={() => onPageChange?.(pagination?.page ?? 1 + 1)}
               disabled={
                 !pagination ||
                 pagination.page >= pagination.totalPages ||
