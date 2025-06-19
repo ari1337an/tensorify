@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE — DO NOT EDIT MANUALLY
-// Generated on: 6/17/2025, 3:29:59 PM
+// Generated on: 6/19/2025, 8:25:42 PM
 
 import { initContract } from "@ts-rest/core";
 import { tsr } from "@ts-rest/serverless/next";
@@ -11,9 +11,11 @@ import { contract as patchAccountContract, action as patchAccountAction } from "
 import { contract as uploadPortraitContract, action as uploadPortraitAction } from "./account/uploadPortrait";
 import { contract as onboardingQuestionsContract, action as onboardingQuestionsAction } from "./onboarding/onboardingQuestions";
 import { contract as onboardingSetupContract, action as onboardingSetupAction } from "./onboarding/onboardingSetup";
-import { contract as getPermissionsContract, action as getPermissionsAction } from "./permissions/getPermissions";
 import { contract as getOrganizationContract, action as getOrganizationAction } from "./organization/getOrganization";
 import { contract as getOrganizationUsersContract, action as getOrganizationUsersAction } from "./organization/getOrganizationUsers";
+import { contract as getPermissionsContract, action as getPermissionsAction } from "./permissions/getPermissions";
+import { contract as getProjectContract, action as getProjectAction } from "./project/getProject";
+import { contract as postProjectContract, action as postProjectAction } from "./project/postProject";
 import { contract as getRolesContract, action as getRolesAction } from "./roles/getRoles";
 import { contract as patchRoleContract, action as patchRoleAction } from "./roles/patchRole";
 import { contract as postRolesContract, action as postRolesAction } from "./roles/postRoles";
@@ -30,9 +32,11 @@ export const contract = c.router({
   uploadPortrait: uploadPortraitContract,
   onboardingQuestions: onboardingQuestionsContract,
   onboardingSetup: onboardingSetupContract,
-  getPermissions: getPermissionsContract,
   getOrganization: getOrganizationContract,
   getOrganizationUsers: getOrganizationUsersContract,
+  getPermissions: getPermissionsContract,
+  getProject: getProjectContract,
+  postProject: postProjectContract,
   getRoles: getRolesContract,
   patchRole: patchRoleContract,
   postRoles: postRolesContract,
@@ -50,9 +54,11 @@ export const appRouter = tsr.routerWithMiddleware(contract)<{
   uploadPortrait: uploadPortraitAction,
   onboardingQuestions: onboardingQuestionsAction,
   onboardingSetup: onboardingSetupAction,
-  getPermissions: getPermissionsAction,
   getOrganization: getOrganizationAction,
   getOrganizationUsers: getOrganizationUsersAction,
+  getPermissions: getPermissionsAction,
+  getProject: getProjectAction,
+  postProject: postProjectAction,
   getRoles: getRolesAction,
   patchRole: patchRoleAction,
   postRoles: postRolesAction,

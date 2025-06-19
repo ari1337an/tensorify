@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE — DO NOT EDIT MANUALLY
-// Generated on: 6/17/2025, 3:19:02 PM
+// Generated on: 6/19/2025, 8:15:04 PM
 "use server";
 
 import { initClient } from '@ts-rest/core';
@@ -161,9 +161,15 @@ export async function getOrganizationUsers(args: Parameters<typeof client.getOrg
 }
 
 
-export async function getPermissions(args: Parameters<typeof client.getPermissions.contract>[0]): Promise<ReturnType<typeof client.getPermissions.contract>> {
+export async function getProject(args: Parameters<typeof client.getProject.contract>[0]): Promise<ReturnType<typeof client.getProject.contract>> {
   const dynamicClient = await getClientWithBaseUrl();
-  return await dynamicClient.getPermissions.contract(args);
+  return await dynamicClient.getProject.contract(args);
+}
+
+
+export async function postProject(args: Parameters<typeof client.postProject.contract>[0]): Promise<ReturnType<typeof client.postProject.contract>> {
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.postProject.contract(args);
 }
 
 
@@ -206,5 +212,11 @@ export async function getUserRole(args: Parameters<typeof client.getUserRole.con
 export async function postUserRole(args: Parameters<typeof client.postUserRole.contract>[0]): Promise<ReturnType<typeof client.postUserRole.contract>> {
   const dynamicClient = await getClientWithBaseUrl();
   return await dynamicClient.postUserRole.contract(args);
+}
+
+
+export async function getPermissions(args: Parameters<typeof client.getPermissions.contract>[0]): Promise<ReturnType<typeof client.getPermissions.contract>> {
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.getPermissions.contract(args);
 }
 

@@ -14,3 +14,5 @@ You have to write tests with using [test-utils.ts](mdc:src/app/api/v1/_contracts
 Now, write tests in with file name [filename].test.ts for [filename].ts in the same directory of that [filename].ts. 
 
 You cannot ever run the whole test suite of the project, just check if your tests are correct by running this command: """npm run test:args -- src/app/api/v1/_contracts/[groupName]/[filename].test.ts""" for the tests of src/app/api/v1/_contracts/[groupName]/[filename].ts file.
+
+you cannot edit [auth-utils.ts](mdc:src/app/api/v1/_contracts/auth-utils.ts) or [test-utils.ts](mdc:src/app/api/v1/_contracts/test-utils.ts)

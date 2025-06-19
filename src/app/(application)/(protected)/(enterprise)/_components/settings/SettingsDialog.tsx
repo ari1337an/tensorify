@@ -31,6 +31,9 @@ import {
   RBACView,
   RBACIcon,
   useRBACMeta,
+  ProjectsView,
+  ProjectsIcon,
+  useProjectsMeta,
 } from "./group";
 
 // Types for sections
@@ -59,6 +62,7 @@ export function SettingsDialog() {
   const peopleMeta = usePeopleMeta();
   const teamspacesMeta = useTeamspacesMeta();
   const rbacMeta = useRBACMeta();
+  const projectsMeta = useProjectsMeta();
 
   const sections: SectionsType & { accessControl: SectionItem[] } = {
     account: [
@@ -89,6 +93,11 @@ export function SettingsDialog() {
         label: teamspacesMeta.label,
         icon: TeamspacesIcon,
       },
+      {
+        id: projectsMeta.id,
+        label: projectsMeta.label,
+        icon: ProjectsIcon,
+      },
     ],
     accessControl: [
       {
@@ -118,6 +127,8 @@ export function SettingsDialog() {
         return <PeopleView organizationId={currentOrg.id} />;
       case "teamspaces":
         return <TeamspacesView />;
+      case "projects":
+        return <ProjectsView />;
       case "rbac":
         return <RBACView />;
       default:

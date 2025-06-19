@@ -437,8 +437,18 @@ export const ProjectUserListResponse = z.object({
   items: z.array(ProjectUserListItem),
   meta: PaginationMeta,
 });
+export const ProjectListItem = z.object({
+  id: UUID,
+  name: z.string(),
+  description: z.string().nullable(),
+  teamId: UUID,
+  teamName: z.string(),
+  organizationId: UUID,
+  memberCount: z.number().int(),
+  createdAt: z.string(),
+});
 export const ProjectListResponse = z.object({
-  items: z.array(Project),
+  items: z.array(ProjectListItem),
   meta: PaginationMeta,
 });
 

@@ -110,6 +110,7 @@ model Team {
 model Project {
   id     String @id @default(uuid())
   name   String
+  description String?
   team   Team   @relation("TeamProjects", fields: [teamId], references: [id])
   teamId String
 
