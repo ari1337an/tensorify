@@ -510,7 +510,7 @@ describe("POST /workflow", () => {
     await revokeSession(sessionId);
   });
 
-  it("should handle empty string values for non-required fields", async () => {
+  it("should not allow empty string values for non-required fields", async () => {
     await flushDatabase(expect);
     const { jwt, sessionId, projectId } = await setupUserAndOrg(1);
 
@@ -519,23 +519,18 @@ describe("POST /workflow", () => {
       .set("Authorization", `Bearer ${jwt}`)
       .send({
         name: "Workflow with Empty Description",
-        description: "", // Empty description should be allowed
+        description: "",
         projectId: projectId,
       });
 
-    expect(res.status).toBe(201);
-    expect(res.body.message).toBe("Workflow created successfully.");
+    expect(res.status).toBe(400);
+    expect(res.body.message).toContain("Body 'description': Description is required");
 
-    // Verify workflow was created with empty description
+    // Verify workflow was not created with empty description
     const dbWorkflow = await db.workflow.findFirst({
-      where: {
-        name: "Workflow with Empty Description",
-        projectId: projectId,
-      },
+      where: { name: "Workflow with Empty Description" },
     });
-
-    expect(dbWorkflow).toBeDefined();
-    expect(dbWorkflow?.description).toBe("");
+    expect(dbWorkflow).toBeNull();
 
     await revokeSession(sessionId);
   });
