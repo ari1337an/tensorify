@@ -168,9 +168,9 @@ export async function flushDatabase(expect?: jest.Expect) {
 
   const message = expect?.getState().currentTestName;
   if (message) {
-    process.stdout.write(`Database flushed for ${message}\n`);
+    // process.stdout.write(`Database flushed for ${message}\n`);
   } else {
-    process.stdout.write(`Database flushed\n`);
+    // process.stdout.write(`Database flushed\n`);
   }
 }
 

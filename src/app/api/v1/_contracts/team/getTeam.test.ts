@@ -9,6 +9,8 @@ import {
   generateRequestBodyFromClerkDataForOnboardingSetup,
 } from "../test-utils";
 import db from "@/server/database/db";
+import { z } from "zod";
+import { TeamListItem } from "../schema";
 
 let server: ReturnType<typeof createServer>;
 
@@ -259,7 +261,7 @@ describe("GET /organization/:orgId/teams", () => {
     expect(res1.status).toBe(200);
     expect(res1.body.items).toHaveLength(3); // 2 created + 1 default
     expect(res1.body.meta.totalCount).toBe(3);
-    res1.body.items.forEach((team: any) => {
+    res1.body.items.forEach((team: z.infer<typeof TeamListItem>) => {
       expect(team.organizationId).toBe(user1.orgId);
     });
 
@@ -271,7 +273,7 @@ describe("GET /organization/:orgId/teams", () => {
     expect(res2.status).toBe(200);
     expect(res2.body.items).toHaveLength(4); // 3 created + 1 default
     expect(res2.body.meta.totalCount).toBe(4);
-    res2.body.items.forEach((team: any) => {
+    res2.body.items.forEach((team: z.infer<typeof TeamListItem>) => {
       expect(team.organizationId).toBe(user2.orgId);
     });
 
@@ -375,7 +377,8 @@ describe("GET /organization/:orgId/teams", () => {
 
     // Find the team we created (should have null description)
     const createdTeam = res.body.items.find(
-      (team: any) => team.name === "Team with null description"
+      (team: z.infer<typeof TeamListItem>) =>
+        team.name === "Team with null description"
     );
     expect(createdTeam).toBeDefined();
     expect(createdTeam.description).toBeNull();

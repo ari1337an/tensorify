@@ -9,6 +9,8 @@ import {
   generateRequestBodyFromClerkDataForOnboardingSetup,
 } from "../test-utils";
 import db from "@/server/database/db";
+import { ProjectListItem } from "../schema";
+import { z } from "zod";
 
 let server: ReturnType<typeof createServer>;
 
@@ -293,7 +295,7 @@ describe("GET /organization/:orgId/projects", () => {
     expect(res1.status).toBe(200);
     expect(res1.body.items).toHaveLength(3); // 2 created + 1 default
     expect(res1.body.meta.totalCount).toBe(3);
-    res1.body.items.forEach((project: any) => {
+    res1.body.items.forEach((project: z.infer<typeof ProjectListItem>) => {
       expect(project.organizationId).toBe(user1.orgId);
     });
 
@@ -305,7 +307,7 @@ describe("GET /organization/:orgId/projects", () => {
     expect(res2.status).toBe(200);
     expect(res2.body.items).toHaveLength(4); // 3 created + 1 default
     expect(res2.body.meta.totalCount).toBe(4);
-    res2.body.items.forEach((project: any) => {
+    res2.body.items.forEach((project: z.infer<typeof ProjectListItem>) => {
       expect(project.organizationId).toBe(user2.orgId);
     });
 
@@ -409,7 +411,8 @@ describe("GET /organization/:orgId/projects", () => {
 
     // Find the project we created (should have null description)
     const createdProject = res.body.items.find(
-      (project: any) => project.name === "Project with null description"
+      (project: z.infer<typeof ProjectListItem>) =>
+        project.name === "Project with null description"
     );
     expect(createdProject).toBeDefined();
     expect(createdProject.description).toBeNull();
@@ -425,7 +428,7 @@ describe("GET /organization/:orgId/projects", () => {
     await createProjectsForTeam(teamId, 2);
 
     // Create another team and projects
-    const { team: additionalTeam, projects: additionalProjects } =
+    const { team: additionalTeam } =
       await createAdditionalTeamWithProjects(orgId, 2);
 
     const res = await request(server)
@@ -437,11 +440,13 @@ describe("GET /organization/:orgId/projects", () => {
     expect(res.body.meta.totalCount).toBe(5);
 
     // Verify projects from both teams are included
-    const teamNames = res.body.items.map((project: any) => project.teamName);
+    const teamNames = res.body.items.map(
+      (project: z.infer<typeof ProjectListItem>) => project.teamName
+    );
     expect(teamNames).toContain(additionalTeam.name);
 
     // Verify all projects belong to the same organization
-    res.body.items.forEach((project: any) => {
+    res.body.items.forEach((project: z.infer<typeof ProjectListItem>) => {
       expect(project.organizationId).toBe(orgId);
     });
 
@@ -497,7 +502,9 @@ describe("GET /organization/:orgId/projects", () => {
     expect(res.status).toBe(200);
 
     // Find our test project and verify member count
-    const testProject = res.body.items.find((p: any) => p.id === project.id);
+    const testProject = res.body.items.find(
+      (p: z.infer<typeof ProjectListItem>) => p.id === project.id
+    );
     expect(testProject).toBeDefined();
     expect(testProject.memberCount).toBe(2);
 

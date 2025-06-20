@@ -79,8 +79,9 @@ export const action = {
           status: 201,
           body: { message: "Team created successfully." },
         };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
-        console.error("Failed to create team:", error);
+        // console.error("Failed to create team:", error);
         throw new TsRestResponseError(contract, {
           status: 500,
           body: {

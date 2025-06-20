@@ -96,7 +96,7 @@ export const action = {
           body: { message: "Workflow created successfully." },
         };
       } catch (error) {
-        console.error("Failed to create workflow:", error);
+        // console.error("Failed to create workflow:", error);
 
         if (error instanceof TsRestResponseError) {
           throw error;

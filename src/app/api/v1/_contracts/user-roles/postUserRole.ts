@@ -139,7 +139,7 @@ export const action = {
         // Validate response body
         const parsedResponse = UserRole.safeParse(responseBody);
         if (!parsedResponse.success) {
-          console.log(parsedResponse.error);
+          // console.log(parsedResponse.error);
           throw new TsRestResponseError(contract, {
             status: 500,
             body: {

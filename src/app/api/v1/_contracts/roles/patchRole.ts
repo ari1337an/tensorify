@@ -133,7 +133,7 @@ export const action = {
         // Validate response body against schema
         const parsedResponse = Role.safeParse(responseBody);
         if (!parsedResponse.success) {
-          console.error("Schema validation failed:", parsedResponse.error);
+          // console.error("Schema validation failed:", parsedResponse.error);
           throw new TsRestResponseError(contract, {
             status: 500,
             body: {

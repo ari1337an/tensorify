@@ -9,6 +9,8 @@ import {
   generateRequestBodyFromClerkDataForOnboardingSetup,
 } from "../test-utils";
 import db from "@/server/database/db";
+import { WorkflowListItem } from "../schema";
+import { z } from "zod";
 
 let server: ReturnType<typeof createServer>;
 
@@ -303,7 +305,7 @@ describe("GET /organization/:orgId/workflows", () => {
     expect(res1.status).toBe(200);
     expect(res1.body.items).toHaveLength(3); // 2 created + 1 default
     expect(res1.body.meta.totalCount).toBe(3);
-    res1.body.items.forEach((workflow: any) => {
+    res1.body.items.forEach((workflow: z.infer<typeof WorkflowListItem>) => {
       expect(workflow.organizationId).toBe(user1.orgId);
     });
 
@@ -315,7 +317,7 @@ describe("GET /organization/:orgId/workflows", () => {
     expect(res2.status).toBe(200);
     expect(res2.body.items).toHaveLength(4); // 3 created + 1 default
     expect(res2.body.meta.totalCount).toBe(4);
-    res2.body.items.forEach((workflow: any) => {
+    res2.body.items.forEach((workflow: z.infer<typeof WorkflowListItem>) => {
       expect(workflow.organizationId).toBe(user2.orgId);
     });
 
@@ -406,7 +408,7 @@ describe("GET /organization/:orgId/workflows", () => {
     await createWorkflowsForProject(projectId, 2);
 
     // Create another project and workflows
-    const { project: additionalProject, workflows: additionalWorkflows } =
+    const { project: additionalProject } =
       await createAdditionalProjectWithWorkflows(teamId, 2);
 
     const res = await request(server)
@@ -419,12 +421,12 @@ describe("GET /organization/:orgId/workflows", () => {
 
     // Verify workflows from both projects are included
     const projectNames = res.body.items.map(
-      (workflow: any) => workflow.projectName
+      (workflow: z.infer<typeof WorkflowListItem>) => workflow.projectName
     );
     expect(projectNames).toContain(additionalProject.name);
 
     // Verify all workflows belong to the same organization
-    res.body.items.forEach((workflow: any) => {
+    res.body.items.forEach((workflow: z.infer<typeof WorkflowListItem>) => {
       expect(workflow.organizationId).toBe(orgId);
     });
 
@@ -480,7 +482,9 @@ describe("GET /organization/:orgId/workflows", () => {
     expect(res.status).toBe(200);
 
     // Find our test workflow and verify member count
-    const testWorkflow = res.body.items.find((w: any) => w.id === workflow.id);
+    const testWorkflow = res.body.items.find(
+      (w: z.infer<typeof WorkflowListItem>) => w.id === workflow.id
+    );
     expect(testWorkflow).toBeDefined();
     expect(testWorkflow.memberCount).toBe(2);
 

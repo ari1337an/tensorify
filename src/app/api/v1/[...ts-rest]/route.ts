@@ -14,7 +14,7 @@ const handler = createNextHandler(contract, appRouter, {
   jsonQuery: true,
   responseValidation: true,
   errorHandler: (error: unknown, request: TsRestRequest) => {
-    const debug = true;
+    const debug = false;
     if (debug) {
       console.log(
         "\x1b[31m%s\x1b[0m",

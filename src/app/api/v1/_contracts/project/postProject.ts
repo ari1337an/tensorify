@@ -99,7 +99,7 @@ export const action = {
           body: { message: "Project created successfully." },
         };
       } catch (error) {
-        console.error("Failed to create project:", error);
+        // console.error("Failed to create project:", error);
 
         if (error instanceof TsRestResponseError) {
           throw error;
