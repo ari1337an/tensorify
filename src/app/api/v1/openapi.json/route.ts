@@ -1,3 +1,4 @@
+"use server";
 import { generateOpenApi } from "@ts-rest/open-api";
 import { contract } from "../_contracts";
 import { SecurityRequirementObject } from "openapi3-ts";

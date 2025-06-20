@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE — DO NOT EDIT MANUALLY
-// Generated on: 6/21/2025, 12:29:03 AM
+// Generated on: 6/21/2025, 12:37:21 AM
 
 import { initContract } from "@ts-rest/core";
 import { tsr } from "@ts-rest/serverless/next";
@@ -13,9 +13,9 @@ import { contract as onboardingQuestionsContract, action as onboardingQuestionsA
 import { contract as onboardingSetupContract, action as onboardingSetupAction } from "./onboarding/onboardingSetup";
 import { contract as getOrganizationContract, action as getOrganizationAction } from "./organization/getOrganization";
 import { contract as getOrganizationUsersContract, action as getOrganizationUsersAction } from "./organization/getOrganizationUsers";
+import { contract as getPermissionsContract, action as getPermissionsAction } from "./permissions/getPermissions";
 import { contract as getProjectContract, action as getProjectAction } from "./project/getProject";
 import { contract as postProjectContract, action as postProjectAction } from "./project/postProject";
-import { contract as getPermissionsContract, action as getPermissionsAction } from "./permissions/getPermissions";
 import { contract as getRolesContract, action as getRolesAction } from "./roles/getRoles";
 import { contract as patchRoleContract, action as patchRoleAction } from "./roles/patchRole";
 import { contract as postRolesContract, action as postRolesAction } from "./roles/postRoles";
@@ -36,9 +36,9 @@ export const contract = c.router({
   onboardingSetup: onboardingSetupContract,
   getOrganization: getOrganizationContract,
   getOrganizationUsers: getOrganizationUsersContract,
+  getPermissions: getPermissionsContract,
   getProject: getProjectContract,
   postProject: postProjectContract,
-  getPermissions: getPermissionsContract,
   getRoles: getRolesContract,
   patchRole: patchRoleContract,
   postRoles: postRolesContract,
@@ -60,9 +60,9 @@ export const appRouter = tsr.routerWithMiddleware(contract)<{
   onboardingSetup: onboardingSetupAction,
   getOrganization: getOrganizationAction,
   getOrganizationUsers: getOrganizationUsersAction,
+  getPermissions: getPermissionsAction,
   getProject: getProjectAction,
   postProject: postProjectAction,
-  getPermissions: getPermissionsAction,
   getRoles: getRolesAction,
   patchRole: patchRoleAction,
   postRoles: postRolesAction,

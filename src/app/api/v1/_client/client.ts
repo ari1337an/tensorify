@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE — DO NOT EDIT MANUALLY
-// Generated on: 6/21/2025, 12:29:03 AM
+// Generated on: 6/21/2025, 12:37:21 AM
 "use server";
 
 import { initClient } from '@ts-rest/core';
@@ -149,12 +149,6 @@ export async function onboardingSetup(args: Parameters<typeof client.onboardingS
 }
 
 
-export async function getPermissions(args: Parameters<typeof client.getPermissions.contract>[0]): Promise<ReturnType<typeof client.getPermissions.contract>> {
-  const dynamicClient = await getClientWithBaseUrl();
-  return await dynamicClient.getPermissions.contract(args);
-}
-
-
 export async function getOrganization(args: Parameters<typeof client.getOrganization.contract>[0]): Promise<ReturnType<typeof client.getOrganization.contract>> {
   const dynamicClient = await getClientWithBaseUrl();
   return await dynamicClient.getOrganization.contract(args);
@@ -164,6 +158,30 @@ export async function getOrganization(args: Parameters<typeof client.getOrganiza
 export async function getOrganizationUsers(args: Parameters<typeof client.getOrganizationUsers.contract>[0]): Promise<ReturnType<typeof client.getOrganizationUsers.contract>> {
   const dynamicClient = await getClientWithBaseUrl();
   return await dynamicClient.getOrganizationUsers.contract(args);
+}
+
+
+export async function getRoles(args: Parameters<typeof client.getRoles.contract>[0]): Promise<ReturnType<typeof client.getRoles.contract>> {
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.getRoles.contract(args);
+}
+
+
+export async function patchRole(args: Parameters<typeof client.patchRole.contract>[0]): Promise<ReturnType<typeof client.patchRole.contract>> {
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.patchRole.contract(args);
+}
+
+
+export async function postRoles(args: Parameters<typeof client.postRoles.contract>[0]): Promise<ReturnType<typeof client.postRoles.contract>> {
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.postRoles.contract(args);
+}
+
+
+export async function getPermissions(args: Parameters<typeof client.getPermissions.contract>[0]): Promise<ReturnType<typeof client.getPermissions.contract>> {
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.getPermissions.contract(args);
 }
 
 
@@ -188,24 +206,6 @@ export async function getTeam(args: Parameters<typeof client.getTeam.contract>[0
 export async function postTeam(args: Parameters<typeof client.postTeam.contract>[0]): Promise<ReturnType<typeof client.postTeam.contract>> {
   const dynamicClient = await getClientWithBaseUrl();
   return await dynamicClient.postTeam.contract(args);
-}
-
-
-export async function getRoles(args: Parameters<typeof client.getRoles.contract>[0]): Promise<ReturnType<typeof client.getRoles.contract>> {
-  const dynamicClient = await getClientWithBaseUrl();
-  return await dynamicClient.getRoles.contract(args);
-}
-
-
-export async function patchRole(args: Parameters<typeof client.patchRole.contract>[0]): Promise<ReturnType<typeof client.patchRole.contract>> {
-  const dynamicClient = await getClientWithBaseUrl();
-  return await dynamicClient.patchRole.contract(args);
-}
-
-
-export async function postRoles(args: Parameters<typeof client.postRoles.contract>[0]): Promise<ReturnType<typeof client.postRoles.contract>> {
-  const dynamicClient = await getClientWithBaseUrl();
-  return await dynamicClient.postRoles.contract(args);
 }
 
 

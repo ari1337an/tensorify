@@ -17,19 +17,6 @@ function getImportPath(filePath) {
   return `./${rel.replace(/\\/g, "/")}`;
 }
 
-function getCurrentDateTime() {
-  const now = new Date();
-  return now.toLocaleString("en-US", {
-    year: "numeric",
-    month: "numeric",
-    day: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-    second: "numeric",
-    hour12: true,
-  });
-}
-
 async function generateIndex() {
   const files = await fg(`${API_DIR}/**/*.ts`, {
     ignore: [
@@ -56,9 +43,7 @@ async function generateIndex() {
     actionEntries.push(`  ${key}: ${importAliasAction},`);
   }
 
-  const output = `// AUTO-GENERATED FILE — DO NOT EDIT MANUALLY
-// Generated on: ${getCurrentDateTime()}
-
+  const output = `
 import { initContract } from "@ts-rest/core";
 import { tsr } from "@ts-rest/serverless/next";
 import { JwtPayloadSchema } from "./schema";

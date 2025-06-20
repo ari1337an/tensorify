@@ -18,19 +18,6 @@ function getContractKey(filePath) {
   return fileName;
 }
 
-function getCurrentDateTime() {
-  const now = new Date();
-  return now.toLocaleString("en-US", {
-    year: "numeric",
-    month: "numeric",
-    day: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-    second: "numeric",
-    hour12: true,
-  });
-}
-
 async function generateClient() {
   const contractFiles = await fg(`${CONTRACTS_DIR}/**/*.ts`, {
     ignore: [
@@ -78,9 +65,7 @@ export async function ${key}(args: Parameters<typeof client.${key}.contract>[0])
     })
     .join("\n");
 
-  const output = `// AUTO-GENERATED FILE — DO NOT EDIT MANUALLY
-// Generated on: ${getCurrentDateTime()}
-"use server";
+  const output = `"use server";
 
 import { initClient } from '@ts-rest/core';
 import { contract } from '${RELATIVE_CONTRACTS_PATH}';
