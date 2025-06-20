@@ -43,8 +43,7 @@ async function generateIndex() {
     actionEntries.push(`  ${key}: ${importAliasAction},`);
   }
 
-  const output = `
-import { initContract } from "@ts-rest/core";
+  const output = `import { initContract } from "@ts-rest/core";
 import { tsr } from "@ts-rest/serverless/next";
 import { JwtPayloadSchema } from "./schema";
 import { z } from "zod";
