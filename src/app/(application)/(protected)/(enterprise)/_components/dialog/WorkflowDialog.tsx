@@ -25,78 +25,86 @@ import {
 } from "@/app/_components/ui/form";
 import { Input } from "@/app/_components/ui/input";
 import { Textarea } from "@/app/_components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/app/_components/ui/select";
-import { postProject } from "@/app/api/v1/_client/client";
+import { postWorkflow } from "@/app/api/v1/_client/client";
 import { toast } from "sonner";
-import useStore from "@/app/_store/store";
 import { useProjects } from "@/app/_providers/project-provider";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  description: z.string().optional(),
-  teamId: z.string().min(1, "Team is required"),
+  description: z
+    .string()
+    .min(1, "Description is required")
+    .max(500, "Description must be less than 500 characters"),
+  projectId: z.string().min(1, "Project is required"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function ProjectDialog() {
+interface WorkflowDialogProps {
+  projectId: string;
+  projectName: string;
+}
+
+export function WorkflowDialog({
+  projectId,
+  projectName,
+}: WorkflowDialogProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const teams = useStore((state) => state.teams);
-  const currentTeam = useStore((state) => state.currentTeam);
-  const { refresh } = useProjects();
+  const { refetch, addWorkflowOptimistically } = useProjects();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       description: "",
-      teamId: currentTeam?.id || "",
+      projectId: projectId,
     },
   });
 
-  // Update teamId when currentTeam changes
+  // Update projectId when prop changes
   React.useEffect(() => {
-    if (currentTeam?.id) {
-      form.setValue("teamId", currentTeam.id);
-    }
-  }, [currentTeam?.id, form]);
+    form.setValue("projectId", projectId);
+  }, [projectId, form]);
 
   const onSubmit = async (values: FormValues) => {
     try {
       setIsSubmitting(true);
-      const response = await postProject({
+      const response = await postWorkflow({
         body: {
           name: values.name,
           description: values.description,
-          teamId: values.teamId,
+          projectId: values.projectId,
         },
       });
 
       if (response.status === 201) {
-        toast.success(response.body.message || "Project created successfully");
+        const workflowName = values.name;
+
+        // Optimistically add the workflow to local state for immediate UI update
+        addWorkflowOptimistically(projectId, workflowName);
+
+        toast.success(response.body.message || "Workflow created successfully");
         form.reset({
           name: "",
           description: "",
-          teamId: currentTeam?.id || "",
+          projectId: projectId,
         });
-        refresh(); // Refresh the projects list
         setIsOpen(false);
+
+        // Refresh in background to ensure data consistency
+        setTimeout(async () => {
+          await refetch();
+        }, 1000);
       } else if (response.status === 400) {
         toast.error(`Error: ${response.body.message}`);
       } else {
-        toast.error(response.body.message || "Failed to create project");
+        toast.error(response.body.message || "Failed to create workflow");
       }
     } catch (error) {
-      console.error("Error creating project:", error);
-      toast.error("Failed to create project. Please try again.");
+      console.error("Error creating workflow:", error);
+      toast.error("Failed to create workflow. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -105,17 +113,20 @@ export function ProjectDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-5 w-5">
-          <Plus className="h-3 w-3" />
-        </Button>
+        <button className="hover:cursor-pointer w-full flex items-center rounded-md px-3 py-2 text-sm transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-accent">
+          <div className="w-5 flex items-center justify-center flex-shrink-0">
+            <Plus className="h-3 w-3" />
+          </div>
+          <span className="truncate ml-2">Create workflow</span>
+        </button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create a project</DialogTitle>
+          <DialogTitle>Create a workflow</DialogTitle>
           <DialogDescription>
-            Add a new project to your organization. Projects help you organize
-            and manage your work within teams.
+            Add a new workflow to &quot;{projectName}&quot;. Workflows help you
+            organize and manage your work processes within projects.
           </DialogDescription>
         </DialogHeader>
 
@@ -129,9 +140,9 @@ export function ProjectDialog() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Project Name</FormLabel>
+                  <FormLabel>Workflow Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter project name" {...field} />
+                    <Input placeholder="Enter workflow name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -142,41 +153,13 @@ export function ProjectDialog() {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
+                  <FormLabel>Description</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Enter project description"
+                      placeholder="Enter workflow description"
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="teamId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Team</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    value={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a team" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {teams.map((team) => (
-                        <SelectItem key={team.id} value={team.id}>
-                          {team.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -186,10 +169,10 @@ export function ProjectDialog() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating Project...
+                    Creating Workflow...
                   </>
                 ) : (
-                  "Create Project"
+                  "Create Workflow"
                 )}
               </Button>
             </DialogFooter>

@@ -5,6 +5,7 @@ import { FingerprintProvider } from "@/app/_providers/fingerprint-provider";
 import { UserProvider } from "@/app/_providers/user-provider";
 import { OrganizationProvider } from "@/app/_providers/organization-provider";
 import { TeamProvider } from "@/app/_providers/team-provider";
+import { ProjectProvider } from "@/app/_providers/project-provider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 
@@ -46,7 +47,7 @@ export function ProvidersWrapper({
           <UserProvider sessionClaims={sessionClaims}>
             <OrganizationProvider organization={organization}>
               <TeamProvider teams={teams} currentTeam={currentTeam}>
-                {children}
+                <ProjectProvider>{children}</ProjectProvider>
               </TeamProvider>
             </OrganizationProvider>
           </UserProvider>

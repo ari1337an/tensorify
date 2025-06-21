@@ -27,6 +27,49 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useProjects } from "@/app/_providers/project-provider";
+import { Skeleton } from "@/app/_components/ui/skeleton";
+import { WorkflowDialog } from "@/app/(application)/(protected)/(enterprise)/_components/dialog";
+
+// Skeleton components for loading states
+const ProjectSkeleton = ({
+  showWorkflows = false,
+}: {
+  showWorkflows?: boolean;
+}) => (
+  <div className="space-y-1">
+    {/* Project item skeleton */}
+    <div className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent/50">
+      <Skeleton className="h-5 w-5 rounded-full flex-shrink-0" />
+      <Skeleton className="h-4 w-20 flex-1 max-w-[80px]" />
+    </div>
+    {/* Workflow items skeleton */}
+    {showWorkflows && (
+      <div className="space-y-1 mt-1">
+        <div className="flex items-center gap-2 px-2 py-1 ml-7">
+          <div className="w-5 flex-shrink-0" />
+          <Skeleton className="h-3 w-16" />
+        </div>
+        <div className="flex items-center gap-2 px-2 py-1 ml-7">
+          <div className="w-5 flex-shrink-0" />
+          <Skeleton className="h-3 w-20" />
+        </div>
+        <div className="flex items-center gap-2 px-2 py-1 ml-7">
+          <div className="w-5 flex-shrink-0" />
+          <Skeleton className="h-3 w-14" />
+        </div>
+      </div>
+    )}
+  </div>
+);
+
+const ProjectsSkeleton = () => (
+  <div className="space-y-1">
+    <ProjectSkeleton showWorkflows={true} />
+    <ProjectSkeleton showWorkflows={false} />
+    <ProjectSkeleton showWorkflows={false} />
+  </div>
+);
 
 type Project = {
   id: string;
@@ -183,6 +226,9 @@ const StaticProject = ({
                 onClick={() => setActiveItem(workflow)}
               />
             ))}
+
+            {/* Add workflow button */}
+            <WorkflowDialog projectId={project.id} projectName={project.name} />
           </div>
         )}
       </CollapsibleContent>
@@ -303,6 +349,9 @@ const SortableWorkflows = ({
             />
           ))}
         </SortableContext>
+
+        {/* Add workflow button */}
+        <WorkflowDialog projectId={project.id} projectName={project.name} />
       </div>
 
       <DragOverlay>
@@ -325,25 +374,24 @@ export function ProjectsSection({
 }: ProjectsSectionProps) {
   const [projectsSectionOpen, setProjectsSectionOpen] = React.useState(true);
   const [openProjects, setOpenProjects] = React.useState<Set<string>>(
-    new Set(["project-1"])
+    new Set()
   );
   const [hoveredProject, setHoveredProject] = React.useState<string | null>(
     null
   );
 
-  // Example projects - in a real app, this would come from your data source
-  const [projects, setProjects] = React.useState<Project[]>([
-    {
-      id: "project-1",
-      name: "Project 1",
-      workflows: ["Workflow 1", "Workflow 2", "Workflow 3"],
-    },
-    {
-      id: "project-2",
-      name: "Project 2",
-      workflows: ["Workflow 1", "Workflow 2", "Workflow 3", "Workflow 4"],
-    },
-  ]);
+  // Get projects from provider instead of dummy data
+  const { projects: projectsFromProvider, loading, error } = useProjects();
+  const [projects, setProjects] = React.useState<Project[]>([]);
+
+  // Update local projects state when provider data changes
+  React.useEffect(() => {
+    setProjects(projectsFromProvider);
+    // Open the first project by default if there are any projects
+    if (projectsFromProvider.length > 0) {
+      setOpenProjects(new Set([projectsFromProvider[0].id]));
+    }
+  }, [projectsFromProvider]);
 
   const [activeProject, setActiveProject] = React.useState<string | null>(null);
   const [isClient, setIsClient] = React.useState(false);
@@ -411,7 +459,17 @@ export function ProjectsSection({
       </div>
 
       <CollapsibleContent className="mt-1 mb-2 space-y-1">
-        {isClient ? (
+        {loading ? (
+          <ProjectsSkeleton />
+        ) : error ? (
+          <div className="px-2 py-4 text-xs text-red-400">
+            Error loading projects: {error}
+          </div>
+        ) : projects.length === 0 ? (
+          <div className="px-2 py-4 text-xs text-muted-foreground">
+            No projects found for this team
+          </div>
+        ) : isClient ? (
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
