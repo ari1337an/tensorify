@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/app/_providers/theme-provider";
 import { FingerprintProvider } from "@/app/_providers/fingerprint-provider";
 import { UserProvider } from "@/app/_providers/user-provider";
 import { OrganizationProvider } from "@/app/_providers/organization-provider";
+import { TeamProvider } from "@/app/_providers/team-provider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 
@@ -15,10 +16,14 @@ export function ProvidersWrapper({
   children,
   sessionClaims,
   organization,
+  teams,
+  currentTeam,
 }: {
   children: React.ReactNode;
   sessionClaims: string;
   organization: string;
+  teams: string;
+  currentTeam?: string;
 }) {
   return (
     <ClerkProvider
@@ -40,7 +45,9 @@ export function ProvidersWrapper({
         <FingerprintProvider>
           <UserProvider sessionClaims={sessionClaims}>
             <OrganizationProvider organization={organization}>
-              {children}
+              <TeamProvider teams={teams} currentTeam={currentTeam}>
+                {children}
+              </TeamProvider>
             </OrganizationProvider>
           </UserProvider>
         </FingerprintProvider>

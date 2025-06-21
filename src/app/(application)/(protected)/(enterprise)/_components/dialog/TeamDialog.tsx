@@ -1,79 +1,115 @@
 "use client";
 
 import * as React from "react";
-import { X } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { postTeam } from "@/app/api/v1/_client/client";
+import { toast } from "sonner";
+import useStore from "@/app/_store/store";
+
 import { Button } from "@/app/_components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/app/_components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/app/_components/ui/form";
 import { Input } from "@/app/_components/ui/input";
-import { Avatar } from "@/app/_components/ui/avatar";
+import { Textarea } from "@/app/_components/ui/textarea";
 
-type InvitedMember = {
-  id: string;
-  email: string;
-};
+const teamFormSchema = z.object({
+  name: z
+    .string()
+    .min(2, { message: "Team name must be at least 2 characters." })
+    .max(100, { message: "Team name must be less than 100 characters." }),
+  description: z
+    .string()
+    .max(500, { message: "Description must be less than 500 characters." })
+    .optional(),
+});
 
 interface TeamDialogProps {
   children: React.ReactNode;
   onOpenChange?: (open: boolean) => void;
   open?: boolean;
+  onTeamCreated?: () => void; // Callback to refresh team list
 }
 
 export function TeamDialog({
   children,
   onOpenChange,
   open = false,
+  onTeamCreated,
 }: TeamDialogProps) {
-  const [teamName, setTeamName] = React.useState("");
-  const [emailInput, setEmailInput] = React.useState("");
-  const [invitedMembers, setInvitedMembers] = React.useState<InvitedMember[]>(
-    []
-  );
+  const form = useForm<z.infer<typeof teamFormSchema>>({
+    resolver: zodResolver(teamFormSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+    },
+  });
 
-  const handleAddMember = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && emailInput.trim()) {
-      e.preventDefault();
+  const currentOrg = useStore((state) => state.currentOrg);
 
-      // Simple email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(emailInput)) {
-        return; // Invalid email
+  const onSubmit = async (values: z.infer<typeof teamFormSchema>) => {
+    if (!currentOrg) {
+      toast.error("Organization not found. Please select an organization.");
+      return;
+    }
+
+    try {
+      const response = await postTeam({
+        body: {
+          name: values.name,
+          description: values.description,
+          orgId: currentOrg.id,
+        },
+      });
+
+      if (response.status === 201) {
+        toast.success(response.body.message);
+        if (onTeamCreated) {
+          onTeamCreated(); // Call the callback to refresh the team list
+        }
+        if (onOpenChange) {
+          onOpenChange(false); // Close the dialog on success
+        }
+        form.reset(); // Reset form fields
+      } else if (response.status === 400) {
+        toast.error(`Error: ${response.body.message}`);
+      } else {
+        toast.error(response.body.message);
       }
-
-      const newMember = {
-        id: Date.now().toString(),
-        email: emailInput.trim(),
-      };
-
-      setInvitedMembers([...invitedMembers, newMember]);
-      setEmailInput("");
+    } catch (error) {
+      console.error("Team creation failed:", error);
+      toast.error("Failed to create team. Please try again.");
     }
   };
 
-  const handleRemoveMember = (id: string) => {
-    setInvitedMembers(invitedMembers.filter((member) => member.id !== id));
-  };
-
-  const handleCreateTeam = () => {
-    if (!teamName.trim()) return;
-
-    // Here you would handle team creation with the invited members
-    console.log("Creating team:", teamName, invitedMembers);
-
-    // Reset form and close dialog
-    setTeamName("");
-    setEmailInput("");
-    setInvitedMembers([]);
-    if (onOpenChange) onOpenChange(false);
+  const handleOpenChange = (newOpen: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(newOpen);
+    }
+    // Reset form when dialog closes
+    if (!newOpen) {
+      form.reset();
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger
         asChild
         onClick={(e) => {
@@ -85,77 +121,55 @@ export function TeamDialog({
       </DialogTrigger>
 
       <DialogContent
-        className="sm:max-w-md"
+        className="sm:max-w-[425px]"
         onClick={(e) => e.stopPropagation()}
       >
         <DialogHeader>
-          <DialogTitle>Create a team</DialogTitle>
+          <DialogTitle>Create New Team</DialogTitle>
+          <DialogDescription>
+            Enter the details for your new team. You can add members later.
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4" onClick={(e) => e.stopPropagation()}>
-          <div className="space-y-2">
-            <label htmlFor="team-name" className="text-sm font-medium">
-              Team name
-            </label>
-            <Input
-              id="team-name"
-              value={teamName}
-              onChange={(e) => setTeamName(e.target.value)}
-              placeholder="Enter team name"
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Team Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="My Awesome Team" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description (Optional)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="A brief description of your team's purpose."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <div className="space-y-2">
-            <label htmlFor="invite-members" className="text-sm font-medium">
-              Invite members
-            </label>
-            <div className="flex flex-wrap gap-1 p-2 border rounded-md min-h-10">
-              {invitedMembers.map((member) => (
-                <div
-                  key={member.id}
-                  className="flex items-center gap-1 bg-secondary px-2 py-1 rounded-full"
-                >
-                  <Avatar className="h-5 w-5 bg-primary/80 flex items-center justify-center text-white text-xs">
-                    {member.email[0].toUpperCase()}
-                  </Avatar>
-                  <span className="text-xs">{member.email}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-4 w-4 rounded-full"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemoveMember(member.id);
-                    }}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              ))}
-              <Input
-                id="invite-members"
-                value={emailInput}
-                onChange={(e) => setEmailInput(e.target.value)}
-                onKeyDown={handleAddMember}
-                placeholder="Enter email addresses"
-                className="flex-1 min-w-[200px] border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-0"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-end">
-          <Button
-            variant="default"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleCreateTeam();
-            }}
-            disabled={!teamName.trim()}
-          >
-            Create Team
-          </Button>
-        </div>
+            <DialogFooter>
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? "Creating..." : "Create Team"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

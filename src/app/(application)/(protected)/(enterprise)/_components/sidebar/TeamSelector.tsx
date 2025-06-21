@@ -7,9 +7,9 @@ import {
   User,
   LogOut,
   Settings,
-  Globe,
   Blocks,
   Telescope,
+  Loader2,
 } from "lucide-react";
 import { Avatar } from "@/app/_components/ui/avatar";
 import {
@@ -25,19 +25,28 @@ import { useAuth } from "@clerk/nextjs";
 import { TeamDialog } from "@/app/(application)/(protected)/(enterprise)/_components/dialog";
 import { useSettingsDialog } from "@/app/(application)/(protected)/(enterprise)/_components/settings";
 import { Badge } from "@/app/_components/ui/badge";
+import { getTeam } from "@/app/api/v1/_client/client";
+import useStore from "@/app/_store/store";
 
 type Team = {
   id: string;
   name: string;
-  icon: string;
-  isGuest?: boolean;
+  description: string | null;
+  organizationId: string;
+  memberCount: number;
+  createdAt: string;
 };
 
 type TeamSelectorProps = {
   email?: string;
-  currentTeam?: Team;
+  currentTeam?: Team | null;
   teams?: Team[];
   onChangeTeam?: (team: Team) => void;
+};
+
+// Helper function to generate team icon from name
+const getTeamIcon = (name: string) => {
+  return name.charAt(0).toUpperCase();
 };
 
 export function TeamSelector({
@@ -49,36 +58,87 @@ export function TeamSelector({
   const { signOut } = useAuth();
   const [isOpen, setIsOpen] = React.useState(false);
   const [isTeamDialogOpen, setIsTeamDialogOpen] = React.useState(false);
+  const [isLoadingTeams, setIsLoadingTeams] = React.useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { setIsOpen: setSidebarOpen } = useSidebar();
   const { openSettings } = useSettingsDialog();
 
-  // If no teams provided, create some example ones
-  const defaultTeams =
-    teams.length > 0
-      ? teams
-      : [
-          { id: "user-tensorify", name: "Md Sahadul Hasan's", icon: "M" },
-          { id: "university", name: "University", icon: "U", isGuest: true },
-          { id: "alphawolf", name: "AlphaWolf Ventures, Inc.", icon: "A" },
-        ];
+  // Get organization and team management from store
+  const currentOrg = useStore((state) => state.currentOrg);
+  const setTeams = useStore((state) => state.setTeams);
 
-  const activeTeam = currentTeam || defaultTeams[2]; // Default to AlphaWolf
+  // Function to fetch fresh team data
+  const fetchTeams = React.useCallback(async () => {
+    if (!currentOrg?.id) return;
+
+    setIsLoadingTeams(true);
+    try {
+      const response = await getTeam({
+        params: { orgId: currentOrg.id },
+        query: { limit: 100 }, // Get all teams, adjust limit as needed
+      });
+
+      if (response.status === 200) {
+        // Sort teams by creation date in ascending order (oldest first)
+        const sortedTeams = response.body.items.sort(
+          (a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+        setTeams(sortedTeams);
+      } else {
+        console.error("Failed to fetch teams:", response.body);
+      }
+    } catch (error) {
+      console.error("Error fetching teams:", error);
+    } finally {
+      setIsLoadingTeams(false);
+    }
+  }, [currentOrg?.id, setTeams]);
+
+  // Handle dropdown open change
+  const handleOpenChange = React.useCallback(
+    (open: boolean) => {
+      setIsOpen(open);
+      if (open) {
+        // Fetch fresh teams when dropdown opens
+        fetchTeams();
+      }
+    },
+    [fetchTeams]
+  );
+
+  // Use the first team as default if no current team is selected
+  const activeTeam = currentTeam || (teams.length > 0 ? teams[0] : null);
+
+  if (!activeTeam) {
+    return (
+      <div className="flex items-center justify-between w-full px-2 py-1.5">
+        <span className="text-sm text-muted-foreground">
+          No teams available
+        </span>
+      </div>
+    );
+  }
 
   return (
     <>
-      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <DropdownMenu open={isOpen} onOpenChange={handleOpenChange}>
         <DropdownMenuTrigger asChild>
           <div className="flex items-center justify-between w-full px-2 py-1.5 hover:bg-accent rounded-md cursor-pointer">
             <div className="flex items-center min-w-0">
               <Avatar className="h-6 w-6 mr-2 bg-zinc-800 flex items-center justify-center text-white text-xs">
-                {activeTeam.icon}
+                {getTeamIcon(activeTeam.name)}
               </Avatar>
               <span className="text-sm font-medium truncate">
                 {activeTeam.name}
               </span>
             </div>
-            <ChevronDown className="h-4 w-4 text-zinc-800 dark:text-zinc-400" />
+            <div className="flex items-center gap-1">
+              {isLoadingTeams && (
+                <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+              )}
+              <ChevronDown className="h-4 w-4 text-zinc-800 dark:text-zinc-400" />
+            </div>
           </div>
         </DropdownMenuTrigger>
 
@@ -89,12 +149,12 @@ export function TeamSelector({
           <DropdownMenuLabel className="px-3 py-1.5">
             <div className="flex items-center justify-between">
               <Avatar className="h-8 w-8 mr-2 bg-zinc-800 flex items-center justify-center text-white text-sm">
-                {activeTeam.icon}
+                {getTeamIcon(activeTeam.name)}
               </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-sm">{activeTeam.name}</div>
                 <div className="text-xs text-muted-foreground">
-                  Organization Name · 2 members
+                  Team · {activeTeam.memberCount} members
                 </div>
               </div>
             </div>
@@ -121,9 +181,10 @@ export function TeamSelector({
 
           <div className="px-3 py-1.5 flex items-center justify-between text-zinc-400">
             <span className="text-sm">{email}</span>
+            {isLoadingTeams && <Loader2 className="h-3 w-3 animate-spin" />}
           </div>
 
-          {defaultTeams.map((team) => (
+          {teams.map((team) => (
             <DropdownMenuItem
               key={team.id}
               className="px-3 py-1.5 hover:bg-zinc-800 hover:cursor-pointer"
@@ -131,15 +192,19 @@ export function TeamSelector({
             >
               <div className="flex items-center w-full">
                 <Avatar className="h-6 w-6 mr-2 bg-zinc-800 flex items-center justify-center text-white text-xs">
-                  {team.icon}
+                  {getTeamIcon(team.name)}
                 </Avatar>
-                <span className="flex-1 text-sm">{team.name}</span>
-                {team.isGuest && (
-                  <span className="flex items-center text-amber-500/90 text-xs font-medium">
-                    <Globe className="h-3.5 w-3.5 mr-1" />
-                    Guest
-                  </span>
-                )}
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm block truncate">{team.name}</span>
+                  {team.description && (
+                    <span className="text-xs text-muted-foreground block truncate">
+                      {team.description}
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs text-muted-foreground ml-2">
+                  {team.memberCount} members
+                </span>
                 {team.id === activeTeam.id && (
                   <span className="text-zinc-400 ml-2">✓</span>
                 )}
@@ -206,7 +271,11 @@ export function TeamSelector({
       </DropdownMenu>
 
       {/* Render TeamDialog outside the dropdown to avoid nesting issues */}
-      <TeamDialog open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen}>
+      <TeamDialog
+        open={isTeamDialogOpen}
+        onOpenChange={setIsTeamDialogOpen}
+        onTeamCreated={fetchTeams}
+      >
         <span className="hidden">New Team</span>
       </TeamDialog>
     </>

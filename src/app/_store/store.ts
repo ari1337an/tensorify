@@ -21,6 +21,15 @@ type SessionClaims = {
   sub: string;
 };
 
+type Team = {
+  id: string;
+  name: string;
+  description: string | null;
+  organizationId: string;
+  memberCount: number;
+  createdAt: string;
+};
+
 interface StoreState {
   currentUser: SessionClaims | null;
   setCurrentUser: (user: SessionClaims) => void;
@@ -28,6 +37,10 @@ interface StoreState {
   setClientFingerprint: (fingerprint: string) => void;
   currentOrg: Organization | null;
   setCurrentOrg: (org: Organization) => void;
+  currentTeam: Team | null;
+  setCurrentTeam: (team: Team) => void;
+  teams: Team[];
+  setTeams: (teams: Team[]) => void;
 }
 
 const useStore = create<StoreState>()(
@@ -50,6 +63,11 @@ const useStore = create<StoreState>()(
       currentOrg: null,
       setCurrentOrg: (org: Organization) =>
         set({ currentOrg: org }, undefined, "setCurrentOrg"),
+      currentTeam: null,
+      setCurrentTeam: (team: Team) =>
+        set({ currentTeam: team }, undefined, "setCurrentTeam"),
+      teams: [],
+      setTeams: (teams: Team[]) => set({ teams }, undefined, "setTeams"),
     }),
     { name: "AppStore" }
   )

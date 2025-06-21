@@ -17,21 +17,19 @@ type SidebarProps = React.HTMLAttributes<HTMLDivElement>;
 type Team = {
   id: string;
   name: string;
-  icon: string;
+  description: string | null;
+  organizationId: string;
+  memberCount: number;
+  createdAt: string;
 };
-
-// Mock data for teams
-const mockTeams: Team[] = [
-  { id: "team1", name: "Alpha team", icon: "A" },
-  { id: "team2", name: "Beta team", icon: "B" },
-  { id: "team3", name: "Gamma team", icon: "C" },
-];
 
 export function Sidebar({ className, ...props }: SidebarProps) {
   const currentUser = useStore((state) => state.currentUser);
+  const teams = useStore((state) => state.teams);
+  const currentTeam = useStore((state) => state.currentTeam);
+  const setCurrentTeam = useStore((state) => state.setCurrentTeam);
   const { isOpen } = useSidebar();
   const [activeItem, setActiveItem] = React.useState("Projects");
-  const [currentTeam, setCurrentTeam] = React.useState(mockTeams[0]);
 
   const handleChangeTeam = (team: Team) => {
     setCurrentTeam(team);
@@ -57,7 +55,7 @@ export function Sidebar({ className, ...props }: SidebarProps) {
             <TeamSelector
               email={currentUser?.email}
               currentTeam={currentTeam}
-              teams={mockTeams}
+              teams={teams}
               onChangeTeam={handleChangeTeam}
             />
           </div>

@@ -40,10 +40,40 @@ export default async function RootLayout({
       })
     : null;
 
+  // Fetch teams data for the current organization
+  const teams = organization
+    ? await db.team.findMany({
+        where: {
+          orgId: organization.id,
+        },
+        include: {
+          _count: {
+            select: { members: true },
+          },
+        },
+        orderBy: { createdAt: "asc" }, // Sort by creation date ascending (oldest first)
+      })
+    : [];
+
+  // Transform teams data to match our schema
+  const transformedTeams = teams.map((team) => ({
+    id: team.id,
+    name: team.name,
+    description: team.description,
+    organizationId: team.orgId,
+    memberCount: team._count.members,
+    createdAt: team.createdAt.toISOString(),
+  }));
+
+  // Select the first team as the current team (you can modify this logic)
+  const currentTeam = transformedTeams.length > 0 ? transformedTeams[0] : null;
+
   return (
     <ProvidersWrapper
       sessionClaims={JSON.stringify(sessionClaims)}
       organization={JSON.stringify(organization)}
+      teams={JSON.stringify(transformedTeams)}
+      currentTeam={currentTeam ? JSON.stringify(currentTeam) : undefined}
     >
       <Toaster />
       {children}
