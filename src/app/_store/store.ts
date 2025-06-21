@@ -30,6 +30,19 @@ type Team = {
   createdAt: string;
 };
 
+type Workflow = {
+  id: string;
+  name: string;
+  description: string;
+  projectId: string;
+  projectName: string;
+  teamId: string;
+  teamName: string;
+  organizationId: string;
+  memberCount: number;
+  createdAt: string;
+};
+
 interface StoreState {
   currentUser: SessionClaims | null;
   setCurrentUser: (user: SessionClaims) => void;
@@ -41,6 +54,8 @@ interface StoreState {
   setCurrentTeam: (team: Team) => void;
   teams: Team[];
   setTeams: (teams: Team[]) => void;
+  currentWorkflow: Workflow | null;
+  setCurrentWorkflow: (workflow: Workflow | null) => void;
 }
 
 const useStore = create<StoreState>()(
@@ -68,9 +83,13 @@ const useStore = create<StoreState>()(
         set({ currentTeam: team }, undefined, "setCurrentTeam"),
       teams: [],
       setTeams: (teams: Team[]) => set({ teams }, undefined, "setTeams"),
+      currentWorkflow: null,
+      setCurrentWorkflow: (workflow: Workflow | null) =>
+        set({ currentWorkflow: workflow }, undefined, "setCurrentWorkflow"),
     }),
     { name: "AppStore" }
   )
 );
 
 export default useStore;
+export type { Workflow };

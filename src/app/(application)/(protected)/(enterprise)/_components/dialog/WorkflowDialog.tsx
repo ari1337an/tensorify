@@ -28,6 +28,8 @@ import { Textarea } from "@/app/_components/ui/textarea";
 import { postWorkflow } from "@/app/api/v1/_client/client";
 import { toast } from "sonner";
 import { useProjects } from "@/app/_providers/project-provider";
+import { useWorkflows } from "@/app/_providers/workflow-provider";
+import useStore from "@/app/_store/store";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -53,6 +55,12 @@ export function WorkflowDialog({
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const { refetch, addWorkflowOptimistically } = useProjects();
+  const {
+    addWorkflowOptimistically: addWorkflowOptimisticallyToWorkflows,
+    refetch: refetchWorkflows,
+  } = useWorkflows();
+  const currentTeam = useStore((state) => state.currentTeam);
+  const currentOrg = useStore((state) => state.currentOrg);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -82,8 +90,23 @@ export function WorkflowDialog({
       if (response.status === 201) {
         const workflowName = values.name;
 
-        // Optimistically add the workflow to local state for immediate UI update
+        // Optimistically add the workflow to ProjectProvider
         addWorkflowOptimistically(projectId, workflowName);
+
+        // Optimistically add the workflow to WorkflowProvider with temporary data
+        if (currentTeam && currentOrg) {
+          addWorkflowOptimisticallyToWorkflows({
+            name: workflowName,
+            description: values.description,
+            projectId: projectId,
+            projectName: projectName,
+            teamId: currentTeam.id,
+            teamName: currentTeam.name,
+            organizationId: currentOrg.id,
+            memberCount: currentTeam.memberCount,
+            createdAt: new Date().toISOString(),
+          });
+        }
 
         toast.success(response.body.message || "Workflow created successfully");
         form.reset({
@@ -95,7 +118,7 @@ export function WorkflowDialog({
 
         // Refresh in background to ensure data consistency
         setTimeout(async () => {
-          await refetch();
+          await Promise.all([refetch(), refetchWorkflows()]);
         }, 1000);
       } else if (response.status === 400) {
         toast.error(`Error: ${response.body.message}`);

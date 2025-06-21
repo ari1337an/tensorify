@@ -112,7 +112,10 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
             if (!acc[workflow.projectId]) {
               acc[workflow.projectId] = [];
             }
-            acc[workflow.projectId].push(workflow.name);
+            // Check for duplicate workflow names in the same project
+            if (!acc[workflow.projectId].includes(workflow.name)) {
+              acc[workflow.projectId].push(workflow.name);
+            }
             return acc;
           },
           {} as Record<string, string[]>
