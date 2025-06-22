@@ -3,7 +3,6 @@
 import * as React from "react";
 import { SettingsState, defaultSettings } from "../types/settings.types";
 import { SettingsDialog } from "../SettingsDialog";
-import { useTheme } from "next-themes";
 
 interface SettingsContextType {
   settings: SettingsState;
@@ -30,12 +29,6 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] =
     React.useState<SettingsState>(defaultSettings);
   const [isOpen, setIsOpen] = React.useState(false);
-  const { setTheme } = useTheme();
-
-  // Update theme when settings.themePreference changes
-  React.useEffect(() => {
-    setTheme(settings.themePreference);
-  }, [settings.themePreference, setTheme]);
 
   const updateSettings = React.useCallback(
     (key: keyof SettingsState, value: unknown) => {

@@ -1,12 +1,13 @@
 "use client";
 
 import { useSettingsDialog } from "../../context/SettingsContext";
+import { useTheme } from "next-themes";
 
 export function usePreferencesLogic() {
-  const { settings, updateSettings } = useSettingsDialog();
-
+  const { settings } = useSettingsDialog();
+  const { setTheme } = useTheme();
   const handleThemeChange = (value: string) => {
-    updateSettings("themePreference", value);
+    setTheme(value);
   };
 
   return {

@@ -13,6 +13,7 @@ import { useState } from "react";
 import { cn } from "@/app/_lib/utils";
 import { ExportDialog } from "@/app/(application)/(protected)/(enterprise)/_components/dialog/ExportDialog";
 import { ShareDialog } from "@/app/(application)/(protected)/(enterprise)/_components/dialog/ShareDialog";
+import { ThemeToggle } from "@/app/_components/ui/theme-toggle";
 
 // Example collaborators data - in a real app, this would come from your collaboration system
 const collaborators = [
@@ -60,6 +61,8 @@ export function NavbarRight() {
       <div className="mr-2">
         <CollaboratorAvatars collaborators={collaborators} maxVisible={2} />
       </div>
+
+      <ThemeToggle />
 
       <Button
         variant={isLocked ? "destructive" : "ghost"}

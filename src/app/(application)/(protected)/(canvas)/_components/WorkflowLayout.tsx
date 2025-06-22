@@ -1,16 +1,18 @@
 "use client";
 
 import { Workflow } from "@/app/_store/store";
+import { ReactFlow, Background, Controls } from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import { useTheme } from "next-themes";
 
 export function WorkflowLayout({ workflow }: { workflow: Workflow }) {
+  const { theme } = useTheme();
   if (!workflow) return null;
 
-  // beautify the json
   return (
-    <div className="flex flex-col items-center justify-center h-full w-full">
-      <pre>
-        <code>{JSON.stringify(workflow, null, 2)}</code>
-      </pre>
-    </div>
+    <ReactFlow colorMode={theme as "dark" | "light" | "system" || "system"}>
+      <Background />
+      <Controls />
+    </ReactFlow>
   );
 }
