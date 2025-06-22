@@ -1,11 +1,23 @@
 "use client";
 
-import { WorkflowDetails } from "@/app/_components/WorkflowDetails";
+import useStore from "@/app/_store/store";
+import { CanvasContainer } from "./CanvasContainer";
+import WorkflowSkeleton from "./WorkflowSkeleton";
+import { WorkflowLayout } from "./WorkflowLayout";
 
 export function CanvasRoot() {
-  return (
-    <div className="w-full h-[calc(100vh-2.75rem)] bg-background">
-      <WorkflowDetails />
-    </div>
-  );
+  const currentWorkflow = useStore((state) => state.currentWorkflow);
+  if (!currentWorkflow) {
+    return (
+      <CanvasContainer>
+        <WorkflowSkeleton />
+      </CanvasContainer>
+    );
+  } else {
+    return (
+      <CanvasContainer>
+        <WorkflowLayout workflow={currentWorkflow} />
+      </CanvasContainer>
+    );
+  }
 }

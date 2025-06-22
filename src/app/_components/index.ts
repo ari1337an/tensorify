@@ -1,1 +1,1 @@
-export { WorkflowDetails } from "./WorkflowDetails";
+export { WorkflowDetails } from "../(application)/(protected)/(canvas)/_components/WorkflowLayout";
