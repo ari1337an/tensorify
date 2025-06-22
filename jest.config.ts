@@ -69,9 +69,6 @@ const config: Config = {
   // A set of global variables that need to be available in all test environments
   // globals: {},
 
-  // The maximum amount of workers used to run your tests. Can be specified as % or a number. E.g. maxWorkers: 10% will use 10% of your CPU amount + 1 as the maximum worker number. maxWorkers: 2 will use a maximum of 2 workers.
-  // maxWorkers: "50%",
-
   // An array of directory names to be searched recursively up from the requiring module's location
   // moduleDirectories: [
   //   "node_modules"
@@ -140,7 +137,10 @@ const config: Config = {
   // runner: "jest-runner",
 
   // The paths to modules that run some code to configure or set up the testing environment before each test
-  // setupFiles: [],
+  setupFiles: ["./scripts/test/jest-setup.cjs"],
+
+  // The maximum amount of workers used to run your tests. Can be specified as % or a number. E.g. maxWorkers: 10% will use 10% of your CPU amount + 1 as the maximum worker number. maxWorkers: 2 will use a maximum of 2 workers.
+  maxWorkers: "4",
 
   // A list of paths to modules that run some code to configure or set up the testing framework before each test
   // setupFilesAfterEnv: ["./scripts/test/global-beforeEach-testing-setup.cjs"],
@@ -173,6 +173,8 @@ const config: Config = {
 
   // The regexp pattern or array of patterns that Jest uses to detect test files
   // testRegex: [],
+
+  // testTimeout: 50000,
 
   // This option allows the use of a custom results processor
   // testResultsProcessor: undefined,

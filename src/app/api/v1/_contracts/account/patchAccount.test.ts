@@ -77,7 +77,7 @@ describe("PATCH /account", () => {
     await flushDatabase(expect);
 
     // Sign in but don't onboard (so user won't exist in database)
-    const userData = await signInTestAccount(1, false, false);
+    const userData = await signInTestAccount(3, false, false);
 
     const res = await request(server)
       .patch("/account")
@@ -274,8 +274,8 @@ describe("PATCH /account", () => {
     await flushDatabase(expect);
 
     // Create multiple sessions for the same user
-    const userData1 = await signInTestAccount(1, false, false);
-    const _userData2 = await signInTestAccount(1, false, false); // Same user, different session
+    const userData1 = await signInTestAccount(3, false, false);
+    const _userData2 = await signInTestAccount(3, false, false); // Same user, different session
     void _userData2; // Mark as intentionally unused
 
     // Setup user
@@ -354,8 +354,8 @@ describe("PATCH /account", () => {
     await flushDatabase(expect);
 
     // Create multiple sessions
-    const userData1 = await signInTestAccount(1, false, false);
-    const _userData2 = await signInTestAccount(1, false, false); // Same user, different session
+    const userData1 = await signInTestAccount(3, false, false);
+    const _userData2 = await signInTestAccount(3, false, false); // Same user, different session
     void _userData2; // Mark as intentionally unused
 
     // Setup user
@@ -462,9 +462,9 @@ describe("PATCH /account", () => {
     await flushDatabase(expect);
 
     // Create multiple sessions
-    const userData1 = await signInTestAccount(1, false, false);
-    const userData2 = await signInTestAccount(1, false, false);
-    const userData3 = await signInTestAccount(1, false, false);
+    const userData1 = await signInTestAccount(3, false, false);
+    const userData2 = await signInTestAccount(3, false, false);
+    const userData3 = await signInTestAccount(3, false, false);
 
     // Setup user
     const questions = (await request(server).get("/onboarding/questions")).body;

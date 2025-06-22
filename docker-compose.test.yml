@@ -10,3 +10,13 @@ services:
       POSTGRES_USER: prisma
       POSTGRES_PASSWORD: prisma
       POSTGRES_DB: app_test
+    # Create multiple databases for parallel testing
+    command: >
+      sh -c "
+        docker-entrypoint.sh postgres &
+        until pg_isready -h localhost -p 5432 -U prisma; do sleep 1; done
+        for i in \$$(seq 1 10); do
+          createdb -h localhost -p 5432 -U prisma app_test_\$$i || true
+        done
+        wait
+      "

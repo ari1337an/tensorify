@@ -193,6 +193,7 @@ export async function signInTestAccount(
   const botIds = [
     "user_2xLLWhUxEMd1EbDXsfAyfyCFXtE",
     "user_2xdxI5ZwYaOqiDzy0FgQkVdsw5j",
+    "user_2yrUrWZNbmtotmiUDGWFxjEhvbe", // integration_test_bot3; only used for patchAccount.test.ts for session revocation testing
   ]; // integration_test_bot1, integration_test_bot2
 
   const session = await clerkClient.sessions.createSession({
