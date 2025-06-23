@@ -39,7 +39,7 @@ export function Sidebar({ className, ...props }: SidebarProps) {
   return (
     <div
       className={cn(
-        "flex-shrink-0 flex flex-col border-r border-border/50 bg-sidebar backdrop-blur-lg h-screen transition-all duration-300",
+        "z-[100] flex-shrink-0 flex flex-col border-r border-border/50 bg-sidebar backdrop-blur-lg h-screen transition-all duration-300",
         !isOpen && "w-0",
         className
       )}

@@ -40,7 +40,7 @@ export default function WorkflowSkeleton() {
       </div>
 
       {/* Main workflow container, ensuring it stays in front of the grid */}
-      <div className="relative z-10 flex items-center gap-4">
+      <div className="relative z-0 flex items-center gap-4">
         {/* === STARTING ROW: Start Node -> Regular Node === */}
         <Skeleton className="h-16 w-16 rounded-full" />
         <Skeleton className="h-1 w-12" />

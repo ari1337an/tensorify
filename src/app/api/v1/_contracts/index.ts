@@ -8,9 +8,9 @@ import { contract as patchAccountContract, action as patchAccountAction } from "
 import { contract as uploadPortraitContract, action as uploadPortraitAction } from "./account/uploadPortrait";
 import { contract as onboardingQuestionsContract, action as onboardingQuestionsAction } from "./onboarding/onboardingQuestions";
 import { contract as onboardingSetupContract, action as onboardingSetupAction } from "./onboarding/onboardingSetup";
+import { contract as getPermissionsContract, action as getPermissionsAction } from "./permissions/getPermissions";
 import { contract as getOrganizationContract, action as getOrganizationAction } from "./organization/getOrganization";
 import { contract as getOrganizationUsersContract, action as getOrganizationUsersAction } from "./organization/getOrganizationUsers";
-import { contract as getPermissionsContract, action as getPermissionsAction } from "./permissions/getPermissions";
 import { contract as getProjectContract, action as getProjectAction } from "./project/getProject";
 import { contract as postProjectContract, action as postProjectAction } from "./project/postProject";
 import { contract as getRolesContract, action as getRolesAction } from "./roles/getRoles";
@@ -31,9 +31,9 @@ export const contract = c.router({
   uploadPortrait: uploadPortraitContract,
   onboardingQuestions: onboardingQuestionsContract,
   onboardingSetup: onboardingSetupContract,
+  getPermissions: getPermissionsContract,
   getOrganization: getOrganizationContract,
   getOrganizationUsers: getOrganizationUsersContract,
-  getPermissions: getPermissionsContract,
   getProject: getProjectContract,
   postProject: postProjectContract,
   getRoles: getRolesContract,
@@ -55,9 +55,9 @@ export const appRouter = tsr.routerWithMiddleware(contract)<{
   uploadPortrait: uploadPortraitAction,
   onboardingQuestions: onboardingQuestionsAction,
   onboardingSetup: onboardingSetupAction,
+  getPermissions: getPermissionsAction,
   getOrganization: getOrganizationAction,
   getOrganizationUsers: getOrganizationUsersAction,
-  getPermissions: getPermissionsAction,
   getProject: getProjectAction,
   postProject: postProjectAction,
   getRoles: getRolesAction,
