@@ -2,8 +2,8 @@
 
 import useStore from "@/app/_store/store";
 import { CanvasContainer } from "./CanvasContainer";
-import WorkflowSkeleton from "./WorkflowSkeleton";
-import { WorkflowLayout } from "./WorkflowLayout";
+import WorkflowSkeleton from "../_workflow/layout/WorkflowSkeleton";
+import { WorkflowLayout } from "../_workflow/layout/WorkflowLayout";
 
 export function CanvasRoot() {
   const currentWorkflow = useStore((state) => state.currentWorkflow);

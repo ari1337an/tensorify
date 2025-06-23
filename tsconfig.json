@@ -23,7 +23,8 @@
       "@canvas/*": ["./src/app/(protected)/(canvas)/*"],
       "@onboarding/*": ["./src/app/(application)/(onboarding)/*"],
       "@enterprise/*": ["./src/app/(application)/(protected)/(enterprise)/*"],
-      "@app/*": ["./src/app/*"]
+      "@app/*": ["./src/app/*"],
+      "@workflow/*": ["./src/app/(application)/(protected)/(canvas)/_workflow/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
