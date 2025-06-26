@@ -10,8 +10,9 @@ import {
 import "@xyflow/react/dist/style.css";
 import "@workflow/style/flow.css";
 import { useTheme } from "next-themes";
-import CustomControl from "@workflow/layout/controls/CustomControl";
-import useMiniMapFade from "@workflow/layout/hooks/useMiniMapFade";
+import CustomControl from "@workflow/controls/CustomControl";
+import useMiniMapFade from "@workflow/hooks/useMiniMapFade";
+import NodeSearch from "@workflow/components/NodeSearch";
 
 export function WorkflowLayout({ workflow }: { workflow: Workflow }) {
   const { theme } = useTheme();
@@ -30,6 +31,7 @@ export function WorkflowLayout({ workflow }: { workflow: Workflow }) {
     >
       <Background variant={BackgroundVariant.Dots} gap={16} size={2} />
       <CustomControl />
+      <NodeSearch />
       <div
         style={{
           position: "absolute",
