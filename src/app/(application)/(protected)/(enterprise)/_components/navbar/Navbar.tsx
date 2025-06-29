@@ -4,7 +4,7 @@ import { NavbarRight } from "@/app/(application)/(protected)/(enterprise)/_compo
 
 export function Navbar() {
   return (
-    <nav className="bg-background h-11 flex justify-between">
+    <nav className="bg-sidebar border-l border-b border-border h-11 flex justify-between">
       {/* Left side with burger menu & breadcrumb */}
       <NavbarLeft />
 

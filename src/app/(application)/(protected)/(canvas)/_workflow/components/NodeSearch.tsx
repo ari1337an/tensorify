@@ -54,13 +54,13 @@ const SearchBar = ({
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) => (
-  <div className="p-3 sticky top-0 z-10">
+  <div className="px-3 py-1 sticky top-0 z-10">
     <div className="relative">
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
       <Input
         type="search"
         placeholder="Search for a node..."
-        className="w-full pl-9 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground"
+        className="w-full pl-9 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground"
         value={value}
         onChange={onChange}
       />
