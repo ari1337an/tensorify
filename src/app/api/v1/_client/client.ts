@@ -159,24 +159,6 @@ export async function getOrganizationUsers(args: Parameters<typeof client.getOrg
 }
 
 
-export async function getPermissions(args: Parameters<typeof client.getPermissions.contract>[0]): Promise<ReturnType<typeof client.getPermissions.contract>> {
-  const dynamicClient = await getClientWithBaseUrl();
-  return await dynamicClient.getPermissions.contract(args);
-}
-
-
-export async function getProject(args: Parameters<typeof client.getProject.contract>[0]): Promise<ReturnType<typeof client.getProject.contract>> {
-  const dynamicClient = await getClientWithBaseUrl();
-  return await dynamicClient.getProject.contract(args);
-}
-
-
-export async function postProject(args: Parameters<typeof client.postProject.contract>[0]): Promise<ReturnType<typeof client.postProject.contract>> {
-  const dynamicClient = await getClientWithBaseUrl();
-  return await dynamicClient.postProject.contract(args);
-}
-
-
 export async function getRoles(args: Parameters<typeof client.getRoles.contract>[0]): Promise<ReturnType<typeof client.getRoles.contract>> {
   const dynamicClient = await getClientWithBaseUrl();
   return await dynamicClient.getRoles.contract(args);
@@ -192,6 +174,24 @@ export async function patchRole(args: Parameters<typeof client.patchRole.contrac
 export async function postRoles(args: Parameters<typeof client.postRoles.contract>[0]): Promise<ReturnType<typeof client.postRoles.contract>> {
   const dynamicClient = await getClientWithBaseUrl();
   return await dynamicClient.postRoles.contract(args);
+}
+
+
+export async function getPermissions(args: Parameters<typeof client.getPermissions.contract>[0]): Promise<ReturnType<typeof client.getPermissions.contract>> {
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.getPermissions.contract(args);
+}
+
+
+export async function getProject(args: Parameters<typeof client.getProject.contract>[0]): Promise<ReturnType<typeof client.getProject.contract>> {
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.getProject.contract(args);
+}
+
+
+export async function postProject(args: Parameters<typeof client.postProject.contract>[0]): Promise<ReturnType<typeof client.postProject.contract>> {
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.postProject.contract(args);
 }
 
 
