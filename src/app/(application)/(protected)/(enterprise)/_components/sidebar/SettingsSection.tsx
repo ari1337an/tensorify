@@ -32,13 +32,27 @@ export function SettingsSection({
         />
         <MenuItem
           icon={<FileText className="h-4 w-4" />}
-          label="Archive"
+          label={
+            <div className="flex items-center justify-between w-full">
+              <span>Archive</span>
+              <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full ml-2">
+                Coming Soon
+              </span>
+            </div>
+          }
           active={activeItem === "Archive"}
           onClick={() => setActiveItem("Archive")}
         />
         <MenuItem
           icon={<Trash2 className="h-4 w-4" />}
-          label="Trash"
+          label={
+            <div className="flex items-center justify-between w-full">
+              <span>Trash</span>
+              <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full ml-2">
+                Coming Soon
+              </span>
+            </div>
+          }
           active={activeItem === "Trash"}
           onClick={() => setActiveItem("Trash")}
         />

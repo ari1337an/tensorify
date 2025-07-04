@@ -1,14 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { Avatar } from "@/app/_components/ui/avatar";
 import { MenuItem } from "@/app/(application)/(protected)/(enterprise)/_components/sidebar/MenuItem";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/app/_components/ui/collapsible";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, FolderDot, FolderOpenDot, Workflow } from "lucide-react";
 import { ProjectDialog } from "@/app/(application)/(protected)/(enterprise)/_components/dialog";
 import { useProjects } from "@/app/_providers/project-provider";
 import { useWorkflows } from "@/app/_providers/workflow-provider";
@@ -166,10 +165,10 @@ export function ProjectsSection({
                         isOpen ? "rotate-180" : ""
                       }`}
                     />
+                  ) : isOpen ? (
+                    <FolderOpenDot className="h-5 w-5" />
                   ) : (
-                    <Avatar className="h-5 w-5 bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white text-xs">
-                      {project.name[0]}
-                    </Avatar>
+                    <FolderDot className="h-5 w-5" />
                   )}
                 </div>
               }
@@ -192,23 +191,26 @@ export function ProjectsSection({
                   : `fallback-${project.id}-${workflowName}-${index}`;
 
                 return (
-                  <MenuItem
-                    key={uniqueKey}
-                    icon={<div className="w-5" />}
-                    label={workflowName}
-                    active={activeItem === workflowName}
-                    onClick={() =>
-                      handleWorkflowClick(workflowName, project.id)
-                    }
-                  />
+                  <div key={uniqueKey} className="ml-6">
+                    <MenuItem
+                      icon={<Workflow className="h-4 w-4" />}
+                      label={workflowName}
+                      active={activeItem === workflowName}
+                      onClick={() =>
+                        handleWorkflowClick(workflowName, project.id)
+                      }
+                    />
+                  </div>
                 );
               })}
 
               {/* Add workflow button */}
-              <WorkflowDialog
-                projectId={project.id}
-                projectName={project.name}
-              />
+              <div className="ml-6">
+                <WorkflowDialog
+                  projectId={project.id}
+                  projectName={project.name}
+                />
+              </div>
             </div>
           )}
         </CollapsibleContent>

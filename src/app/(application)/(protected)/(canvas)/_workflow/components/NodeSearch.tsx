@@ -140,9 +140,9 @@ export default function NodeSearch() {
           <Button
             variant="outline"
             size="icon"
-            className="size-12 rounded-xl border-border/40 hover:border-primary/30 hover:bg-card shadow-sm hover:shadow-lg transition-all duration-300"
+            className="size-12 rounded-lg ring-1 ring-card-foreground hover:ring-2 hover:ring-primary p-1.5"
           >
-            <Plus className="size-6 text-primary" />
+            <Plus className="size-6 text-white group-hover:text-primary" />
           </Button>
         </SheetTrigger>
         <SheetContent

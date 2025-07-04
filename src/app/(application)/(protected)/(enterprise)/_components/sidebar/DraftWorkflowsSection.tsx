@@ -34,8 +34,14 @@ export function DraftWorkflowsSection() {
           <div className="space-y-1">
             <MenuItem
               icon={<Workflow className="h-4 w-4" />}
-              label="Draft 1"
-              notification
+              label={
+                <div className="flex items-center justify-between w-full">
+                  <span>Draft 1</span>
+                  <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full ml-2">
+                    Coming Soon
+                  </span>
+                </div>
+              }
             />
           </div>
         </CollapsibleContent>

@@ -11,7 +11,7 @@ import { cn } from "@/app/_lib/utils";
 
 type MenuItemProps = {
   icon: React.ReactNode;
-  label: string;
+  label: React.ReactNode;
   active?: boolean;
   collapsed?: boolean;
   notification?: boolean;
@@ -53,7 +53,11 @@ export function MenuItem({
             )}
           </button>
         </TooltipTrigger>
-        {collapsed && <TooltipContent side="right">{label}</TooltipContent>}
+        {collapsed && (
+          <TooltipContent side="right">
+            {typeof label === "string" ? label : "Menu Item"}
+          </TooltipContent>
+        )}
       </Tooltip>
     </TooltipProvider>
   );

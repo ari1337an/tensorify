@@ -34,7 +34,10 @@ export function SidebarFooter() {
             <div className="mr-2 hover:rotate-180 transition-transform duration-300">
               <Gift className="h-4 w-4" />
             </div>
-            Refer and Earn
+            <span className="flex-1">Affiliate</span>
+            <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full ml-2">
+              Coming Soon
+            </span>
           </Button>
         </div>
       </div>
