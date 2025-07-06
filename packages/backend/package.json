@@ -1,0 +1,42 @@
+{
+  "name": "@tensorify.io/backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The backend transpiler endpoint for generating the codes and fetching plugin metadata for Tensorify.",
+  "main": "dist/index.js",
+  "dependencies": {
+    "@tensorify/sdk": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "jest": "^29.0.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "prepublishOnly": "echo 'Error: This package cannot be published' && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlphaWolf-Ventures/backend.tensorify.io.git"
+  },
+  "keywords": [
+    "tensorify",
+    "backend",
+    "transpiler",
+    "api-endpoint",
+    "plugin",
+    "metadata",
+    "restapi",
+    "api"
+  ],
+  "author": "Arian S. Hasan",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/AlphaWolf-Ventures/backend.tensorify.io/issues"
+  },
+  "homepage": "https://github.com/AlphaWolf-Ventures/backend.tensorify.io#readme",
+  "publishConfig": {
+    "access": "restricted"
+  }
+}

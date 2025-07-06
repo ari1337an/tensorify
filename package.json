@@ -1,0 +1,12 @@
+{
+  "name": "backend.tensorify.io",
+  "private": true,
+  "workspaces": [
+    "packages/sdk",
+    "packages/backend"
+  ],
+  "devDependencies": {
+    "turbo": "^2.5.4"
+  },
+  "packageManager": "npm@10.8.1"
+}

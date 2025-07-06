@@ -1,0 +1,39 @@
+# Node.js and npm
+node_modules/
+npm-debug.log
+*.log
+package-lock.json
+
+# Turborepo
+.turbo/
+turbo.log
+
+# Build outputs
+dist/
+build/
+
+# TypeScript
+*.tsbuildinfo
+
+# Testing
+coverage/
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.production
+
+# Editor and OS files
+.DS_Store
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Miscellaneous
+*.bak
+*.tmp

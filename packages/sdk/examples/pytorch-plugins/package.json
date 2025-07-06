@@ -1,0 +1,65 @@
+{
+  "name": "@tensorify/pytorch-plugin",
+  "version": "1.0.0",
+  "description": "Essential PyTorch nodes for Tensorify",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "validate": "tensorify-cli validate",
+    "test-generation": "tensorify-cli test"
+  },
+  "files": [
+    "src/**/*",
+    "manifest.json",
+    "README.md"
+  ],
+  "keywords": [
+    "tensorify",
+    "plugin",
+    "pytorch",
+    "machine-learning",
+    "dataset",
+    "dataloader",
+    "conv2d"
+  ],
+  "author": "Tensorify Team <team@tensorify.io>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tensorify/pytorch-plugin"
+  },
+  "dependencies": {
+    "@tensorify/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.5.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "tensorify": {
+    "plugin": {
+      "nodes": [
+        {
+          "id": "PTDataset",
+          "name": "PyTorch Dataset",
+          "category": "data",
+          "description": "Configurable PyTorch dataset for training"
+        },
+        {
+          "id": "PTDataLoader", 
+          "name": "PyTorch DataLoader",
+          "category": "data",
+          "description": "PyTorch DataLoader for batch processing"
+        },
+        {
+          "id": "PTConv2d",
+          "name": "PyTorch Conv2d Layer",
+          "category": "layers",
+          "description": "2D convolutional layer for feature extraction"
+        }
+      ]
+    }
+  }
+} 

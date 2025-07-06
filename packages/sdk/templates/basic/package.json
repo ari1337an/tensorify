@@ -1,0 +1,19 @@
+{
+  "name": "{{pluginSlug}}",
+  "version": "{{version}}",
+  "description": "{{description}}",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node test.js",
+    "validate": "tensorify-cli validate"
+  },
+  "keywords": [
+    "tensorify",
+    "plugin"
+  ],
+  "author": "{{author}}",
+  "license": "MIT",
+  "dependencies": {
+    "@tensorify/sdk": "^1.0.0"
+  }
+} 
