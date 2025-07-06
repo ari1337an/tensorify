@@ -465,6 +465,7 @@ export const WorkflowVersion = z.object({
   description: z.string().nullable(),
   version: z.string(),
   code: z.record(z.unknown()).or(z.object({})), // JSON object - can be any object structure
+  isLatest: z.boolean(), // Indicates if this is the latest version
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -492,7 +493,7 @@ export const WorkflowListItem = z.object({
   organizationId: UUID,
   memberCount: z.number().int(),
   createdAt: z.string(),
-  latestVersion: WorkflowVersion.nullable(), // Include the latest version
+  version: WorkflowVersion.nullable(), // Include the requested or latest version
 });
 export const WorkflowUserListItem = z.object({
   workflowId: UUID,

@@ -196,21 +196,23 @@ describe("GET /organization/:orgId/workflows", () => {
     expect(defaultWorkflow).toHaveProperty("organizationId");
     expect(defaultWorkflow).toHaveProperty("memberCount");
     expect(defaultWorkflow).toHaveProperty("createdAt");
-    expect(defaultWorkflow).toHaveProperty("latestVersion");
+    expect(defaultWorkflow).toHaveProperty("version");
     expect(defaultWorkflow.organizationId).toBe(orgId);
 
     // Verify the latest version structure (created during onboarding)
-    expect(defaultWorkflow.latestVersion).toBeDefined();
-    expect(defaultWorkflow.latestVersion).toHaveProperty("id");
-    expect(defaultWorkflow.latestVersion).toHaveProperty("summary");
-    expect(defaultWorkflow.latestVersion).toHaveProperty("description");
-    expect(defaultWorkflow.latestVersion).toHaveProperty("version");
-    expect(defaultWorkflow.latestVersion).toHaveProperty("code");
-    expect(defaultWorkflow.latestVersion).toHaveProperty("createdAt");
-    expect(defaultWorkflow.latestVersion).toHaveProperty("updatedAt");
-    expect(defaultWorkflow.latestVersion.summary).toBe("Initial Commit");
-    expect(defaultWorkflow.latestVersion.version).toBe("1.0.0");
-    expect(defaultWorkflow.latestVersion.code).toEqual({});
+    expect(defaultWorkflow.version).toBeDefined();
+    expect(defaultWorkflow.version).toHaveProperty("id");
+    expect(defaultWorkflow.version).toHaveProperty("summary");
+    expect(defaultWorkflow.version).toHaveProperty("description");
+    expect(defaultWorkflow.version).toHaveProperty("version");
+    expect(defaultWorkflow.version).toHaveProperty("code");
+    expect(defaultWorkflow.version).toHaveProperty("isLatest");
+    expect(defaultWorkflow.version).toHaveProperty("createdAt");
+    expect(defaultWorkflow.version).toHaveProperty("updatedAt");
+    expect(defaultWorkflow.version.summary).toBe("Initial Commit");
+    expect(defaultWorkflow.version.version).toBe("1.0.0");
+    expect(defaultWorkflow.version.code).toEqual({});
+    expect(defaultWorkflow.version.isLatest).toBe(true);
 
     await revokeSession(sessionId);
   });
@@ -245,16 +247,17 @@ describe("GET /organization/:orgId/workflows", () => {
     expect(firstWorkflow).toHaveProperty("organizationId");
     expect(firstWorkflow).toHaveProperty("memberCount");
     expect(firstWorkflow).toHaveProperty("createdAt");
-    expect(firstWorkflow).toHaveProperty("latestVersion");
+    expect(firstWorkflow).toHaveProperty("version");
     expect(firstWorkflow.organizationId).toBe(orgId);
     expect(typeof firstWorkflow.projectName).toBe("string");
     expect(typeof firstWorkflow.teamName).toBe("string");
 
     // Verify all workflows have latest versions
     res.body.items.forEach((workflow: z.infer<typeof WorkflowListItem>) => {
-      expect(workflow.latestVersion).toBeDefined();
-      expect(workflow.latestVersion?.version).toBe("1.0.0");
-      expect(workflow.latestVersion?.summary).toBe("Initial Commit");
+      expect(workflow.version).toBeDefined();
+      expect(workflow.version?.version).toBe("1.0.0");
+      expect(workflow.version?.summary).toBe("Initial Commit");
+      expect(workflow.version?.isLatest).toBe(true);
     });
 
     await revokeSession(sessionId);
@@ -607,18 +610,208 @@ describe("GET /organization/:orgId/workflows", () => {
 
     // Find the workflow without version
     const workflowWithoutVersionInResponse = res.body.items.find(
-      (w: z.infer<typeof WorkflowListItem>) => w.id === workflowWithoutVersion.id
+      (w: z.infer<typeof WorkflowListItem>) =>
+        w.id === workflowWithoutVersion.id
     );
     expect(workflowWithoutVersionInResponse).toBeDefined();
-    expect(workflowWithoutVersionInResponse.latestVersion).toBeNull();
+    expect(workflowWithoutVersionInResponse.version).toBeNull();
 
     // Verify the default workflow still has a version
     const defaultWorkflow = res.body.items.find(
-      (w: z.infer<typeof WorkflowListItem>) => w.id !== workflowWithoutVersion.id
+      (w: z.infer<typeof WorkflowListItem>) =>
+        w.id !== workflowWithoutVersion.id
     );
     expect(defaultWorkflow).toBeDefined();
-    expect(defaultWorkflow.latestVersion).toBeDefined();
-    expect(defaultWorkflow.latestVersion?.version).toBe("1.0.0");
+    expect(defaultWorkflow.version).toBeDefined();
+    expect(defaultWorkflow.version?.version).toBe("1.0.0");
+    expect(defaultWorkflow.version?.isLatest).toBe(true);
+
+    await revokeSession(sessionId);
+  });
+
+  it("should return specific version when version parameter is provided", async () => {
+    await flushDatabase(expect);
+    const { jwt, sessionId, orgId, projectId } = await setupUserAndOrg(1);
+
+    // Create a workflow with multiple versions
+    const workflow = await db.$transaction(async (tx) => {
+      const newWorkflow = await tx.workflow.create({
+        data: {
+          name: "Multi-version Workflow",
+          description: "Testing version retrieval",
+          projectId: projectId,
+        },
+      });
+
+      // Create version 1.0.0
+      await tx.workflowVersion.create({
+        data: {
+          summary: "Initial version",
+          description: "First version",
+          version: "1.0.0",
+          code: { step1: "initial" },
+          workflowId: newWorkflow.id,
+        },
+      });
+
+      // Create version 2.0.0
+      await tx.workflowVersion.create({
+        data: {
+          summary: "Major update",
+          description: "Second version",
+          version: "2.0.0",
+          code: { step1: "updated", step2: "new" },
+          workflowId: newWorkflow.id,
+        },
+      });
+
+      // Create version 1.1.0 (should not be the latest)
+      await tx.workflowVersion.create({
+        data: {
+          summary: "Minor update",
+          description: "Patch version",
+          version: "1.1.0",
+          code: { step1: "patched" },
+          workflowId: newWorkflow.id,
+        },
+      });
+
+      return newWorkflow;
+    });
+
+    // Test getting specific version 1.0.0
+    const resSpecific = await request(server)
+      .get(`/organization/${orgId}/workflows?version=1.0.0`)
+      .set("Authorization", `Bearer ${jwt}`);
+
+    expect(resSpecific.status).toBe(200);
+
+    // Find the workflow with multiple versions
+    const workflowItem = resSpecific.body.items.find(
+      (item: any) => item.id === workflow.id
+    );
+
+    expect(workflowItem).toBeDefined();
+    expect(workflowItem.version).toBeDefined();
+    expect(workflowItem.version.version).toBe("1.0.0");
+    expect(workflowItem.version.summary).toBe("Initial version");
+    expect(workflowItem.version.code).toEqual({ step1: "initial" });
+    expect(workflowItem.version.isLatest).toBe(false); // 1.0.0 is not the latest when 2.0.0 exists
+
+    await revokeSession(sessionId);
+  });
+
+  it("should return latest semantic version when no version parameter is provided", async () => {
+    await flushDatabase(expect);
+    const { jwt, sessionId, orgId, projectId } = await setupUserAndOrg(1);
+
+    // Create a workflow with multiple versions in non-chronological order
+    const workflow = await db.$transaction(async (tx) => {
+      const newWorkflow = await tx.workflow.create({
+        data: {
+          name: "Semantic Version Test",
+          description: "Testing semantic version ordering",
+          projectId: projectId,
+        },
+      });
+
+      // Create versions in non-sequential order to test semantic ordering
+      await tx.workflowVersion.create({
+        data: {
+          summary: "Version 1.0.0",
+          description: "First version",
+          version: "1.0.0",
+          code: { v: "1.0.0" },
+          workflowId: newWorkflow.id,
+        },
+      });
+
+      await tx.workflowVersion.create({
+        data: {
+          summary: "Version 10.0.0",
+          description: "Major version jump",
+          version: "10.0.0",
+          code: { v: "10.0.0" },
+          workflowId: newWorkflow.id,
+        },
+      });
+
+      await tx.workflowVersion.create({
+        data: {
+          summary: "Version 2.1.0",
+          description: "Minor update",
+          version: "2.1.0",
+          code: { v: "2.1.0" },
+          workflowId: newWorkflow.id,
+        },
+      });
+
+      return newWorkflow;
+    });
+
+    // Test getting latest version (should be 10.0.0)
+    const res = await request(server)
+      .get(`/organization/${orgId}/workflows`)
+      .set("Authorization", `Bearer ${jwt}`);
+
+    expect(res.status).toBe(200);
+
+    // Find the workflow with multiple versions
+    const workflowItem = res.body.items.find(
+      (item: any) => item.id === workflow.id
+    );
+
+    expect(workflowItem).toBeDefined();
+    expect(workflowItem.version).toBeDefined();
+    expect(workflowItem.version.version).toBe("10.0.0");
+    expect(workflowItem.version.summary).toBe("Version 10.0.0");
+    expect(workflowItem.version.code).toEqual({ v: "10.0.0" });
+    expect(workflowItem.version.isLatest).toBe(true); // 10.0.0 is the latest version
+
+    await revokeSession(sessionId);
+  });
+
+  it("should return null version when requested version does not exist", async () => {
+    await flushDatabase(expect);
+    const { jwt, sessionId, orgId, projectId } = await setupUserAndOrg(1);
+
+    // Create a workflow with only version 1.0.0
+    const workflow = await db.$transaction(async (tx) => {
+      const newWorkflow = await tx.workflow.create({
+        data: {
+          name: "Single Version Workflow",
+          description: "Testing non-existent version",
+          projectId: projectId,
+        },
+      });
+
+      await tx.workflowVersion.create({
+        data: {
+          summary: "Only version",
+          description: "Only version available",
+          version: "1.0.0",
+          code: {},
+          workflowId: newWorkflow.id,
+        },
+      });
+
+      return newWorkflow;
+    });
+
+    // Request non-existent version
+    const res = await request(server)
+      .get(`/organization/${orgId}/workflows?version=2.0.0`)
+      .set("Authorization", `Bearer ${jwt}`);
+
+    expect(res.status).toBe(200);
+
+    // Find the workflow
+    const workflowItem = res.body.items.find(
+      (item: any) => item.id === workflow.id
+    );
+
+    expect(workflowItem).toBeDefined();
+    expect(workflowItem.version).toBeNull();
 
     await revokeSession(sessionId);
   });

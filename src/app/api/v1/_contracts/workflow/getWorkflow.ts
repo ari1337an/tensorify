@@ -23,6 +23,22 @@ import db from "@/server/database/db";
 
 extendZodWithOpenApi(z);
 
+// Helper function to compare semantic versions (e.g., "1.0.0", "2.1.0", "10.0.0")
+function compareVersions(a: string, b: string): number {
+  const aParts = a.split(".").map(Number);
+  const bParts = b.split(".").map(Number);
+
+  for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+    const aPart = aParts[i] || 0;
+    const bPart = bParts[i] || 0;
+
+    if (aPart > bPart) return -1; // a is greater (newer)
+    if (aPart < bPart) return 1; // b is greater (newer)
+  }
+
+  return 0; // versions are equal
+}
+
 export const contract = c.router(
   {
     contract: {
@@ -34,6 +50,7 @@ export const contract = c.router(
       query: z.object({
         page: Page.optional(),
         limit: Size.optional(),
+        version: z.string().optional(), // Optional version filter for specific version
       }),
       responses: {
         200: WorkflowListResponse,
@@ -48,7 +65,7 @@ export const contract = c.router(
       },
       summary: "List all workflows in an organization",
       description:
-        "List all workflows in an organization with pagination, including project information.",
+        "List all workflows in an organization with pagination, including project information and workflow versions. Use 'version' query parameter to filter for a specific version, otherwise returns the latest version.",
     },
   },
   {
@@ -70,6 +87,7 @@ export const action = {
       query,
     }: ContractRequest): Promise<ContractResponse> => {
       const { orgId } = params;
+      const { version } = query;
       const page = query.page || 1;
       const limit = query.limit || 20;
       const skip = (page - 1) * limit;
@@ -86,7 +104,7 @@ export const action = {
         });
       }
 
-      // Get workflows with project and team information, member count, and latest version
+      // Get workflows with project and team information, member count, and version(s)
       const [workflows, totalCount] = await Promise.all([
         db.workflow.findMany({
           where: {
@@ -109,8 +127,7 @@ export const action = {
               },
             },
             versions: {
-              orderBy: { createdAt: "desc" },
-              take: 1, // Get only the latest version
+              // Always get all versions to determine isLatest properly
             },
             _count: {
               select: { members: true },
@@ -132,7 +149,30 @@ export const action = {
       ]);
 
       const items = workflows.map((workflow) => {
-        const latestVersion = workflow.versions[0] || null;
+        let selectedVersion = null;
+        let isLatest = false;
+
+        if (workflow.versions.length > 0) {
+          // Find the latest version by semantic version number
+          const latestVersion = workflow.versions.sort((a, b) =>
+            compareVersions(a.version, b.version)
+          )[0];
+
+          if (version) {
+            // If specific version requested, find it in the versions array
+            selectedVersion =
+              workflow.versions.find((v) => v.version === version) || null;
+            // Check if the requested version is the latest
+            isLatest = selectedVersion
+              ? selectedVersion.version === latestVersion.version
+              : false;
+          } else {
+            // No specific version requested, use the latest
+            selectedVersion = latestVersion;
+            isLatest = true; // This is by definition the latest version
+          }
+        }
+
         return {
           id: workflow.id,
           name: workflow.name,
@@ -144,15 +184,16 @@ export const action = {
           organizationId: workflow.project.team.orgId,
           memberCount: workflow._count.members,
           createdAt: workflow.createdAt.toISOString(),
-          latestVersion: latestVersion
+          version: selectedVersion
             ? {
-                id: latestVersion.id,
-                summary: latestVersion.summary,
-                description: latestVersion.description,
-                version: latestVersion.version,
-                code: (latestVersion.code as Record<string, unknown>) || {},
-                createdAt: latestVersion.createdAt.toISOString(),
-                updatedAt: latestVersion.updatedAt.toISOString(),
+                id: selectedVersion.id,
+                summary: selectedVersion.summary,
+                description: selectedVersion.description,
+                version: selectedVersion.version,
+                code: (selectedVersion.code as Record<string, unknown>) || {},
+                isLatest: isLatest,
+                createdAt: selectedVersion.createdAt.toISOString(),
+                updatedAt: selectedVersion.updatedAt.toISOString(),
               }
             : null,
         };
