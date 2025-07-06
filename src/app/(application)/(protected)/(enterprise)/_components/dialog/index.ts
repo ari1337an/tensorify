@@ -5,3 +5,4 @@ export { WorkflowDialog } from "./WorkflowDialog";
 export { ExportDialog } from "./ExportDialog";
 export { ShareDialog } from "./ShareDialog";
 export { InstallPluginDialog } from "./InstallPluginDialog";
+export { PluginManagementDialog } from "./PluginManagementDialog";
