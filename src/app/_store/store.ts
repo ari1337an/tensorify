@@ -30,6 +30,26 @@ type Team = {
   createdAt: string;
 };
 
+type WorkflowVersion = {
+  id: string;
+  summary: string;
+  description: string | null;
+  version: string;
+  code: Record<string, unknown>;
+  isLatest: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type WorkflowVersionSummary = {
+  id: string;
+  summary: string;
+  version: string;
+  isLatest: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 type Workflow = {
   id: string;
   name: string;
@@ -41,6 +61,8 @@ type Workflow = {
   organizationId: string;
   memberCount: number;
   createdAt: string;
+  version: WorkflowVersion | null;
+  allVersions: WorkflowVersionSummary[];
 };
 
 interface StoreState {
@@ -56,6 +78,7 @@ interface StoreState {
   setTeams: (teams: Team[]) => void;
   currentWorkflow: Workflow | null;
   setCurrentWorkflow: (workflow: Workflow | null) => void;
+  fetchWorkflows: () => Promise<void>;
 }
 
 const useStore = create<StoreState>()(
@@ -86,6 +109,13 @@ const useStore = create<StoreState>()(
       currentWorkflow: null,
       setCurrentWorkflow: (workflow: Workflow | null) =>
         set({ currentWorkflow: workflow }, undefined, "setCurrentWorkflow"),
+      fetchWorkflows: async () => {
+        // This method should be implemented by the workflow provider
+        // For now, it's a placeholder to satisfy the interface
+        console.log(
+          "fetchWorkflows called - should be implemented by provider"
+        );
+      },
     }),
     { name: "AppStore" }
   )

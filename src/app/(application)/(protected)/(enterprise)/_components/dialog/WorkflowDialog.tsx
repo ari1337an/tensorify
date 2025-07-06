@@ -105,6 +105,8 @@ export function WorkflowDialog({
             organizationId: currentOrg.id,
             memberCount: currentTeam.memberCount,
             createdAt: new Date().toISOString(),
+            version: null, // No version yet
+            allVersions: [], // Empty versions array
           });
         }
 

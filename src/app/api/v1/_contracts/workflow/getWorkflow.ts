@@ -173,6 +173,24 @@ export const action = {
           }
         }
 
+        // Create allVersions array with limited fields
+        const allVersions = workflow.versions
+          .sort((a, b) => compareVersions(a.version, b.version))
+          .map((v) => ({
+            id: v.id,
+            summary: v.summary,
+            version: v.version,
+            isLatest:
+              v.version ===
+              (workflow.versions.length > 0
+                ? workflow.versions.sort((a, b) =>
+                    compareVersions(a.version, b.version)
+                  )[0].version
+                : false),
+            createdAt: v.createdAt.toISOString(),
+            updatedAt: v.updatedAt.toISOString(),
+          }));
+
         return {
           id: workflow.id,
           name: workflow.name,
@@ -196,6 +214,7 @@ export const action = {
                 updatedAt: selectedVersion.updatedAt.toISOString(),
               }
             : null,
+          allVersions: allVersions,
         };
       });
 

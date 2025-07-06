@@ -13,7 +13,12 @@ import { useState } from "react";
 import { cn } from "@/app/_lib/utils";
 import { ExportDialog } from "@/app/(application)/(protected)/(enterprise)/_components/dialog/ExportDialog";
 import { ShareDialog } from "@/app/(application)/(protected)/(enterprise)/_components/dialog/ShareDialog";
+import { CreateVersionDialog } from "@/app/(application)/(protected)/(enterprise)/_components/dialog/CreateVersionDialog";
 import { ThemeToggle } from "@/app/_components/ui/theme-toggle";
+import { VersionSelector } from "./VersionSelector";
+import useStore from "@/app/_store/store";
+import { postWorkflowVersion } from "@/app/api/v1/_client/client";
+import { toast } from "sonner";
 
 // Example collaborators data - in a real app, this would come from your collaboration system
 const collaborators = [
@@ -48,16 +53,69 @@ const collaborators = [
 ];
 
 export function NavbarRight() {
+  const { currentWorkflow, fetchWorkflows } = useStore();
   const [isLocked, setIsLocked] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [isCreateVersionModalOpen, setIsCreateVersionModalOpen] =
+    useState(false);
+  const [isCreatingVersion, setIsCreatingVersion] = useState(false);
 
   const toggleLock = () => {
     setIsLocked((prev) => !prev);
   };
 
+  const handleCreateNewVersion = () => {
+    setIsCreateVersionModalOpen(true);
+  };
+
+  const handleVersionCreate = async (data: {
+    version: string;
+    summary: string;
+    description?: string;
+  }) => {
+    if (!currentWorkflow?.id) {
+      toast.error("No workflow selected. Please select a workflow first.");
+      return;
+    }
+
+    setIsCreatingVersion(true);
+
+    try {
+      const response = await postWorkflowVersion({
+        params: { workflowId: currentWorkflow.id },
+        body: {
+          version: data.version,
+          summary: data.summary,
+          description: data.description,
+        },
+      });
+
+            if (response.status === 201) {
+        toast.success("New version created successfully!");
+        
+        // Refresh the workflow data to get the updated versions
+        await fetchWorkflows();
+        
+        setIsCreateVersionModalOpen(false);
+      } else {
+        toast.error(response.body.message || "Failed to create version");
+      }
+    } catch (error) {
+      console.error("Error creating version:", error);
+      toast.error("An unexpected error occurred while creating the version.");
+    } finally {
+      setIsCreatingVersion(false);
+    }
+  };
+
   return (
     <div className="flex items-center gap-2 px-3 shrink-0">
+      <VersionSelector
+        onCreateNewVersion={handleCreateNewVersion}
+        className="mr-1"
+      />
+
       <div className="mr-2">
         <CollaboratorAvatars collaborators={collaborators} maxVisible={2} />
       </div>
@@ -113,6 +171,14 @@ export function NavbarRight() {
       <ShareDialog
         isOpen={isShareDialogOpen}
         onClose={() => setIsShareDialogOpen(false)}
+      />
+
+      <CreateVersionDialog
+        isOpen={isCreateVersionModalOpen}
+        onClose={() => setIsCreateVersionModalOpen(false)}
+        onCreateVersion={handleVersionCreate}
+        currentVersion={currentWorkflow?.version?.version || "1.0.0"}
+        isLoading={isCreatingVersion}
       />
     </div>
   );

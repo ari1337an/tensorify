@@ -24,9 +24,11 @@
       "@onboarding/*": ["./src/app/(application)/(onboarding)/*"],
       "@enterprise/*": ["./src/app/(application)/(protected)/(enterprise)/*"],
       "@app/*": ["./src/app/*"],
-      "@workflow/*": ["./src/app/(application)/(protected)/(canvas)/_workflow/*"]
+      "@workflow/*": [
+        "./src/app/(application)/(protected)/(canvas)/_workflow/*"
+      ]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "**/_deprecated_src/**"]
 }

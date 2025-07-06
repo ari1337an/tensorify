@@ -4,19 +4,11 @@ import * as React from "react";
 import { getWorkflow } from "@/app/api/v1/_client/client";
 import useStore from "@/app/_store/store";
 
-// Types based on API responses
-type WorkflowData = {
-  id: string;
-  name: string;
-  description: string;
-  projectId: string;
-  projectName: string;
-  teamId: string;
-  teamName: string;
-  organizationId: string;
-  memberCount: number;
-  createdAt: string;
-};
+// Import the exact type from the store
+import type { Workflow } from "@/app/_store/store";
+
+// Types based on API responses - use the same type as the store
+type WorkflowData = Workflow;
 
 interface WorkflowContextType {
   workflows: WorkflowData[];
@@ -50,9 +42,7 @@ export function WorkflowProvider({ children }: WorkflowProviderProps) {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  const currentOrg = useStore((state) => state.currentOrg);
-  const currentTeam = useStore((state) => state.currentTeam);
-  const setCurrentWorkflow = useStore((state) => state.setCurrentWorkflow);
+  const { currentOrg, currentTeam, setCurrentWorkflow } = useStore();
 
   const fetchWorkflows = React.useCallback(async () => {
     if (!currentOrg?.id || !currentTeam?.id) {
@@ -112,6 +102,11 @@ export function WorkflowProvider({ children }: WorkflowProviderProps) {
     }
   }, [currentOrg?.id, currentTeam?.id, setCurrentWorkflow]);
 
+  // Update the store's fetchWorkflows method
+  React.useEffect(() => {
+    useStore.setState({ fetchWorkflows });
+  }, [fetchWorkflows]);
+
   // Fetch workflows when organization or team changes
   React.useEffect(() => {
     fetchWorkflows();
@@ -138,6 +133,8 @@ export function WorkflowProvider({ children }: WorkflowProviderProps) {
         organizationId: workflowData.organizationId,
         memberCount: workflowData.memberCount,
         createdAt: workflowData.createdAt || new Date().toISOString(),
+        version: workflowData.version || null,
+        allVersions: workflowData.allVersions || [],
       };
 
       setWorkflows((prevWorkflows) => [...prevWorkflows, optimisticWorkflow]);

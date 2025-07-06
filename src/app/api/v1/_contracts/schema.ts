@@ -482,6 +482,15 @@ export const CreateWorkflowRequest = z.object({
   projectId: z.string().uuid({ message: "Invalid project ID format." }),
 });
 
+export const WorkflowVersionSummary = z.object({
+  id: UUID,
+  summary: z.string(),
+  version: z.string(),
+  isLatest: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
 export const WorkflowListItem = z.object({
   id: UUID,
   name: z.string(),
@@ -494,6 +503,7 @@ export const WorkflowListItem = z.object({
   memberCount: z.number().int(),
   createdAt: z.string(),
   version: WorkflowVersion.nullable(), // Include the requested or latest version
+  allVersions: z.array(WorkflowVersionSummary), // All versions with limited fields
 });
 export const WorkflowUserListItem = z.object({
   workflowId: UUID,
