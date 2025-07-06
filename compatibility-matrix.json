@@ -1,0 +1,46 @@
+{
+    "version": "1.0.0",
+    "lastUpdated": "2025-07-07T10:00:00Z",
+    "compatibilityMatrix": {
+      "current": {
+        "api": "v1",
+        "transpiler": "v1",
+        "sdk": "0.0.1",
+        "pluginEngine": "0.0.1"
+      },
+      "supported": [
+        {
+          "api": "v1",
+          "transpiler": "0.0.1",
+          "sdk": "0.0.1",
+          "pluginEngine": "0.0.1",
+          "status": "stable",
+          "endOfLife": null,
+          "description": "Initial beta release"
+        }
+      ],
+      "deprecated": [],
+      "incompatible": []
+    },
+    "rules": {
+      "sdkCompatibility": {
+        "v1": ["0.0.1"]
+      },
+      "apiBackwardCompatibility": {
+        "v1": {
+          "minTranspiler": "0.0.1",
+          "maxTranspiler": "0.0.1"
+        }
+      }
+    },
+    "migration": {
+      "paths": [
+        {
+          "from": { "api": "v1", "transpiler": "v1", "sdk": "0.0.1" },
+          "to": { "api": "v1", "transpiler": "v1", "sdk": "0.0.1" },
+          "breaking": false,
+          "steps": ["Update transpiler", "Test plugins", "Deploy"]
+        }
+      ]
+    }
+  }

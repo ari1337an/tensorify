@@ -2,8 +2,11 @@
   "name": "backend.tensorify.io",
   "private": true,
   "workspaces": [
-    "packages/sdk",
-    "packages/backend"
+    "packages/sdk/v1",
+    "packages/plugin-engine",
+    "packages/shared",
+    "packages/transpiler",
+    "services/api/v1"
   ],
   "devDependencies": {
     "turbo": "^2.5.4"

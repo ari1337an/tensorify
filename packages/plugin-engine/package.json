@@ -1,0 +1,12 @@
+{
+  "name": "@tensorify.io/plugin-engine",
+  "version": "0.0.1",
+  "private": true,
+  "description": "The secure runtime that loads and executes your community plugins safely.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

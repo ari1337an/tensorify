@@ -1,11 +1,11 @@
 {
-  "name": "@tensorify.io/backend",
+  "name": "@tensorify.io/backend-api-v1",
   "version": "1.0.0",
   "private": true,
   "description": "The backend transpiler endpoint for generating the codes and fetching plugin metadata for Tensorify.",
   "main": "dist/index.js",
   "dependencies": {
-    "@tensorify/sdk": "*"
+    "@tensorify.io/sdk": "*"
   },
   "devDependencies": {
     "typescript": "^5.0.0",
