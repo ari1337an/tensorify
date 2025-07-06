@@ -458,6 +458,17 @@ export const Workflow = z.object({
   description: z.string(),
   projectId: UUID,
 });
+
+export const WorkflowVersion = z.object({
+  id: UUID,
+  summary: z.string(),
+  description: z.string().nullable(),
+  version: z.string(),
+  code: z.record(z.unknown()).or(z.object({})), // JSON object - can be any object structure
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
 export const CreateWorkflowRequest = z.object({
   name: z
     .string()
@@ -469,6 +480,7 @@ export const CreateWorkflowRequest = z.object({
     .max(500, { message: "Description must be less than 500 characters." }),
   projectId: z.string().uuid({ message: "Invalid project ID format." }),
 });
+
 export const WorkflowListItem = z.object({
   id: UUID,
   name: z.string(),
@@ -480,6 +492,7 @@ export const WorkflowListItem = z.object({
   organizationId: UUID,
   memberCount: z.number().int(),
   createdAt: z.string(),
+  latestVersion: WorkflowVersion.nullable(), // Include the latest version
 });
 export const WorkflowUserListItem = z.object({
   workflowId: UUID,

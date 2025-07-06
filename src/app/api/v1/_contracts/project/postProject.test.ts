@@ -457,6 +457,10 @@ describe("POST /project", () => {
     });
 
     for (const project of projects) {
+      await db.workflowVersion.deleteMany({
+        where: { workflow: { projectId: project.id } },
+      });
+
       await db.workflow.deleteMany({
         where: { projectId: project.id },
       });

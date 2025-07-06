@@ -61,6 +61,65 @@ afterAll(async () => {
 });
 
 describe("POST /onboarding/setup", () => {
+  it("should not create any records if organization already exists (atomicity test)", async () => {
+    await flushDatabase(expect);
+
+    // Sign in test account
+    const clerkData = await signInTestAccount(1);
+
+    // Prepare request body
+    const requestBody = await generateRequestBody();
+
+    // Pre-create a user and organization with the same slug to force a conflict
+    await db.user.create({
+      data: {
+        id: clerkData.decoded.sub,
+        firstName: clerkData.decoded.firstName,
+        lastName: clerkData.decoded.lastName,
+        email: clerkData.decoded.email,
+        imageUrl: clerkData.decoded.imageUrl,
+      },
+    });
+
+    await db.organization.create({
+      data: {
+        slug: requestBody.orgUrl,
+        name: "Existing Organization",
+        createdById: clerkData.decoded.sub,
+      },
+    });
+
+    // Count existing records before the failed attempt
+    const initialOrgCount = await db.organization.count();
+    const initialTeamCount = await db.team.count();
+    const initialProjectCount = await db.project.count();
+    const initialWorkflowCount = await db.workflow.count();
+    const initialVersionCount = await db.workflowVersion.count();
+
+    // Attempt onboarding with duplicate org slug
+    const res = await request(server)
+      .post("/onboarding/setup")
+      .send(requestBody)
+      .set("Authorization", `Bearer ${clerkData.jwt}`);
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("Organization already exists");
+
+    // Verify no additional records were created (transaction rolled back)
+    const finalOrgCount = await db.organization.count();
+    const finalTeamCount = await db.team.count();
+    const finalProjectCount = await db.project.count();
+    const finalWorkflowCount = await db.workflow.count();
+    const finalVersionCount = await db.workflowVersion.count();
+
+    // User might be created/updated due to upsert, but other counts should remain the same
+    expect(finalOrgCount).toBe(initialOrgCount); // Should still be 1 (the pre-existing one)
+    expect(finalTeamCount).toBe(initialTeamCount);
+    expect(finalProjectCount).toBe(initialProjectCount);
+    expect(finalWorkflowCount).toBe(initialWorkflowCount);
+    expect(finalVersionCount).toBe(initialVersionCount);
+  });
+
   it("should return 201 OK with Correct Bearer Token", async () => {
     // Clear database beforehand
     await flushDatabase(expect);
@@ -209,12 +268,25 @@ describe("POST /onboarding/setup", () => {
     // Expect the workflow to be created
     const workflow = await db.workflow.findUnique({
       where: { id: parsedResponseBody.data.workflowId },
+      include: { versions: true },
     });
     expect(workflow).toBeDefined();
     expect(workflow?.name).toBe(
       `${clerkData.decoded.firstName.split(" ")[0]}'s Workflow`
     );
     expect(workflow?.projectId).toBe(parsedResponseBody.data.projectId);
+
+    // Expect the workflow version to be created
+    expect(workflow?.versions).toHaveLength(1);
+    const workflowVersion = workflow?.versions[0];
+    expect(workflowVersion).toBeDefined();
+    expect(workflowVersion?.summary).toBe("Initial Commit");
+    expect(workflowVersion?.description).toBe(
+      `Default workflow for ${clerkData.decoded.firstName.split(" ")[0]}'s project`
+    );
+    expect(workflowVersion?.version).toBe("1.0.0");
+    expect(workflowVersion?.code).toEqual({});
+    expect(workflowVersion?.workflowId).toBe(workflow?.id);
 
     // Check if the onboarding response is created
     const controlsOrgSizeBracketMapper = {

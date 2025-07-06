@@ -139,6 +139,7 @@ export const action = {
               },
             });
 
+            // Create workflow and its initial version atomically
             workflow = await tx.workflow.create({
               data: {
                 name: `${firstName.split(" ")[0]}'s Workflow`,
@@ -148,6 +149,17 @@ export const action = {
                     id: project.id,
                   },
                 },
+              },
+            });
+
+            // Create the initial workflow version
+            await tx.workflowVersion.create({
+              data: {
+                summary: "Initial Commit",
+                description: `Default workflow for ${firstName.split(" ")[0]}'s project`,
+                version: "1.0.0",
+                code: {}, // empty JSON object
+                workflowId: workflow.id,
               },
             });
           },

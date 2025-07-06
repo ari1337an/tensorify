@@ -123,14 +123,31 @@ model Project {
 }
 
 model Workflow {
-  id        String  @id @default(uuid())
-  name      String
+  id          String            @id @default(uuid())
+  name        String
   description String
-  project   Project @relation("ProjectWorkflows", fields: [projectId], references: [id])
-  projectId String
+  versions    WorkflowVersion[] @relation("WorkflowVersions")
+  project     Project           @relation("ProjectWorkflows", fields: [projectId], references: [id])
+  projectId   String
 
   members User[] @relation("WorkflowMembers")
   roles   Role[] @relation("WorkflowRoles")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WorkflowVersion {
+  id          String   @id @default(uuid())
+
+  // Version metadata
+  summary     String
+  description String?
+  version     String   @default("1.0.0")
+  code        Json     @default("{}")
+
+  workflow    Workflow @relation("WorkflowVersions", fields: [workflowId], references: [id])
+  workflowId  String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

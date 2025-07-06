@@ -82,13 +82,27 @@ export const action = {
           });
         }
 
-        // Create the workflow
-        await db.workflow.create({
-          data: {
-            name: body.name,
-            description: body.description,
-            projectId: projectId,
-          },
+        // Create the workflow and its initial version atomically
+        await db.$transaction(async (tx) => {
+          // 1️⃣ create the workflow
+          const workflow = await tx.workflow.create({
+            data: {
+              name: body.name,
+              description: body.description,
+              projectId,
+            },
+          });
+
+          // 2️⃣ create the initial version
+          await tx.workflowVersion.create({
+            data: {
+              summary: "Initial Commit",
+              description: body.description,
+              version: "1.0.0",
+              code: {}, // empty JSON object
+              workflowId: workflow.id,
+            },
+          });
         });
 
         return {

@@ -86,7 +86,7 @@ export const action = {
         });
       }
 
-      // Get workflows with project and team information and member count
+      // Get workflows with project and team information, member count, and latest version
       const [workflows, totalCount] = await Promise.all([
         db.workflow.findMany({
           where: {
@@ -108,6 +108,10 @@ export const action = {
                 },
               },
             },
+            versions: {
+              orderBy: { createdAt: "desc" },
+              take: 1, // Get only the latest version
+            },
             _count: {
               select: { members: true },
             },
@@ -127,18 +131,32 @@ export const action = {
         }),
       ]);
 
-      const items = workflows.map((workflow) => ({
-        id: workflow.id,
-        name: workflow.name,
-        description: workflow.description,
-        projectId: workflow.projectId,
-        projectName: workflow.project.name,
-        teamId: workflow.project.teamId,
-        teamName: workflow.project.team.name,
-        organizationId: workflow.project.team.orgId,
-        memberCount: workflow._count.members,
-        createdAt: workflow.createdAt.toISOString(),
-      }));
+      const items = workflows.map((workflow) => {
+        const latestVersion = workflow.versions[0] || null;
+        return {
+          id: workflow.id,
+          name: workflow.name,
+          description: workflow.description,
+          projectId: workflow.projectId,
+          projectName: workflow.project.name,
+          teamId: workflow.project.teamId,
+          teamName: workflow.project.team.name,
+          organizationId: workflow.project.team.orgId,
+          memberCount: workflow._count.members,
+          createdAt: workflow.createdAt.toISOString(),
+          latestVersion: latestVersion
+            ? {
+                id: latestVersion.id,
+                summary: latestVersion.summary,
+                description: latestVersion.description,
+                version: latestVersion.version,
+                code: (latestVersion.code as Record<string, unknown>) || {},
+                createdAt: latestVersion.createdAt.toISOString(),
+                updatedAt: latestVersion.updatedAt.toISOString(),
+              }
+            : null,
+        };
+      });
 
       const totalPages = Math.ceil(totalCount / limit);
 

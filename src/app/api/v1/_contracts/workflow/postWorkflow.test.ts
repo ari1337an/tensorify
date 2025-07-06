@@ -238,6 +238,38 @@ describe("POST /workflow", () => {
     await revokeSession(sessionId);
   });
 
+  it("should not create any workflow or version records if project does not exist (atomicity test)", async () => {
+    await flushDatabase(expect);
+    const { jwt, sessionId } = await setupUserAndOrg(1);
+
+    // Count existing records before the failed attempt
+    const initialWorkflowCount = await db.workflow.count();
+    const initialVersionCount = await db.workflowVersion.count();
+
+    const nonExistentProjectId = "12345678-1234-1234-1234-123456789012";
+
+    const res = await request(server)
+      .post("/workflow")
+      .set("Authorization", `Bearer ${jwt}`)
+      .send({
+        name: "Failed Atomic Workflow",
+        description: "This should not create any records",
+        projectId: nonExistentProjectId,
+      });
+
+    expect(res.status).toBe(404);
+    expect(res.body.message).toBe("Project not found");
+
+    // Verify no records were created (transaction rolled back)
+    const finalWorkflowCount = await db.workflow.count();
+    const finalVersionCount = await db.workflowVersion.count();
+
+    expect(finalWorkflowCount).toBe(initialWorkflowCount);
+    expect(finalVersionCount).toBe(initialVersionCount);
+
+    await revokeSession(sessionId);
+  });
+
   it("should successfully create a new workflow with valid data and return 201", async () => {
     await flushDatabase(expect);
     const { jwt, sessionId, projectId } = await setupUserAndOrg(1);
@@ -262,12 +294,27 @@ describe("POST /workflow", () => {
         name: createWorkflowPayload.name,
         projectId: projectId,
       },
+      include: {
+        versions: true, // Include versions to verify they were created
+      },
     });
 
     expect(dbWorkflow).toBeDefined();
     expect(dbWorkflow?.name).toBe(createWorkflowPayload.name);
     expect(dbWorkflow?.description).toBe(createWorkflowPayload.description);
     expect(dbWorkflow?.projectId).toBe(projectId);
+
+    // Verify that exactly one workflow version was created
+    expect(dbWorkflow?.versions).toHaveLength(1);
+    const workflowVersion = dbWorkflow?.versions[0];
+    expect(workflowVersion).toBeDefined();
+    expect(workflowVersion?.summary).toBe("Initial Commit");
+    expect(workflowVersion?.description).toBe(
+      createWorkflowPayload.description
+    );
+    expect(workflowVersion?.version).toBe("1.0.0");
+    expect(workflowVersion?.code).toEqual({});
+    expect(workflowVersion?.workflowId).toBe(dbWorkflow?.id);
 
     await revokeSession(sessionId);
   });
@@ -308,10 +355,17 @@ describe("POST /workflow", () => {
     // Verify both workflows exist in database
     const workflows = await db.workflow.findMany({
       where: { name: workflowName },
+      include: { versions: true },
     });
 
     expect(workflows).toHaveLength(2);
     expect(workflows[0].projectId).not.toBe(workflows[1].projectId);
+
+    // Verify both workflows have initial versions
+    expect(workflows[0].versions).toHaveLength(1);
+    expect(workflows[1].versions).toHaveLength(1);
+    expect(workflows[0].versions[0].version).toBe("1.0.0");
+    expect(workflows[1].versions[0].version).toBe("1.0.0");
 
     await revokeSession(sessionId);
   });
@@ -350,9 +404,17 @@ describe("POST /workflow", () => {
     // Verify both workflows exist in database
     const workflows = await db.workflow.findMany({
       where: { name: workflowName, projectId: projectId },
+      include: { versions: true },
     });
 
     expect(workflows).toHaveLength(2);
+
+    // Verify both workflows have initial versions
+    workflows.forEach((workflow) => {
+      expect(workflow.versions).toHaveLength(1);
+      expect(workflow.versions[0].version).toBe("1.0.0");
+      expect(workflow.versions[0].summary).toBe("Initial Commit");
+    });
 
     await revokeSession(sessionId);
   });
@@ -424,12 +486,17 @@ describe("POST /workflow", () => {
     await flushDatabase(expect);
     const { jwt, sessionId, projectId } = await setupUserAndOrg(1);
 
-    // First, delete workflows, then projects to simulate a foreign key constraint violation
+    // First, delete workflows and their versions, then projects to simulate a foreign key constraint violation
     const workflows = await db.workflow.findMany({
       where: { projectId: projectId },
     });
 
     for (const workflow of workflows) {
+      // Delete workflow versions first due to foreign key constraint
+      await db.workflowVersion.deleteMany({
+        where: { workflowId: workflow.id },
+      });
+
       await db.workflow.delete({
         where: { id: workflow.id },
       });
@@ -524,7 +591,9 @@ describe("POST /workflow", () => {
       });
 
     expect(res.status).toBe(400);
-    expect(res.body.message).toContain("Body 'description': Description is required");
+    expect(res.body.message).toContain(
+      "Body 'description': Description is required"
+    );
 
     // Verify workflow was not created with empty description
     const dbWorkflow = await db.workflow.findFirst({
