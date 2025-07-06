@@ -482,6 +482,16 @@ export const CreateWorkflowRequest = z.object({
   projectId: z.string().uuid({ message: "Invalid project ID format." }),
 });
 
+export const InstallPluginRequest = z
+  .object({
+    slug: z
+      .string()
+      .regex(/^@[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+:(?:latest|\d+\.\d+\.\d+)$/, {
+        message: "Plugin slug must follow format @username/plugin:version",
+      }),
+  })
+  .strict();
+
 export const WorkflowVersionSummary = z.object({
   id: UUID,
   summary: z.string(),

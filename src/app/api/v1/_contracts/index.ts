@@ -6,11 +6,11 @@ import { z } from "zod";
 import { contract as getAccountUserIdContract, action as getAccountUserIdAction } from "./account/getAccountUserId";
 import { contract as patchAccountContract, action as patchAccountAction } from "./account/patchAccount";
 import { contract as uploadPortraitContract, action as uploadPortraitAction } from "./account/uploadPortrait";
-import { contract as getPermissionsContract, action as getPermissionsAction } from "./permissions/getPermissions";
 import { contract as onboardingQuestionsContract, action as onboardingQuestionsAction } from "./onboarding/onboardingQuestions";
 import { contract as onboardingSetupContract, action as onboardingSetupAction } from "./onboarding/onboardingSetup";
 import { contract as getOrganizationContract, action as getOrganizationAction } from "./organization/getOrganization";
 import { contract as getOrganizationUsersContract, action as getOrganizationUsersAction } from "./organization/getOrganizationUsers";
+import { contract as getPermissionsContract, action as getPermissionsAction } from "./permissions/getPermissions";
 import { contract as getProjectContract, action as getProjectAction } from "./project/getProject";
 import { contract as postProjectContract, action as postProjectAction } from "./project/postProject";
 import { contract as getRolesContract, action as getRolesAction } from "./roles/getRoles";
@@ -22,6 +22,7 @@ import { contract as getUserRoleContract, action as getUserRoleAction } from "./
 import { contract as postUserRoleContract, action as postUserRoleAction } from "./user-roles/postUserRole";
 import { contract as getWorkflowContract, action as getWorkflowAction } from "./workflow/getWorkflow";
 import { contract as postWorkflowContract, action as postWorkflowAction } from "./workflow/postWorkflow";
+import { contract as postWorkflowPluginContract, action as postWorkflowPluginAction } from "./workflow/postWorkflowPlugin";
 import { contract as postWorkflowVersionContract, action as postWorkflowVersionAction } from "./workflow/postWorkflowVersion";
 
 const c = initContract();
@@ -30,11 +31,11 @@ export const contract = c.router({
   getAccountUserId: getAccountUserIdContract,
   patchAccount: patchAccountContract,
   uploadPortrait: uploadPortraitContract,
-  getPermissions: getPermissionsContract,
   onboardingQuestions: onboardingQuestionsContract,
   onboardingSetup: onboardingSetupContract,
   getOrganization: getOrganizationContract,
   getOrganizationUsers: getOrganizationUsersContract,
+  getPermissions: getPermissionsContract,
   getProject: getProjectContract,
   postProject: postProjectContract,
   getRoles: getRolesContract,
@@ -46,6 +47,7 @@ export const contract = c.router({
   postUserRole: postUserRoleContract,
   getWorkflow: getWorkflowContract,
   postWorkflow: postWorkflowContract,
+  postWorkflowPlugin: postWorkflowPluginContract,
   postWorkflowVersion: postWorkflowVersionContract,
 });
 
@@ -55,11 +57,11 @@ export const appRouter = tsr.routerWithMiddleware(contract)<{
   getAccountUserId: getAccountUserIdAction,
   patchAccount: patchAccountAction,
   uploadPortrait: uploadPortraitAction,
-  getPermissions: getPermissionsAction,
   onboardingQuestions: onboardingQuestionsAction,
   onboardingSetup: onboardingSetupAction,
   getOrganization: getOrganizationAction,
   getOrganizationUsers: getOrganizationUsersAction,
+  getPermissions: getPermissionsAction,
   getProject: getProjectAction,
   postProject: postProjectAction,
   getRoles: getRolesAction,
@@ -71,5 +73,6 @@ export const appRouter = tsr.routerWithMiddleware(contract)<{
   postUserRole: postUserRoleAction,
   getWorkflow: getWorkflowAction,
   postWorkflow: postWorkflowAction,
+  postWorkflowPlugin: postWorkflowPluginAction,
   postWorkflowVersion: postWorkflowVersionAction,
 });

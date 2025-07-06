@@ -4,6 +4,7 @@ import {
   History,
   Lock,
   MessageSquare,
+  Package,
   Share,
   Unlock,
 } from "lucide-react";
@@ -14,10 +15,11 @@ import { cn } from "@/app/_lib/utils";
 import { ExportDialog } from "@/app/(application)/(protected)/(enterprise)/_components/dialog/ExportDialog";
 import { ShareDialog } from "@/app/(application)/(protected)/(enterprise)/_components/dialog/ShareDialog";
 import { CreateVersionDialog } from "@/app/(application)/(protected)/(enterprise)/_components/dialog/CreateVersionDialog";
+import { InstallPluginDialog } from "@/app/(application)/(protected)/(enterprise)/_components/dialog/InstallPluginDialog";
 import { ThemeToggle } from "@/app/_components/ui/theme-toggle";
 import { VersionSelector } from "./VersionSelector";
 import useStore from "@/app/_store/store";
-import { postWorkflowVersion } from "@/app/api/v1/_client/client";
+import { postWorkflowVersion, postWorkflowPlugin } from "@/app/api/v1/_client/client";
 import { toast } from "sonner";
 
 // Example collaborators data - in a real app, this would come from your collaboration system
@@ -60,6 +62,9 @@ export function NavbarRight() {
   const [isCreateVersionModalOpen, setIsCreateVersionModalOpen] =
     useState(false);
   const [isCreatingVersion, setIsCreatingVersion] = useState(false);
+  const [isInstallPluginModalOpen, setIsInstallPluginModalOpen] =
+    useState(false);
+  const [isInstallingPlugin, setIsInstallingPlugin] = useState(false);
 
   const toggleLock = () => {
     setIsLocked((prev) => !prev);
@@ -109,12 +114,50 @@ export function NavbarRight() {
     }
   };
 
+  const handlePluginInstall = async (slug: string) => {
+    if (!currentWorkflow?.id) {
+      toast.error("No workflow selected. Please select a workflow first.");
+      return;
+    }
+
+    setIsInstallingPlugin(true);
+
+    try {
+      const response = await postWorkflowPlugin({
+        params: { workflowId: currentWorkflow.id },
+        body: { slug },
+      });
+
+      if (response.status === 201) {
+        toast.success(`Plugin ${slug} installed successfully!`);
+        setIsInstallPluginModalOpen(false);
+      } else {
+        toast.error(response.body.message || "Failed to install plugin");
+      }
+    } catch (error) {
+      console.error("Error installing plugin:", error);
+      toast.error("An unexpected error occurred while installing the plugin.");
+    } finally {
+      setIsInstallingPlugin(false);
+    }
+  };
+
   return (
     <div className="flex items-center gap-2 px-3 shrink-0">
       <VersionSelector
         onCreateNewVersion={handleCreateNewVersion}
-        className="mr-1"
       />
+
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 px-4 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mr-2"
+        onClick={() => setIsInstallPluginModalOpen(true)}
+        title="Install Plugin"
+      >
+        <Package className="h-3 w-3 text-green-500" />
+        Plugin
+      </Button>
 
       <div className="mr-2">
         <CollaboratorAvatars collaborators={collaborators} maxVisible={2} />
@@ -179,6 +222,13 @@ export function NavbarRight() {
         onCreateVersion={handleVersionCreate}
         currentVersion={currentWorkflow?.version?.version || "1.0.0"}
         isLoading={isCreatingVersion}
+      />
+
+      <InstallPluginDialog
+        isOpen={isInstallPluginModalOpen}
+        onClose={() => setIsInstallPluginModalOpen(false)}
+        onInstallPlugin={handlePluginInstall}
+        isLoading={isInstallingPlugin}
       />
     </div>
   );
