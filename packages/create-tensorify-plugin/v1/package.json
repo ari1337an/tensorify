@@ -1,6 +1,6 @@
 {
-  "name": "create-tensorify-plugin",
-  "version": "1.0.0",
+  "name": "@tensorify.io/create-tensorify-plugin",
+  "version": "0.0.1",
   "description": "Create Tensorify plugins with zero configuration",
   "main": "index.js",
   "bin": {
