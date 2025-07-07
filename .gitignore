@@ -37,3 +37,5 @@ coverage/
 # Miscellaneous
 *.bak
 *.tmp
+
+*node_modules*

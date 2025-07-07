@@ -1,0 +1,41 @@
+{
+  "name": "create-tensorify-plugin",
+  "version": "1.0.0",
+  "description": "Create Tensorify plugins with zero configuration",
+  "main": "index.js",
+  "bin": {
+    "create-tensorify-plugin": "./index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "tensorify",
+    "plugin",
+    "create",
+    "scaffold",
+    "cli",
+    "generator"
+  ],
+  "author": "Faisal",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^9.4.1",
+    "inquirer": "^8.2.5",
+    "fs-extra": "^11.1.1",
+    "handlebars": "^4.7.7",
+    "validate-npm-package-name": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "files": [
+    "index.js",
+    "templates/**/*"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+} 
