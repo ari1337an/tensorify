@@ -1,0 +1,35 @@
+# Source files (compiled versions in dist/ will be included)
+src/
+tsconfig.json
+
+# Development files
+.git/
+.gitignore
+node_modules/
+*.log
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+test/
+tests/
+*.test.js
+*.test.ts
+__tests__/
+
+# Build artifacts that shouldn't be published
+coverage/
+.nyc_output/
+
+# Development documentation
+*.md
+!README.md
+!CHANGELOG.md 

@@ -1,4 +1,4 @@
-# @tensorify/sdk
+# @tensorify.io/sdk
 
 **Complete SDK for developing Tensorify plugins** - Everything you need in one package to develop [Tensorify](https://tensorify.io) Plugins.
 
@@ -6,7 +6,7 @@
 
 ### Install
 ```bash
-npm install @tensorify/sdk
+npm install @tensorify.io/sdk
 ```
 
 ### Create a Plugin
@@ -18,7 +18,7 @@ npm install
 
 ### Basic Node Example
 ```javascript
-const { BaseNode, NodeType, DevUtils, createPlugin } = require('@tensorify/sdk');
+const { BaseNode, NodeType, DevUtils, createPlugin } = require('@tensorify.io/sdk');
 
 class MyNode extends BaseNode {
   constructor() {
@@ -154,41 +154,11 @@ npm run cli -- create test-plugin
 
 ## 📝 Key Features
 
-- **Single Package**: Everything in `@tensorify/sdk`
+- **Single Package**: Everything in `@tensorify.io/sdk`
 - **Simple API**: One import, clear structure
 - **CLI Tools**: Scaffolding and validation
 - **Type Safety**: Full TypeScript support
 - **Examples**: Ready-to-use templates
-
-## 📦 Migration Guide
-
-### From @tensorify/types to @tensorify/sdk
-
-```bash
-# Uninstall old package
-npm uninstall @tensorify/types
-
-# Install new package
-npm install @tensorify/sdk
-
-# Update your imports
-- const { NodeType } = require('@tensorify/types');
-+ const { NodeType, BaseNode, DevUtils, createPlugin } = require('@tensorify/sdk');
-```
-
-The new package includes everything from the old `@tensorify/types` plus a complete SDK for plugin development.
-
-## 🚀 Migration from v0.x
-
-The SDK has been streamlined! Replace:
-```javascript
-// Old
-const { NodeType } = require('@tensorify/types');
-const { BaseNode, DevUtils } = require('@tensorify/sdk');
-
-// New  
-const { BaseNode, NodeType, DevUtils, createPlugin } = require('@tensorify/sdk');
-```
 
 ## 📄 License
 
