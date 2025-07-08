@@ -6,8 +6,13 @@
     "packages/plugin-engine",
     "packages/shared",
     "packages/transpiler",
-    "services/api/v1"
+    "packages/create-tensorify-plugin/v1",
+    "services/api"
   ],
+  "scripts": {
+    "dev": "turbo run dev --filter='!./packages/*'",
+    "build": "turbo run build"
+  },
   "devDependencies": {
     "turbo": "^2.5.4"
   },

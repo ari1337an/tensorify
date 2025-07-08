@@ -13,6 +13,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "dev": "tsc --watch",
     "test": "jest",
     "prepublishOnly": "echo 'Error: This package cannot be published' && exit 1"
   },

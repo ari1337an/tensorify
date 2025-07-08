@@ -1,5 +1,5 @@
 {
-  "name": "@tensorify.io/create-tensorify-plugin",
+  "name": "create-tensorify-plugin",
   "version": "0.0.1",
   "description": "Create Tensorify plugins with zero configuration",
   "main": "index.js",
@@ -17,7 +17,7 @@
     "cli",
     "generator"
   ],
-  "author": "Faisal",
+  "author": "AlphaWolf Ventures, Inc.",
   "license": "MIT",
   "dependencies": {
     "chalk": "^4.1.2",
