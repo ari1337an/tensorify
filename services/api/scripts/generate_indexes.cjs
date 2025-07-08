@@ -109,24 +109,34 @@ export const contracts = c.router(
 );
 
 export const actions = s.router(contracts, {});
+
+export const openapi = [];
 `;
   }
 
   // Generate imports for each version
   const imports = versionDirs
-    .map(version => 
-      `import { contracts as ${version}Contracts, actions as ${version}Actions } from "./${version}";`
+    .map(
+      (version) =>
+        `import { contracts as ${version}Contracts, actions as ${version}Actions, openApiDocument as ${version}OpenApiDocument } from "./${version}";`
     )
     .join("\n");
 
   // Generate contract router object entries
   const contractEntries = versionDirs
-    .map(version => `    ${version}: ${version}Contracts,`)
+    .map((version) => `    ${version}: ${version}Contracts,`)
     .join("\n");
 
-  // Generate actions router object entries  
+  // Generate actions router object entries
   const actionEntries = versionDirs
-    .map(version => `  ${version}: ${version}Actions,`)
+    .map((version) => `  ${version}: ${version}Actions,`)
+    .join("\n");
+
+  // Generate openapi array entries
+  const openapiEntries = versionDirs
+    .map(
+      (version) => `  { json: ${version}OpenApiDocument, name: "${version}" },`
+    )
     .join("\n");
 
   return `import { initServer } from "@ts-rest/express";
@@ -151,6 +161,11 @@ ${contractEntries}
 export const actions = s.router(contracts, {
 ${actionEntries}
 });
+
+// Export openapi documents array
+export const openapi = [
+${openapiEntries}
+];
 `;
 }
 
@@ -158,6 +173,7 @@ ${actionEntries}
 function generateIndexContent(versionNum, contractFiles) {
   if (contractFiles.length === 0) {
     return `import { initContract } from "@ts-rest/core";
+import { generateOpenApi } from '@ts-rest/open-api';
 
 const c = initContract();
 
@@ -170,6 +186,16 @@ export const contracts = c.router(
 );
 
 export const actions = {};
+
+export const openApiDocument = generateOpenApi(
+  contracts,
+  {
+    info: {
+      title: 'API Service',
+      version: '${versionNum}.0.0',
+    },
+  }
+);
 `;
   }
 
@@ -192,6 +218,7 @@ export const actions = {};
     .join("\n");
 
   return `import { initContract } from "@ts-rest/core";
+import { generateOpenApi } from '@ts-rest/open-api';
 ${imports}
 
 const c = initContract();
@@ -209,6 +236,16 @@ ${contractEntries}
 export const actions = {
 ${actionEntries}
 };
+
+export const openApiDocument = generateOpenApi(
+  contracts,
+  {
+    info: {
+      title: 'API Service',
+      version: '${versionNum}.0.0',
+    },
+  }
+);
 `;
 }
 
@@ -227,7 +264,7 @@ function generateIndexes() {
       console.log(
         "⚠️  No version directories found (looking for v1, v2, v3, etc.)"
       );
-      
+
       // Still generate an empty loader.ts file
       console.log("\n🔧 Generating empty loader.ts...");
       const loaderPath = path.join(SRC_DIR, "loader.ts");

@@ -2,7 +2,8 @@ import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import { createExpressEndpoints } from "@ts-rest/express";
-import { contracts, actions } from "./loader";
+import { contracts, actions, openapi } from "./loader";
+import swaggerUi from "swagger-ui-express";
 
 const app = express();
 
@@ -12,9 +13,36 @@ app.use(bodyParser.json());
 
 createExpressEndpoints(contracts, actions, app);
 
+// Serve the OpenAPI documents
+openapi.forEach(({ json, name }) => {
+  app.get(`/api/${name}/swagger.json`, (req, res) => {
+    res.json(json);
+  });
+});
+
+// Serve the Swagger UI
+app.use(
+  "/api/docs",
+  swaggerUi.serve,
+  swaggerUi.setup(null, {
+    explorer: true,
+    swaggerOptions: {
+      urls: openapi.map(({ name }) => ({
+        url: `/api/${name}/swagger.json`,
+        name,
+      })),
+    },
+  })
+);
+
 // Add a simple health check endpoint
 app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+// 404 handler - must be last middleware
+app.use((req, res) => {
+  res.status(404).json({ status: "failed", message: "Not Found" });
 });
 
 const port = process.env.PORT || 3001;

@@ -1,7 +1,6 @@
 import { initServer } from "@ts-rest/express";
 import { initContract } from "@ts-rest/core";
-import { contracts as v1Contracts, actions as v1Actions } from "./v1";
-import { contracts as v2Contracts, actions as v2Actions } from "./v2";
+import { contracts as v1Contracts, actions as v1Actions, openApiDocument as v1OpenApiDocument } from "./v1";
 
 const s = initServer();
 const c = initContract();
@@ -10,7 +9,6 @@ const c = initContract();
 export const contracts = c.router(
   {
     v1: v1Contracts,
-    v2: v2Contracts,
   },
   {
     pathPrefix: "/api",
@@ -21,5 +19,9 @@ export const contracts = c.router(
 // Create the actions router that matches the contract structure
 export const actions = s.router(contracts, {
   v1: v1Actions,
-  v2: v2Actions,
 });
+
+// Export openapi documents array
+export const openapi = [
+  { json: v1OpenApiDocument, name: "v1" },
+];
