@@ -14,7 +14,7 @@ COPY scripts/ scripts/
 # Install all dependencies, build, then prune dev dependencies
 RUN npm install --legacy-peer-deps && \
     npm run build && \
-    npm prune --production && \
+    npm prune --production --legacy-peer-deps && \
     npm cache clean --force && \
     mkdir -p logs
 
