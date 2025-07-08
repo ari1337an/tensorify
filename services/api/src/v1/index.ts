@@ -1,14 +1,14 @@
 import { initContract } from "@ts-rest/core";
 import {
-  contract as getUserContract,
-  action as getUserAction,
+  contract as userGetUserContract,
+  action as userGetUserAction,
 } from "./user/getUser";
 
 const c = initContract();
 
 export const contracts = c.router(
   {
-    getUser: getUserContract,
+    userGetUser: userGetUserContract,
   },
   {
     pathPrefix: "/v1",
@@ -17,5 +17,5 @@ export const contracts = c.router(
 );
 
 export const actions = {
-  getUser: getUserAction,
+  userGetUser: userGetUserAction,
 };
