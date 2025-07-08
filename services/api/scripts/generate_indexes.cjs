@@ -177,8 +177,17 @@ import { generateOpenApi } from '@ts-rest/open-api';
 
 const c = initContract();
 
+const unprefixedContracts = {};
+
+const composedUnprefixedContracts = c.router(
+  unprefixedContracts,
+  {
+    strictStatusCodes: true,
+  }
+);
+
 export const contracts = c.router(
-  {},
+  unprefixedContracts,
   {
     pathPrefix: "/${versionNum}",
     strictStatusCodes: true,
@@ -188,12 +197,25 @@ export const contracts = c.router(
 export const actions = {};
 
 export const openApiDocument = generateOpenApi(
-  contracts,
+  composedUnprefixedContracts,
   {
     info: {
       title: 'API Service',
       version: '${versionNum}.0.0',
     },
+    servers: process.env.NODE_ENV === 'production'
+      ? [
+          {
+            url: "https://backend.tensorify.io/api/${versionNum}",
+            description: "Production server",
+          },
+        ]
+      : [
+          {
+            url: "http://localhost:3001/api/${versionNum}",
+            description: "Local server",
+          },
+        ],
   }
 );
 `;
@@ -223,10 +245,19 @@ ${imports}
 
 const c = initContract();
 
-export const contracts = c.router(
-  {
+const unprefixedContracts = {
 ${contractEntries}
-  },
+};
+
+const composedUnprefixedContracts = c.router(
+  unprefixedContracts,
+  {
+    strictStatusCodes: true,
+  }
+);
+
+export const contracts = c.router(
+  unprefixedContracts,
   {
     pathPrefix: "/${versionNum}",
     strictStatusCodes: true,
@@ -238,12 +269,25 @@ ${actionEntries}
 };
 
 export const openApiDocument = generateOpenApi(
-  contracts,
+  composedUnprefixedContracts,
   {
     info: {
       title: 'API Service',
       version: '${versionNum}.0.0',
     },
+    servers: process.env.NODE_ENV === 'production'
+      ? [
+          {
+            url: "https://backend.tensorify.io/api/${versionNum}",
+            description: "Production server",
+          },
+        ]
+      : [
+          {
+            url: "http://localhost:3001/api/${versionNum}",
+            description: "Local server",
+          },
+        ],
   }
 );
 `;

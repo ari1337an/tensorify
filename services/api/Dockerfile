@@ -12,7 +12,7 @@ COPY src/ src/
 COPY scripts/ scripts/
 
 # Install all dependencies, build, then prune dev dependencies
-RUN npm install && \
+RUN npm install --legacy-peer-deps && \
     npm run build && \
     npm prune --production && \
     npm cache clean --force && \

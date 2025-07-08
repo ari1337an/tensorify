@@ -13,27 +13,10 @@ app.use(bodyParser.json());
 
 createExpressEndpoints(contracts, actions, app);
 
-// Serve the OpenAPI documents
-openapi.forEach(({ json, name }) => {
-  app.get(`/api/${name}/swagger.json`, (req, res) => {
-    res.json(json);
-  });
-});
-
 // Serve the Swagger UI
-app.use(
-  "/api/docs",
-  swaggerUi.serve,
-  swaggerUi.setup(null, {
-    explorer: true,
-    swaggerOptions: {
-      urls: openapi.map(({ name }) => ({
-        url: `/api/${name}/swagger.json`,
-        name,
-      })),
-    },
-  })
-);
+openapi.forEach(({ json, name }) => {
+  app.use(`/api/${name}`, swaggerUi.serveFiles(json), swaggerUi.setup(json));
+});
 
 // Add a simple health check endpoint
 app.get("/health", (req, res) => {
