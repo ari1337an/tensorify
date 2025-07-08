@@ -90,6 +90,70 @@ function findContractFiles(dir, basePath = "") {
   return contractFiles;
 }
 
+// Function to generate loader.ts content
+function generateLoaderContent(versionDirs) {
+  if (versionDirs.length === 0) {
+    return `import { initServer } from "@ts-rest/express";
+import { initContract } from "@ts-rest/core";
+
+const s = initServer();
+const c = initContract();
+
+// No version directories found
+export const contracts = c.router(
+  {},
+  {
+    pathPrefix: "/api",
+    strictStatusCodes: true,
+  }
+);
+
+export const actions = s.router(contracts, {});
+`;
+  }
+
+  // Generate imports for each version
+  const imports = versionDirs
+    .map(version => 
+      `import { contracts as ${version}Contracts, actions as ${version}Actions } from "./${version}";`
+    )
+    .join("\n");
+
+  // Generate contract router object entries
+  const contractEntries = versionDirs
+    .map(version => `    ${version}: ${version}Contracts,`)
+    .join("\n");
+
+  // Generate actions router object entries  
+  const actionEntries = versionDirs
+    .map(version => `  ${version}: ${version}Actions,`)
+    .join("\n");
+
+  return `import { initServer } from "@ts-rest/express";
+import { initContract } from "@ts-rest/core";
+${imports}
+
+const s = initServer();
+const c = initContract();
+
+// Create the main contract router with proper versioning
+export const contracts = c.router(
+  {
+${contractEntries}
+  },
+  {
+    pathPrefix: "/api",
+    strictStatusCodes: true,
+  }
+);
+
+// Create the actions router that matches the contract structure
+export const actions = s.router(contracts, {
+${actionEntries}
+});
+`;
+}
+
 // Function to generate index.ts content
 function generateIndexContent(versionNum, contractFiles) {
   if (contractFiles.length === 0) {
@@ -163,10 +227,24 @@ function generateIndexes() {
       console.log(
         "⚠️  No version directories found (looking for v1, v2, v3, etc.)"
       );
+      
+      // Still generate an empty loader.ts file
+      console.log("\n🔧 Generating empty loader.ts...");
+      const loaderPath = path.join(SRC_DIR, "loader.ts");
+      const loaderContent = generateLoaderContent([]);
+      fs.writeFileSync(loaderPath, loaderContent, "utf8");
+      console.log("   ✅ Generated loader.ts (empty)");
       return;
     }
 
     console.log(`📁 Found version directories: ${versionDirs.join(", ")}`);
+
+    // Generate loader.ts file
+    console.log("\n🔧 Generating loader.ts...");
+    const loaderPath = path.join(SRC_DIR, "loader.ts");
+    const loaderContent = generateLoaderContent(versionDirs);
+    fs.writeFileSync(loaderPath, loaderContent, "utf8");
+    console.log("   ✅ Generated loader.ts");
 
     for (const versionDir of versionDirs) {
       console.log(`\n🔧 Processing ${versionDir}...`);
@@ -194,7 +272,7 @@ function generateIndexes() {
       console.log(`   ✅ Generated ${versionDir}/index.ts`);
     }
 
-    console.log("\n🎉 Index generation completed!");
+    console.log("\n🎉 Index generation and loader creation completed!");
   } catch (error) {
     console.error("❌ Error:", error.message);
     process.exit(1);
