@@ -11,7 +11,7 @@ export const contracts = c.router(
     getUser: getUserContract,
   },
   {
-    pathPrefix: "/v1",
+    pathPrefix: "/v2",
     strictStatusCodes: true,
   }
 );

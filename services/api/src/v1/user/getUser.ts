@@ -1,31 +1,22 @@
-import {
-  initContract,
-  // ServerInferRequest,
-  ServerInferResponses,
-} from "@ts-rest/core";
+import { initContract, ServerInferResponses } from "@ts-rest/core";
 import { User } from "../schema";
 
 const c = initContract();
 
-export const contract = c.router({
-  contract: {
-    method: "GET",
-    path: "/user",
-    responses: {
-      200: User,
-    },
-    summary: "Get all users",
+export const contract = {
+  method: "GET" as const,
+  path: "/user",
+  responses: {
+    200: User,
   },
-});
+  summary: "Get all users",
+};
 
-// type ContractRequest = ServerInferRequest<typeof contract.contract>;
-type ContractResponse = ServerInferResponses<typeof contract.contract>;
+type ContractResponse = ServerInferResponses<typeof contract>;
 
-export const action = {
-  contract: async (): Promise<ContractResponse> => {
-    return {
-      status: 200,
-      body: { id: "1", name: "John Doe" },
-    };
-  },
+export const action = async () => {
+  return {
+    status: 200 as const,
+    body: { id: "1", name: "John Doe" },
+  };
 };
