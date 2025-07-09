@@ -10,8 +10,14 @@
     "services/api"
   ],
   "scripts": {
-    "dev": "turbo run dev --filter='!./packages/*'",
-    "build": "turbo run build"
+    "dev:services:api": "turbo run dev --filter='./services/api'",
+    "dev:packages:plugin-engine": "turbo run dev --filter='./packages/plugin-engine'",
+    "dev:packages:sdk": "turbo run dev --filter='./packages/sdk/v1'",
+    "dev:packages:transpiler": "turbo run dev --filter='./packages/transpiler'",
+    "dev:packages:shared": "turbo run dev --filter='./packages/shared'",
+    "dev:packages:create-tensorify-plugin": "turbo run dev --filter='./packages/create-tensorify-plugin/v1'",
+    "build": "turbo run build",
+    "test": "turbo run test"
   },
   "devDependencies": {
     "turbo": "^2.5.4"
