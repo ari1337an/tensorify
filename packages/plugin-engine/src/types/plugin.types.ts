@@ -38,6 +38,22 @@ export interface PluginManifest {
   author?: string;
   /** Supported engine versions */
   engineVersion?: string;
+  /** Plugin tags for categorization */
+  tags?: string[];
+  /** Plugin category */
+  category?: string;
+  /** Plugin dependencies */
+  dependencies?: Record<string, string>;
+  /** Plugin parameter definitions */
+  parameters?: Record<
+    string,
+    {
+      type: string;
+      required?: boolean;
+      default?: any;
+      description?: string;
+    }
+  >;
 }
 
 /** Plugin code structure that should be present in the fetched index.js */

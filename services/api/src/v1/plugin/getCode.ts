@@ -26,6 +26,7 @@ export const contract = c.router({
         id: z.string(),
         slug: z.string(),
         code: z.string(),
+        manifest: z.string(),
       }),
       400: z.object({
         status: z.literal("error"),
@@ -81,9 +82,11 @@ export const mainFunction = async (
     const engine = createPluginEngine(s3Config, bucketName, {
       debug: process.env.NODE_ENV === "development",
     });
-
+    
     // Get plugin source code
     const pluginCode = await engine.getPluginCode(slug);
+
+    const manifest = JSON.stringify(await engine.getPluginManifest(slug), null, 2);
 
     // Clean up engine resources
     await engine.dispose();
@@ -94,6 +97,7 @@ export const mainFunction = async (
         id: "1",
         slug: slug,
         code: pluginCode,
+        manifest: manifest,
       },
     };
   } catch (error) {

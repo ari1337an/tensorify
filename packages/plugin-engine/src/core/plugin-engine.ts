@@ -88,16 +88,21 @@ export class PluginEngine {
 
   /**
    * Check if a plugin exists in storage
+   * A valid plugin must have both index.js and manifest.json files
    * @param pluginSlug - Unique identifier for the plugin
    * @returns Promise resolving to true if plugin exists
    */
   async pluginExists(pluginSlug: string): Promise<boolean> {
     try {
       const pluginPath = this.getPluginPath(pluginSlug);
-      return await this.storageService.fileExists(
-        this.config.bucketName,
-        pluginPath
-      );
+      const metadataPath = this.getPluginMetadataPath(pluginSlug);
+
+      const [indexExists, metadataExists] = await Promise.all([
+        this.storageService.fileExists(this.config.bucketName, pluginPath),
+        this.storageService.fileExists(this.config.bucketName, metadataPath),
+      ]);
+
+      return indexExists && metadataExists;
     } catch (error) {
       this.log(
         `Error checking plugin existence for ${pluginSlug}: ${
@@ -130,6 +135,46 @@ export class PluginEngine {
   }
 
   /**
+   * Get plugin manifest metadata from manifest.json file
+   * @param pluginSlug - Unique identifier for the plugin
+   * @returns Promise resolving to plugin manifest
+   */
+  async getPluginManifest(pluginSlug: string) {
+    try {
+      const metadataPath = this.getPluginMetadataPath(pluginSlug);
+      const fileInfo = await this.storageService.getFile(
+        this.config.bucketName,
+        metadataPath
+      );
+
+      try {
+        return JSON.parse(fileInfo.content);
+      } catch (parseError) {
+        throw new Error(
+          `Invalid JSON in manifest.json for plugin '${pluginSlug}': ${
+            (parseError as Error).message
+          }`
+        );
+      }
+    } catch (error) {
+      // If it's already our custom JSON error, re-throw it
+      if (
+        error instanceof Error &&
+        error.message.includes("Invalid JSON in manifest.json")
+      ) {
+        throw error;
+      }
+
+      // Otherwise, it's a file not found error
+      throw new PluginNotFoundError(
+        pluginSlug,
+        this.config.bucketName,
+        error as Error
+      );
+    }
+  }
+
+  /**
    * List available plugins in the storage
    * @param maxResults - Maximum number of plugins to return
    * @returns Promise resolving to array of plugin slugs
@@ -140,21 +185,38 @@ export class PluginEngine {
       const files = await this.storageService.listFiles(
         this.config.bucketName,
         basePath,
-        maxResults * 2 // Get more files to account for filtering
+        maxResults * 4 // Get more files to account for filtering (each plugin has 2+ files)
       );
 
-      // Filter for index.js files and extract plugin slugs
-      const pluginSlugs = files
-        .filter((file) => file.endsWith("/index.js"))
-        .map((file) => {
-          const relativePath = basePath
-            ? file.replace(basePath + "/", "")
-            : file;
-          return relativePath.replace("/index.js", "");
-        })
+      // Group files by plugin slug and validate that both index.js and manifest.json exist
+      const pluginFiles: Record<string, Set<string>> = {};
+
+      files.forEach((file) => {
+        const relativePath = basePath ? file.replace(basePath + "/", "") : file;
+
+        // Extract plugin slug and file type
+        const parts = relativePath.split("/");
+        if (parts.length >= 2) {
+          const pluginSlug = parts[0];
+          const fileName = parts[parts.length - 1];
+
+          if (!pluginFiles[pluginSlug]) {
+            pluginFiles[pluginSlug] = new Set();
+          }
+          pluginFiles[pluginSlug].add(fileName);
+        }
+      });
+
+      // Filter for valid plugins that have both index.js and manifest.json
+      const validPluginSlugs = Object.entries(pluginFiles)
+        .filter(
+          ([_, fileSet]) =>
+            fileSet.has("index.js") && fileSet.has("manifest.json")
+        )
+        .map(([pluginSlug, _]) => pluginSlug)
         .slice(0, maxResults);
 
-      return pluginSlugs;
+      return validPluginSlugs;
     } catch (error) {
       this.log(`Error listing plugins: ${(error as Error).message}`);
       return [];
@@ -230,6 +292,16 @@ export class PluginEngine {
     const pluginPath = `${pluginSlug}/index.js`;
 
     return basePath ? `${basePath}/${pluginPath}` : pluginPath;
+  }
+
+  /**
+   * Get the full path for a plugin's manifest.json file in storage
+   * @private
+   */
+  private getPluginMetadataPath(pluginSlug: string): string {
+    const basePath = this.config.basePath || "";
+    const metadataPath = `${pluginSlug}/manifest.json`;
+    return basePath ? `${basePath}/${metadataPath}` : metadataPath;
   }
 
   /**

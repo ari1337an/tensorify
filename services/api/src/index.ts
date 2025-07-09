@@ -52,13 +52,14 @@ createExpressEndpoints(contracts, actions, app, {
     } else if (err.body) {
       res.status(400).json({
         message: "Body validation failed",
-      });
+      }); 
     } else {
-      console.error(err);
+      // console.error(err);
       res.status(400).json({
         message: "Validation failed",
       });
     }
+    return;
   },
 });
 

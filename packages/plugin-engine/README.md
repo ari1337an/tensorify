@@ -244,6 +244,16 @@ const sourceCode = await engine.getPluginCode("my-plugin");
 console.log("Plugin source:", sourceCode);
 ```
 
+### Get Plugin Manifest
+
+```typescript
+const manifest = await engine.getPluginManifest("my-plugin");
+console.log("Plugin name:", manifest.name);
+console.log("Plugin version:", manifest.version);
+console.log("Plugin description:", manifest.description);
+console.log("Required parameters:", manifest.parameters);
+```
+
 ## Plugin Structure
 
 Plugins must follow this structure in S3:
@@ -251,12 +261,24 @@ Plugins must follow this structure in S3:
 ```
 bucket/
 ├── plugin-name-1/
-│   └── index.js
+│   ├── index.js
+│   └── manifest.json
 ├── plugin-name-2/
-│   └── index.js
+│   ├── index.js
+│   └── manifest.json
 └── plugin-name-3/
-    └── index.js
+    ├── index.js
+    └── manifest.json
 ```
+
+### Required Files
+
+**Both files are required for a plugin to be considered valid:**
+
+1. **`index.js`** - The main plugin implementation
+2. **`manifest.json`** - Plugin metadata and configuration
+
+### Plugin Implementation (`index.js`)
 
 Each `index.js` must export a class with this structure:
 
@@ -284,6 +306,39 @@ print(result)
 }
 
 module.exports = MyPlugin;
+```
+
+### Plugin Metadata (`manifest.json`)
+
+Each `manifest.json` must contain plugin information:
+
+```json
+{
+  "slug": "my-plugin",
+  "name": "My Awesome Plugin",
+  "version": "1.0.0",
+  "description": "A plugin that does awesome things",
+  "author": "Your Name",
+  "engineVersion": "^0.0.1",
+  "tags": ["machine-learning", "data-processing"],
+  "category": "data-science",
+  "dependencies": {
+    "pandas": "^1.5.0",
+    "numpy": "^1.24.0"
+  },
+  "parameters": {
+    "dataset": {
+      "type": "string",
+      "required": true,
+      "description": "Path to the dataset file"
+    },
+    "threshold": {
+      "type": "number",
+      "default": 0.5,
+      "description": "Classification threshold"
+    }
+  }
+}
 ```
 
 ## Error Handling
