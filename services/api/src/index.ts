@@ -11,7 +11,23 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-createExpressEndpoints(contracts, actions, app);
+createExpressEndpoints(contracts, actions, app, {
+  logInitialization: true,
+  jsonQuery: true,
+  responseValidation: true,
+  globalMiddleware: [
+    (req, res, next) => {
+      console.info(req.method, req.url);
+      next();
+    },
+  ],
+  requestValidationErrorHandler: (err, req, res, next) => {
+    //             err is typed as ^ RequestValidationError
+    res.status(400).json({
+      message: "Validation failed",
+    });
+  },
+});
 
 // Serve the Swagger UI
 openapi.forEach(({ json, name }) => {
@@ -31,9 +47,15 @@ app.use((req, res) => {
 const port = process.env.PORT || 3001;
 
 const server = app.listen(port, () => {
-  console.log(`🚀 API Server listening at http://localhost:${port}`);
-  console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
-  console.log(`Process ID: ${process.pid}`);
+  console.info(
+    `🚀 API Server listening at ${
+      process.env.NODE_ENV === "production"
+        ? `https://backend.tensorify.io`
+        : `http://localhost:${port}`
+    }`
+  );
+  console.info(`Environment: ${process.env.NODE_ENV || "development"}`);
+  console.info(`Process ID: ${process.pid}`);
 });
 
 // Enhanced error handling for production stability
@@ -43,7 +65,7 @@ process.on("uncaughtException", (error) => {
 
   // Attempt graceful shutdown
   server.close(() => {
-    console.log("Server closed due to uncaught exception");
+    console.info("Server closed due to uncaught exception");
     process.exit(1);
   });
 
@@ -61,17 +83,17 @@ process.on("unhandledRejection", (reason, promise) => {
 });
 
 process.on("SIGTERM", () => {
-  console.log("Received SIGTERM signal, starting graceful shutdown...");
+  console.error("Received SIGTERM signal, starting graceful shutdown...");
   server.close(() => {
-    console.log("Server closed gracefully");
+    console.error("Server closed gracefully");
     process.exit(0);
   });
 });
 
 process.on("SIGINT", () => {
-  console.log("Received SIGINT signal, starting graceful shutdown...");
+  console.error("Received SIGINT signal, starting graceful shutdown...");
   server.close(() => {
-    console.log("Server closed gracefully");
+    console.error("Server closed gracefully");
     process.exit(0);
   });
 });
