@@ -5,10 +5,13 @@
   "description": "The backend transpiler endpoint for generating the codes and fetching plugin metadata for Tensorify.",
   "main": "dist/index.js",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.592.0",
+    "@tensorify.io/plugin-engine": "*",
     "@ts-rest/core": "^3.52.1",
     "@ts-rest/express": "^3.52.1",
     "@ts-rest/open-api": "^3.52.1",
     "cors": "^2.8.5",
+    "dotenv": "^17.1.0",
     "express": "^5.1.0",
     "swagger-ui-express": "^5.0.1",
     "zod": "^3.25.76"

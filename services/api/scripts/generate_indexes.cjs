@@ -122,14 +122,14 @@ export const openapi = [];
     )
     .join("\n");
 
-  // Generate contract router object entries
+  // Generate contract router object entries (e.g., "    v1Contracts,")
   const contractEntries = versionDirs
     .map((version) => `    ${version}: ${version}Contracts,`)
     .join("\n");
 
-  // Generate actions router object entries
+  // Generate actions router object entries using spread syntax (e.g., "  ...v1Actions,")
   const actionEntries = versionDirs
-    .map((version) => `  ${version}: ${version}Actions,`)
+    .map((version) => `    ${version}: ${version}Actions,`)
     .join("\n");
 
   // Generate openapi array entries

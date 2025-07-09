@@ -162,6 +162,16 @@ export class PluginEngine {
   }
 
   /**
+   * Get plugin source code without executing it
+   * @param pluginSlug - Unique identifier for the plugin
+   * @returns Promise resolving to the plugin source code
+   */
+  async getPluginCode(pluginSlug: string): Promise<string> {
+    this.log(`Retrieving plugin code for: ${pluginSlug}`);
+    return await this.fetchPluginCode(pluginSlug);
+  }
+
+  /**
    * Clean up resources used by the engine
    */
   async dispose(): Promise<void> {

@@ -4,13 +4,20 @@ import bodyParser from "body-parser";
 import { createExpressEndpoints } from "@ts-rest/express";
 import { contracts, actions, openapi } from "./loader";
 import swaggerUi from "swagger-ui-express";
+import dotenv from "dotenv";
 
+// Load environment variables
+dotenv.config({ path: ".env" });
+
+// Create Express app
 const app = express();
 
+// Middleware
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+// Create Express endpoints
 createExpressEndpoints(contracts, actions, app, {
   logInitialization: true,
   jsonQuery: true,
@@ -23,18 +30,19 @@ createExpressEndpoints(contracts, actions, app, {
   ],
   requestValidationErrorHandler: (err, req, res, next) => {
     //             err is typed as ^ RequestValidationError
+    console.log(err);
     res.status(400).json({
       message: "Validation failed",
     });
   },
 });
 
-// Serve the Swagger UI
+// Serve Swagger UI
 openapi.forEach(({ json, name }) => {
   app.use(`/api/${name}`, swaggerUi.serveFiles(json), swaggerUi.setup(json));
 });
 
-// Add a simple health check endpoint
+// Add health check endpoint
 app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
