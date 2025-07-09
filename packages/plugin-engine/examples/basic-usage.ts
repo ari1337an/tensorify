@@ -2,52 +2,38 @@
  * Basic usage example for @tensorify.io/plugin-engine
  */
 
-import {
-  getExecutionResult,
-  PluginEngineFactory,
-  PluginEngine,
-  S3StorageService,
-  IStorageService,
-} from "../src/index";
-import { S3Client } from "@aws-sdk/client-s3";
+import { createPluginEngine } from "../src/index";
 
-// Example 1: Simple usage with the main function
-async function simpleUsage() {
+// Example 1: Basic usage with credentials
+async function basicUsageWithCredentials() {
   try {
-    // Using environment variables for configuration
-    const result = await getExecutionResult("my-plugin", {
-      inputData: "test data",
-      parameters: { threshold: 0.5 },
-    });
-
-    console.log("Generated code:", result);
-  } catch (error) {
-    console.error("Error:", error);
-  }
-}
-
-// Example 2: Using the factory pattern
-async function factoryUsage() {
-  try {
-    // Create engine with credentials
-    const engine = PluginEngineFactory.createWithCredentials(
+    const engine = createPluginEngine(
+      {
+        region: "us-west-2",
+        credentials: {
+          accessKeyId: process.env.S3_ACCESS_KEY_ID!,
+          secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
+        },
+      },
       "my-plugins-bucket",
       {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-        region: "us-west-2",
+        debug: true,
+        executionTimeout: 60000,
+        memoryLimit: 256,
       }
     );
 
-    // Execute multiple plugins
-    const result1 = await engine.getExecutionResult("plugin-1", {
+    // Execute plugins
+    const result1 = await engine.getExecutionResult("tensorflow-plugin", {
       type: "tensorflow",
       layers: ["dense", "dropout"],
+      epochs: 100,
     });
 
-    const result2 = await engine.getExecutionResult("plugin-2", {
+    const result2 = await engine.getExecutionResult("pytorch-plugin", {
       type: "pytorch",
       model: "resnet",
+      pretrained: true,
     });
 
     console.log("TensorFlow plugin result:", result1.code);
@@ -57,6 +43,20 @@ async function factoryUsage() {
     const plugins = await engine.listAvailablePlugins();
     console.log("Available plugins:", plugins);
 
+    // Check if plugin exists
+    const exists = await engine.pluginExists("custom-plugin");
+    console.log("Custom plugin exists:", exists);
+
+    // Get plugin metadata
+    if (exists) {
+      const metadata = await engine.getPluginMetadata("custom-plugin");
+      console.log("Plugin metadata:", metadata);
+    }
+
+    // Get plugin source code
+    const sourceCode = await engine.getPluginCode("tensorflow-plugin");
+    console.log("Plugin source code:", sourceCode);
+
     // Cleanup
     await engine.dispose();
   } catch (error) {
@@ -64,62 +64,35 @@ async function factoryUsage() {
   }
 }
 
-// Example 3: Advanced usage with custom configuration
-async function advancedUsage() {
+// Example 2: Environment variables approach (user manages their own env vars)
+async function environmentVariablesUsage() {
   try {
-    // Custom S3 client
-    const s3Client = new S3Client({
-      region: "us-east-1",
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-      },
-    });
+    // Users handle their own environment variables
+    const s3Config = {
+      region: process.env.S3_REGION || "us-east-1",
+      endpoint: process.env.S3_ENDPOINT,
+      credentials: process.env.S3_ACCESS_KEY_ID
+        ? {
+            accessKeyId: process.env.S3_ACCESS_KEY_ID,
+            secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
+            sessionToken: process.env.S3_SESSION_TOKEN,
+          }
+        : undefined,
+      forcePathStyle: !!process.env.S3_ENDPOINT,
+    };
 
-    // Create factory with custom defaults
-    const factory = new PluginEngineFactory({
-      defaultBucketName: "tensorify-plugins",
-      defaultExecutionTimeout: 60000, // 60 seconds
-      defaultMemoryLimit: 256, // 256 MB
-      defaultDebug: true,
-    });
-
-    // Create engine with custom configuration
-    const engine = factory.createWithS3Client(s3Client, {
-      bucketName: "my-custom-bucket",
-      basePath: "plugins/production",
+    const engine = createPluginEngine(s3Config, "my-plugins-bucket", {
+      debug: process.env.NODE_ENV === "development",
       executionTimeout: 30000,
-      memoryLimit: 512,
-      debug: true,
     });
 
-    // Execute plugin with detailed error handling
-    const result = await engine.getExecutionResult("advanced-plugin", {
-      model: {
-        type: "transformer",
-        layers: 12,
-        hiddenSize: 768,
-      },
-      training: {
-        epochs: 100,
-        batchSize: 32,
-        learningRate: 0.001,
-      },
+    const result = await engine.getExecutionResult("data-processing-plugin", {
+      dataset: "users.csv",
+      operations: ["normalize", "filter", "aggregate"],
+      outputFormat: "json",
     });
 
-    console.log("Generated code:", result.code);
-    console.log("Execution time:", result.metadata?.executionTime, "ms");
-    console.log("Memory usage:", result.metadata?.memoryUsage);
-
-    // Check if plugin exists before execution
-    const pluginExists = await engine.pluginExists("another-plugin");
-    if (pluginExists) {
-      console.log("Plugin exists, can execute safely");
-    }
-
-    // Get plugin metadata
-    const metadata = await engine.getPluginMetadata("advanced-plugin");
-    console.log("Plugin metadata:", metadata);
+    console.log("Data processing result:", result.code);
 
     await engine.dispose();
   } catch (error) {
@@ -127,21 +100,98 @@ async function advancedUsage() {
   }
 }
 
-// Example 4: Error handling
-async function errorHandlingExample() {
+// Example 3: Custom endpoint (MinIO, LocalStack, etc.)
+async function customEndpointUsage() {
   try {
-    const engine = PluginEngineFactory.createDefault("test-bucket");
+    const engine = createPluginEngine(
+      {
+        endpoint: "http://localhost:9000", // MinIO endpoint
+        forcePathStyle: true,
+        credentials: {
+          accessKeyId: "minioadmin",
+          secretAccessKey: "minioadmin",
+        },
+      },
+      "development-plugins",
+      {
+        debug: true,
+        executionTimeout: 15000,
+        memoryLimit: 128,
+        basePath: "plugins/v1",
+      }
+    );
 
-    const result = await engine.getExecutionResult("non-existent-plugin", {});
+    const result = await engine.getExecutionResult("test-plugin", {
+      environment: "development",
+      testData: true,
+    });
+
+    console.log("Development result:", result.code);
 
     await engine.dispose();
   } catch (error) {
-    // Handle specific error types
+    console.error("Error:", error);
+  }
+}
+
+// Example 4: Production configuration
+async function productionConfiguration() {
+  try {
+    const engine = createPluginEngine(
+      {
+        region: "us-west-2",
+        credentials: {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+        },
+      },
+      "production-plugins",
+      {
+        executionTimeout: 120000,
+        memoryLimit: 512,
+        debug: false,
+        basePath: "plugins/v1",
+      }
+    );
+
+    const result = await engine.getExecutionResult("ml-model-plugin", {
+      algorithm: "random-forest",
+      features: ["age", "income", "education"],
+      target: "purchase_probability",
+    });
+
+    console.log("ML model result:", result.code);
+
+    await engine.dispose();
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+// Example 5: Error handling
+async function errorHandlingExample() {
+  try {
+    const engine = createPluginEngine(
+      {
+        region: "us-east-1",
+        credentials: {
+          accessKeyId: "invalid-key",
+          secretAccessKey: "invalid-secret",
+        },
+      },
+      "test-bucket"
+    );
+
+    await engine.getExecutionResult("non-existent-plugin", {});
+
+    await engine.dispose();
+  } catch (error) {
+    // Handle specific error types from the library
     if (error instanceof Error) {
       console.error("Error type:", error.constructor.name);
       console.error("Message:", error.message);
 
-      // Type-specific error handling
+      // Check for specific plugin engine error properties
       if ("code" in error) {
         console.error("Error code:", (error as any).code);
       }
@@ -149,55 +199,68 @@ async function errorHandlingExample() {
       if ("timestamp" in error) {
         console.error("Error timestamp:", (error as any).timestamp);
       }
+
+      if ("bucketName" in error) {
+        console.error("Bucket:", (error as any).bucketName);
+      }
     }
   }
 }
 
-// Example 5: Testing setup
-async function testingSetup() {
+// Example 6: Multiple plugin execution
+async function multiplePluginExecution() {
   try {
-    // Create engine for testing with LocalStack or MinIO
-    const engine = PluginEngineFactory.createForTesting(
-      "test-bucket",
-      "http://localhost:4566", // LocalStack endpoint
+    const engine = createPluginEngine(
       {
-        executionTimeout: 5000,
-        memoryLimit: 64,
-        debug: true,
+        region: "us-east-1",
+        credentials: {
+          accessKeyId: process.env.S3_ACCESS_KEY_ID!,
+          secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
+        },
+      },
+      "ml-plugins",
+      {
+        executionTimeout: 60000,
+        memoryLimit: 256,
       }
     );
 
-    // Test plugin execution
-    const result = await engine.getExecutionResult("test-plugin", {
-      test: true,
-      data: "sample",
-    });
+    // Execute multiple plugins in parallel
+    const [dataResult, modelResult, analysisResult] = await Promise.all([
+      engine.getExecutionResult("data-preprocessor", { dataset: "users.csv" }),
+      engine.getExecutionResult("ml-trainer", { algorithm: "random-forest" }),
+      engine.getExecutionResult("result-analyzer", { threshold: 0.85 }),
+    ]);
 
-    console.log("Test result:", result.code);
+    console.log("Data processing:", dataResult.code);
+    console.log("Model training:", modelResult.code);
+    console.log("Analysis:", analysisResult.code);
 
     await engine.dispose();
   } catch (error) {
-    console.error("Test error:", error);
+    console.error("Error:", error);
   }
 }
 
 // Run examples
 if (require.main === module) {
-  console.log("Plugin Engine Examples");
-  console.log("=====================");
+  console.log("Plugin Engine Examples - Clean API");
+  console.log("==================================");
 
   // Uncomment to run specific examples
-  // simpleUsage();
-  // factoryUsage();
-  // advancedUsage();
+  // basicUsageWithCredentials();
+  // environmentVariablesUsage();
+  // customEndpointUsage();
+  // productionConfiguration();
   // errorHandlingExample();
-  // testingSetup();
+  // multiplePluginExecution();
 }
 
 export {
-  simpleUsage,
-  factoryUsage,
-  advancedUsage,
+  basicUsageWithCredentials,
+  environmentVariablesUsage,
+  customEndpointUsage,
+  productionConfiguration,
   errorHandlingExample,
-  testingSetup,
+  multiplePluginExecution,
 };

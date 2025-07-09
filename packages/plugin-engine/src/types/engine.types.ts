@@ -23,10 +23,8 @@ export interface EngineConfig {
   debug?: boolean;
 }
 
-/** Engine options for creating instances */
-export interface EngineOptions {
-  /** S3 bucket name where plugins are stored */
-  bucketName: string;
+/** Plugin engine creation options */
+export interface PluginEngineOptions {
   /** Optional base path for plugin folders in S3 */
   basePath?: string;
   /** Timeout for plugin execution in milliseconds (default: 30000) */
@@ -35,16 +33,4 @@ export interface EngineOptions {
   memoryLimit?: number;
   /** Enable debug logging (default: false) */
   debug?: boolean;
-}
-
-/** Engine factory configuration */
-export interface EngineFactoryConfig {
-  /** Default bucket name */
-  defaultBucketName?: string;
-  /** Default execution timeout */
-  defaultExecutionTimeout?: number;
-  /** Default memory limit */
-  defaultMemoryLimit?: number;
-  /** Default debug setting */
-  defaultDebug?: boolean;
 }

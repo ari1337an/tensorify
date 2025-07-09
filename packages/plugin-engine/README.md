@@ -1,17 +1,18 @@
 # @tensorify.io/plugin-engine
 
-A professional TypeScript library for executing Tensorify plugins in isolated environments with comprehensive type safety and dependency injection.
+A professional TypeScript library for executing Tensorify plugins in isolated environments with comprehensive type safety, dependency injection, and a clean, user-friendly API.
 
 ## Features
 
 - 🚀 **High Performance**: Execute plugins in isolated VMs with configurable memory and timeout limits
 - 🔒 **Secure Execution**: Isolated VM environment prevents plugins from accessing host system
 - 🎯 **Type Safe**: Full TypeScript support with comprehensive type definitions
-- 🏗️ **Dependency Injection**: Clean architecture with injectable storage and executor services
-- 📦 **S3 Integration**: Built-in AWS S3 support for plugin storage
-- 🛠️ **Configurable**: Extensive configuration options for different use cases
-- ⚡ **Factory Pattern**: Easy setup with factory methods for common scenarios
-- 🧪 **Testable**: Mockable interfaces for comprehensive testing
+- 🏗️ **Clean Architecture**: Dependency injection with service interfaces for maximum testability
+- 📦 **S3 Integration**: Direct S3Client compatibility with explicit configuration
+- 🛠️ **Professional API**: Single, clean API that follows library best practices
+- ⚡ **Explicit Configuration**: Users control their own environment variables and configuration
+- 🧪 **Testable**: Mockable interfaces and testing utilities included
+- 🌐 **S3-Compatible**: Works with AWS S3, MinIO, LocalStack, and other S3-compatible services
 
 ## Installation
 
@@ -29,94 +30,218 @@ npm install @aws-sdk/client-s3
 
 ## Quick Start
 
-### Simple Usage
+The plugin engine has a single, clean API that takes explicit S3 configuration:
 
 ```typescript
-import { getExecutionResult } from "@tensorify.io/plugin-engine";
+import { createPluginEngine } from "@tensorify.io/plugin-engine";
 
-// Execute a plugin with minimal setup
-const result = await getExecutionResult("my-plugin", {
-  inputData: "test input",
-  parameters: { threshold: 0.5 },
-});
+// Users handle their own environment variables
+const s3Config = {
+  region: process.env.S3_REGION || "us-east-1",
+  endpoint: process.env.S3_ENDPOINT,
+  credentials: process.env.S3_ACCESS_KEY_ID
+    ? {
+        accessKeyId: process.env.S3_ACCESS_KEY_ID,
+        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
+        sessionToken: process.env.S3_SESSION_TOKEN,
+      }
+    : undefined,
+  forcePathStyle: !!process.env.S3_ENDPOINT,
+};
 
-console.log(result); // Generated code string
-```
-
-### Factory Pattern (Recommended)
-
-```typescript
-import { PluginEngineFactory } from "@tensorify.io/plugin-engine";
-
-// Create engine with credentials
-const engine = PluginEngineFactory.createWithCredentials("my-plugins-bucket", {
-  accessKeyId: "your-access-key",
-  secretAccessKey: "your-secret-key",
-  region: "us-west-2",
+// Create engine
+const engine = createPluginEngine(s3Config, "my-plugins-bucket", {
+  debug: true,
+  executionTimeout: 60000,
+  memoryLimit: 256,
 });
 
 // Execute plugin
 const result = await engine.getExecutionResult("my-plugin", {
   inputData: "test",
+  parameters: { threshold: 0.5 },
 });
 
 console.log(result.code); // Generated code
 console.log(result.metadata); // Execution metadata
-```
-
-### Advanced Configuration
-
-```typescript
-import {
-  PluginEngineFactory,
-  S3StorageService,
-  IsolatedVMExecutorService,
-} from "@tensorify.io/plugin-engine";
-import { S3Client } from "@aws-sdk/client-s3";
-
-// Custom S3 client
-const s3Client = new S3Client({
-  region: "us-east-1",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
-
-// Create factory with custom configuration
-const factory = new PluginEngineFactory({
-  defaultBucketName: "my-plugins",
-  defaultExecutionTimeout: 60000, // 60 seconds
-  defaultMemoryLimit: 256, // 256 MB
-  defaultDebug: true,
-});
-
-// Create engine with custom services
-const storageService = new S3StorageService(s3Client);
-const executorService = new IsolatedVMExecutorService({
-  memoryLimit: 512,
-  timeout: 30000,
-  debug: true,
-});
-
-const engine = factory.createWithCustomServices(
-  storageService,
-  executorService,
-  {
-    bucketName: "my-plugins-bucket",
-    basePath: "plugins/v1",
-    debug: true,
-  }
-);
-
-// Execute plugin
-const result = await engine.getExecutionResult("advanced-plugin", {
-  model: "gpt-4",
-  temperature: 0.7,
-});
 
 // Cleanup
 await engine.dispose();
+```
+
+## API Reference
+
+### `createPluginEngine(s3Config, bucketName, options?)`
+
+The main function to create a plugin engine instance.
+
+**Parameters:**
+
+- `s3Config`: S3 configuration object (maps directly to S3Client constructor options)
+- `bucketName`: S3 bucket name where plugins are stored
+- `options`: Optional engine configuration
+
+**Returns:** `PluginEngine` instance
+
+## Configuration
+
+### S3 Configuration
+
+The S3 configuration object maps directly to the S3Client constructor options from `@aws-sdk/client-s3`:
+
+```typescript
+interface S3Config {
+  region?: string;
+  credentials?: {
+    accessKeyId: string;
+    secretAccessKey: string;
+    sessionToken?: string;
+  };
+  endpoint?: string; // For custom endpoints (MinIO, LocalStack)
+  forcePathStyle?: boolean; // Required for custom endpoints
+  // ... all other S3ClientConfig options
+}
+```
+
+### Engine Options
+
+```typescript
+interface PluginEngineOptions {
+  basePath?: string; // Optional base path for plugins in S3
+  executionTimeout?: number; // Execution timeout in ms (default: 30000)
+  memoryLimit?: number; // Memory limit in MB (default: 128)
+  debug?: boolean; // Enable debug logging (default: false)
+}
+```
+
+## Usage Examples
+
+### Basic Usage with Credentials
+
+```typescript
+import { createPluginEngine } from "@tensorify.io/plugin-engine";
+
+const engine = createPluginEngine(
+  {
+    region: "us-west-2",
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    },
+  },
+  "my-plugins-bucket",
+  {
+    debug: true,
+    executionTimeout: 60000,
+  }
+);
+
+const result = await engine.getExecutionResult("tensorflow-plugin", {
+  type: "tensorflow",
+  layers: ["dense", "dropout"],
+  epochs: 100,
+});
+
+console.log("Generated code:", result.code);
+await engine.dispose();
+```
+
+### Development with MinIO
+
+```typescript
+const engine = createPluginEngine(
+  {
+    endpoint: "http://localhost:9000",
+    forcePathStyle: true,
+    credentials: {
+      accessKeyId: "minioadmin",
+      secretAccessKey: "minioadmin",
+    },
+  },
+  "dev-plugins",
+  {
+    debug: true,
+    executionTimeout: 15000,
+  }
+);
+```
+
+### Production Configuration
+
+```typescript
+const engine = createPluginEngine(
+  {
+    region: "us-west-2",
+    credentials: {
+      accessKeyId: process.env.PROD_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.PROD_SECRET_ACCESS_KEY!,
+    },
+  },
+  "production-plugins",
+  {
+    debug: false,
+    executionTimeout: 120000,
+    memoryLimit: 512,
+    basePath: "plugins/v1",
+  }
+);
+```
+
+### Environment Variable Handling
+
+Users control their own environment variables:
+
+```typescript
+// Example of how users can handle environment variables
+const s3Config = {
+  region: process.env.S3_REGION || "us-east-1",
+  endpoint: process.env.S3_ENDPOINT,
+  credentials: process.env.S3_ACCESS_KEY_ID
+    ? {
+        accessKeyId: process.env.S3_ACCESS_KEY_ID,
+        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
+        sessionToken: process.env.S3_SESSION_TOKEN,
+      }
+    : undefined,
+  forcePathStyle: !!process.env.S3_ENDPOINT,
+};
+
+const engine = createPluginEngine(s3Config, "my-bucket", {
+  debug: process.env.NODE_ENV === "development",
+});
+```
+
+## Plugin Management
+
+### Check Plugin Availability
+
+```typescript
+const exists = await engine.pluginExists("my-plugin");
+if (exists) {
+  console.log("Plugin is available");
+}
+```
+
+### List Available Plugins
+
+```typescript
+const plugins = await engine.listAvailablePlugins(50);
+console.log("Available plugins:", plugins);
+```
+
+### Get Plugin Metadata
+
+```typescript
+const metadata = await engine.getPluginMetadata("my-plugin");
+console.log("Plugin size:", metadata.size);
+console.log("Last modified:", metadata.lastModified);
+```
+
+### Get Plugin Source Code
+
+```typescript
+const sourceCode = await engine.getPluginCode("my-plugin");
+console.log("Plugin source:", sourceCode);
 ```
 
 ## Plugin Structure
@@ -133,7 +258,7 @@ bucket/
     └── index.js
 ```
 
-Each `index.js` must export a class with the following structure:
+Each `index.js` must export a class with this structure:
 
 ```javascript
 class MyPlugin {
@@ -141,7 +266,18 @@ class MyPlugin {
     this.codeGeneration = {
       generateCode: (settings) => {
         // Your plugin logic here
-        return "generated code string";
+        // settings contains the data passed from the execution call
+
+        // Example: Generate Python code
+        return `
+import pandas as pd
+import numpy as np
+
+# Generated code based on settings: ${JSON.stringify(settings)}
+data = pd.read_csv('${settings.dataset || "data.csv"}')
+result = data.head(${settings.rows || 10})
+print(result)
+        `.trim();
       },
     };
   }
@@ -150,61 +286,9 @@ class MyPlugin {
 module.exports = MyPlugin;
 ```
 
-## API Reference
+## Error Handling
 
-### Main Functions
-
-#### `getExecutionResult(pluginSlug, settings, options?)`
-
-Execute a plugin with minimal configuration.
-
-**Parameters:**
-
-- `pluginSlug` (string): Unique identifier for the plugin
-- `settings` (Record<string, any>): Settings to pass to the plugin
-- `options` (object, optional): Configuration options
-
-**Returns:** `Promise<string>` - The generated code
-
-### Factory Methods
-
-#### `PluginEngineFactory.createDefault(bucketName, region?, options?)`
-
-Create engine with default AWS configuration.
-
-#### `PluginEngineFactory.createWithCredentials(bucketName, credentials, options?)`
-
-Create engine with explicit AWS credentials.
-
-#### `PluginEngineFactory.createForTesting(bucketName, endpoint, options?)`
-
-Create engine for testing with custom S3 endpoint (e.g., LocalStack, MinIO).
-
-### Core Classes
-
-#### `PluginEngine`
-
-Main engine class for plugin execution.
-
-**Methods:**
-
-- `getExecutionResult(pluginSlug, settings)`: Execute a plugin
-- `pluginExists(pluginSlug)`: Check if plugin exists
-- `getPluginMetadata(pluginSlug)`: Get plugin metadata
-- `listAvailablePlugins(maxResults?)`: List available plugins
-- `dispose()`: Clean up resources
-
-#### `S3StorageService`
-
-AWS S3 implementation of storage service.
-
-#### `IsolatedVMExecutorService`
-
-Isolated VM implementation of executor service.
-
-### Error Handling
-
-The library provides comprehensive error types:
+The library provides comprehensive error types for better debugging:
 
 ```typescript
 import {
@@ -216,40 +300,78 @@ import {
 } from "@tensorify.io/plugin-engine";
 
 try {
-  const result = await engine.getExecutionResult("nonexistent-plugin", {});
+  const result = await engine.getExecutionResult("my-plugin", {});
 } catch (error) {
   if (error instanceof PluginNotFoundError) {
     console.error("Plugin not found:", error.message);
+    console.error("Bucket:", error.bucketName);
   } else if (error instanceof TimeoutError) {
-    console.error("Execution timed out:", error.timeoutMs);
+    console.error("Execution timed out after:", error.timeoutMs, "ms");
   } else if (error instanceof MemoryLimitError) {
-    console.error("Memory limit exceeded:", error.limitMB);
+    console.error("Memory limit exceeded:", error.limitMB, "MB");
+    console.error("Used memory:", error.usedMB, "MB");
+  } else if (error instanceof ConfigurationError) {
+    console.error("Configuration error:", error.message);
+    console.error("Field:", error.configField);
   }
 }
 ```
 
-## Configuration
-
-### Environment Variables
-
-- `TENSORIFY_PLUGIN_BUCKET`: Default S3 bucket name
-- `AWS_REGION`: Default AWS region
-- `AWS_ACCESS_KEY_ID`: AWS access key
-- `AWS_SECRET_ACCESS_KEY`: AWS secret key
-
-### Engine Options
+## Multiple Plugin Execution
 
 ```typescript
-interface EngineOptions {
-  bucketName: string;
-  basePath?: string;
-  executionTimeout?: number; // milliseconds
-  memoryLimit?: number; // MB
-  debug?: boolean;
-}
+const engine = createPluginEngine(s3Config, "ml-plugins");
+
+// Execute multiple plugins in parallel
+const [dataResult, modelResult, analysisResult] = await Promise.all([
+  engine.getExecutionResult("data-preprocessor", { dataset: "users.csv" }),
+  engine.getExecutionResult("ml-trainer", { algorithm: "random-forest" }),
+  engine.getExecutionResult("result-analyzer", { threshold: 0.85 }),
+]);
+
+console.log("Data processing:", dataResult.code);
+console.log("Model training:", modelResult.code);
+console.log("Analysis:", analysisResult.code);
+
+await engine.dispose();
 ```
 
 ## Testing
+
+### Unit Testing
+
+```typescript
+import { createPluginEngine } from "@tensorify.io/plugin-engine";
+
+// Create engine for testing with LocalStack
+const testEngine = createPluginEngine(
+  {
+    endpoint: "http://localhost:4566",
+    forcePathStyle: true,
+    credentials: {
+      accessKeyId: "test",
+      secretAccessKey: "test",
+    },
+  },
+  "test-bucket",
+  {
+    debug: true,
+    executionTimeout: 5000,
+  }
+);
+
+// Run tests
+describe("Plugin Tests", () => {
+  it("should execute test plugin", async () => {
+    const result = await testEngine.getExecutionResult("test-plugin", {
+      test: true,
+    });
+    expect(result.code).toContain("test output");
+  });
+});
+```
+
+### Running Tests
 
 ```bash
 # Run tests
@@ -262,7 +384,37 @@ npm run test:coverage
 npm run test:watch
 ```
 
+## Performance Considerations
+
+### Memory Management
+
+```typescript
+// Configure memory limits based on your plugins
+const engine = createPluginEngine(s3Config, bucketName, {
+  memoryLimit: 512, // MB - adjust based on plugin requirements
+  executionTimeout: 60000, // 60 seconds
+});
+```
+
+### Connection Pooling
+
+```typescript
+// Reuse the same engine instance for multiple executions
+const engine = createPluginEngine(s3Config, bucketName);
+
+// Execute multiple plugins efficiently
+for (const pluginId of pluginIds) {
+  const result = await engine.getExecutionResult(pluginId, settings);
+  // Process result
+}
+
+// Don't forget to cleanup
+await engine.dispose();
+```
+
 ## Development
+
+### Building
 
 ```bash
 # Build the package
@@ -273,19 +425,25 @@ npm run build:watch
 
 # Type checking
 npm run type-check
+```
 
-# Linting
+### Linting
+
+```bash
+# Check for linting issues
 npm run lint
+
+# Fix linting issues
 npm run lint:fix
 ```
 
 ## Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes with proper TypeScript types
 4. Add tests for new functionality
-5. Ensure all tests pass
+5. Ensure all tests pass: `npm test`
 6. Submit a pull request
 
 ## License
@@ -294,4 +452,12 @@ ISC
 
 ## Support
 
-For issues and questions, please use the GitHub issue tracker.
+For issues and questions:
+
+- GitHub Issues: [Create an issue](https://github.com/tensorify/backend/issues)
+- Documentation: See examples in `/examples` directory
+- TypeScript Support: Full type definitions included
+
+---
+
+**Made with ❤️ for the Tensorify ecosystem**

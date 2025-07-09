@@ -7,8 +7,7 @@ import {
 import { z } from "zod";
 import { PluginSlugSchema } from "../schema";
 
-import { S3Client } from "@aws-sdk/client-s3";
-import { PluginEngineFactory } from "@tensorify.io/plugin-engine";
+import { createPluginEngine } from "@tensorify.io/plugin-engine";
 import { initServer } from "@ts-rest/express";
 
 const s = initServer();
@@ -46,17 +45,6 @@ export const mainFunction = async (
 ): Promise<ContractResponse> => {
   const slug = request.query.slug;
   try {
-    // Create S3 client using environment variables
-    const s3Client = new S3Client({
-      region: process.env.S3_REGION || "us-east-1",
-      endpoint: process.env.S3_ENDPOINT,
-      credentials: {
-        accessKeyId: process.env.S3_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
-      },
-      forcePathStyle: !!process.env.S3_ENDPOINT, // Required for custom endpoints like MinIO
-    });
-
     // Get bucket name from environment
     const bucketName = process.env.S3_BUCKET_NAME;
     if (!bucketName) {
@@ -65,15 +53,32 @@ export const mainFunction = async (
         body: {
           status: "error",
           message:
-            "S3_BUCKET_NAME not configured. Set  S3_BUCKET_NAME environment variable.",
+            "S3_BUCKET_NAME not configured. Set S3_BUCKET_NAME environment variable.",
         },
       });
     }
 
-    // Create plugin engine factory and engine instance
-    const factory = new PluginEngineFactory();
-    const engine = factory.createWithS3Client(s3Client, {
-      bucketName,
+    // Handle S3 configuration from environment variables
+    const s3Config = {
+      region: process.env.S3_REGION || process.env.AWS_REGION || "us-east-1",
+      endpoint: process.env.S3_ENDPOINT,
+      credentials:
+        process.env.S3_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID
+          ? {
+              accessKeyId:
+                process.env.S3_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID!,
+              secretAccessKey:
+                process.env.S3_SECRET_ACCESS_KEY ||
+                process.env.AWS_SECRET_ACCESS_KEY!,
+              sessionToken:
+                process.env.S3_SESSION_TOKEN || process.env.AWS_SESSION_TOKEN,
+            }
+          : undefined,
+      forcePathStyle: !!process.env.S3_ENDPOINT,
+    };
+
+    // Create plugin engine using the new clean API
+    const engine = createPluginEngine(s3Config, bucketName, {
       debug: process.env.NODE_ENV === "development",
     });
 

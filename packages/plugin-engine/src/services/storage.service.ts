@@ -9,7 +9,7 @@ import {
   ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
 import type { IStorageService } from "../interfaces/storage.interface";
-import type { StorageFileInfo, StorageConfig } from "../types/storage.types";
+import type { StorageFileInfo, S3Config } from "../types/storage.types";
 import { StorageError } from "../errors/plugin-engine.errors";
 
 /**
@@ -28,24 +28,11 @@ export class S3StorageService implements IStorageService {
 
   /**
    * Create S3 storage service with configuration
-   * @param config - Storage configuration
+   * @param config - S3 configuration that maps directly to S3Client options
    * @returns New S3StorageService instance
    */
-  static create(config: StorageConfig): S3StorageService {
-    const s3Client = new S3Client({
-      region: config.region || "us-east-1",
-      credentials:
-        config.accessKeyId && config.secretAccessKey
-          ? {
-              accessKeyId: config.accessKeyId,
-              secretAccessKey: config.secretAccessKey,
-              sessionToken: config.sessionToken,
-            }
-          : undefined,
-      endpoint: config.endpoint,
-      forcePathStyle: config.forcePathStyle,
-    });
-
+  static create(config: S3Config): S3StorageService {
+    const s3Client = new S3Client(config);
     return new S3StorageService(s3Client);
   }
 
@@ -139,7 +126,9 @@ export class S3StorageService implements IStorageService {
 
       const response = await this.s3Client.send(command);
 
-      return response.Contents?.map((obj: any) => obj.Key!).filter(Boolean) || [];
+      return (
+        response.Contents?.map((obj: any) => obj.Key!).filter(Boolean) || []
+      );
     } catch (error) {
       throw new StorageError(
         `Failed to list files with prefix '${prefix}' in bucket '${bucketName}': ${

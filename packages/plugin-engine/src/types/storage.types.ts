@@ -2,20 +2,20 @@
  * Storage service type definitions
  */
 
-/** Storage service configuration */
-export interface StorageConfig {
-  /** AWS region */
-  region?: string;
-  /** AWS access key ID */
-  accessKeyId?: string;
-  /** AWS secret access key */
-  secretAccessKey?: string;
-  /** AWS session token */
-  sessionToken?: string;
-  /** Custom endpoint for S3-compatible services */
-  endpoint?: string;
-  /** Force path style for S3 requests */
-  forcePathStyle?: boolean;
+import type { S3ClientConfig } from "@aws-sdk/client-s3";
+
+/** S3 configuration that maps directly to S3Client constructor options */
+export interface S3Config extends S3ClientConfig {
+  // All S3Client options are available directly
+  // Common ones for reference:
+  // region?: string;
+  // credentials?: {
+  //   accessKeyId: string;
+  //   secretAccessKey: string;
+  //   sessionToken?: string;
+  // };
+  // endpoint?: string;
+  // forcePathStyle?: boolean;
 }
 
 /** File information returned by storage operations */

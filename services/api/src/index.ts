@@ -1,7 +1,10 @@
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
-import { createExpressEndpoints } from "@ts-rest/express";
+import {
+  createExpressEndpoints,
+  RequestValidationError,
+} from "@ts-rest/express";
 import { contracts, actions, openapi } from "./loader";
 import swaggerUi from "swagger-ui-express";
 import dotenv from "dotenv";
@@ -28,12 +31,34 @@ createExpressEndpoints(contracts, actions, app, {
       next();
     },
   ],
-  requestValidationErrorHandler: (err, req, res, next) => {
-    //             err is typed as ^ RequestValidationError
-    console.log(err);
-    res.status(400).json({
-      message: "Validation failed",
-    });
+  requestValidationErrorHandler: (
+    err: RequestValidationError,
+    req,
+    res,
+    next
+  ) => {
+    if (err.pathParams) {
+      res.status(400).json({
+        message: "Path parameter validation failed",
+      });
+    } else if (err.headers) {
+      res.status(400).json({
+        message: "Header validation failed",
+      });
+    } else if (err.query) {
+      res.status(400).json({
+        message: "Query parameter validation failed",
+      });
+    } else if (err.body) {
+      res.status(400).json({
+        message: "Body validation failed",
+      });
+    } else {
+      console.error(err);
+      res.status(400).json({
+        message: "Validation failed",
+      });
+    }
   },
 });
 

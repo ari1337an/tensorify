@@ -19,7 +19,4 @@ module.exports = {
   coverageReporters: ["text", "lcov", "html"],
   setupFilesAfterEnv: ["<rootDir>/tests/setup.ts"],
   testTimeout: 30000, // 30 seconds for isolated-vm tests
-  moduleNameMapping: {
-    "^@/(.*)$": "<rootDir>/src/$1",
-  },
 };
