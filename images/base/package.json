@@ -1,0 +1,11 @@
+{
+  "name": "ari1337an/node-20-python3-make-cpp",
+  "version": "0.0.2",
+  "description": "The base images that will be used to build and deploy services of this monorepo in production. This image has node 20, python3, make, and g++ for isolated-vm. You need to enable containerd in your system to build a multi platform image.",
+  "main": "index.js",
+  "scripts": {
+    "docker:build": "docker buildx build --platform linux/amd64,linux/arm64 -t ari1337an/node-20-python3-make-cpp:0.0.2 --push ."
+  },
+  "author": "ari1337an",
+  "license": "ISC"
+}
