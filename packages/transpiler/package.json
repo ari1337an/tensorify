@@ -7,7 +7,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "start": "ts-node --require tsconfig-paths/register v1/usage.ts"
+    "start": "ts-node --require tsconfig-paths/register src/usage.ts"
   },
   "devDependencies": {
     "typescript": "^5.0.0"

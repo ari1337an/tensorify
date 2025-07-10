@@ -7,7 +7,7 @@ This directory contains example JSON inputs for the v1 transpiler.
 To generate formatted Python code from a JSON model:
 
 1. Navigate to the transpiler package: `cd packages/transpiler`
-2. Run `npm start -- -f v1/examples/simple-model.json`
+2. Run `npm start -- -f src/examples/simple-model.json`
 
 This will print the generated code to the terminal.
 
