@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import INode from '../interfaces/INode';
+import INode from '../../core/interfaces/INode';
 
 // The directory where your node modules are located
 const nodesDir = path.join(__dirname, '../nodes');
