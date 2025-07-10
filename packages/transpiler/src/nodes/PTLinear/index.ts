@@ -1,5 +1,5 @@
 // nodes/PTLinear.ts
-import INode, { NodeType } from "../../../core/interfaces/INode";
+import INode, { NodeType } from "../../core/interfaces/INode";
 
 export default class PTLinear implements INode<PTLinear["settings"]> {
   /** Name of the node */
