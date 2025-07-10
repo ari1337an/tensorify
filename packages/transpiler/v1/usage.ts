@@ -1,6 +1,6 @@
-import { convertBythonToPython } from "./engines/bython/engine";
-import { formatPythonCode } from "./engines/formatter/engine";
-import translateJsonToBython from "./engines/translator";
+import { convertBythonToPython } from "./core/engines/bython/engine";
+import { formatPythonCode } from "./core/engines/formatter/engine";
+import translateJsonToBython from "./core/engines/translator";
 import { Command } from "commander";
 import fs from "fs";
 
