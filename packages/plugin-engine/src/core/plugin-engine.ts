@@ -4,11 +4,7 @@
 
 import type { IStorageService } from "../interfaces/storage.interface";
 import type { IExecutorService } from "../interfaces/executor.interface";
-import type {
-  EngineConfig,
-  PluginSettings,
-  PluginExecutionResult,
-} from "../types";
+import type { EngineConfig, PluginExecutionResult } from "../types";
 import {
   PluginNotFoundError,
   ConfigurationError,
@@ -39,12 +35,14 @@ export class PluginEngine {
   /**
    * Main method to execute a plugin and get the generated code
    * @param pluginSlug - Unique identifier for the plugin
-   * @param settings - Settings to pass to the plugin
+   * @param payload - Data to pass to the plugin
+   * @param entryPointString - Entry point to execute (function name or class.method like 'sum', 'Calculator.add', etc.)
    * @returns Promise resolving to the execution result with generated code
    */
   async getExecutionResult(
     pluginSlug: string,
-    settings: PluginSettings
+    payload: any,
+    entryPointString: string
   ): Promise<PluginExecutionResult> {
     try {
       this.log(`Starting execution for plugin: ${pluginSlug}`);
@@ -52,14 +50,19 @@ export class PluginEngine {
       // Step 1: Fetch the plugin code from storage
       const pluginCode = await this.fetchPluginCode(pluginSlug);
 
+      this.log(`Plugin code fetched: ${pluginCode.slice(0, 20)}...`);
+
       // Step 2: Validate the plugin structure (optional but recommended)
       await this.validatePluginCode(pluginCode);
+
+      this.log(`Plugin code validated`);
 
       // Step 3: Execute the plugin in isolated environment
       const executionResult = await this.executorService.execute(
         {
           code: pluginCode,
-          settings,
+          payload,
+          entryPointString,
         },
         {
           memoryLimit: this.config.memoryLimit || 128,

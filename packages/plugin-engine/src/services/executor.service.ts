@@ -8,7 +8,7 @@ import type {
   ExecutionContext,
   ExecutionResult,
   ExecutorConfig,
-  VMContextOptions,
+  // VMContextOptions,
 } from "../types/executor.types";
 import {
   ExecutionError,
@@ -53,14 +53,21 @@ export class IsolatedVMExecutorService implements IExecutorService {
       const vmContext = await isolate.createContext();
 
       // Set up the VM context with necessary globals
-      await this.setupVMContext(vmContext, effectiveConfig);
+      // Skip VM context setup to test if that's causing the non-transferable value issue
+      // await this.setupVMContext(vmContext, effectiveConfig);
 
-      // Compile and execute the plugin code
-      const script = await isolate.compileScript(context.code);
+      console.log("VM context setup");
+
+      console.log("Ready to execute plugin code");
 
       // Execute with timeout
       const result = await Promise.race([
-        this.executeWithContext(script, vmContext, context.settings),
+        this.executeWithContext(
+          vmContext,
+          context.payload,
+          context.entryPointString,
+          context.code
+        ),
         this.createTimeoutPromise(effectiveConfig.timeout),
       ]);
 
@@ -156,6 +163,7 @@ export class IsolatedVMExecutorService implements IExecutorService {
   /**
    * Set up the VM context with necessary globals and modules
    */
+  /*
   private async setupVMContext(
     context: ivm.Context,
     config: Required<ExecutorConfig>,
@@ -166,15 +174,14 @@ export class IsolatedVMExecutorService implements IExecutorService {
     // Set up basic globals
     await jail.set("global", jail.derefInto());
 
-    // Set up console if debug is enabled
+    // Set up console if debug is enabled (using transferable functions)
     if (config.debug || options?.enableConsole) {
-      const console = {
-        log: (...args: any[]): void => console.log(...args),
-        error: (...args: any[]): void => console.error(...args),
-        warn: (...args: any[]): void => console.warn(...args),
-        info: (...args: any[]): void => console.info(...args),
-      };
-      await jail.set("console", console);
+      await jail.set("console", {
+        log: new ivm.Reference((...args: any[]) => console.log(...args)),
+        error: new ivm.Reference((...args: any[]) => console.error(...args)),
+        warn: new ivm.Reference((...args: any[]) => console.warn(...args)),
+        info: new ivm.Reference((...args: any[]) => console.info(...args)),
+      });
     }
 
     // Add any custom globals
@@ -196,52 +203,54 @@ export class IsolatedVMExecutorService implements IExecutorService {
       await jail.set("require", requireFunction);
     }
   }
+  */
 
   /**
    * Execute the script with the plugin context
    */
   private async executeWithContext(
-    script: ivm.Script,
     context: ivm.Context,
-    settings: Record<string, any>
+    payload: any,
+    entryPointString: string,
+    originalCode: string
   ): Promise<string> {
-    // Execute the script to load the plugin class
-    await script.run(context);
+    // Use the original plugin code instead of script.toString()
+    const payloadJson = JSON.stringify(payload);
+    const entryPoint = entryPointString;
 
-    // Create an execution script that instantiates the plugin and calls generateCode
-    const executionCode = `
+    // Create a single script that includes the plugin code and execution logic
+    const combinedCode = `
+      // Set up minimal module system
+      var module = { exports: {} };
+      var exports = module.exports;
+      
+      ${originalCode}
+      
       (function() {
-        // The plugin should export a class as the default export
-        const PluginClass = (typeof module !== 'undefined' && module.exports) || 
-                            (typeof exports !== 'undefined' && exports.default) ||
-                            this; // fallback to global context
-        
-        if (typeof PluginClass !== 'function') {
-          throw new Error('Plugin must export a class constructor');
+        try {
+          var payload = JSON.parse('${payloadJson.replace(/'/g, "\\'")}');
+          var entryPoint = '${entryPoint}';
+          
+          var exported = module.exports;
+          var fn = exported[entryPoint];
+          
+          if (typeof fn !== 'function') {
+            return 'Error: Function ' + entryPoint + ' not found';
+          }
+          
+          var result = fn(payload);
+          return String(result);
+        } catch (error) {
+          return 'Error: ' + error.message;
         }
-        
-        const pluginInstance = new PluginClass();
-        
-        if (!pluginInstance.codeGeneration || typeof pluginInstance.codeGeneration.generateCode !== 'function') {
-          throw new Error('Plugin instance must have codeGeneration.generateCode method');
-        }
-        
-        return pluginInstance.codeGeneration.generateCode(${JSON.stringify(
-          settings
-        )});
       })()
     `;
 
-    const executionScript = await (context as any).isolate.compileScript(executionCode);
-    const result = await executionScript.run(context);
+    console.log("Combined script:", combinedCode.slice(0, 200) + "...");
 
-    if (typeof result !== "string") {
-      throw new ExecutionError(
-        "Plugin generateCode method must return a string"
-      );
-    }
-
-    return result;
+    // Execute everything as a single script to avoid transferable value issues
+    const result = await context.evalSync(combinedCode);
+    return String(result);
   }
 
   /**

@@ -10,7 +10,7 @@
     "services/api"
   ],
   "scripts": {
-    "dev:services:api": "turbo run dev --filter='./services/api'",
+    "dev:services:api": "turbo run build --filter='./packages/plugin-engine' && turbo run dev --filter='./packages/plugin-engine' --filter='./services/api' --parallel",
     "dev:packages:plugin-engine": "turbo run dev --filter='./packages/plugin-engine'",
     "dev:packages:sdk": "turbo run dev --filter='./packages/sdk/v1'",
     "dev:packages:transpiler": "turbo run dev --filter='./packages/transpiler'",

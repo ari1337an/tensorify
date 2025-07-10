@@ -13,6 +13,7 @@ A professional TypeScript library for executing Tensorify plugins in isolated en
 - ⚡ **Explicit Configuration**: Users control their own environment variables and configuration
 - 🧪 **Testable**: Mockable interfaces and testing utilities included
 - 🌐 **S3-Compatible**: Works with AWS S3, MinIO, LocalStack, and other S3-compatible services
+- 🎪 **Flexible Entry Points**: Support for simple functions, class methods, and nested object methods
 
 ## Installation
 
@@ -56,11 +57,29 @@ const engine = createPluginEngine(s3Config, "my-plugins-bucket", {
   memoryLimit: 256,
 });
 
-// Execute plugin
-const result = await engine.getExecutionResult("my-plugin", {
-  inputData: "test",
-  parameters: { threshold: 0.5 },
-});
+// Execute plugin with flexible entry points
+const result = await engine.getExecutionResult(
+  "my-plugin:1.0.0",
+  {
+    inputData: "test",
+    parameters: { threshold: 0.5 },
+  },
+  "processData" // Simple function
+);
+
+// Or call class methods
+const classResult = await engine.getExecutionResult(
+  "my-plugin:1.0.0",
+  { data: "example" },
+  "DataProcessor.transform" // Class method
+);
+
+// Or nested object methods
+const nestedResult = await engine.getExecutionResult(
+  "my-plugin:1.0.0",
+  { config: "advanced" },
+  "handlers.data.process" // Nested method
+);
 
 console.log(result.code); // Generated code
 console.log(result.metadata); // Execution metadata
@@ -82,6 +101,41 @@ The main function to create a plugin engine instance.
 - `options`: Optional engine configuration
 
 **Returns:** `PluginEngine` instance
+
+### `engine.getExecutionResult(pluginSlug, payload, entryPointString)`
+
+Execute a plugin with specified data and entry point.
+
+**Parameters:**
+
+- `pluginSlug`: Unique identifier for the plugin (e.g., "my-plugin:1.0.0")
+- `payload`: Data to pass to the plugin (any JSON-serializable object)
+- `entryPointString`: Entry point to execute. Supports:
+  - Simple functions: `"processData"`
+  - Class methods: `"DataProcessor.transform"`
+  - Nested methods: `"handlers.data.process"`
+  - Multiple levels: `"services.ml.models.predict"`
+
+**Returns:** Promise resolving to `PluginExecutionResult`
+
+#### Entry Point Examples
+
+```typescript
+// Simple function calls
+await engine.getExecutionResult(pluginSlug, data, "sum");
+await engine.getExecutionResult(pluginSlug, data, "processData");
+
+// Class methods (auto-instantiated)
+await engine.getExecutionResult(pluginSlug, data, "Calculator.add");
+await engine.getExecutionResult(pluginSlug, data, "DataProcessor.transform");
+
+// Nested object methods
+await engine.getExecutionResult(pluginSlug, data, "utils.math.calculate");
+await engine.getExecutionResult(pluginSlug, data, "handlers.data.process");
+
+// Deep nesting
+await engine.getExecutionResult(pluginSlug, data, "services.ml.models.predict");
+```
 
 ## Configuration
 
@@ -136,13 +190,30 @@ const engine = createPluginEngine(
   }
 );
 
-const result = await engine.getExecutionResult("tensorflow-plugin", {
-  type: "tensorflow",
-  layers: ["dense", "dropout"],
-  epochs: 100,
-});
+// Simple function call
+const result1 = await engine.getExecutionResult(
+  "data-plugin:2.1.0",
+  {
+    dataset: "users.csv",
+    operation: "filter",
+    criteria: { age: ">= 18" },
+  },
+  "filterData"
+);
 
-console.log("Generated code:", result.code);
+// Class method call
+const result2 = await engine.getExecutionResult(
+  "ml-plugin:1.5.0",
+  {
+    algorithm: "random-forest",
+    features: ["age", "income"],
+    target: "purchase",
+  },
+  "MLModel.train"
+);
+
+console.log("Filtered data code:", result1.code);
+console.log("ML training code:", result2.code);
 await engine.dispose();
 ```
 
@@ -280,32 +351,128 @@ bucket/
 
 ### Plugin Implementation (`index.js`)
 
-Each `index.js` must export a class with this structure:
+Plugins support multiple export patterns:
+
+#### Simple Function Export
 
 ```javascript
-class MyPlugin {
-  constructor() {
-    this.codeGeneration = {
-      generateCode: (settings) => {
-        // Your plugin logic here
-        // settings contains the data passed from the execution call
+function processData(payload) {
+  // Access payload data
+  const { inputData, parameters } = payload;
 
-        // Example: Generate Python code
-        return `
+  return `
 import pandas as pd
 import numpy as np
 
-# Generated code based on settings: ${JSON.stringify(settings)}
-data = pd.read_csv('${settings.dataset || "data.csv"}')
-result = data.head(${settings.rows || 10})
+# Processing data: ${inputData}
+# Parameters: ${JSON.stringify(parameters)}
+data = pd.read_csv('${inputData}')
+result = data.head(${parameters.rows || 10})
 print(result)
-        `.trim();
-      },
-    };
+  `.trim();
+}
+
+function sum(payload) {
+  const { numbers } = payload;
+  const total = numbers.reduce((a, b) => a + b, 0);
+  return `result = ${total}`;
+}
+
+module.exports = { processData, sum };
+```
+
+#### Class-Based Export
+
+```javascript
+class DataProcessor {
+  transform(payload) {
+    const { data, operation } = payload;
+    return `
+# Data transformation: ${operation}
+import pandas as pd
+data = pd.DataFrame(${JSON.stringify(data)})
+transformed = data.${operation}()
+print(transformed)
+    `.trim();
+  }
+
+  filter(payload) {
+    const { criteria } = payload;
+    return `data_filtered = data[data.${criteria}]`;
   }
 }
 
-module.exports = MyPlugin;
+class MLModel {
+  train(payload) {
+    const { algorithm, features } = payload;
+    return `
+from sklearn.ensemble import RandomForestClassifier
+model = RandomForestClassifier()
+X = data[${JSON.stringify(features)}]
+model.fit(X, y)
+    `.trim();
+  }
+}
+
+module.exports = { DataProcessor, MLModel };
+```
+
+#### Nested Object Export
+
+```javascript
+const utils = {
+  math: {
+    calculate: (payload) => {
+      const { operation, values } = payload;
+      return `result = ${operation}(${values.join(", ")})`;
+    },
+  },
+};
+
+const handlers = {
+  data: {
+    process: (payload) => {
+      return `# Processing ${payload.type} data`;
+    },
+  },
+};
+
+module.exports = { utils, handlers };
+```
+
+#### Mixed Export Pattern
+
+```javascript
+// Simple functions
+function quickProcess(payload) {
+  return `# Quick process: ${payload.type}`;
+}
+
+// Classes
+class AdvancedProcessor {
+  complexTransform(payload) {
+    return `# Advanced transform with ${payload.algorithm}`;
+  }
+}
+
+// Nested objects
+const services = {
+  ml: {
+    models: {
+      predict: (payload) => {
+        return `prediction = model.predict(${JSON.stringify(
+          payload.features
+        )})`;
+      },
+    },
+  },
+};
+
+module.exports = {
+  quickProcess,
+  AdvancedProcessor,
+  services,
+};
 ```
 
 ### Plugin Metadata (`manifest.json`)
@@ -326,16 +493,35 @@ Each `manifest.json` must contain plugin information:
     "pandas": "^1.5.0",
     "numpy": "^1.24.0"
   },
-  "parameters": {
-    "dataset": {
-      "type": "string",
-      "required": true,
-      "description": "Path to the dataset file"
+  "entryPoints": {
+    "processData": {
+      "description": "Process input data with basic transformations",
+      "parameters": {
+        "inputData": {
+          "type": "string",
+          "required": true,
+          "description": "Path to the dataset file"
+        },
+        "parameters": {
+          "type": "object",
+          "description": "Processing parameters"
+        }
+      }
     },
-    "threshold": {
-      "type": "number",
-      "default": 0.5,
-      "description": "Classification threshold"
+    "DataProcessor.transform": {
+      "description": "Advanced data transformation using class methods",
+      "parameters": {
+        "data": {
+          "type": "array",
+          "required": true,
+          "description": "Input data array"
+        },
+        "operation": {
+          "type": "string",
+          "required": true,
+          "description": "Transformation operation"
+        }
+      }
     }
   }
 }
@@ -355,7 +541,11 @@ import {
 } from "@tensorify.io/plugin-engine";
 
 try {
-  const result = await engine.getExecutionResult("my-plugin", {});
+  const result = await engine.getExecutionResult(
+    "my-plugin",
+    { data: "test" },
+    "processData"
+  );
 } catch (error) {
   if (error instanceof PluginNotFoundError) {
     console.error("Plugin not found:", error.message);
@@ -379,9 +569,21 @@ const engine = createPluginEngine(s3Config, "ml-plugins");
 
 // Execute multiple plugins in parallel
 const [dataResult, modelResult, analysisResult] = await Promise.all([
-  engine.getExecutionResult("data-preprocessor", { dataset: "users.csv" }),
-  engine.getExecutionResult("ml-trainer", { algorithm: "random-forest" }),
-  engine.getExecutionResult("result-analyzer", { threshold: 0.85 }),
+  engine.getExecutionResult(
+    "data-preprocessor",
+    { dataset: "users.csv" },
+    "preprocessData"
+  ),
+  engine.getExecutionResult(
+    "ml-trainer",
+    { algorithm: "random-forest" },
+    "MLTrainer.train"
+  ),
+  engine.getExecutionResult(
+    "result-analyzer",
+    { threshold: 0.85 },
+    "analyzers.results.evaluate"
+  ),
 ]);
 
 console.log("Data processing:", dataResult.code);
@@ -418,10 +620,23 @@ const testEngine = createPluginEngine(
 // Run tests
 describe("Plugin Tests", () => {
   it("should execute test plugin", async () => {
-    const result = await testEngine.getExecutionResult("test-plugin", {
-      test: true,
-    });
+    const result = await testEngine.getExecutionResult(
+      "test-plugin",
+      {
+        test: true,
+      },
+      "processTest"
+    );
     expect(result.code).toContain("test output");
+  });
+
+  it("should execute class method", async () => {
+    const result = await testEngine.getExecutionResult(
+      "test-plugin",
+      { data: "example" },
+      "TestClass.execute"
+    );
+    expect(result.code).toContain("executed");
   });
 });
 ```
@@ -438,6 +653,445 @@ npm run test:coverage
 # Run tests in watch mode
 npm run test:watch
 ```
+
+## Migration Guide
+
+### From Settings-Based to Payload-Based API
+
+**Old API (v0.x):**
+
+```typescript
+// Old way
+const result = await engine.getExecutionResult(
+  "my-plugin",
+  {
+    dataset: "data.csv",
+    threshold: 0.5,
+  },
+  "codeGeneration.generateCode" // Fixed entry point
+);
+
+// Plugin had to implement codeGeneration.generateCode
+class MyPlugin {
+  constructor() {
+    this.codeGeneration = {
+      generateCode: (settings) => {
+        // Fixed structure
+      },
+    };
+  }
+}
+```
+
+**New API (v1.x):**
+
+```typescript
+// New way - flexible entry points
+const result = await engine.getExecutionResult(
+  "my-plugin",
+  {
+    dataset: "data.csv",
+    threshold: 0.5,
+  },
+  "processData" // Any function/method
+);
+
+// Plugin can export any structure
+function processData(payload) {
+  // Direct function
+}
+
+// Or class methods
+class DataProcessor {
+  processData(payload) {
+    // Class method
+  }
+}
+
+// Or nested methods
+const handlers = {
+  data: {
+    process: (payload) => {
+      // Nested method
+    },
+  },
+};
+
+module.exports = { processData, DataProcessor, handlers };
+```
+
+### Migration Steps
+
+#### 1. Update Plugin Engine Usage
+
+**Before:**
+
+```typescript
+const result = await engine.getExecutionResult(
+  "data-plugin",
+  { inputFile: "data.csv", operations: ["clean", "normalize"] },
+  "codeGeneration.generateCode"
+);
+```
+
+**After:**
+
+```typescript
+const result = await engine.getExecutionResult(
+  "data-plugin",
+  { inputFile: "data.csv", operations: ["clean", "normalize"] },
+  "processData" // Choose your entry point
+);
+```
+
+#### 2. Update Plugin Structure
+
+**Before (Fixed Structure):**
+
+```javascript
+class DataPlugin {
+  constructor() {
+    this.codeGeneration = {
+      generateCode: (settings) => {
+        const { inputFile, operations } = settings;
+        return `
+import pandas as pd
+data = pd.read_csv('${inputFile}')
+# Apply operations: ${operations.join(", ")}
+        `;
+      },
+    };
+  }
+}
+
+module.exports = DataPlugin;
+```
+
+**After (Flexible Structure):**
+
+```javascript
+// Option 1: Simple function export
+function processData(payload) {
+  const { inputFile, operations } = payload;
+  return `
+import pandas as pd
+data = pd.read_csv('${inputFile}')
+# Apply operations: ${operations.join(", ")}
+  `;
+}
+
+// Option 2: Class with methods
+class DataProcessor {
+  processData(payload) {
+    const { inputFile, operations } = payload;
+    return `
+import pandas as pd
+data = pd.read_csv('${inputFile}')
+# Apply operations: ${operations.join(", ")}
+    `;
+  }
+
+  cleanData(payload) {
+    return "data.dropna().reset_index(drop=True)";
+  }
+}
+
+// Option 3: Nested object structure
+const dataHandlers = {
+  csv: {
+    read: (payload) => `pd.read_csv('${payload.file}')`,
+    write: (payload) => `data.to_csv('${payload.output}')`,
+  },
+  json: {
+    read: (payload) => `pd.read_json('${payload.file}')`,
+    write: (payload) => `data.to_json('${payload.output}')`,
+  },
+};
+
+module.exports = {
+  processData,
+  DataProcessor,
+  dataHandlers,
+};
+```
+
+#### 3. Update Manifest Entries
+
+**Before:**
+
+```json
+{
+  "slug": "data-plugin",
+  "name": "Data Processing Plugin",
+  "version": "1.0.0",
+  "parameters": {
+    "inputFile": {
+      "type": "string",
+      "required": true
+    }
+  }
+}
+```
+
+**After:**
+
+```json
+{
+  "slug": "data-plugin",
+  "name": "Data Processing Plugin",
+  "version": "2.0.0",
+  "entryPoints": {
+    "processData": {
+      "description": "Process data with basic operations",
+      "parameters": {
+        "inputFile": {
+          "type": "string",
+          "required": true,
+          "description": "Path to input data file"
+        },
+        "operations": {
+          "type": "array",
+          "description": "List of operations to apply"
+        }
+      }
+    },
+    "DataProcessor.processData": {
+      "description": "Advanced data processing with class methods",
+      "parameters": {
+        "inputFile": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    "dataHandlers.csv.read": {
+      "description": "Read CSV files specifically",
+      "parameters": {
+        "file": {
+          "type": "string",
+          "required": true,
+          "description": "CSV file path"
+        }
+      }
+    }
+  }
+}
+```
+
+### Common Migration Patterns
+
+#### Pattern 1: Single Function Plugin
+
+**Before:**
+
+```javascript
+class SimplePlugin {
+  constructor() {
+    this.codeGeneration = {
+      generateCode: (settings) => {
+        return `result = ${settings.value * 2}`;
+      },
+    };
+  }
+}
+module.exports = SimplePlugin;
+```
+
+**After:**
+
+```javascript
+function double(payload) {
+  return `result = ${payload.value * 2}`;
+}
+module.exports = { double };
+```
+
+**Usage:**
+
+```typescript
+// Before
+await engine.getExecutionResult(
+  "plugin",
+  { value: 5 },
+  "codeGeneration.generateCode"
+);
+
+// After
+await engine.getExecutionResult("plugin", { value: 5 }, "double");
+```
+
+#### Pattern 2: Multiple Functions Plugin
+
+**Before:**
+
+```javascript
+class MathPlugin {
+  constructor() {
+    this.codeGeneration = {
+      generateCode: (settings) => {
+        switch (settings.operation) {
+          case "add":
+            return `result = ${settings.a} + ${settings.b}`;
+          case "multiply":
+            return `result = ${settings.a} * ${settings.b}`;
+          default:
+            return "result = 0";
+        }
+      },
+    };
+  }
+}
+module.exports = MathPlugin;
+```
+
+**After:**
+
+```javascript
+function add(payload) {
+  return `result = ${payload.a} + ${payload.b}`;
+}
+
+function multiply(payload) {
+  return `result = ${payload.a} * ${payload.b}`;
+}
+
+class Calculator {
+  add(payload) {
+    return `result = ${payload.a} + ${payload.b}`;
+  }
+
+  multiply(payload) {
+    return `result = ${payload.a} * ${payload.b}`;
+  }
+}
+
+module.exports = { add, multiply, Calculator };
+```
+
+**Usage:**
+
+```typescript
+// Before
+await engine.getExecutionResult(
+  "plugin",
+  { operation: "add", a: 5, b: 3 },
+  "codeGeneration.generateCode"
+);
+
+// After - multiple options
+await engine.getExecutionResult("plugin", { a: 5, b: 3 }, "add");
+await engine.getExecutionResult("plugin", { a: 5, b: 3 }, "Calculator.add");
+```
+
+#### Pattern 3: Complex Plugin with Categories
+
+**Before:**
+
+```javascript
+class MLPlugin {
+  constructor() {
+    this.codeGeneration = {
+      generateCode: (settings) => {
+        if (settings.category === "preprocessing") {
+          return this.generatePreprocessing(settings);
+        } else if (settings.category === "training") {
+          return this.generateTraining(settings);
+        }
+        return "";
+      },
+    };
+  }
+
+  generatePreprocessing(settings) {
+    return `data = preprocess('${settings.data}')`;
+  }
+
+  generateTraining(settings) {
+    return `model = train('${settings.algorithm}')`;
+  }
+}
+module.exports = MLPlugin;
+```
+
+**After:**
+
+```javascript
+const preprocessing = {
+  clean: (payload) => `data = clean('${payload.data}')`,
+  normalize: (payload) => `data = normalize('${payload.data}')`,
+  scale: (payload) => `data = scale('${payload.data}')`,
+};
+
+const training = {
+  linear: (payload) =>
+    `model = LinearRegression().fit(${payload.features}, ${payload.target})`,
+  forest: (payload) =>
+    `model = RandomForest(n_estimators=${payload.trees}).fit(X, y)`,
+};
+
+class MLPipeline {
+  preprocess(payload) {
+    return `data = preprocess('${payload.data}', method='${payload.method}')`;
+  }
+
+  train(payload) {
+    return `model = train_model('${payload.algorithm}', data)`;
+  }
+}
+
+module.exports = { preprocessing, training, MLPipeline };
+```
+
+**Usage:**
+
+```typescript
+// Before
+await engine.getExecutionResult(
+  "plugin",
+  { category: "preprocessing", data: "file.csv" },
+  "codeGeneration.generateCode"
+);
+
+// After - specific entry points
+await engine.getExecutionResult(
+  "plugin",
+  { data: "file.csv" },
+  "preprocessing.clean"
+);
+
+await engine.getExecutionResult(
+  "plugin",
+  { algorithm: "random_forest", features: "X", target: "y" },
+  "MLPipeline.train"
+);
+```
+
+### Breaking Changes Summary
+
+1. **Entry Point**: Changed from fixed `"codeGeneration.generateCode"` to flexible entry points
+2. **Parameter Name**: Changed from `settings` to `payload` in plugin functions
+3. **Plugin Structure**: No longer requires specific class structure with `codeGeneration` property
+4. **Manifest Format**: Added `entryPoints` section to describe available entry points
+5. **Export Pattern**: Supports multiple export patterns (functions, classes, nested objects)
+
+### Migration Checklist
+
+- [ ] **Update plugin engine calls**: Replace `"codeGeneration.generateCode"` with specific entry points
+- [ ] **Rename parameter**: Change `settings` to `payload` in plugin functions
+- [ ] **Restructure plugins**: Move from class-based structure to flexible exports
+- [ ] **Update manifests**: Add `entryPoints` section with entry point descriptions
+- [ ] **Test entry points**: Verify all entry points work with new API
+- [ ] **Update documentation**: Update plugin documentation to reflect new patterns
+- [ ] **Version plugins**: Increment plugin versions to indicate breaking changes
+
+### Benefits of Migration
+
+1. **Flexibility**: Plugins can export any structure that makes sense for their use case
+2. **Clarity**: Entry points are explicit and descriptive
+3. **Maintainability**: Simpler plugin structure without forced class hierarchies
+4. **Discoverability**: Entry points are documented in manifests
+5. **Extensibility**: Easy to add new entry points without changing existing ones
+6. **Performance**: More direct function calls without wrapper layers
 
 ## Performance Considerations
 
@@ -459,7 +1113,7 @@ const engine = createPluginEngine(s3Config, bucketName);
 
 // Execute multiple plugins efficiently
 for (const pluginId of pluginIds) {
-  const result = await engine.getExecutionResult(pluginId, settings);
+  const result = await engine.getExecutionResult(pluginId, payload, entryPoint);
   // Process result
 }
 

@@ -82,10 +82,11 @@ export const mainFunction = async (
     });
 
     // Get plugin result
-    const result = await engine.getExecutionResult(slug, {
-      first: 10,
-      second: 20,
-    });
+    const result = await engine.getExecutionResult(
+      slug,
+      { first: "hello", second: "world" },
+      "together"
+    );
 
     // Clean up engine resources
     await engine.dispose();
