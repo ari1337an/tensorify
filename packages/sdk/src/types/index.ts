@@ -73,10 +73,14 @@ export interface PluginEntryPoint {
  * Plugin manifest structure
  */
 export interface PluginManifest {
+  slug: string;
   name: string;
   version?: string;
   description?: string;
   author?: string;
+  engineVersion?: string;
+  tags?: string[];
+  category?: string;
   entryPoints: {
     [entryPointName: string]: PluginEntryPoint;
   };

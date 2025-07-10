@@ -81,11 +81,11 @@ export const mainFunction = async (
       debug: process.env.NODE_ENV === "development",
     });
 
-    // Get plugin result
+    // Get plugin result - test with PyTorch linear layer
     const result = await engine.getExecutionResult(
       slug,
-      { first: "hello", second: "world" },
-      "together"
+      { inFeatures: 784, outFeatures: 128, bias: true },
+      "generateLinearLayer"
     );
 
     // Clean up engine resources
