@@ -1,39 +1,77 @@
-// src/nodes/PTMaxPool2d.ts
+// nodes/PTMaxPool2d.ts
+import {
+  ModelLayerNode,
+  ModelLayerSettings,
+  NodeType,
+} from "@tensorify.io/sdk";
 
-import INode, { NodeType } from "../../../core/interfaces/INode";
+interface MaxPool2dSettings extends ModelLayerSettings {
+  kernelSize: number;
+  stride?: number;
+  padding?: number;
+}
 
-export default class PTMaxPool2d implements INode<PTMaxPool2d["settings"]> {
-  name: string = "MaxPool2d";
+export default class PTMaxPool2d extends ModelLayerNode<MaxPool2dSettings> {
+  /** Name of the node */
+  public readonly name: string = "MaxPool2d";
 
-  translationTemplate: string = `nn.MaxPool2d({parameters})`;
+  /** Template used for translation */
+  public readonly translationTemplate: string = `torch.nn.MaxPool2d({parameters})`;
 
-  inputLines: number = 1;
-  outputLinesCount: number = 1;
-  secondaryInputLinesCount: number = 0;
-  nodeType: NodeType = NodeType.MODEL_LAYER;
+  /** Number of input lines */
+  public readonly inputLines: number = 1;
 
-  settings: {
-    kernelSize: number;
-    stride?: number;
-    padding?: number;
-  } = {
+  /** Number of output lines */
+  public readonly outputLinesCount: number = 1;
+
+  /** Number of secondary input lines */
+  public readonly secondaryInputLinesCount: number = 0;
+
+  /** Type of the node */
+  public readonly nodeType: NodeType = NodeType.MODEL_LAYER;
+
+  /** Default settings for PTMaxPool2d */
+  public readonly settings: MaxPool2dSettings = {
     kernelSize: 2,
   };
 
   constructor() {
-    // Initialize settings if needed
+    super();
   }
 
-  getTranslationCode(settings: typeof this.settings): string {
-    const params = [`${settings.kernelSize}`];
+  /** Function to get the translation code */
+  public getTranslationCode(settings: MaxPool2dSettings): string {
+    // Validate required settings using SDK method
+    this.validateRequiredParams(settings, ["kernelSize"]);
 
-    if (settings.stride !== undefined) {
-      params.push(`stride=${settings.stride}`);
-    }
-    if (settings.padding !== undefined) {
-      params.push(`padding=${settings.padding}`);
+    // Validate input values
+    if (settings.kernelSize <= 0) {
+      throw new Error(
+        "Invalid settings: 'kernelSize' must be a positive number."
+      );
     }
 
-    return this.translationTemplate.replace('{parameters}', params.join(', '));
+    const requiredParams = {
+      kernel_size: settings.kernelSize,
+    };
+
+    const optionalParams = {
+      stride: settings.stride,
+      padding: settings.padding,
+    };
+
+    const defaultValues = {
+      // MaxPool2d defaults stride to kernel_size if not specified
+      // padding defaults to 0
+      padding: 0,
+    };
+
+    // Use SDK utility to build the layer constructor
+    return this.buildLayerConstructor(
+      "torch.nn.MaxPool2d",
+      requiredParams,
+      defaultValues,
+      settings
+    );
   }
 }

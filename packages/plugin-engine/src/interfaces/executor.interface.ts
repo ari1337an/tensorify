@@ -26,11 +26,12 @@ export interface IExecutorService {
   ): Promise<ExecutionResult>;
 
   /**
-   * Validate JavaScript code syntax without executing it
-   * @param code - The JavaScript code to validate
+   * Validate JavaScript/TypeScript code syntax without executing it
+   * @param code - The JavaScript/TypeScript code to validate
+   * @param config - Optional executor configuration for enhanced validation
    * @returns Promise resolving to true if valid, false otherwise
    */
-  validateCode(code: string): Promise<boolean>;
+  validateCode(code: string, config?: ExecutorConfig): Promise<boolean>;
 
   /**
    * Get memory usage statistics for the executor

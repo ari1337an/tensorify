@@ -1,65 +1,57 @@
-const { createPlugin, BaseNode, NodeType, DevUtils } = require('@tensorify/sdk');
+import { BaseNode, NodeType } from '@tensorify.io/sdk';
 
 /**
- * Example Custom Node
+ * Example Custom Node using the Tensorify SDK
  */
-class CustomNode extends BaseNode {
+export default class CustomNode extends BaseNode {
+  /** Name of the node */
+  public readonly name: string = 'Custom Node';
+
+  /** Template used for translation */
+  public readonly translationTemplate: string = `{variable_name} = {custom_parameter}`;
+
+  /** Number of input lines */
+  public readonly inputLines: number = 1;
+
+  /** Number of output lines */
+  public readonly outputLinesCount: number = 1;
+
+  /** Number of secondary input lines */
+  public readonly secondaryInputLinesCount: number = 0;
+
+  /** Type of the node */
+  public readonly nodeType: NodeType = NodeType.CUSTOM;
+
+  /** Default settings for CustomNode */
+  public readonly settings = {
+    variableName: 'custom_var',
+    customParameter: 'default_value',
+  };
+
   constructor() {
     super();
-    
-    this.name = 'Custom Node';
-    this.nodeType = NodeType.CUSTOM;
-    this.description = 'A custom node created with Tensorify SDK';
-    
-    this.inputs = [
-      DevUtils.createInput('input', 'tensor', 'Input tensor', false)
-    ];
-    
-    this.outputs = [
-      DevUtils.createOutput('output', 'tensor', 'Output tensor')
-    ];
-    
-    this.schema = {
-      type: 'object',
-      properties: {
-        variableName: DevUtils.createProperty('string', 'custom_var', 'Variable name', true),
-        customParameter: DevUtils.createProperty('string', 'default_value', 'Custom parameter')
-      },
-      required: ['variableName']
-    };
-
-    this.codeGeneration = {
-      generateCode: (settings, context) => {
-        const varName = settings.variableName || 'custom_var';
-        const customParam = settings.customParameter || 'default_value';
-
-        return {
-          imports: ['# Add your imports here'],
-          definitions: [`# Custom definitions for ${varName}`],
-          instantiations: [`${varName} = "${customParam}"`],
-          usage: {
-            forward: `# Use ${varName} here`,
-            named_parameters: `('${varName}', ${varName})`
-          }
-        };
-      },
-      getDependencies: () => [],
-      getOutputs: (settings) => [settings.variableName || 'custom_var'],
-      validateConnections: () => true
-    };
-
-    this.security = DevUtils.createBasicSecurity();
-    this.quality = DevUtils.createBasicQuality('1.0.0', ['Basic usage example']);
   }
-}
 
-// Create and export the plugin
-module.exports = createPlugin({
-  name: '{{pluginName}}',
-  version: '{{version}}',
-  description: '{{description}}',
-  author: '{{author}}',
-  nodes: {
-    CustomNode
+  /** Function to get the translation code */
+  public getTranslationCode(settings) {
+    // Validate required settings using SDK method
+    this.validateRequiredParams(settings, ['variableName']);
+
+    const varName = settings.variableName || 'custom_var';
+    const customParam = settings.customParameter || 'default_value';
+
+    return this.translationTemplate
+      .replace('{variable_name}', varName)
+      .replace('{custom_parameter}', `"${customParam}"`);
   }
-}); 
+
+  /** Get required dependencies */
+  public getDependencies() {
+    return [];
+  }
+
+  /** Get required imports */
+  public getImports() {
+    return ['# Add your imports here'];
+  }
+} 

@@ -1,5 +1,5 @@
 /**
- * Factory for creating Plugin Engine instances
+ * Factory for creating Plugin Engine instances with TypeScript and SDK support
  */
 
 import { PluginEngine } from "../core/plugin-engine";
@@ -9,11 +9,11 @@ import type { S3Config } from "../types/storage.types";
 import { ConfigurationError } from "../errors/plugin-engine.errors";
 
 /**
- * Create a plugin engine with S3 configuration
+ * Create a plugin engine with S3 configuration and TypeScript/SDK support
  *
  * @param s3Config - S3 configuration that maps directly to S3Client constructor options
  * @param bucketName - S3 bucket name where plugins are stored
- * @param options - Optional engine options
+ * @param options - Optional engine options including TypeScript and SDK support
  * @returns New PluginEngine instance
  *
  * @example
@@ -29,6 +29,11 @@ import { ConfigurationError } from "../errors/plugin-engine.errors";
  * }, "my-plugins-bucket", {
  *   debug: true,
  *   executionTimeout: 60000,
+ *   enableTypeScript: true,  // Enable TypeScript compilation
+ *   enableSDKImports: true,  // Enable SDK import resolution
+ *   sdkDependencies: {       // Additional SDK dependencies
+ *     customUtils: customUtilsModule
+ *   }
  * });
  * ```
  */
@@ -62,7 +67,7 @@ export function createPluginEngine(
   // Create storage service with provided S3 config
   const storageService = S3StorageService.create(s3Config);
 
-  // Create engine configuration
+  // Create engine configuration with TypeScript and SDK support
   const engineConfig = {
     storageService,
     bucketName,
@@ -70,6 +75,9 @@ export function createPluginEngine(
     executionTimeout: options.executionTimeout || 30000,
     memoryLimit: options.memoryLimit || 128,
     debug: options.debug || false,
+    enableTypeScript: options.enableTypeScript ?? true, // Default to enabled
+    enableSDKImports: options.enableSDKImports ?? true, // Default to enabled
+    sdkDependencies: options.sdkDependencies || {},
   };
 
   return new PluginEngine(engineConfig);

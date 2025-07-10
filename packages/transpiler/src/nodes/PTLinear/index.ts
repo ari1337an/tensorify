@@ -1,65 +1,83 @@
 // nodes/PTLinear.ts
-import INode, { NodeType } from "../../core/interfaces/INode";
+import {
+  ModelLayerNode,
+  ModelLayerSettings,
+  NodeType,
+} from "@tensorify.io/sdk";
 
-export default class PTLinear implements INode<PTLinear["settings"]> {
+interface LinearSettings extends ModelLayerSettings {
+  inFeatures: number;
+  outFeatures: number;
+  bias?: boolean;
+}
+
+export default class PTLinear extends ModelLayerNode<LinearSettings> {
   /** Name of the node */
-  name: string = "Linear Layer";
+  public readonly name: string = "Linear Layer";
 
   /** Template used for translation */
-  translationTemplate: string = `torch.nn.Linear({in_features}, {out_features}{optional_params})`;
+  public readonly translationTemplate: string = `torch.nn.Linear({in_features}, {out_features}{optional_params})`;
 
   /** Number of input lines */
-  inputLines: number = 1;
+  public readonly inputLines: number = 1;
 
   /** Number of output lines */
-  outputLinesCount: number = 1;
+  public readonly outputLinesCount: number = 1;
 
   /** Number of secondary input lines */
-  secondaryInputLinesCount: number = 0;
+  public readonly secondaryInputLinesCount: number = 0;
 
   /** Type of the node */
-  nodeType: NodeType = NodeType.MODEL_LAYER;
+  public readonly nodeType: NodeType = NodeType.MODEL_LAYER;
 
-  /** Settings specific to PTLinear */
-  settings: {
-    inFeatures: number;
-    outFeatures: number;
-    bias?: boolean;
-  } = {
-    inFeatures: -1,
-    outFeatures: -1,
+  /** Default settings for PTLinear */
+  public readonly settings: LinearSettings = {
+    inFeatures: 784,
+    outFeatures: 128,
     bias: true,
   };
 
   constructor() {
-    // Initialize settings with default values if needed
+    super();
   }
 
   /** Function to get the translation code */
-  getTranslationCode(settings: typeof this.settings): string {
-    // Validate required settings
-    if (
-      settings.inFeatures === undefined ||
-      settings.outFeatures === undefined ||
-      settings.inFeatures <= 0 ||
-      settings.outFeatures <= 0
-    ) {
+  public getTranslationCode(settings: LinearSettings): string {
+    // Validate required settings using SDK method
+    this.validateRequiredParams(settings, ["inFeatures", "outFeatures"]);
+
+    // Validate input values
+    if (settings.inFeatures <= 0 || settings.outFeatures <= 0) {
       throw new Error(
         "Invalid settings: 'inFeatures' and 'outFeatures' must be positive numbers."
       );
     }
 
-    // Prepare optional parameters
-    let optionalParams = "";
+    const requiredParams = {
+      in_features: settings.inFeatures,
+      out_features: settings.outFeatures,
+    };
 
-    if (settings.bias !== undefined && settings.bias !== true) {
-      optionalParams += `, bias=${settings.bias}`;
-    }
+    const optionalParams = {
+      bias: settings.bias ?? true,
+    };
 
-    // Generate the translation code
-    return this.translationTemplate
-      .replace("{in_features}", settings.inFeatures.toString())
-      .replace("{out_features}", settings.outFeatures.toString())
-      .replace("{optional_params}", optionalParams);
+    // Use SDK utility to build the layer constructor
+    return this.buildLayerConstructor(
+      "nn.Linear",
+      requiredParams,
+      { bias: true }, // defaults to exclude
+      settings
+    );
+  }
+
+  /** Get required dependencies */
+  public getDependencies(): string[] {
+    return ["torch", "torch.nn"];
+  }
+
+  /** Get required imports */
+  public getImports(): string[] {
+    return ["import torch", "import torch.nn"];
   }
 }

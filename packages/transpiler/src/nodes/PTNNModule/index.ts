@@ -1,13 +1,28 @@
-// src/nodes/PTNNModule.ts
+// nodes/PTNNModule.ts
+import {
+  ModelLayerNode,
+  ModelLayerSettings,
+  NodeType,
+} from "@tensorify.io/sdk";
 
-import INode, { NodeType } from "../../../core/interfaces/INode";
-import { Layer } from "../../../core/types/global";
-import createNodeInstance from "../../instances/index";
+interface NNModuleSettings extends ModelLayerSettings {
+  className: string;
+  constructorParams: string[]; // Parameters for __init__
+  layers: Array<{
+    type: string;
+    settings: any;
+    child?: any;
+  }>; // Layers to be defined in __init__
+  forwardParams: string[]; // Parameters for forward
+  dataFlow: string; // Code inside forward method
+}
 
-export default class PTNNModule implements INode<PTNNModule["settings"]> {
-  name: string = "PyTorch NN Module";
+export default class PTNNModule extends ModelLayerNode<NNModuleSettings> {
+  /** Name of the node */
+  public readonly name: string = "PyTorch NN Module";
 
-  translationTemplate: string = `
+  /** Template used for translation */
+  public readonly translationTemplate: string = `
 class {class_name}(nn.Module):
     def __init__({constructor_params}):
         super().__init__()
@@ -16,18 +31,20 @@ class {class_name}(nn.Module):
 {forward_body}
 `;
 
-  inputLines: number = 0;
-  outputLinesCount: number = 1;
-  secondaryInputLinesCount: number = 0;
-  nodeType: NodeType = NodeType.MODEL;
+  /** Number of input lines */
+  public readonly inputLines: number = 0;
 
-  settings: {
-    className: string;
-    constructorParams: string[]; // Parameters for __init__
-    layers: Layer[]; // Layers to be defined in __init__
-    forwardParams: string[]; // Parameters for forward
-    dataFlow: string; // Code inside forward method
-  } = {
+  /** Number of output lines */
+  public readonly outputLinesCount: number = 1;
+
+  /** Number of secondary input lines */
+  public readonly secondaryInputLinesCount: number = 0;
+
+  /** Type of the node */
+  public readonly nodeType: NodeType = NodeType.MODEL;
+
+  /** Default settings for PTNNModule */
+  public readonly settings: NNModuleSettings = {
     className: "NeuralNetwork",
     constructorParams: [],
     layers: [],
@@ -39,24 +56,27 @@ class {class_name}(nn.Module):
   private layerVariableNames: Set<string> = new Set();
 
   constructor() {
-    // Initialize settings if needed
+    super();
   }
 
-  getTranslationCode(settings: typeof this.settings): string {
+  /** Function to get the translation code */
+  public getTranslationCode(settings: NNModuleSettings): string {
+    // Validate required settings using SDK method
+    this.validateRequiredParams(settings, ["className"]);
+
     const initLines: string[] = [];
     const forwardLines: string[] = [];
+
+    // Clear previous layer variable names
+    this.layerVariableNames.clear();
 
     // Generate unique variable names for layers
     settings.layers.forEach((layer, index) => {
       const varName = `layer_${index}`;
       this.layerVariableNames.add(varName);
 
-      // Create node instance and get code
-      const nodeInstance = createNodeInstance(layer.type);
-      const layerCode = nodeInstance.getTranslationCode(
-        layer.settings,
-        layer.child ?? null
-      );
+      // Generate layer code using simplified approach
+      const layerCode = this.processLayer(layer);
 
       // Add to __init__ body
       initLines.push(`self.${varName} = ${layerCode}`);
@@ -102,6 +122,34 @@ class {class_name}(nn.Module):
       .replace("{forward_body}", forwardBody);
   }
 
+  /**
+   * Process a layer definition to generate PyTorch code
+   */
+  private processLayer(layer: any): string {
+    const { type, settings } = layer;
+
+    // Handle common layer types with simplified settings
+    switch (type) {
+      case "PTLinear":
+        return `torch.nn.Linear(${settings.inFeatures}, ${settings.outFeatures})`;
+      case "PTReLU":
+        return `torch.nn.ReLU()`;
+      case "PTConv2d":
+        return `torch.nn.Conv2d(${settings.inChannels}, ${settings.outChannels}, ${settings.kernelSize})`;
+      case "PTFlatten":
+        return `torch.nn.Flatten()`;
+      case "PTMaxPool2d":
+        return `torch.nn.MaxPool2d(${settings.kernelSize})`;
+      default:
+        // Fallback: try to generate generic code
+        const className = type.replace("PT", "torch.nn.");
+        return `${className}()`;
+    }
+  }
+
+  /**
+   * Resolve variable names in forward method expressions
+   */
   private resolveVariableNameInExpression(
     expr: string,
     lineNumber: number,
@@ -165,14 +213,5 @@ class {class_name}(nn.Module):
     result += expr.slice(lastIndex);
 
     return result;
-  }
-
-  // Helper method to indent code by a given number of indent levels
-  private indentCode(code: string, indentLevels: number): string {
-    const indent = "    ".repeat(indentLevels); // 4 spaces per indent level
-    return code
-      .split("\n")
-      .map((line) => (line.length > 0 ? indent + line : line))
-      .join("\n");
   }
 }

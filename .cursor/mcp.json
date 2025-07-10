@@ -1,0 +1,15 @@
+{
+    "mcpServers": {
+      "tensorify-s3-plugin": {
+        "command": "node",
+        "args": ["/Users/mdsahadulhasanarian/Desktop/backend.tensorify.io/services/mcp/dist/index.js"],
+        "env": {
+          "S3_ACCESS_KEY_ID": "jNTpVgoAE081rVPaDIyM",
+          "S3_SECRET_ACCESS_KEY": "J7m39ULTZl01HK8B1PqhHzOm8ofV5qWCNR3DrNVY",
+          "S3_ENDPOINT": "https://minio-api.tensorify.io",
+          "S3_REGION": "us-east-1",
+          "S3_BUCKET_NAME": "plugins.tensorify.io"
+        }
+      }
+    }
+  }

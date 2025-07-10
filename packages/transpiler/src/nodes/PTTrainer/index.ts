@@ -1,32 +1,43 @@
-// src/nodes/PTTrainer.ts
+// nodes/PTTrainer.ts
+import { TrainerNode, TrainerSettings, NodeType } from "@tensorify.io/sdk";
 
-import INode, { NodeType } from "../../../core/interfaces/INode";
+interface PTTrainerSettings extends TrainerSettings {
+  numEpochs: number; // The number of epochs to run
+  trainFunctionName: string; // Name of the training function (e.g., "train_one_epoch")
+  optimizerVariable: string; // Name of the optimizer variable (e.g., "optimizer")
+  dataloaderVariable: string; // Name of the dataloader variable (e.g., "dataloader")
+  modelVariable: string; // Name of the model variable (e.g., "model")
+  lossFunctionVariable: string; // Name of the loss function variable (e.g., "loss_fn")
+  avgLossVariable: string; // Name of the variable to store the average loss (e.g., "avg_loss")
+  additionalCode?: string; // Any additional code to include inside the loop
+}
 
-export default class PTTrainer implements INode<PTTrainer["settings"]> {
-  name: string = "PyTorch Trainer Pipeline";
+export default class PTTrainer extends TrainerNode<PTTrainerSettings> {
+  /** Name of the node */
+  public readonly name: string = "PyTorch Trainer Pipeline";
 
-  translationTemplate: string = `
+  /** Template used for translation */
+  public readonly translationTemplate: string = `
 for epoch_index in range({number_of_epochs}):
     {model_variable}.train(True)
     {avg_loss_variable} = {train_function_name}(epoch_index, {optimizer_variable}, {dataloader_variable}, {model_variable}, {loss_function_variable})
 {additional_code}
 `;
 
-  inputLines: number = 0;
-  outputLinesCount: number = 1;
-  secondaryInputLinesCount: number = 0;
-  nodeType: NodeType = NodeType.TRAINER;
+  /** Number of input lines */
+  public readonly inputLines: number = 0;
 
-  settings: {
-    numEpochs: number; // The number of epochs to run
-    trainFunctionName: string; // Name of the training function (e.g., "train_one_epoch")
-    optimizerVariable: string; // Name of the optimizer variable (e.g., "optimizer")
-    dataloaderVariable: string; // Name of the dataloader variable (e.g., "dataloader")
-    modelVariable: string; // Name of the model variable (e.g., "model")
-    lossFunctionVariable: string; // Name of the loss function variable (e.g., "loss_fn")
-    avgLossVariable: string; // Name of the variable to store the average loss (e.g., "avg_loss")
-    additionalCode?: string; // Any additional code to include inside the loop
-  } = {
+  /** Number of output lines */
+  public readonly outputLinesCount: number = 1;
+
+  /** Number of secondary input lines */
+  public readonly secondaryInputLinesCount: number = 0;
+
+  /** Type of the node */
+  public readonly nodeType: NodeType = NodeType.TRAINER;
+
+  /** Default settings for PTTrainer */
+  public readonly settings: PTTrainerSettings = {
     numEpochs: 1,
     trainFunctionName: "train_one_epoch",
     optimizerVariable: "optimizer",
@@ -38,54 +49,33 @@ for epoch_index in range({number_of_epochs}):
   };
 
   constructor() {
-    // Initialize settings if needed
+    super();
   }
 
-  getTranslationCode(settings: typeof this.settings): string {
-    // Validate required settings
-    if (!settings.trainFunctionName) {
-      throw new Error("Train function name must be provided in settings.");
-    }
-    if (
-      !settings.optimizerVariable ||
-      !settings.dataloaderVariable ||
-      !settings.modelVariable ||
-      !settings.lossFunctionVariable
-    ) {
-      throw new Error(
-        "Optimizer, dataloader, model, and loss function variable names must be provided in settings."
-      );
-    }
+  /** Function to get the translation code */
+  public getTranslationCode(settings: PTTrainerSettings): string {
+    // Validate required settings using SDK method
+    this.validateRequiredParams(settings, [
+      "trainFunctionName",
+      "optimizerVariable",
+      "dataloaderVariable",
+      "modelVariable",
+      "lossFunctionVariable",
+    ]);
 
-    // Indent additional code if provided
-    let additionalCode = "";
+    // Use SDK utility to build training loop structure
+    const epochLoop = `${settings.modelVariable}.train(True)`;
+    const batchLoop = `${settings.avgLossVariable} = ${settings.trainFunctionName}(epoch_index, ${settings.optimizerVariable}, ${settings.dataloaderVariable}, ${settings.modelVariable}, ${settings.lossFunctionVariable})`;
+
+    // Add additional code if provided
+    let finalBatchLoop = batchLoop;
     if (settings.additionalCode && settings.additionalCode.trim()) {
-      additionalCode = this.indentCode(settings.additionalCode.trim(), 1);
+      finalBatchLoop += "\n" + settings.additionalCode.trim();
     }
 
-    // Generate the code
-    let code = this.translationTemplate
-      .replace("{number_of_epochs}", settings.numEpochs + "")
-      .replace("{train_function_name}", settings.trainFunctionName)
-      .replace(/{optimizer_variable}/g, settings.optimizerVariable)
-      .replace(/{dataloader_variable}/g, settings.dataloaderVariable)
-      .replace(/{model_variable}/g, settings.modelVariable)
-      .replace(/{loss_function_variable}/g, settings.lossFunctionVariable)
-      .replace("{avg_loss_variable}", settings.avgLossVariable)
-      .replace("{additional_code}", additionalCode);
+    // Override the epochs setting for the SDK utility
+    const trainerSettings = { ...settings, epochs: settings.numEpochs };
 
-    return code.trim();
-  }
-
-  // Helper method to indent code by a given number of indent levels
-  private indentCode(code: string, indentLevels: number): string {
-    const indent = "    ".repeat(indentLevels); // 4 spaces per indent level
-    if (!code) {
-      return "";
-    }
-    return code
-      .split("\n")
-      .map((line) => (line.trim().length > 0 ? indent + line : line))
-      .join("\n");
+    return this.buildTrainingLoop(epochLoop, finalBatchLoop, trainerSettings);
   }
 }

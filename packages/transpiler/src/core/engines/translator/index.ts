@@ -1,4 +1,4 @@
-import createNodeInstance from "../../../offline/instances/index";
+import createNodeInstance from "../../../instances/index";
 import { Model } from "../../../core/types/global";
 
 export default function translateJsonToBython(json: Model): string {
@@ -12,10 +12,16 @@ export default function translateJsonToBython(json: Model): string {
       // process
       const nodeInstance = createNodeInstance(layer.type);
       if (!layer.child) {
-        const code = nodeInstance.getTranslationCode(layer.settings ?? null, layer.child ?? null);
+        const code = nodeInstance.getTranslationCode(
+          layer.settings ?? null,
+          layer.child ?? null
+        );
         layerCodes.push(code);
       } else {
-        const code = nodeInstance.getTranslationCode(layer.settings ?? null, layer.child ?? null);
+        const code = nodeInstance.getTranslationCode(
+          layer.settings ?? null,
+          layer.child ?? null
+        );
         layerCodes.push(code);
       }
     }

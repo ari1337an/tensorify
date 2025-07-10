@@ -2,6 +2,8 @@
  * Plugin-related type definitions
  */
 
+import type { CompilationInfo } from "./executor.types";
+
 /** Settings that can be passed to a plugin */
 export type PluginSettings = Record<string, any>;
 
@@ -21,6 +23,8 @@ export interface PluginExecutionResult {
     };
     /** Any warnings generated during execution */
     warnings?: string[];
+    /** Compilation information if TypeScript/SDK processing was used */
+    compilationInfo?: CompilationInfo;
   };
 }
 

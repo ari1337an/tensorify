@@ -1,17 +1,66 @@
-// src/nodes/PTPipeline.ts
+// nodes/PTPipeline.ts
+import { BaseNode, LayerSettings, NodeType } from "@tensorify.io/sdk";
 
-import INode, { NodeType } from "../../../core/interfaces/INode";
-import PTNNDataset from "../PTNNDataset";
-import PTDataloader from "../PTDataloader";
-import PTNNModule from "../PTNNModule";
-import PTOptimAdam from "../PTOptimAdam";
-import PTTrainOneEpoch from "../PTTrainOneEpoch";
-import PTTrainer from "../PTTrainer";
+interface PipelineSettings extends LayerSettings {
+  datasetSettings: {
+    className: string;
+    constructorParams: string[];
+    initCode: string;
+    lenParams: string[];
+    lenCode: string;
+    getitemParams: string[];
+    getitemCode: string;
+  };
+  dataloaderSettings: {
+    dataloaderVariable: string;
+    datasetVariable: string;
+    parameters: { [key: string]: any };
+  };
+  modelSettings: {
+    className: string;
+    constructorParams: string[];
+    layers: Array<any>;
+    forwardParams: string[];
+    dataFlow: string;
+  };
+  optimizerSettings: {
+    optimizerVariable: string;
+    params: string;
+    parameters: { [key: string]: any };
+  };
+  lossFunctionSettings: {
+    className: string;
+    constructorParams: string[];
+    layers: Array<any>;
+    forwardParams: string[];
+    dataFlow: string;
+  };
+  trainOneEpochSettings: {
+    functionName: string;
+    destructureDataVariables: string[];
+    modelInputOrder: string[];
+    modelOutputVariables: string[];
+    lossFunctionInputs: string[];
+    reportLossSettings: any;
+  };
+  trainerSettings: {
+    numEpochs: number;
+    trainFunctionName: string;
+    optimizerVariable: string;
+    dataloaderVariable: string;
+    modelVariable: string;
+    lossFunctionVariable: string;
+    avgLossVariable: string;
+    additionalCode?: string;
+  };
+}
 
-export default class PTPipeline implements INode<PTPipeline["settings"]> {
-  name: string = "PyTorch Pipeline";
+export default class PTPipeline extends BaseNode<PipelineSettings> {
+  /** Name of the node */
+  public readonly name: string = "PyTorch Pipeline";
 
-  translationTemplate: string = `
+  /** Template used for translation */
+  public readonly translationTemplate: string = `
 {imports}
 
 {dataset_code}
@@ -29,73 +78,109 @@ export default class PTPipeline implements INode<PTPipeline["settings"]> {
 {trainer_code}
   `;
 
-  inputLines: number = 7;
-  outputLinesCount: number = 0;
-  secondaryInputLinesCount: number = 0;
-  nodeType: NodeType = NodeType.PIPELINE;
+  /** Number of input lines */
+  public readonly inputLines: number = 7;
 
-  settings: {
-    datasetSettings: PTNNDataset["settings"];
-    dataloaderSettings: PTDataloader["settings"];
-    modelSettings: PTNNModule["settings"];
-    optimizerSettings: PTOptimAdam["settings"];
-    lossFunctionSettings: PTNNModule["settings"];
-    trainOneEpochSettings: PTTrainOneEpoch["settings"];
-    trainerSettings: PTTrainer["settings"];
-  } = {
-    datasetSettings: new PTNNDataset().settings,
-    dataloaderSettings: new PTDataloader().settings,
-    modelSettings: new PTNNModule().settings,
-    optimizerSettings: new PTOptimAdam().settings,
-    lossFunctionSettings: new PTNNModule().settings,
-    trainOneEpochSettings: new PTTrainOneEpoch().settings,
-    trainerSettings: new PTTrainer().settings,
+  /** Number of output lines */
+  public readonly outputLinesCount: number = 0;
+
+  /** Number of secondary input lines */
+  public readonly secondaryInputLinesCount: number = 0;
+
+  /** Type of the node */
+  public readonly nodeType: NodeType = NodeType.CUSTOM; // Pipeline orchestrates multiple components
+
+  /** Default settings for PTPipeline */
+  public readonly settings: PipelineSettings = {
+    datasetSettings: {
+      className: "CustomDataset",
+      constructorParams: ["self"],
+      initCode: "",
+      lenParams: ["self"],
+      lenCode: "",
+      getitemParams: ["self", "idx"],
+      getitemCode: "",
+    },
+    dataloaderSettings: {
+      dataloaderVariable: "data_loader",
+      datasetVariable: "dataset",
+      parameters: {},
+    },
+    modelSettings: {
+      className: "NeuralNetwork",
+      constructorParams: [],
+      layers: [],
+      forwardParams: ["x"],
+      dataFlow: "",
+    },
+    optimizerSettings: {
+      optimizerVariable: "optimizer",
+      params: "model.parameters()",
+      parameters: {},
+    },
+    lossFunctionSettings: {
+      className: "LossFunction",
+      constructorParams: [],
+      layers: [],
+      forwardParams: ["x"],
+      dataFlow: "",
+    },
+    trainOneEpochSettings: {
+      functionName: "train_one_epoch",
+      destructureDataVariables: [],
+      modelInputOrder: [],
+      modelOutputVariables: [],
+      lossFunctionInputs: [],
+      reportLossSettings: {},
+    },
+    trainerSettings: {
+      numEpochs: 1,
+      trainFunctionName: "train_one_epoch",
+      optimizerVariable: "optimizer",
+      dataloaderVariable: "dataloader",
+      modelVariable: "model",
+      lossFunctionVariable: "loss_fn",
+      avgLossVariable: "avg_loss",
+      additionalCode: "",
+    },
   };
 
   constructor() {
-    // Initialize settings if needed
+    super();
   }
 
-  getTranslationCode(settings: typeof this.settings): string {
-    // Instantiate components
-    const datasetNode = new PTNNDataset();
-    datasetNode.settings = settings.datasetSettings;
+  /** Function to get the translation code */
+  public getTranslationCode(settings: PipelineSettings): string {
+    // Generate code for each component using simplified implementations
 
-    const dataloaderNode = new PTDataloader();
-    dataloaderNode.settings = settings.dataloaderSettings;
+    // Dataset code
+    const datasetCode = this.generateDatasetCode(settings.datasetSettings);
 
-    const modelNode = new PTNNModule();
-    modelNode.settings = settings.modelSettings;
-
-    const optimizerNode = new PTOptimAdam();
-    optimizerNode.settings = settings.optimizerSettings;
-
-    const lossNode = new PTNNModule();
-    lossNode.settings = settings.lossFunctionSettings;
-
-    const trainOneEpochNode = new PTTrainOneEpoch();
-    trainOneEpochNode.settings = settings.trainOneEpochSettings;
-
-    const trainerNode = new PTTrainer();
-    trainerNode.settings = settings.trainerSettings;
-
-    // Generate code for each component
-    const datasetCode = datasetNode.getTranslationCode(datasetNode.settings);
-    const dataloaderCode = dataloaderNode.getTranslationCode(
-      dataloaderNode.settings
+    // DataLoader code
+    const dataloaderCode = this.generateDataloaderCode(
+      settings.dataloaderSettings
     );
-    const modelCode = modelNode.getTranslationCode(modelNode.settings);
-    const optimizerCode = optimizerNode.getTranslationCode(
-      optimizerNode.settings
-    );
-    const lossCode = lossNode.getTranslationCode(lossNode.settings);
-    const trainOneEpochCode = trainOneEpochNode.getTranslationCode(
-      trainOneEpochNode.settings
-    );
-    const trainerCode = trainerNode.getTranslationCode(trainerNode.settings);
 
-    // Loss function code is provided directly
-    const lossFunctionCode = lossNode.getTranslationCode(lossNode.settings);
+    // Model code
+    const modelCode = this.generateModelCode(settings.modelSettings);
+
+    // Optimizer code
+    const optimizerCode = this.generateOptimizerCode(
+      settings.optimizerSettings
+    );
+
+    // Loss function code
+    const lossFunctionCode = this.generateLossFunctionCode(
+      settings.lossFunctionSettings
+    );
+
+    // Training function code
+    const trainOneEpochCode = this.generateTrainOneEpochCode(
+      settings.trainOneEpochSettings
+    );
+
+    // Trainer code
+    const trainerCode = this.generateTrainerCode(settings.trainerSettings);
 
     // Prepare imports
     const imports = `
@@ -116,5 +201,109 @@ from torch.utils.data import DataLoader, Dataset
       .replace("{trainer_code}", trainerCode);
 
     return fullCode.trim();
+  }
+
+  private generateDatasetCode(settings: any): string {
+    return `
+class ${settings.className}(Dataset):
+    def __init__(${settings.constructorParams.join(", ")}):
+${this.indentCode(settings.initCode, 2)}
+    
+    def __len__(${settings.lenParams.join(", ")}):
+${this.indentCode(settings.lenCode, 2)}
+    
+    def __getitem__(${settings.getitemParams.join(", ")}):
+${this.indentCode(settings.getitemCode, 2)}
+
+${settings.datasetVariable || "dataset"} = ${settings.className}()
+    `.trim();
+  }
+
+  private generateDataloaderCode(settings: any): string {
+    const params = [`${settings.datasetVariable}`];
+
+    Object.entries(settings.parameters).forEach(([key, value]) => {
+      params.push(`${key}=${this.stringifyParameter(value)}`);
+    });
+
+    return `${settings.dataloaderVariable} = DataLoader(${params.join(", ")})`;
+  }
+
+  private generateModelCode(settings: any): string {
+    // Simplified model generation
+    const initBody = settings.layers
+      .map((layer: any, index: number) => {
+        const layerCode = this.processLayer(layer);
+        return `self.layer_${index} = ${layerCode}`;
+      })
+      .join("\n");
+
+    return `
+class ${settings.className}(nn.Module):
+    def __init__(${["self", ...settings.constructorParams].join(", ")}):
+        super().__init__()
+${this.indentCode(initBody, 2)}
+    
+    def forward(${["self", ...settings.forwardParams].join(", ")}):
+${this.indentCode(settings.dataFlow, 2)}
+
+model = ${settings.className}()
+    `.trim();
+  }
+
+  private generateOptimizerCode(settings: any): string {
+    const params = [`${settings.params}`];
+
+    Object.entries(settings.parameters).forEach(([key, value]) => {
+      params.push(`${key}=${this.stringifyParameter(value)}`);
+    });
+
+    return `${settings.optimizerVariable} = torch.optim.Adam(${params.join(
+      ", "
+    )})`;
+  }
+
+  private generateLossFunctionCode(settings: any): string {
+    // Simplified loss function - often just a standard loss
+    return `loss_fn = nn.CrossEntropyLoss()`;
+  }
+
+  private generateTrainOneEpochCode(settings: any): string {
+    return `
+def ${settings.functionName}(epoch_index, optimizer, dataloader, model, loss_fn):
+    running_loss = 0.
+    last_loss = 0.
+    
+    for batch_no, data in enumerate(dataloader):
+        # Training logic would go here
+        pass
+    
+    return last_loss
+    `.trim();
+  }
+
+  private generateTrainerCode(settings: any): string {
+    return `
+for epoch_index in range(${settings.numEpochs}):
+    ${settings.modelVariable}.train(True)
+    ${settings.avgLossVariable} = ${settings.trainFunctionName}(epoch_index, ${settings.optimizerVariable}, ${settings.dataloaderVariable}, ${settings.modelVariable}, ${settings.lossFunctionVariable})
+    `.trim();
+  }
+
+  private processLayer(layer: any): string {
+    const { type, settings } = layer;
+
+    switch (type) {
+      case "PTLinear":
+        return `torch.nn.Linear(${settings.inFeatures}, ${settings.outFeatures})`;
+      case "PTReLU":
+        return `torch.nn.ReLU()`;
+      case "PTConv2d":
+        return `torch.nn.Conv2d(${settings.inChannels}, ${settings.outChannels}, ${settings.kernelSize})`;
+      case "PTFlatten":
+        return `torch.nn.Flatten()`;
+      default:
+        return `torch.nn.Module()`;
+    }
   }
 }

@@ -1,11 +1,22 @@
-// src/nodes/PTNNDataset.ts
+// nodes/PTNNDataset.ts
+import { DataNode, DataSettings, NodeType } from "@tensorify.io/sdk";
 
-import INode, { NodeType } from "../../../core/interfaces/INode";
+interface NNDatasetSettings extends DataSettings {
+  className: string;
+  constructorParams: string[]; // Parameters for __init__
+  initCode: string; // Code inside __init__
+  lenParams: string[]; // Parameters for __len__, typically just 'self'
+  lenCode: string; // Code inside __len__
+  getitemParams: string[]; // Parameters for __getitem__, typically 'self, idx'
+  getitemCode: string; // Code inside __getitem__
+}
 
-export default class PTNNDataset implements INode<PTNNDataset["settings"]> {
-  name: string = "PyTorch NN Dataset";
+export default class PTNNDataset extends DataNode<NNDatasetSettings> {
+  /** Name of the node */
+  public readonly name: string = "PyTorch NN Dataset";
 
-  translationTemplate: string = `
+  /** Template used for translation */
+  public readonly translationTemplate: string = `
 class {class_name}(Dataset):
     def __init__({constructor_params}):
 {init_body}
@@ -15,20 +26,20 @@ class {class_name}(Dataset):
 {getitem_body}
 `;
 
-  inputLines: number = 0;
-  outputLinesCount: number = 1;
-  secondaryInputLinesCount: number = 0;
-  nodeType: NodeType = NodeType.MODEL;
+  /** Number of input lines */
+  public readonly inputLines: number = 0;
 
-  settings: {
-    className: string;
-    constructorParams: string[]; // Parameters for __init__
-    initCode: string; // Code inside __init__
-    lenParams: string[]; // Parameters for __len__, typically just 'self'
-    lenCode: string; // Code inside __len__
-    getitemParams: string[]; // Parameters for __getitem__, typically 'self, idx'
-    getitemCode: string; // Code inside __getitem__
-  } = {
+  /** Number of output lines */
+  public readonly outputLinesCount: number = 1;
+
+  /** Number of secondary input lines */
+  public readonly secondaryInputLinesCount: number = 0;
+
+  /** Type of the node */
+  public readonly nodeType: NodeType = NodeType.DATALOADER;
+
+  /** Default settings for PTNNDataset */
+  public readonly settings: NNDatasetSettings = {
     className: "CustomDataset",
     constructorParams: ["self"],
     initCode: "",
@@ -39,37 +50,20 @@ class {class_name}(Dataset):
   };
 
   constructor() {
-    // Initialize settings if needed
+    super();
   }
 
-  getTranslationCode(settings: typeof this.settings): string {
-    // Prepare parameters
-    const constructorParams = settings.constructorParams.join(", ");
-    const lenParams = settings.lenParams.join(", ");
-    const getitemParams = settings.getitemParams.join(", ");
+  /** Function to get the translation code */
+  public getTranslationCode(settings: NNDatasetSettings): string {
+    // Validate required settings using SDK method
+    this.validateRequiredParams(settings, ["className"]);
 
-    // Process code blocks
-    const initBody = this.indentCode(settings.initCode, 2);
-    const lenBody = this.indentCode(settings.lenCode, 2);
-    const getitemBody = this.indentCode(settings.getitemCode, 2);
-
-    return this.translationTemplate
-      .replace("{class_name}", settings.className)
-      .replace("{constructor_params}", constructorParams)
-      .replace("{init_body}", initBody)
-      .replace("{len_params}", lenParams)
-      .replace("{len_body}", lenBody)
-      .replace("{getitem_params}", getitemParams)
-      .replace("{getitem_body}", getitemBody)
-      .trim();
-  }
-
-  // Helper method to indent code by a given number of indent levels
-  private indentCode(code: string, indentLevels: number): string {
-    const indent = "    ".repeat(indentLevels); // 4 spaces per indent level
-    return code
-      .split("\n")
-      .map((line) => (line.length > 0 ? indent + line : line))
-      .join("\n");
+    // Use the SDK utility method to build the dataset class
+    return this.buildDatasetClass(
+      settings.className,
+      settings.initCode,
+      settings.getitemCode,
+      settings.lenCode
+    );
   }
 }

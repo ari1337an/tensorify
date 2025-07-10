@@ -21,6 +21,12 @@ export interface EngineConfig {
   memoryLimit?: number;
   /** Enable debug logging */
   debug?: boolean;
+  /** Whether to enable TypeScript compilation (default: true) */
+  enableTypeScript?: boolean;
+  /** Whether to enable SDK imports (default: true) */
+  enableSDKImports?: boolean;
+  /** SDK dependencies to provide to plugins */
+  sdkDependencies?: Record<string, any>;
 }
 
 /** Plugin engine creation options */
@@ -33,4 +39,10 @@ export interface PluginEngineOptions {
   memoryLimit?: number;
   /** Enable debug logging (default: false) */
   debug?: boolean;
+  /** Whether to enable TypeScript compilation (default: true) */
+  enableTypeScript?: boolean;
+  /** Whether to enable SDK imports (default: true) */
+  enableSDKImports?: boolean;
+  /** SDK dependencies to provide to plugins */
+  sdkDependencies?: Record<string, any>;
 }

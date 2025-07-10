@@ -1,12 +1,25 @@
-// src/nodes/PTTrainOneEpoch.ts
+// nodes/PTTrainOneEpoch.ts
+import { TrainerNode, TrainerSettings, NodeType } from "@tensorify.io/sdk";
 
-import INode, { NodeType } from "../../../core/interfaces/INode";
-import PTReportLoss from "../PTReportLoss"; // Import the PTReportLoss class
+interface TrainOneEpochSettings extends TrainerSettings {
+  functionName: string;
+  destructureDataVariables: string[];
+  modelInputOrder: string[];
+  modelOutputVariables: string[];
+  lossFunctionInputs: string[];
+  reportLossSettings: {
+    reportCondition: string;
+    reportStatements: string;
+    resetRunningLoss: boolean;
+  };
+}
 
-export default class PTTrainOneEpoch implements INode<PTTrainOneEpoch["settings"]> {
-  name: string = "PyTorch Train One Epoch";
+export default class PTTrainOneEpoch extends TrainerNode<TrainOneEpochSettings> {
+  /** Name of the node */
+  public readonly name: string = "PyTorch Train One Epoch";
 
-  translationTemplate: string = `
+  /** Template used for translation */
+  public readonly translationTemplate: string = `
 def {function_name}(epoch_index, optimizer, dataloader, model, loss_fn):
     running_loss = 0.
     last_loss = 0.
@@ -25,19 +38,20 @@ def {function_name}(epoch_index, optimizer, dataloader, model, loss_fn):
 
 `;
 
-  inputLines: number = 0;
-  outputLinesCount: number = 1;
-  secondaryInputLinesCount: number = 0;
-  nodeType: NodeType = NodeType.FUNCTION;
+  /** Number of input lines */
+  public readonly inputLines: number = 0;
 
-  settings: {
-    functionName: string;
-    destructureDataVariables: string[];
-    modelInputOrder: string[];
-    modelOutputVariables: string[];
-    lossFunctionInputs: string[];
-    reportLossSettings: PTReportLoss["settings"];
-  } = {
+  /** Number of output lines */
+  public readonly outputLinesCount: number = 1;
+
+  /** Number of secondary input lines */
+  public readonly secondaryInputLinesCount: number = 0;
+
+  /** Type of the node */
+  public readonly nodeType: NodeType = NodeType.TRAINER;
+
+  /** Default settings for PTTrainOneEpoch */
+  public readonly settings: TrainOneEpochSettings = {
     functionName: "train_one_epoch",
     destructureDataVariables: [],
     modelInputOrder: [],
@@ -47,14 +61,18 @@ def {function_name}(epoch_index, optimizer, dataloader, model, loss_fn):
       reportCondition: "",
       reportStatements: "",
       resetRunningLoss: false,
-    }
+    },
   };
 
   constructor() {
-    // Initialize settings if needed
+    super();
   }
 
-  getTranslationCode(settings: typeof this.settings): string {
+  /** Function to get the translation code */
+  public getTranslationCode(settings: TrainOneEpochSettings): string {
+    // Validate required settings using SDK method
+    this.validateRequiredParams(settings, ["functionName"]);
+
     // Generate destructure code
     const destructureVariables = settings.destructureDataVariables.join(", ");
     const destructureCode = `${destructureVariables} = data`;
@@ -68,29 +86,45 @@ def {function_name}(epoch_index, optimizer, dataloader, model, loss_fn):
     const lossFunctionInputs = settings.lossFunctionInputs.join(", ");
     const lossCode = `loss = loss_fn(${lossFunctionInputs})`;
 
-    // Generate report code using PTReportLoss
-    const reportLossNode = new PTReportLoss();
-    reportLossNode.settings = settings.reportLossSettings;
-    const reportCode = this.indentCode(
-      reportLossNode.getTranslationCode(reportLossNode.settings).trim(),
-      2
+    // Generate report code (simplified - no PTReportLoss dependency for now)
+    let reportCode = "";
+    if (
+      settings.reportLossSettings.reportCondition &&
+      settings.reportLossSettings.reportStatements
+    ) {
+      const condition = settings.reportLossSettings.reportCondition;
+      const statements = settings.reportLossSettings.reportStatements;
+      const resetCode = settings.reportLossSettings.resetRunningLoss
+        ? "\n        running_loss = 0."
+        : "";
+
+      reportCode = `if ${condition}:\n${this.indentCode(
+        statements,
+        3
+      )}${resetCode}`;
+    }
+
+    // Use SDK utility to build the training function
+    const functionBody = `
+running_loss = 0.
+last_loss = 0.
+
+for batch_no, data in enumerate(dataloader):
+${this.indentCode(destructureCode, 1)}
+    optimizer.zero_grad()
+${this.indentCode(predictCode, 1)}
+${this.indentCode(lossCode, 1)}
+    loss.backward()
+    optimizer.step()
+    running_loss += loss.item()
+${this.indentCode(reportCode, 1)}
+
+return last_loss`.trim();
+
+    return this.buildTrainingFunction(
+      settings.functionName,
+      ["epoch_index", "optimizer", "dataloader", "model", "loss_fn"],
+      functionBody
     );
-
-    // Generate the final code
-    return this.translationTemplate
-      .replace("{function_name}", settings.functionName)
-      .replace("{destructure_code}", this.indentCode(destructureCode, 2))
-      .replace("{predict_code}", this.indentCode(predictCode, 2))
-      .replace("{loss_code}", this.indentCode(lossCode, 2))
-      .replace("{report_code}", reportCode);
-  }
-
-  // Helper method to indent code by a given number of indent levels
-  private indentCode(code: string, indentLevels: number): string {
-    const indent = "    ".repeat(indentLevels); // 4 spaces per indent level
-    return code
-      .split("\n")
-      .map((line) => (line.trim().length > 0 ? indent + line : line))
-      .join("\n");
   }
 }

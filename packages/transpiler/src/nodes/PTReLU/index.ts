@@ -1,46 +1,60 @@
 // nodes/PTReLU.ts
-import INode, { NodeType } from "../../../core/interfaces/INode";
+import {
+  ModelLayerNode,
+  ModelLayerSettings,
+  NodeType,
+} from "@tensorify.io/sdk";
 
-export default class PTReLU implements INode<PTReLU["settings"]> {
+interface ReLUSettings extends ModelLayerSettings {
+  inplace?: boolean;
+}
+
+export default class PTReLU extends ModelLayerNode<ReLUSettings> {
   /** Name of the node */
-  name: string = "ReLU Layer";
+  public readonly name: string = "ReLU Layer";
 
   /** Template used for translation */
-  translationTemplate: string = `torch.nn.ReLU({optional_params})`;
+  public readonly translationTemplate: string = `torch.nn.ReLU({optional_params})`;
 
   /** Number of input lines */
-  inputLines: number = 1;
+  public readonly inputLines: number = 1;
 
   /** Number of output lines */
-  outputLinesCount: number = 1;
+  public readonly outputLinesCount: number = 1;
 
   /** Number of secondary input lines */
-  secondaryInputLinesCount: number = 0;
+  public readonly secondaryInputLinesCount: number = 0;
 
   /** Type of the node */
-  nodeType: NodeType = NodeType.MODEL_LAYER;
+  public readonly nodeType: NodeType = NodeType.MODEL_LAYER;
 
-  /** Settings specific to PTReLU */
-  settings: {
-    inplace?: boolean;
-  } = {
+  /** Default settings for PTReLU */
+  public readonly settings: ReLUSettings = {
     inplace: false,
   };
 
   constructor() {
-    // Initialize settings with default values if needed
+    super();
   }
 
   /** Function to get the translation code */
-  getTranslationCode(settings: typeof this.settings): string {
-    // Prepare optional parameters
-    let optionalParams = "";
+  public getTranslationCode(settings: ReLUSettings): string {
+    const requiredParams = {};
 
-    if (settings.inplace !== undefined && settings.inplace !== false) {
-      optionalParams += `inplace=${settings.inplace}`;
-    }
+    const optionalParams = {
+      inplace: settings.inplace,
+    };
 
-    // Generate the translation code
-    return this.translationTemplate.replace("{optional_params}", optionalParams.trim());
+    const defaultValues = {
+      inplace: false,
+    };
+
+    // Use SDK utility to build the layer constructor
+    return this.buildLayerConstructor(
+      "torch.nn.ReLU",
+      requiredParams,
+      defaultValues,
+      settings
+    );
   }
 }

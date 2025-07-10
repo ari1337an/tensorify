@@ -87,6 +87,16 @@ export interface ExecutionContext {
 }
 
 /**
+ * Compilation information for TypeScript/SDK-enabled plugins
+ */
+export interface CompilationInfo {
+  /** Compilation diagnostics (warnings, info messages) */
+  diagnostics: string[];
+  /** List of resolved dependencies */
+  dependencies: string[];
+}
+
+/**
  * Code execution result
  *
  * Contains the result of plugin execution along with metadata
@@ -109,6 +119,8 @@ export interface ExecutionResult {
       /** External memory used in bytes */
       external: number;
     };
+    /** Compilation information if TypeScript/SDK processing was used */
+    compilationInfo?: CompilationInfo;
   };
 
   /** Console logs and debug output from plugin execution */

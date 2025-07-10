@@ -1,59 +1,108 @@
 // nodes/PTSequential.ts
-import INode, { NodeType } from "../../../core/interfaces/INode";
-import createNodeInstance from "../../instances/index";
-import { Children, Layer } from "../../../core/types/global";
+import {
+  ModelLayerNode,
+  ModelLayerSettings,
+  NodeType,
+  Children,
+} from "@tensorify.io/sdk";
 
-export default class PTSequential implements INode<PTSequential["settings"]> {
+interface SequentialSettings extends ModelLayerSettings {
+  // PTSequential doesn't need specific settings, it works with children
+}
+
+export default class PTSequential extends ModelLayerNode<SequentialSettings> {
   /** Name of the node */
-  name: string = "Sequential Model";
+  public readonly name: string = "Sequential Model";
 
   /** Template used for translation */
-  translationTemplate: string = `torch.nn.Sequential({layers})`;
+  public readonly translationTemplate: string = `torch.nn.Sequential({layers})`;
 
   /** Number of input lines */
-  inputLines: number = 1;
+  public readonly inputLines: number = 1;
 
   /** Number of output lines */
-  outputLinesCount: number = 1;
+  public readonly outputLinesCount: number = 1;
 
   /** Number of secondary input lines */
-  secondaryInputLinesCount: number = 0;
+  public readonly secondaryInputLinesCount: number = 0;
 
   /** Type of the node */
-  nodeType: NodeType = NodeType.MODEL_LAYER;
+  public readonly nodeType: NodeType = NodeType.MODEL_LAYER;
 
-  /** Settings specific to PTSequential */
-  settings = null;
+  /** Default settings for PTSequential */
+  public readonly settings: SequentialSettings = {};
 
   constructor() {
-    // Initialize settings with default values if needed
+    super();
   }
 
   /** Function to get the translation code */
-  getTranslationCode(settings: PTSequential["settings"], children: Children): string {
-    const layerCodes: string[] = [];
-
-    if (typeof children === "object" && Array.isArray(children)) {
-      for (const _layer in children) {
-        if (Object.prototype.hasOwnProperty.call(children, _layer)) {
-          const layer = children[_layer];
-          const { type, settings: layerSettings } = layer as Layer;
-          const nodeInstance = createNodeInstance(type);
-          const code = nodeInstance.getTranslationCode(layerSettings, null);
-          layerCodes.push(code);
-        }
-      }
-    } else if (typeof children === "object" && !Array.isArray(children)) {
-      const { type, settings: layerSettings } = children as Layer;
-      const nodeInstance = createNodeInstance(type);
-      const code = nodeInstance.getTranslationCode(layerSettings, null);
-      layerCodes.push(code);
-    } else {
-      throw new Error("Wrong Children provided at PTSequential!");
+  public getTranslationCode(
+    settings: SequentialSettings,
+    children?: Children
+  ): string {
+    if (!children) {
+      throw new Error("PTSequential requires children layers to be provided.");
     }
 
-    const layersCode = layerCodes.join(",");
+    const layerCodes: string[] = [];
 
+    // Handle different children formats
+    if (Array.isArray(children)) {
+      children.forEach((layer) => {
+        if (layer && typeof layer === "object" && "type" in layer) {
+          const layerCode = this.processChildLayer(layer);
+          layerCodes.push(layerCode);
+        }
+      });
+    } else if (typeof children === "object" && children !== null) {
+      // Single child or object with children
+      if ("type" in children) {
+        const layerCode = this.processChildLayer(children);
+        layerCodes.push(layerCode);
+      } else {
+        // Children is an object with multiple layers
+        Object.values(children).forEach((layer) => {
+          if (layer && typeof layer === "object" && "type" in layer) {
+            const layerCode = this.processChildLayer(layer);
+            layerCodes.push(layerCode);
+          }
+        });
+      }
+    }
+
+    if (layerCodes.length === 0) {
+      throw new Error("PTSequential requires at least one child layer.");
+    }
+
+    const layersCode = layerCodes.join(", ");
     return this.translationTemplate.replace("{layers}", layersCode);
+  }
+
+  /**
+   * Process a child layer to generate its code
+   * This is a simplified implementation that handles basic layer types
+   * In a full implementation, this would create instances dynamically
+   */
+  private processChildLayer(layer: any): string {
+    // This is a placeholder implementation
+    // In a real scenario, you'd need to create instances of the appropriate node classes
+    // based on the layer.type and call their getTranslationCode methods
+
+    const { type, settings } = layer;
+
+    // Handle common layer types
+    switch (type) {
+      case "PTLinear":
+        return `torch.nn.Linear(${settings.inFeatures}, ${settings.outFeatures})`;
+      case "PTReLU":
+        return `torch.nn.ReLU()`;
+      case "PTConv2d":
+        return `torch.nn.Conv2d(${settings.inChannels}, ${settings.outChannels}, ${settings.kernelSize})`;
+      case "PTFlatten":
+        return `torch.nn.Flatten()`;
+      default:
+        throw new Error(`Unsupported layer type in PTSequential: ${type}`);
+    }
   }
 }

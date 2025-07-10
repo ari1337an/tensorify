@@ -1,20 +1,20 @@
-import fs from 'fs';
-import path from 'path';
-import INode from '../../core/interfaces/INode';
+import fs from "fs";
+import path from "path";
+import { IUniversalNode } from "@tensorify.io/sdk";
 
 // The directory where your node modules are located
-const nodesDir = path.join(__dirname, '../nodes');
+const nodesDir = path.join(__dirname, "../nodes");
 
 // Object to store the dynamically imported nodes
-const InstalledNodes: { [key: string]: new () => INode<any> } = {};
+const InstalledNodes: { [key: string]: new () => IUniversalNode<any> } = {};
 
 // Read all files in the nodes directory
 fs.readdirSync(nodesDir).forEach((file) => {
   // Define possible file paths for both .ts and .js
-  const tsPath = path.join(nodesDir, file, 'index.ts');
-  const jsPath = path.join(nodesDir, file, 'index.js');
+  const tsPath = path.join(nodesDir, file, "index.ts");
+  const jsPath = path.join(nodesDir, file, "index.js");
 
-  let nodePath = '';
+  let nodePath = "";
   if (fs.existsSync(tsPath)) {
     nodePath = tsPath;
   } else if (fs.existsSync(jsPath)) {

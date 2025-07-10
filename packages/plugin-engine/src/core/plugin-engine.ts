@@ -1,5 +1,5 @@
 /**
- * Main Plugin Engine class
+ * Main Plugin Engine class with TypeScript and SDK support
  */
 
 import type { IStorageService } from "../interfaces/storage.interface";
@@ -10,9 +10,13 @@ import {
   ConfigurationError,
   InvalidPluginStructureError,
 } from "../errors/plugin-engine.errors";
+import type {
+  EnhancedExecutionContext,
+  EnhancedExecutorConfig,
+} from "../services/executor.service";
 
 /**
- * The main plugin execution engine
+ * The main plugin execution engine with TypeScript and SDK support
  * Orchestrates fetching plugins from storage and executing them in isolation
  */
 export class PluginEngine {
@@ -22,7 +26,7 @@ export class PluginEngine {
 
   /**
    * Create a new plugin engine instance
-   * @param config - Engine configuration with injected dependencies
+   * @param config - Engine configuration with injected dependencies and TypeScript/SDK options
    */
   constructor(config: EngineConfig) {
     this.validateConfig(config);
@@ -57,18 +61,26 @@ export class PluginEngine {
 
       this.log(`Plugin code validated`);
 
-      // Step 3: Execute the plugin in isolated environment
+      // Step 3: Execute the plugin in isolated environment with TypeScript/SDK support
+      const executionContext: EnhancedExecutionContext = {
+        code: pluginCode,
+        payload,
+        entryPointString,
+        sdkDependencies: this.config.sdkDependencies,
+      };
+
+      const executorConfig: EnhancedExecutorConfig = {
+        memoryLimit: this.config.memoryLimit || 128,
+        timeout: this.config.executionTimeout || 30000,
+        debug: this.config.debug || false,
+        enableTypeScript: this.config.enableTypeScript ?? true,
+        enableSDKImports: this.config.enableSDKImports ?? true,
+        sdkDependencies: this.config.sdkDependencies || {},
+      };
+
       const executionResult = await this.executorService.execute(
-        {
-          code: pluginCode,
-          payload,
-          entryPointString,
-        },
-        {
-          memoryLimit: this.config.memoryLimit || 128,
-          timeout: this.config.executionTimeout || 30000,
-          debug: this.config.debug || false,
-        }
+        executionContext,
+        executorConfig
       );
 
       this.log(`Plugin execution completed successfully for: ${pluginSlug}`);
@@ -79,6 +91,7 @@ export class PluginEngine {
           executionTime: executionResult.stats.executionTime,
           memoryUsage: executionResult.stats.memoryUsage,
           warnings: executionResult.logs || [],
+          compilationInfo: executionResult.stats.compilationInfo,
         },
       };
     } catch (error) {
@@ -267,20 +280,29 @@ export class PluginEngine {
   }
 
   /**
-   * Validate plugin code structure
+   * Validate plugin code structure with TypeScript support
    * @private
    */
   private async validatePluginCode(code: string): Promise<void> {
     try {
-      // Basic syntax validation
-      await this.executorService.validateCode(code);
+      // Enhanced validation with TypeScript support
+      const executorConfig: EnhancedExecutorConfig = {
+        memoryLimit: 32, // Small memory limit for validation
+        timeout: 5000, // Short timeout for validation
+        debug: this.config.debug || false,
+        enableTypeScript: this.config.enableTypeScript ?? true,
+        enableSDKImports: this.config.enableSDKImports ?? true,
+        sdkDependencies: this.config.sdkDependencies || {},
+      };
+
+      await this.executorService.validateCode(code, executorConfig);
 
       // TODO: Add more sophisticated validation for plugin structure
       // e.g., check for required exports, class structure, etc.
     } catch (error) {
       throw new InvalidPluginStructureError(
         "unknown",
-        "Plugin must export a class with codeGeneration.generateCode method",
+        "Plugin must export a valid class or function with proper entry points",
         error as Error
       );
     }
@@ -316,10 +338,14 @@ export class PluginEngine {
     const {
       IsolatedVMExecutorService,
     } = require("../services/executor.service");
+
     return new IsolatedVMExecutorService({
       memoryLimit: this.config.memoryLimit || 128,
       timeout: this.config.executionTimeout || 30000,
       debug: this.config.debug || false,
+      enableTypeScript: this.config.enableTypeScript ?? true,
+      enableSDKImports: this.config.enableSDKImports ?? true,
+      sdkDependencies: this.config.sdkDependencies || {},
     });
   }
 

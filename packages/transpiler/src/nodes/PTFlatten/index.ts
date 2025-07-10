@@ -1,54 +1,64 @@
 // nodes/PTFlatten.ts
-import INode, { NodeType } from "../../../core/interfaces/INode";
+import {
+  ModelLayerNode,
+  ModelLayerSettings,
+  NodeType,
+} from "@tensorify.io/sdk";
 
-export default class PTFlatten implements INode<PTFlatten["settings"]> {
+interface FlattenSettings extends ModelLayerSettings {
+  startDim?: number;
+  endDim?: number;
+}
+
+export default class PTFlatten extends ModelLayerNode<FlattenSettings> {
   /** Name of the node */
-  name: string = "Flatten Layer";
+  public readonly name: string = "Flatten Layer";
 
   /** Template used for translation */
-  translationTemplate: string = `torch.nn.Flatten({optional_params})`;
+  public readonly translationTemplate: string = `torch.nn.Flatten({optional_params})`;
 
   /** Number of input lines */
-  inputLines: number = 1;
+  public readonly inputLines: number = 1;
 
   /** Number of output lines */
-  outputLinesCount: number = 1;
+  public readonly outputLinesCount: number = 1;
 
   /** Number of secondary input lines */
-  secondaryInputLinesCount: number = 0;
+  public readonly secondaryInputLinesCount: number = 0;
 
   /** Type of the node */
-  nodeType: NodeType = NodeType.MODEL_LAYER;
+  public readonly nodeType: NodeType = NodeType.MODEL_LAYER;
 
-  /** Settings specific to PTFlatten */
-  settings: {
-    startDim?: number;
-    endDim?: number;
-  } = {
+  /** Default settings for PTFlatten */
+  public readonly settings: FlattenSettings = {
     startDim: 1,
     endDim: -1,
   };
 
   constructor() {
-    // Initialize settings with default values if needed
+    super();
   }
 
   /** Function to get the translation code */
-  getTranslationCode(settings: typeof this.settings): string {
-    // Prepare optional parameters
-    let optionalParams = "";
+  public getTranslationCode(settings: FlattenSettings): string {
+    const requiredParams = {};
 
-    if (settings.startDim !== undefined && settings.startDim !== 1) {
-      optionalParams += `start_dim=${settings.startDim}`;
-    }
-    if (settings.endDim !== undefined && settings.endDim !== -1) {
-      if (optionalParams !== "") {
-        optionalParams += `, `;
-      }
-      optionalParams += `end_dim=${settings.endDim}`;
-    }
+    const optionalParams = {
+      start_dim: settings.startDim,
+      end_dim: settings.endDim,
+    };
 
-    // Generate the translation code
-    return this.translationTemplate.replace("{optional_params}", optionalParams.trim());
+    const defaultValues = {
+      start_dim: 1,
+      end_dim: -1,
+    };
+
+    // Use SDK utility to build the layer constructor
+    return this.buildLayerConstructor(
+      "torch.nn.Flatten",
+      requiredParams,
+      defaultValues,
+      settings
+    );
   }
 }

@@ -1,5 +1,5 @@
 /**
- * Isolated VM executor service implementation
+ * Isolated VM executor service implementation with TypeScript support
  */
 
 import ivm from "isolated-vm";
@@ -16,33 +16,98 @@ import {
   MemoryLimitError,
   PluginValidationError,
 } from "../errors/plugin-engine.errors";
+import {
+  TypeScriptCompilerService,
+  CompilationOptions,
+} from "./typescript-compiler.service";
 
 /**
- * Isolated VM implementation of the executor service
+ * Enhanced execution context with TypeScript support
+ */
+export interface EnhancedExecutionContext extends ExecutionContext {
+  /** Whether the code is TypeScript */
+  isTypeScript?: boolean;
+  /** SDK dependencies to resolve */
+  sdkDependencies?: Record<string, any>;
+  /** Compilation options */
+  compilationOptions?: CompilationOptions;
+}
+
+/**
+ * Enhanced executor config with TypeScript support
+ */
+export interface EnhancedExecutorConfig extends ExecutorConfig {
+  /** Whether to enable TypeScript compilation */
+  enableTypeScript?: boolean;
+  /** Whether to enable SDK imports */
+  enableSDKImports?: boolean;
+  /** SDK dependencies to provide */
+  sdkDependencies?: Record<string, any>;
+}
+
+/**
+ * Isolated VM implementation of the executor service with TypeScript support
  */
 export class IsolatedVMExecutorService implements IExecutorService {
   private readonly defaultConfig: Required<ExecutorConfig>;
+  private readonly enhancedDefaultConfig: Required<EnhancedExecutorConfig>;
+  private readonly tsCompiler: TypeScriptCompilerService;
 
-  constructor(defaultConfig?: ExecutorConfig) {
+  constructor(defaultConfig?: EnhancedExecutorConfig) {
     this.defaultConfig = {
       memoryLimit: defaultConfig?.memoryLimit || 128,
       timeout: defaultConfig?.timeout || 30000,
       debug: defaultConfig?.debug || false,
     };
+
+    this.enhancedDefaultConfig = {
+      ...this.defaultConfig,
+      enableTypeScript: defaultConfig?.enableTypeScript ?? true,
+      enableSDKImports: defaultConfig?.enableSDKImports ?? true,
+      sdkDependencies: defaultConfig?.sdkDependencies ?? {},
+    };
+
+    this.tsCompiler = new TypeScriptCompilerService({
+      debug: this.defaultConfig.debug,
+    });
   }
 
   /**
-   * Execute JavaScript code in an isolated environment
+   * Execute JavaScript/TypeScript code in an isolated environment
    */
   async execute(
-    context: ExecutionContext,
-    config?: ExecutorConfig
+    context: EnhancedExecutionContext,
+    config?: EnhancedExecutorConfig
   ): Promise<ExecutionResult> {
-    const effectiveConfig = { ...this.defaultConfig, ...config };
+    const effectiveConfig = { ...this.enhancedDefaultConfig, ...config };
     const startTime = Date.now();
     let isolate: ivm.Isolate | undefined;
 
     try {
+      // Pre-process code if TypeScript support is enabled
+      let processedCode = context.code;
+      let compilationResult;
+
+      if (
+        effectiveConfig.enableTypeScript ||
+        effectiveConfig.enableSDKImports
+      ) {
+        compilationResult = await this.preprocessCode(
+          context.code,
+          effectiveConfig,
+          context
+        );
+        processedCode = compilationResult.code;
+
+        if (effectiveConfig.debug) {
+          console.log("Code compilation completed:", {
+            original: context.code.length,
+            processed: processedCode.length,
+            diagnostics: compilationResult.diagnostics,
+          });
+        }
+      }
+
       // Create isolated VM with memory limit
       isolate = new ivm.Isolate({
         memoryLimit: effectiveConfig.memoryLimit,
@@ -52,21 +117,19 @@ export class IsolatedVMExecutorService implements IExecutorService {
       // Create a new context
       const vmContext = await isolate.createContext();
 
-      // Set up the VM context with necessary globals
-      // Skip VM context setup to test if that's causing the non-transferable value issue
-      // await this.setupVMContext(vmContext, effectiveConfig);
-
-      console.log("VM context setup");
+      if (effectiveConfig.debug) {
+        console.log("VM context setup completed");
+      }
 
       console.log("Ready to execute plugin code");
 
-      // Execute with timeout
+      // Execute with timeout using processed code
       const result = await Promise.race([
         this.executeWithContext(
           vmContext,
           context.payload,
           context.entryPointString,
-          context.code
+          processedCode
         ),
         this.createTimeoutPromise(effectiveConfig.timeout),
       ]);
@@ -87,6 +150,12 @@ export class IsolatedVMExecutorService implements IExecutorService {
         stats: {
           executionTime,
           memoryUsage,
+          compilationInfo: compilationResult
+            ? {
+                diagnostics: compilationResult.diagnostics,
+                dependencies: Object.keys(compilationResult.dependencies),
+              }
+            : undefined,
         },
         logs: [], // TODO: Capture console logs if needed
         errors: [],
@@ -113,16 +182,59 @@ export class IsolatedVMExecutorService implements IExecutorService {
   }
 
   /**
-   * Validate JavaScript code syntax without executing it
+   * Validate JavaScript/TypeScript code syntax without executing it
    */
-  async validateCode(code: string): Promise<boolean> {
+  async validateCode(
+    code: string,
+    config?: EnhancedExecutorConfig
+  ): Promise<boolean> {
+    const effectiveConfig = { ...this.enhancedDefaultConfig, ...config };
     let isolate: ivm.Isolate | undefined;
 
     try {
+      // If TypeScript support is enabled, try compiling first
+      if (effectiveConfig.enableTypeScript) {
+        try {
+          const compilationResult = await this.tsCompiler.compileTypeScript(
+            code,
+            {
+              debug: effectiveConfig.debug,
+              sdkDependencies: effectiveConfig.sdkDependencies,
+            }
+          );
+
+          const errors = compilationResult.diagnostics.filter(
+            (d) => d.includes("error") || d.includes("Error")
+          );
+
+          if (errors.length > 0) {
+            throw new PluginValidationError(
+              `TypeScript validation failed: ${errors.join(", ")}`,
+              errors
+            );
+          }
+
+          code = compilationResult.code;
+        } catch (error) {
+          if (error instanceof PluginValidationError) {
+            throw error;
+          }
+          // If TypeScript compilation fails, try as regular JavaScript
+          console.warn(
+            "TypeScript compilation failed, trying as JavaScript:",
+            error
+          );
+        }
+      }
+
+      // Validate the final JavaScript code
       isolate = new ivm.Isolate({ memoryLimit: 32 }); // Small memory limit for validation
       await isolate.compileScript(code);
       return true;
     } catch (error) {
+      if (error instanceof PluginValidationError) {
+        throw error;
+      }
       if (error instanceof Error) {
         throw new PluginValidationError(
           `Code validation failed: ${error.message}`,
@@ -135,6 +247,41 @@ export class IsolatedVMExecutorService implements IExecutorService {
         isolate.dispose();
       }
     }
+  }
+
+  /**
+   * Pre-process code for TypeScript compilation and SDK import resolution
+   */
+  private async preprocessCode(
+    code: string,
+    config: Required<EnhancedExecutorConfig>,
+    context: EnhancedExecutionContext
+  ) {
+    const compilationOptions: CompilationOptions = {
+      debug: config.debug,
+      sdkDependencies: {
+        ...config.sdkDependencies,
+        ...context.sdkDependencies,
+      },
+      ...context.compilationOptions,
+    };
+
+    // Use bundling for better import resolution
+    if (config.enableSDKImports && code.includes("@tensorify.io/sdk")) {
+      return await this.tsCompiler.bundleWithDependencies(
+        code,
+        compilationOptions
+      );
+    } else if (config.enableTypeScript) {
+      return await this.tsCompiler.compileTypeScript(code, compilationOptions);
+    }
+
+    // Fallback to basic import resolution
+    return {
+      code,
+      diagnostics: [],
+      dependencies: {},
+    };
   }
 
   /**
@@ -161,60 +308,14 @@ export class IsolatedVMExecutorService implements IExecutorService {
   }
 
   /**
-   * Set up the VM context with necessary globals and modules
-   */
-  /*
-  private async setupVMContext(
-    context: ivm.Context,
-    config: Required<ExecutorConfig>,
-    options?: VMContextOptions
-  ): Promise<void> {
-    const jail = context.global;
-
-    // Set up basic globals
-    await jail.set("global", jail.derefInto());
-
-    // Set up console if debug is enabled (using transferable functions)
-    if (config.debug || options?.enableConsole) {
-      await jail.set("console", {
-        log: new ivm.Reference((...args: any[]) => console.log(...args)),
-        error: new ivm.Reference((...args: any[]) => console.error(...args)),
-        warn: new ivm.Reference((...args: any[]) => console.warn(...args)),
-        info: new ivm.Reference((...args: any[]) => console.info(...args)),
-      });
-    }
-
-    // Add any custom globals
-    if (options?.globals) {
-      for (const [key, value] of Object.entries(options.globals)) {
-        await jail.set(key, value);
-      }
-    }
-
-    // Set up a basic require function if modules are provided
-    if (options?.modules) {
-      const modules = options.modules;
-      const requireFunction = new ivm.Reference((name: string) => {
-        if (modules[name]) {
-          return modules[name];
-        }
-        throw new Error(`Module '${name}' not found`);
-      });
-      await jail.set("require", requireFunction);
-    }
-  }
-  */
-
-  /**
    * Execute the script with the plugin context
    */
   private async executeWithContext(
     context: ivm.Context,
     payload: any,
     entryPointString: string,
-    originalCode: string
+    processedCode: string
   ): Promise<string> {
-    // Use the original plugin code instead of script.toString()
     const payloadJson = JSON.stringify(payload);
     const entryPoint = entryPointString;
 
@@ -224,7 +325,7 @@ export class IsolatedVMExecutorService implements IExecutorService {
       var module = { exports: {} };
       var exports = module.exports;
       
-      ${originalCode}
+      ${processedCode}
       
       (function() {
         try {
@@ -232,24 +333,49 @@ export class IsolatedVMExecutorService implements IExecutorService {
           var entryPoint = '${entryPoint}';
           
           var exported = module.exports;
-          var fn = exported[entryPoint];
+          
+          // Handle different export patterns
+          var fn;
+          if (typeof exported === 'function') {
+            // Direct function export
+            fn = exported;
+          } else if (exported[entryPoint]) {
+            // Named export
+            fn = exported[entryPoint];
+          } else if (exported.default && exported.default[entryPoint]) {
+            // Default export with method
+            fn = exported.default[entryPoint];
+          } else if (exported.default && typeof exported.default === 'function') {
+            // Default function export
+            fn = exported.default;
+          } else {
+            // Try to find method on any exported class instances
+            for (var key in exported) {
+              if (exported[key] && typeof exported[key][entryPoint] === 'function') {
+                fn = exported[key][entryPoint].bind(exported[key]);
+                break;
+              }
+            }
+          }
           
           if (typeof fn !== 'function') {
-            return 'Error: Function ' + entryPoint + ' not found';
+            return 'Error: Function ' + entryPoint + ' not found in exports. Available: ' + Object.keys(exported).join(', ');
           }
           
           var result = fn(payload);
           return String(result);
         } catch (error) {
-          return 'Error: ' + error.message;
+          return 'Error: ' + error.message + '\\nStack: ' + (error.stack || 'No stack trace');
         }
       })()
     `;
 
-    console.log("Combined script:", combinedCode.slice(0, 200) + "...");
+    if (this.enhancedDefaultConfig.debug) {
+      console.log("Combined script:", combinedCode.slice(0, 300) + "...");
+    }
 
     // Execute everything as a single script to avoid transferable value issues
-    const result = await context.evalSync(combinedCode);
+    const result = context.evalSync(combinedCode);
     return String(result);
   }
 
