@@ -1,0 +1,36 @@
+{
+  "layers": {
+    "model": {
+      "type": "PTSequential",
+      "child": [
+        {
+          "type": "PTFlatten",
+          "settings": {
+            "startDim": 1,
+            "endDim": -1
+          }
+        },
+        {
+          "type": "PTLinear",
+          "settings": {
+            "inFeatures": 784,
+            "outFeatures": 128,
+            "bias": true
+          }
+        },
+        {
+          "type": "PTReLU",
+          "settings": {}
+        },
+        {
+          "type": "PTLinear",
+          "settings": {
+            "inFeatures": 128,
+            "outFeatures": 10,
+            "bias": true
+          }
+        }
+      ]
+    }
+  }
+} 

@@ -13,7 +13,11 @@
     "declarationMap": true,
     "sourceMap": false,
     "moduleResolution": "node",
-    "removeComments": false
+    "removeComments": false,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["v1/*"]
+    }
   },
   "include": ["core/**/*", "v1/**/*"],
   "exclude": ["node_modules", "dist"]
