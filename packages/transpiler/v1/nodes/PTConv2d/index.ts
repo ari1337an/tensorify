@@ -1,5 +1,5 @@
 // nodes/PTConv2d.ts
-import INode, { NodeType } from "@/interfaces/INode";
+import INode, { NodeType } from "../../interfaces/INode";
 
 export default class PTConv2d implements INode<PTConv2d["settings"]> {
   /** Name of the node */

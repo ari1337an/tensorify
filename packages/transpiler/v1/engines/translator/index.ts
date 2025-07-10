@@ -1,5 +1,5 @@
-import createNodeInstance from "@/instances";
-import { Model } from "@/types/global";
+import createNodeInstance from "../../instances";
+import { Model } from "../../types/global";
 
 export default function translateJsonToBython(json: Model): string {
   const layerCodes: string[] = [];

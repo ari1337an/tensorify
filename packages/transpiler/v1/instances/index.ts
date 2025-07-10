@@ -1,5 +1,5 @@
-import InstalledNodes from "@/instances/installed-nodes";
-import INode from "@/interfaces/INode";
+import InstalledNodes from "./installed-nodes";
+import INode from "../interfaces/INode";
 
 export default function createNodeInstance(type: string): INode<any> {
   const NodeClass = InstalledNodes[type];

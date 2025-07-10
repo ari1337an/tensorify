@@ -1,4 +1,4 @@
-import { Children, Layer } from "@/types/global";
+import { Children, Layer } from "../types/global";
 
 // interfaces/INode.ts
 export enum NodeType {
