@@ -104,4 +104,4 @@ USER api
 EXPOSE 3001
 
 # Start application directly with minimal overhead
-CMD ["node", "dist/index.js"]
+CMD ["node", "--no-node-snapshot", "dist/index.js"]

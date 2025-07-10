@@ -27,8 +27,8 @@
   "scripts": {
     "generate-indexes": "node ./scripts/generate_indexes.cjs",
     "build": "npm run generate-indexes && tsc",
-    "dev": "npm run generate-indexes && ts-node-dev --respawn --transpile-only src/index.ts",
-    "start": "node dist/index.js",
+    "dev": "npm run generate-indexes && NODE_OPTIONS=\"--no-node-snapshot\" ts-node-dev --respawn --transpile-only src/index.ts",
+    "start": "node --no-node-snapshot dist/index.js",
     "test": "npm run generate-indexes && jest --passWithNoTests",
     "prepublishOnly": "echo 'Error: This package cannot be published' && exit 1"
   },

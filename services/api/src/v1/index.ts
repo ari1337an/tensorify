@@ -4,11 +4,16 @@ import {
   contract as pluginGetCodeContract,
   action as pluginGetCodeAction,
 } from "./plugin/getCode";
+import {
+  contract as pluginGetResultContract,
+  action as pluginGetResultAction,
+} from "./plugin/getResult";
 
 const c = initContract();
 
 const unprefixedContracts = {
     pluginGetCode: pluginGetCodeContract,
+    pluginGetResult: pluginGetResultContract,
 };
 
 const composedUnprefixedContracts = c.router(
@@ -28,6 +33,7 @@ export const contracts = c.router(
 
 export const actions = {
   pluginGetCode: pluginGetCodeAction,
+  pluginGetResult: pluginGetResultAction,
 };
 
 export const openApiDocument = generateOpenApi(
