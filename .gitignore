@@ -42,5 +42,7 @@ coverage/
 *node_modules*
 
 logs/
+
+# nextjs build files.
 .next/
 services/plugins.tensorify.io/.next
