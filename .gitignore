@@ -43,3 +43,4 @@ coverage/
 
 logs/
 .next/
+services/plugins.tensorify.io/.next
