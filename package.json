@@ -7,7 +7,8 @@
     "packages/shared",
     "packages/transpiler",
     "packages/create-tensorify-plugin/v1",
-    "services/api"
+    "services/api",
+    "services/plugin.tensorify.io"
   ],
   "scripts": {
     "dev:services:api": "turbo run build --filter='./packages/plugin-engine' && turbo run dev --filter='./packages/plugin-engine' --filter='./services/api' --parallel",
@@ -16,6 +17,7 @@
     "dev:packages:transpiler": "turbo run dev --filter='./packages/transpiler'",
     "dev:packages:shared": "turbo run dev --filter='./packages/shared'",
     "dev:packages:create-tensorify-plugin": "turbo run dev --filter='./packages/create-tensorify-plugin/v1'",
+    "dev:services:plugin.tensorify.io": "turbo run dev --filter='./services/plugin.tensorify.io'",
     "build": "turbo run build",
     "test": "turbo run test"
   },

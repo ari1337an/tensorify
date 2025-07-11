@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Plugin {
+  id                String   @id @default(cuid())
+  name              String
+  description       String
+  githubUrl         String
+  status            String
+  tags              String?
+  tensorifyVersion  String   @default("1.0.0")
+  version           String   @default("1.0.0")
+  releaseTag        String? // GitHub release tag (e.g., "v1.2.0")
+  slug              String // Format: @username/plugin-name:version
+  authorName        String
+  authorId          String
+  processingStatus  String   @default("queued")
+  processingTitle   String?  @default("Plugin is queued.")
+  processingMessage String?  @default("This plugin is currently queued for processing. You'll be able to install it once it's published.")
+  sha               String? // New field for GitHub commit SHA
+  isPublic          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([slug])
+  @@index([authorId])
+}
+
+model User {
+  id          String   @id @default(uuid())
+  username    String
+  accessToken String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
