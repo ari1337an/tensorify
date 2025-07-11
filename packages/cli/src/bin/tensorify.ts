@@ -2,6 +2,8 @@
 
 import { program } from "commander";
 import { loginCommand } from "../commands/login";
+import { logoutCommand } from "../commands/logout";
+import { whoamiCommand } from "../commands/whoami";
 import chalk from "chalk";
 
 // Set up the CLI program
@@ -14,6 +16,8 @@ program
 
 // Add commands
 program.addCommand(loginCommand);
+program.addCommand(logoutCommand);
+program.addCommand(whoamiCommand);
 
 // Global error handling
 program.exitOverride();

@@ -1,31 +1,30 @@
 class UrlGenerator {
-  private getBaseAuthUrl(isDev: boolean): string {
-    return isDev ? "http://localhost:3000" : "https://auth.tensorify.io";
-  }
-
-  private getBaseCallbackUrl(isDev: boolean): string {
-    return isDev ? "http://localhost" : "https://plugin.tensorify.io";
+  private getBaseUrl(isDev: boolean): string {
+    return isDev ? "http://localhost:3000" : "https://plugins.tensorify.io";
   }
 
   getSignInUrl(isDev: boolean, redirectUrl: string): string {
-    const baseUrl = this.getBaseAuthUrl(isDev);
+    const baseUrl = this.getBaseUrl(isDev);
     const encodedRedirectUrl = encodeURIComponent(redirectUrl);
-    return `${baseUrl}/sign-in?redirect_url=${encodedRedirectUrl}`;
+    return `${baseUrl}/api/cli/auth/callback?redirect_url=${encodedRedirectUrl}`;
   }
 
   getCallbackUrl(isDev: boolean, port: number): string {
-    const baseUrl = this.getBaseCallbackUrl(isDev);
-
     if (isDev) {
-      return `${baseUrl}:${port}/callback`;
+      return `http://localhost:${port}/callback`;
     } else {
-      // In production, we'll use a specific endpoint for CLI callbacks
-      return `${baseUrl}/cli/auth/callback?port=${port}`;
+      // In production, CLI runs locally, so we always use localhost for the callback
+      return `http://localhost:${port}/callback`;
     }
   }
 
   getApiUrl(isDev: boolean): string {
-    return isDev ? "http://localhost:8080" : "https://api.tensorify.io";
+    return isDev ? "http://localhost:3000" : "https://plugins.tensorify.io";
+  }
+
+  getUserProfileUrl(isDev: boolean): string {
+    const baseUrl = this.getApiUrl(isDev);
+    return `${baseUrl}/api/user/profile`;
   }
 }
 
