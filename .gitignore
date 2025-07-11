@@ -41,3 +41,4 @@ coverage/
 *node_modules*
 
 logs/
+.next/
