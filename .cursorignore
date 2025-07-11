@@ -1,2 +1,10 @@
 mcp.json
 .env
+.next/
+.turbo/
+.vscode/
+.idea/
+.DS_Store
+.gitignore
+.gitignore
+.gitignore
