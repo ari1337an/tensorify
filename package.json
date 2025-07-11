@@ -8,9 +8,11 @@
     "packages/shared",
     "packages/transpiler",
     "packages/create-tensorify-plugin/v1",
-    "services/api"
+    "services/api",
+    "services/plugins.tensorify.io"
   ],
   "scripts": {
+    "dev": "turbo run dev --filter='./services/api' --filter='./services/plugins.tensorify.io' --parallel",
     "dev:services:api": "turbo run build --filter='./packages/plugin-engine' && turbo run dev --filter='./packages/plugin-engine' --filter='./services/api' --parallel",
     "dev:packages:plugin-engine": "turbo run dev --filter='./packages/plugin-engine'",
     "dev:packages:sdk": "turbo run dev --filter='./packages/sdk/v1'",
@@ -18,7 +20,7 @@
     "dev:packages:shared": "turbo run dev --filter='./packages/shared'",
     "dev:packages:create-tensorify-plugin": "turbo run dev --filter='./packages/create-tensorify-plugin/v1'",
     "dev:packages:cli": "turbo run dev --filter='./packages/cli'",
-    "dev:services:plugin.tensorify.io": "turbo run dev --filter='./services/plugin.tensorify.io'",
+    "dev:services:plugins.tensorify.io": "turbo run dev --filter='./services/plugins.tensorify.io'",
     "build": "turbo run build",
     "build:cli": "turbo run build --filter='./packages/cli'",
     "cli": "npm run build:cli && node packages/cli/lib/bin/tensorify.js",

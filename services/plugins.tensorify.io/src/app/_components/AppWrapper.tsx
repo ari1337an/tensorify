@@ -6,10 +6,19 @@ import {
   SignUpButton,
   SignedIn,
   SignedOut,
-  UserButton,
+  useUser,
+  useClerk,
 } from "@clerk/nextjs";
 import Link from "@/app/_components/ui/link";
-import { Menu, Search, X, Command, BookOpen, Gauge, Github, Code } from "lucide-react";
+import {
+  Menu,
+  Search,
+  X,
+  Command,
+  BookOpen,
+  Gauge,
+  LogOut,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { Toaster } from "@/app/_components/ui/sonner";
 import { SearchDialog } from "@/app/_components/SearchDialog";
@@ -17,8 +26,88 @@ import { usePathname } from "next/navigation";
 import { NavigationLoader } from "@/app/_components/NavigationLoader";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { dark } from "@clerk/themes";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/app/_components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/app/_components/ui/dropdown-menu";
 
 const queryClient = new QueryClient();
+
+// User Avatar Dropdown Component
+const UserAvatarDropdown = () => {
+  const { user } = useUser();
+  const { signOut } = useClerk();
+
+  const handleSignOut = () => {
+    signOut();
+  };
+
+  const userInitials = user?.fullName
+    ? user.fullName
+        .split(" ")
+        .map((name) => name[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : user?.emailAddresses?.[0]?.emailAddress?.[0]?.toUpperCase() || "U";
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="flex items-center gap-2 rounded-full transition-all duration-200 hover:ring-2 hover:ring-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/20">
+          <Avatar className="h-8 w-8 ring-2 ring-border hover:ring-primary/30 transition-colors duration-200">
+            <AvatarImage
+              src={user?.imageUrl}
+              alt={user?.fullName || "User"}
+              className="object-cover"
+            />
+            <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white text-sm font-medium">
+              {userInitials}
+            </AvatarFallback>
+          </Avatar>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56 mt-2">
+        <div className="flex items-center gap-3 p-3">
+          <Avatar className="h-10 w-10">
+            <AvatarImage
+              src={user?.imageUrl}
+              alt={user?.fullName || "User"}
+              className="object-cover"
+            />
+            <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
+              {userInitials}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col gap-1">
+            <p className="text-sm font-medium leading-none">
+              {user?.fullName || "User"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {user?.emailAddresses?.[0]?.emailAddress}
+            </p>
+          </div>
+        </div>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={handleSignOut}
+          className="cursor-pointer text-red-500 focus:text-red-500 focus:bg-red-500/10"
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
 
 // Header auth component with loading state
 const HeaderAuth = () => {
@@ -69,32 +158,7 @@ const HeaderAuth = () => {
           Dashboard
         </Link>
         <div className="h-4 w-px bg-border/40" />
-        <UserButton
-          appearance={{
-            elements: {
-              avatarBox: "h-8 w-8 ring-2 ring-border hover:ring-primary/30 transition-colors duration-200",
-              profileSectionPrimaryButton__username: {
-                display: "none",
-              },
-            },
-          }}
-        >
-          <UserButton.MenuItems>
-            <UserButton.Action
-              label="Your plugins"
-              labelIcon={<Gauge className="h-4 w-4" />}
-              onClick={() => (window.location.href = "/dashboard")}
-            />
-          </UserButton.MenuItems>
-          <UserButton.MenuItems>
-            <UserButton.Action
-              label="GitHub Permissions"
-              labelIcon={<Github className="h-4 w-4" />}
-              onClick={() => (window.location.href = "/plugins/permissions")}
-            />
-          </UserButton.MenuItems>
-        </UserButton>
-        
+        <UserAvatarDropdown />
       </SignedIn>
     </>
   );
@@ -136,14 +200,6 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
           >
             <BookOpen className="h-5 w-5" />
             Documentation
-          </Link>
-          <Link
-            href="/api-docs"
-            onClick={onClose}
-            className="flex items-center gap-3 p-3 text-sm font-medium rounded-lg hover:bg-muted/60 transition-colors"
-          >
-            <Code className="h-5 w-5" />
-            API Documentation
           </Link>
 
           {isLoading ? (
@@ -275,14 +331,6 @@ export default function AppWrapper({
                   >
                     <BookOpen className="h-4 w-4" />
                     Docs
-                  </Link>
-                  <Link
-                    href="/api-docs"
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground 
-                                hover:bg-muted/60 rounded-lg transition-all duration-200"
-                  >
-                    <Code className="h-4 w-4" />
-                    API Docs
                   </Link>
                 </nav>
 

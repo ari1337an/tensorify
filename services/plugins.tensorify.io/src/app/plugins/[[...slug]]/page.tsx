@@ -2,7 +2,6 @@ import {
   getPluginBySlug,
   getLatestPluginVersion,
   listPluginVersions,
-  getPluginReadmeContent,
 } from "@/server/actions/plugin-actions";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
@@ -20,19 +19,12 @@ import Link from "@/app/_components/ui/link";
 import { PluginStatusIndicator } from "@/app/_components/PluginStatusIndicator";
 import { ProcessingStatus } from "@/server/models/plugin";
 import { PluginProcessingBanner } from "@/app/_components/PluginProcessingBanner";
-import { PublishNewVersionButton } from "@/app/_components/PublishNewVersionButton";
 import { VersionSwitcher } from "@/app/_components/VersionSwitcher";
 import { Suspense } from "react";
 import { Skeleton } from "@/app/_components/ui/skeleton";
 import { CopyButton } from "@/app/_components/CopyButton";
 import { MarkdownContent } from "@/app/_components/MarkdownContent";
-import { RetryPublishButton } from "@/app/_components/RetryPublishButton";
-import { DeletePluginButton } from "@/app/_components/DeletePluginButton";
 import { getUserByUserId } from "@/server/actions/author-actions";
-import { EditTagsButton } from "@/app/_components/EditTagsButton";
-import { EditDescriptionButton } from "@/app/_components/EditDescriptionButton";
-import { EditTensorifyVersionButton } from "@/app/_components/EditTensorifyVersionButton";
-import { EditStatusButton } from "@/app/_components/EditStatusButton";
 import { Metadata } from "next/types";
 import { AutoRefreshStatus } from "@/app/_components/AutoRefreshStatus";
 
@@ -207,8 +199,12 @@ function PluginContentSkeleton() {
   );
 }
 
-async function ReadmeContent({ slug }: { slug: string }) {
-  const readmeContent = await getPluginReadmeContent(slug);
+async function ReadmeContent({
+  plugin,
+}: {
+  plugin: { readme?: string | null };
+}) {
+  const readmeContent = plugin.readme || "No README available for this plugin.";
   return <MarkdownContent content={readmeContent} />;
 }
 
@@ -408,29 +404,6 @@ export default async function PluginPage({
                             }
                           />
                         )}
-                        {isOwner &&
-                          isLatest &&
-                          plugin.processingStatus === "published" && (
-                            <PublishNewVersionButton
-                              baseSlug={baseSlug}
-                              pluginData={{
-                                name: plugin.name,
-                                description: plugin.description,
-                                githubUrl: plugin.githubUrl,
-                                status: plugin.status,
-                                slug: plugin.slug,
-                                tags: plugin.tags || "",
-                                tensorifyVersion: plugin.tensorifyVersion,
-                                version: plugin.version,
-                              }}
-                            />
-                          )}
-                        {isOwner && plugin.processingStatus === "failed" && (
-                          <RetryPublishButton
-                            slug={plugin.slug}
-                            githubUrl={plugin.githubUrl}
-                          />
-                        )}
                       </div>
                     </div>
 
@@ -480,7 +453,7 @@ export default async function PluginPage({
                   <Suspense
                     fallback={<Skeleton className="h-64 w-full rounded-xl" />}
                   >
-                    <ReadmeContent slug={plugin.slug} />
+                    <ReadmeContent plugin={plugin} />
                   </Suspense>
                 </div>
               </div>
@@ -614,11 +587,14 @@ export default async function PluginPage({
                       </div>
 
                       {/* Description */}
-                      <EditDescriptionButton
-                        pluginSlug={plugin.slug}
-                        initialDescription={plugin.description}
-                        isOwner={isOwner}
-                      />
+                      <div className="bg-muted/30 rounded-lg p-4 border border-border/50">
+                        <dt className="text-sm text-muted-foreground mb-2">
+                          Description
+                        </dt>
+                        <dd className="text-sm text-foreground">
+                          {plugin.description}
+                        </dd>
+                      </div>
 
                       {/* Meta Info Group */}
                       <div className="bg-muted/30 rounded-lg p-4 border border-border/50 space-y-4">
@@ -697,69 +673,46 @@ export default async function PluginPage({
                       </div>
 
                       {/* SDK Version */}
-                      <EditTensorifyVersionButton
-                        pluginSlug={plugin.slug}
-                        initialVersion={plugin.tensorifyVersion}
-                        isOwner={isOwner}
-                      />
+                      <div className="bg-muted/30 rounded-lg p-4 border border-border/50">
+                        <dt className="text-sm text-muted-foreground mb-2">
+                          Tensorify SDK Version
+                        </dt>
+                        <dd className="text-sm text-foreground">
+                          {plugin.tensorifyVersion}
+                        </dd>
+                      </div>
 
                       {/* Status */}
-                      <EditStatusButton
-                        pluginSlug={plugin.slug}
-                        initialStatus={plugin.status}
-                        isOwner={isOwner}
-                      />
+                      <div className="bg-muted/30 rounded-lg p-4 border border-border/50">
+                        <dt className="text-sm text-muted-foreground mb-2">
+                          Status
+                        </dt>
+                        <dd className="text-sm text-foreground capitalize">
+                          {plugin.status}
+                        </dd>
+                      </div>
 
                       {/* Tags */}
-                      <EditTagsButton
-                        pluginSlug={plugin.slug}
-                        initialTags={tags}
-                        isOwner={isOwner}
-                      />
+                      {tags.length > 0 && (
+                        <div className="bg-muted/30 rounded-lg p-4 border border-border/50">
+                          <dt className="text-sm text-muted-foreground mb-2">
+                            Tags
+                          </dt>
+                          <dd className="flex flex-wrap gap-2">
+                            {tags.map((tag) => (
+                              <span
+                                key={tag}
+                                className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-md"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </dd>
+                        </div>
+                      )}
                     </dl>
                   </div>
                 </div>
-
-                {/* Danger Zone - Separate Card - Only show if private and user is owner */}
-                {isOwner &&
-                  (!plugin.isPublic ||
-                    plugin.processingStatus !== "published") && (
-                    <div
-                      className="group relative bg-card/40 hover:bg-card/50 backdrop-blur-xl 
-                             border border-red-700/20 rounded-xl overflow-hidden mt-8
-                             shadow-[0_4px_20px_-4px_rgba(239,68,68,0.1)] hover:shadow-[0_8px_30px_-4px_rgba(239,68,68,0.15)]
-                             ring-1 ring-red-700/10 transition-all duration-500"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-br from-red-700/[0.03] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                      <div className="p-6">
-                        <h2 className="text-xl font-semibold mb-6 flex items-center gap-3">
-                          <div className="h-8 w-1 bg-gradient-to-b from-red-600 via-red-500 to-red-400 rounded-full group-hover:from-red-500 group-hover:to-red-600 transition-colors duration-300" />
-                          <span className="bg-gradient-to-br from-red-600 to-red-500 bg-clip-text text-transparent">
-                            Danger Zone
-                          </span>
-                        </h2>
-                        <div className="bg-red-700/10 rounded-lg p-4 border border-red-700/20">
-                          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                            <div>
-                              <h3 className="font-medium text-red-700 mb-1">
-                                Delete this plugin
-                              </h3>
-                              <p className="text-sm text-red-700/80">
-                                Once deleted, it cannot be recovered. All data
-                                will be permanently removed.
-                              </p>
-                            </div>
-                            <div className="sm:ml-3 cursor-pointer hover:opacity-90 active:scale-95 transition-all duration-200 z-10 relative">
-                              <DeletePluginButton
-                                slug={plugin.slug}
-                                pluginName={plugin.name}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
               </Suspense>
             </div>
           </div>

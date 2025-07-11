@@ -25,6 +25,7 @@ model Plugin {
   processingMessage String?  @default("This plugin is currently queued for processing. You'll be able to install it once it's published.")
   sha               String? // New field for GitHub commit SHA
   isPublic          Boolean  @default(true)
+  readme            String? // README content from the plugin repository
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 

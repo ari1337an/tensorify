@@ -1,8 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { listPluginsByUsername } from "@/server/actions/plugin-actions";
-import CreatePluginButton from "../_components/CreatePluginButton";
-import { DevModeCreateButton } from "../_components/DevModeCreateButton";
 import { PluginGroupCard } from "../_components/PluginGroupCard";
 import { groupPluginsByBase } from "@/lib/utils";
 
@@ -21,9 +19,8 @@ export default async function DashboardPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-foreground">My Plugins</h1>
-        <div className="flex gap-4">
-          <DevModeCreateButton />
-          <CreatePluginButton />
+        <div className="text-sm text-muted-foreground">
+          Upload plugins using the Tensorify CLI
         </div>
       </div>
 
@@ -32,9 +29,9 @@ export default async function DashboardPage() {
           className="text-center py-12 text-muted-foreground"
           data-testid="no-plugins-message"
         >
-          <p>You haven&apos;t created any plugins yet.</p>
+          <p>You haven&apos;t published any plugins yet.</p>
           <p className="mt-2">
-            Click the &quot;Create Plugin&quot; button to get started!
+            Use the Tensorify CLI to upload and publish your plugins.
           </p>
         </div>
       ) : (

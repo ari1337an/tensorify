@@ -90,6 +90,11 @@ export async function GET(request: Request) {
         processingStatus: true,
         processingTitle: true,
         processingMessage: true,
+        version: true,
+        releaseTag: true,
+        authorId: true,
+        sha: true,
+        readme: true,
       },
     });
 

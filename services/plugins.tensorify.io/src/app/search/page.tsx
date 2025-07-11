@@ -7,6 +7,30 @@ import { useAdvancedSearch } from "@/app/_hooks/use-advanced-search";
 // import PluginCard from "@/app/_components/PluginCard";
 import SearchResultCard from "@/app/_components/SearchResultCard";
 
+type SearchResultPlugin = {
+  id: string;
+  name: string;
+  description: string;
+  slug: string;
+  authorName: string;
+  tags: string | null;
+  tensorifyVersion: string;
+  createdAt: Date;
+  updatedAt: Date;
+  githubUrl: string;
+  isPublic: boolean;
+  status: string;
+  processingStatus: string;
+  processingTitle: string | null;
+  processingMessage: string | null;
+  // Add missing fields that SearchResultCard expects
+  version: string;
+  releaseTag: string | null;
+  authorId: string;
+  sha: string | null;
+  readme: string | null;
+};
+
 export default function SearchPage() {
   const [tags, setTags] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -136,27 +160,15 @@ export default function SearchPage() {
                 </div>
               ) : searchResults?.plugins.length ? (
                 searchResults.plugins.map(
-                  (plugin: {
-                    id: string;
-                    name: string;
-                    version: string;
-                    slug: string;
-                    githubUrl: string;
-                    description: string;
-                    authorId: string;
-                    status: string;
-                    tags: string | null;
-                    tensorifyVersion: string;
-                    authorName: string;
-                    processingStatus: string;
-                    processingTitle: string | null;
-                    processingMessage: string | null;
-                    sha: string | null;
-                    releaseTag: string | null;
-                    isPublic: boolean;
-                    createdAt: Date;
-                    updatedAt: Date;
-                  }) => <SearchResultCard key={plugin.id} plugin={plugin} />
+                  (plugin: SearchResultPlugin) => {
+                    // Convert string dates back to Date objects to match Plugin type
+                    const pluginWithDates = {
+                      ...plugin,
+                      createdAt: new Date(plugin.createdAt),
+                      updatedAt: new Date(plugin.updatedAt),
+                    };
+                    return <SearchResultCard key={plugin.id} plugin={pluginWithDates} />;
+                  }
                 )
               ) : (
                 <div
