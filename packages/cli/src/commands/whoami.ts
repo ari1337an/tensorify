@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { authService } from "../auth/auth-service";
+import { getConfig } from "../auth/session-storage";
 
 export const whoamiCommand = new Command("whoami")
   .description("Display current logged-in user information")
@@ -17,7 +18,17 @@ export const whoamiCommand = new Command("whoami")
 
       console.log(chalk.blue("🔍 Fetching user profile..."));
 
-      const isDev = options.dev || process.env.NODE_ENV === "development";
+      // Determine if we should use dev environment
+      // Priority: explicit --dev flag > saved config > NODE_ENV
+      let isDev = options.dev;
+      if (isDev === undefined) {
+        const config = await getConfig();
+        isDev = config.isDev || process.env.NODE_ENV === "development";
+      }
+
+      if (isDev) {
+        console.log(chalk.cyan("🔧 Using development environment"));
+      }
 
       // Fetch user profile from plugins.tensorify.io API
       const userProfile = await authService.getUserProfile(isDev);

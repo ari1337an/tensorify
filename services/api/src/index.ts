@@ -8,6 +8,7 @@ import {
 import { contracts, actions, openapi } from "./loader";
 import swaggerUi from "swagger-ui-express";
 import dotenv from "dotenv";
+import { uploadService } from "./services/upload-service";
 
 // Load environment variables
 dotenv.config({ path: ".env" });
@@ -52,7 +53,7 @@ createExpressEndpoints(contracts, actions, app, {
     } else if (err.body) {
       res.status(400).json({
         message: "Body validation failed",
-      }); 
+      });
     } else {
       // console.error(err);
       res.status(400).json({
@@ -68,9 +69,71 @@ openapi.forEach(({ json, name }) => {
   app.use(`/api/${name}`, swaggerUi.serveFiles(json), swaggerUi.setup(json));
 });
 
+// Add file upload endpoints
+app.post("/api/upload/single", async (req, res) => {
+  try {
+    await uploadService.handleFileUpload(req, res);
+  } catch (error) {
+    console.error("Single file upload error:", error);
+    res.status(500).json({ error: "Upload failed" });
+  }
+});
+
+app.post("/api/upload/multiple", async (req, res) => {
+  try {
+    await uploadService.handleMultipleFileUpload(req, res);
+  } catch (error) {
+    console.error("Multiple file upload error:", error);
+    res.status(500).json({ error: "Upload failed" });
+  }
+});
+
+// Add plugin publish completion endpoint
+app.post("/api/publish-complete", async (req, res) => {
+  try {
+    await uploadService.handlePublishComplete(req, res);
+  } catch (error) {
+    console.error("Publish complete error:", error);
+    res.status(500).json({ error: "Publish completion failed" });
+  }
+});
+
 // Add health check endpoint
-app.get("/health", (req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+app.get("/health", async (req, res) => {
+  try {
+    // Check if service is in maintenance mode
+    const isMaintenanceMode = process.env.MAINTENANCE_MODE === "true";
+
+    if (isMaintenanceMode) {
+      res.status(503).json({
+        status: "maintenance",
+        timestamp: new Date().toISOString(),
+        message:
+          "Tensorify servers are currently under maintenance to provide you with a smoother experience. Please try again in a few hours.",
+        services: {
+          upload: { status: "maintenance" },
+        },
+      });
+      return;
+    }
+
+    const uploadHealth = await uploadService.healthCheck();
+    res.json({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      message: "All services are operational",
+      services: {
+        upload: uploadHealth,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      timestamp: new Date().toISOString(),
+      message: "One or more services are experiencing issues",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
 });
 
 // 404 handler - must be last middleware

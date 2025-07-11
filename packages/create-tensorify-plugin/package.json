@@ -1,21 +1,21 @@
 {
   "name": "create-tensorify-plugin",
-  "version": "0.0.1",
-  "description": "Create Tensorify plugins with zero configuration",
+  "version": "0.0.8",
+  "description": "Create Tensorify plugins with the latest SDK - Linear layer template",
   "main": "index.js",
   "bin": {
     "create-tensorify-plugin": "./index.js"
   },
-  "scripts": {
-    
-  },
+  "scripts": {},
   "keywords": [
     "tensorify",
     "plugin",
     "create",
     "scaffold",
     "cli",
-    "generator"
+    "generator",
+    "linear-layer",
+    "sdk"
   ],
   "author": "AlphaWolf Ventures, Inc.",
   "license": "MIT",
@@ -24,7 +24,6 @@
     "commander": "^9.4.1",
     "inquirer": "^8.2.5",
     "fs-extra": "^11.1.1",
-    "handlebars": "^4.7.7",
     "validate-npm-package-name": "^5.0.0"
   },
   "engines": {
@@ -33,9 +32,9 @@
   },
   "files": [
     "index.js",
-    "templates/**/*"
+    "template/**/*"
   ],
   "publishConfig": {
     "access": "public"
   }
-} 
+}

@@ -25,7 +25,19 @@
     "build:cli": "turbo run build --filter='./packages/cli'",
     "cli": "npm run build:cli && node packages/cli/lib/bin/tensorify.js",
     "tensorify": "npm run build:cli && node packages/cli/lib/bin/tensorify.js",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "version:patch": "npm version patch --workspace=packages/cli --workspace=packages/sdk --workspace=packages/create-tensorify-plugin",
+    "version:minor": "npm version minor --workspace=packages/cli --workspace=packages/sdk --workspace=packages/create-tensorify-plugin",
+    "version:major": "npm version major --workspace=packages/cli --workspace=packages/sdk --workspace=packages/create-tensorify-plugin",
+    "publish:all": "npm run build && npm publish --workspace=packages/cli --workspace=packages/sdk --workspace=packages/create-tensorify-plugin",
+    "versions": "./scripts/version-management.sh show",
+    "versions:patch": "./scripts/version-management.sh patch",
+    "versions:minor": "./scripts/version-management.sh minor",
+    "versions:major": "./scripts/version-management.sh major",
+    "versions:sync": "./scripts/version-management.sh sync",
+    "versions:build": "./scripts/version-management.sh build",
+    "versions:publish": "./scripts/version-management.sh publish",
+    "versions:release": "./scripts/version-management.sh release"
   },
   "devDependencies": {
     "turbo": "^2.5.4"

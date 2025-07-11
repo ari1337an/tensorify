@@ -42,6 +42,16 @@ export {
   compareVersions,
 } from "./utils";
 
+// Validation
+export {
+  PluginValidator,
+  validatePlugin,
+  ManifestSchema,
+  PackageJsonSchema,
+  CURRENT_SDK_VERSION,
+} from "./validation";
+export type { ValidationResult, ValidationError } from "./validation";
+
 // Import types for internal use
 import { PluginManifest, PluginEntryPoint } from "./types";
 

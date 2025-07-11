@@ -272,7 +272,7 @@ npm run cli -- login
 **Production:**
 
 - Auth: `https://auth.tensorify.io`
-- API: `https://api.tensorify.io`
+- API: `https://backend.tensorify.io`
 - Callback: `https://plugin.tensorify.io/cli/auth/callback`
 
 ### Environment Variables

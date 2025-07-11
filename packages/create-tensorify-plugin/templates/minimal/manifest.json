@@ -1,0 +1,15 @@
+{
+  "name": "{{packageName}}",
+  "version": "1.0.0",
+  "description": "{{description}}",
+  "author": "{{author}}",
+  "main": "dist/index.js",
+  "entrypointClassName": "TensorifyPlugin",
+  "keywords": ["tensorify", "plugin"],
+  "scripts": {
+    "build": "tsc"
+  },
+  "tensorifySettings": {
+    "sdkVersion": "{{sdkVersion}}"
+  }
+} 

@@ -1,255 +1,697 @@
 # @tensorify.io/cli
 
-Official CLI for Tensorify.io - Build, test, and deploy machine learning plugins with ease.
+> **Official CLI for Tensorify.io - Build, test, and deploy machine learning plugins**
 
-[![npm version](https://badge.fury.io/js/@tensorify.io%2Fcli.svg)](https://badge.fury.io/js/@tensorify.io%2Fcli)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+The Tensorify CLI provides powerful tools for developing, validating, and publishing machine learning plugins to the Tensorify ecosystem.
 
-## 🚀 Installation
+## 🚀 Quick Start
 
-### Global Installation (Recommended)
+### Installation
 
 ```bash
+# Install globally
 npm install -g @tensorify.io/cli
+
+# Or install locally in your project
+npm install --save-dev @tensorify.io/cli
 ```
-
-### Local Installation
-
-```bash
-npm install @tensorify.io/cli
-npx tensorify --help
-```
-
-## 📖 Usage
 
 ### Authentication
 
-Before using any CLI commands, you must authenticate with your Tensorify.io account:
-
 ```bash
-# Production authentication
+# Login to your Tensorify account
 tensorify login
 
-# Development authentication (for contributors)
-tensorify login --dev
+# Check your authentication status
+tensorify whoami
+
+# Logout when needed
+tensorify logout
 ```
 
-### Available Commands
+### Basic Usage
 
-#### `tensorify login`
+```bash
+# Validate your plugin structure
+tensorify validate
 
-Authenticate with Tensorify.io and securely store your session credentials.
+# Publish your plugin
+tensorify publish --access=public
+```
 
-**Usage:**
+## 📋 Commands
+
+### `tensorify login`
+
+Authenticate with Tensorify.io using OAuth2 flow.
 
 ```bash
 tensorify login [options]
 ```
 
+**Features:**
+
+- 🔐 Secure OAuth2 authentication
+- 🌐 Opens browser for login
+- 💾 Stores token securely in system keyring
+- ✅ Automatic token validation
+
 **Options:**
 
-- `-d, --dev` - Use development environment (localhost:3000)
-- `-h, --help` - Display help for command
+- `--port <number>` - Custom port for OAuth callback (default: 3000)
+- `--timeout <seconds>` - Authentication timeout (default: 300)
 
 **Examples:**
 
 ```bash
-# Login to production (default)
+# Standard login
 tensorify login
 
-# Login to development environment
-tensorify login --dev
+# Login with custom port
+tensorify login --port 8080
+
+# Login with timeout
+tensorify login --timeout 600
 ```
 
-## 🔐 Authentication Flow
+### `tensorify whoami`
 
-The CLI uses a secure OAuth-like flow with Clerk authentication:
+Display current authentication status and user information.
 
-1. **Command Execution**: You run `tensorify login`
-2. **Local Server**: CLI starts a temporary local callback server
-3. **Browser Redirect**: Opens your browser to Tensorify.io sign-in page
-4. **User Authentication**: Complete sign-in with your credentials
-5. **Callback Handling**: Browser redirects back to local server with session token
-6. **Secure Storage**: Session token is stored in your system's keychain
-7. **Ready to Use**: All future CLI commands use the stored session
+```bash
+tensorify whoami [options]
+```
 
-### Environment-Specific URLs
+**Features:**
 
-**Production Mode** (`tensorify login`):
+- 👤 Shows logged-in user details
+- 🔑 Displays token status
+- ⏰ Shows token expiration
+- 📊 User account information
 
-- Auth URL: `https://auth.tensorify.io/sign-in`
-- API Base: `https://api.tensorify.io`
+**Options:**
 
-**Development Mode** (`tensorify login --dev`):
+- `--json` - Output in JSON format
+- `--token` - Show token details
 
-- Auth URL: `http://localhost:3000/sign-in`
-- API Base: `http://localhost:8080`
+**Examples:**
+
+```bash
+# Basic user info
+tensorify whoami
+
+# JSON output
+tensorify whoami --json
+
+# Include token details
+tensorify whoami --token
+```
+
+### `tensorify logout`
+
+Clear authentication tokens and logout.
+
+```bash
+tensorify logout [options]
+```
+
+**Features:**
+
+- 🗑️ Removes stored tokens
+- 🔒 Secure cleanup
+- ✅ Confirmation prompts
+
+**Options:**
+
+- `--force` - Skip confirmation prompt
+
+**Examples:**
+
+```bash
+# Standard logout
+tensorify logout
+
+# Force logout without confirmation
+tensorify logout --force
+```
+
+### `tensorify validate`
+
+Validate plugin structure and configuration using SDK rules.
+
+```bash
+tensorify validate [directory] [options]
+```
+
+**Features:**
+
+- 🔍 Complete plugin validation
+- 📁 File structure checks
+- 📝 Schema validation
+- 🏗️ Class interface validation
+- 📊 Detailed error reporting
+
+**Arguments:**
+
+- `directory` - Plugin directory path (default: current directory)
+
+**Options:**
+
+- `--verbose` - Show detailed validation output
+- `--sdk-version <version>` - Check against specific SDK version
+- `--json` - Output results in JSON format
+- `--fix` - Attempt to fix common issues
+
+**Validation Checks:**
+
+- ✅ Required files exist (`index.ts`, `manifest.json`, `icon.svg`, `package.json`)
+- ✅ `manifest.json` schema validation
+- ✅ `package.json` structure validation
+- ✅ Class implements `INode` interface
+- ✅ Class name matches manifest `entrypointClassName`
+- ✅ SDK version compatibility
+- ✅ Repository URL for public plugins
+
+**Examples:**
+
+```bash
+# Validate current directory
+tensorify validate
+
+# Validate specific directory
+tensorify validate ./my-plugin
+
+# Verbose validation output
+tensorify validate --verbose
+
+# JSON output for CI/CD
+tensorify validate --json
+
+# Check against specific SDK version
+tensorify validate --sdk-version 0.0.1
+```
+
+### `tensorify publish`
+
+Publish plugin to Tensorify registry with comprehensive validation and upload.
+
+```bash
+tensorify publish [options]
+```
+
+**Features:**
+
+- 🔍 Pre-publish validation
+- 🏗️ Automatic build and bundling
+- ✅ Version conflict checking
+- 📤 Secure file uploads
+- 🔔 Registry notifications
+- 🚀 Complete publishing pipeline
+
+**Options:**
+
+- `--access <level>` - Access level: `public` or `private` (default: `public`)
+- `--directory <path>` - Plugin directory (default: current directory)
+- `--backend <url>` - Backend API URL (default: `https://backend.tensorify.io`)
+- `--frontend <url>` - Frontend API URL (default: `https://plugins.tensorify.io`)
+- `--dry-run` - Validate and build without publishing
+- `--skip-build` - Skip build step (use existing dist/)
+- `--force` - Force publish (skip confirmations)
+
+**Publishing Process:**
+
+1. **🔐 Authentication Check**
+
+   - Verifies valid login token
+   - Checks token expiration
+
+2. **🔍 Plugin Validation**
+
+   - Runs complete SDK validation
+   - Checks file structure
+   - Validates schemas
+
+3. **🔒 Access Level Validation**
+
+   - Ensures `package.json` `private` flag matches `--access`
+   - Validates repository URL for public plugins
+   - Checks access consistency with previous versions
+
+4. **✅ Version Conflict Check**
+
+   - Queries registry for existing versions
+   - Prevents duplicate version publishing
+   - Validates access level consistency
+
+5. **🏗️ Build and Bundle**
+
+   - Runs TypeScript compilation (`npm run build`)
+   - Creates optimized bundle with ESBuild
+   - Generates production-ready artifacts
+
+6. **📤 File Upload**
+
+   - Uploads `bundle.js`, `manifest.json`, `icon.svg`
+   - Uses secure multipart upload
+   - Provides upload progress
+
+7. **🔔 Registry Notification**
+   - Sends webhook to registry
+   - Updates plugin database
+   - Triggers indexing
+
+**Examples:**
+
+```bash
+# Publish public plugin
+tensorify publish --access=public
+
+# Publish private plugin
+tensorify publish --access=private
+
+# Dry run (validate without publishing)
+tensorify publish --dry-run
+
+# Publish from specific directory
+tensorify publish --directory ./my-plugin
+
+# Force publish without confirmations
+tensorify publish --force
+
+# Custom backend/frontend URLs
+tensorify publish --backend https://api.custom.com --frontend https://registry.custom.com
+```
 
 ## 🔧 Configuration
 
 ### Environment Variables
 
-- `NODE_ENV` - Set to `development` for automatic dev mode
-- `CLERK_SECRET_KEY` - Optional: Clerk secret key for advanced authentication features
-
-### Session Storage
-
-Sessions are stored securely using your operating system's credential manager:
-
-- **macOS**: Keychain Access
-- **Windows**: Windows Credential Manager
-- **Linux**: libsecret (requires `gnome-keyring` or `kde-wallet`)
-
-## 🛠️ Development
-
-### Prerequisites
-
-- Node.js >= 16.0.0
-- npm >= 8.0.0
-
-### Building from Source
-
 ```bash
-git clone https://github.com/tensorify/backend.tensorify.io.git
-cd backend.tensorify.io/packages/cli
-npm install
-npm run build
+# Backend API URL
+export TENSORIFY_BACKEND_URL=https://backend.tensorify.io
+
+# Frontend registry URL
+export TENSORIFY_FRONTEND_URL=https://plugins.tensorify.io
+
+# OAuth configuration
+export TENSORIFY_CLIENT_ID=your_client_id
+export TENSORIFY_CLIENT_SECRET=your_client_secret
+
+# CLI configuration
+export TENSORIFY_DEFAULT_ACCESS=public
+export TENSORIFY_CLI_LOG_LEVEL=info
 ```
 
-### Local Testing
+### Configuration File
 
-```bash
-# Build and test
-npm run build
-npm start -- --version
+Create `.tensorifyrc.json` in your project or home directory:
 
-# Development mode with auto-rebuild
-npm run dev
+```json
+{
+  "backend": "https://backend.tensorify.io",
+  "frontend": "https://plugins.tensorify.io",
+  "defaultAccess": "public",
+  "autoValidate": true,
+  "buildTimeout": 300,
+  "uploadTimeout": 600
+}
 ```
 
-### Running Tests
+## 🔐 Authentication
 
-```bash
-npm test
+### OAuth2 Flow
+
+The CLI uses secure OAuth2 authentication:
+
+1. **Login Command**: Opens browser to Tensorify.io
+2. **User Authorization**: User grants CLI access
+3. **Token Exchange**: CLI receives secure access token
+4. **Token Storage**: Token stored in system keyring
+5. **Automatic Refresh**: Tokens refreshed as needed
+
+### Token Storage
+
+Tokens are securely stored using:
+
+- **macOS**: Keychain
+- **Windows**: Credential Manager
+- **Linux**: Secret Service (libsecret)
+
+### Token Security
+
+- 🔒 Tokens encrypted at rest
+- ⏰ Automatic expiration
+- 🔄 Refresh token rotation
+- 🚫 No tokens in environment variables
+
+## 📦 Plugin Requirements
+
+### Required Files
+
+```
+my-plugin/
+├── package.json      # NPM package configuration
+├── manifest.json     # Plugin metadata
+├── icon.svg         # Plugin icon (SVG format)
+├── index.ts         # Main plugin class
+├── tsconfig.json    # TypeScript configuration
+└── dist/           # Build output directory
+```
+
+### package.json Structure
+
+```json
+{
+  "name": "@namespace/plugin-name",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "tensorify-settings": {
+    "sdk-version": "0.0.1"
+  },
+  "keywords": ["tensorify", "plugin"],
+  "author": "Your Name",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/username/plugin-name"
+  },
+  "private": false
+}
+```
+
+### manifest.json Structure
+
+```json
+{
+  "name": "@namespace/plugin-name",
+  "version": "1.0.0",
+  "description": "Plugin description",
+  "author": "Your Name",
+  "main": "dist/index.js",
+  "entrypointClassName": "MyPluginClass",
+  "keywords": ["tensorify", "plugin"],
+  "scripts": {
+    "build": "tsc"
+  },
+  "tensorifySettings": {
+    "sdkVersion": "0.0.1"
+  }
+}
+```
+
+### Plugin Class Structure
+
+```typescript
+import { INode, NodeType, LayerSettings } from "@tensorify.io/sdk";
+
+export default class MyPluginClass implements INode {
+  readonly name = "My Plugin";
+  readonly nodeType = NodeType.CUSTOM;
+  readonly inputLines = 1;
+  readonly outputLinesCount = 1;
+  readonly secondaryInputLinesCount = 0;
+  readonly translationTemplate = "my_template";
+  readonly settings: LayerSettings = {};
+
+  getTranslationCode(settings: LayerSettings): string {
+    return "# Generated code";
+  }
+
+  validateSettings(settings: LayerSettings): boolean {
+    return true;
+  }
+
+  getDependencies(): string[] {
+    return ["numpy", "torch"];
+  }
+
+  getImports(): string[] {
+    return ["import torch"];
+  }
+}
+```
+
+## 🔄 CI/CD Integration
+
+### GitHub Actions
+
+```yaml
+name: Publish Plugin
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Tensorify CLI
+        run: npm install -g @tensorify.io/cli
+
+      - name: Authenticate
+        run: tensorify login --token ${{ secrets.TENSORIFY_TOKEN }}
+
+      - name: Validate plugin
+        run: tensorify validate --json
+
+      - name: Publish plugin
+        run: tensorify publish --access=public
+```
+
+### GitLab CI
+
+```yaml
+stages:
+  - validate
+  - publish
+
+validate:
+  stage: validate
+  script:
+    - npm install -g @tensorify.io/cli
+    - tensorify validate --json
+  only:
+    - merge_requests
+
+publish:
+  stage: publish
+  script:
+    - npm install -g @tensorify.io/cli
+    - echo $TENSORIFY_TOKEN | tensorify login --stdin
+    - tensorify publish --access=public
+  only:
+    - tags
 ```
 
 ## 🐛 Troubleshooting
 
-### Authentication Issues
+### Common Issues
 
-**Browser doesn't open automatically:**
+#### Authentication Problems
 
-- Copy and paste the authentication URL displayed in your terminal
-- Ensure your default browser is set correctly
-
-**Session storage fails:**
-
-- **Linux**: Install `gnome-keyring` or `kde-wallet`
-- **macOS/Windows**: Usually works out of the box
-
-**Authentication timeout:**
-
-- Ensure you complete the sign-in process within 5 minutes
-- Check your internet connection
-- Try again with `tensorify login`
-
-### Platform-Specific Issues
-
-**Linux keychain setup:**
+**❌ "Not authenticated"**
 
 ```bash
-# Ubuntu/Debian
-sudo apt-get install gnome-keyring
+# Solution: Login first
+tensorify login
 
-# Fedora/CentOS
-sudo yum install gnome-keyring
+# Check authentication status
+tensorify whoami
 ```
 
-**Permission issues:**
+**❌ "Token expired"**
 
 ```bash
-# Fix npm global permissions (if needed)
-npm config set prefix '~/.npm-global'
-export PATH=~/.npm-global/bin:$PATH
+# Solution: Re-login
+tensorify logout
+tensorify login
 ```
 
-### Network Issues
+#### Validation Errors
 
-**Corporate firewall/proxy:**
-
-- Ensure ports 80, 443, and dynamic ports (for callback) are accessible
-- Configure npm proxy settings if needed:
+**❌ "Plugin validation failed"**
 
 ```bash
-npm config set proxy http://proxy-server:port
-npm config set https-proxy http://proxy-server:port
+# Get detailed validation info
+tensorify validate --verbose
+
+# Common fixes:
+# 1. Check file names (index.ts, manifest.json, icon.svg)
+# 2. Verify class name matches manifest entrypointClassName
+# 3. Ensure class implements INode interface
+# 4. Check SDK version compatibility
 ```
 
-## 🔒 Security
+**❌ "SDK version mismatch"**
 
-### Session Management
+```json
+// Update package.json
+{
+  "tensorify-settings": {
+    "sdk-version": "0.0.1" // Use current SDK version
+  }
+}
+```
 
-- Session tokens are encrypted and stored in OS-specific secure storage
-- Tokens automatically expire based on Clerk's session management
-- Use `tensorify logout` to manually clear stored sessions (coming soon)
+**❌ "Missing repository URL"**
 
-### Best Practices
+```json
+// For public plugins, add repository
+{
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/username/plugin-name"
+  },
+  "private": false
+}
+```
 
-- Never share your session tokens
-- Regularly re-authenticate in production environments
-- Use development mode only for local development
-- Report security issues to security@tensorify.io
+#### Publishing Problems
 
-## 📚 API Reference
-
-### Exit Codes
-
-- `0` - Success
-- `1` - General error (authentication failed, network error, etc.)
-
-### Error Handling
-
-The CLI provides clear error messages and suggestions:
+**❌ "Version already exists"**
 
 ```bash
-$ tensorify login
-❌ Authentication failed: Network timeout
-💡 Try: Check your internet connection and try again
+# Solution: Increment version in package.json and manifest.json
+# Cannot republish existing versions
 ```
 
-## 🤝 Contributing
-
-See the [main repository](https://github.com/tensorify/backend.tensorify.io) for contribution guidelines.
-
-### Development Setup
+**❌ "Access level mismatch"**
 
 ```bash
-git clone https://github.com/tensorify/backend.tensorify.io.git
-cd backend.tensorify.io
-npm install
-npm run build:cli
+# Solution: Use consistent access level
+# Cannot change from public to private or vice versa
 ```
 
-## 📋 Changelog
+**❌ "Build failed"**
 
-### v0.0.1
+```bash
+# Check TypeScript compilation
+npm run build
 
-- Initial release
-- Authentication with Clerk integration
-- Secure session storage
-- Development and production environment support
+# Verify tsconfig.json exists
+# Ensure all dependencies installed
+```
 
-## 📞 Support
+**❌ "Upload failed"**
 
-- 📖 [Documentation](https://docs.tensorify.io)
-- 🐛 [Issues](https://github.com/tensorify/backend.tensorify.io/issues)
-- 💬 [Discussions](https://github.com/tensorify/backend.tensorify.io/discussions)
-- 📧 [Email](mailto:support@tensorify.io)
+```bash
+# Check network connection
+# Verify file sizes (< 100MB each)
+# Ensure backend is accessible
+```
+
+### Debug Mode
+
+Enable detailed logging:
+
+```bash
+# Set log level
+export TENSORIFY_CLI_LOG_LEVEL=debug
+
+# Or use debug flag
+tensorify validate --debug
+tensorify publish --debug
+```
+
+### Getting Help
+
+```bash
+# Command help
+tensorify --help
+tensorify publish --help
+
+# Version information
+tensorify --version
+
+# Validate with verbose output
+tensorify validate --verbose
+```
+
+## 📈 Performance Tips
+
+### Faster Builds
+
+```json
+// tsconfig.json optimization
+{
+  "compilerOptions": {
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo"
+  }
+}
+```
+
+### Faster Uploads
+
+- Keep bundle sizes small (< 10MB recommended)
+- Optimize dependencies
+- Use `.npmignore` to exclude unnecessary files
+
+### Faster Validation
+
+```bash
+# Skip build for validation-only
+tensorify validate --skip-build
+
+# Use specific directory
+tensorify validate ./plugin-dir
+```
+
+## 🔗 Integration Examples
+
+### Pre-commit Hooks
+
+```json
+// package.json
+{
+  "husky": {
+    "hooks": {
+      "pre-commit": "tensorify validate"
+    }
+  }
+}
+```
+
+### NPM Scripts
+
+```json
+// package.json
+{
+  "scripts": {
+    "validate": "tensorify validate",
+    "publish:public": "tensorify publish --access=public",
+    "publish:private": "tensorify publish --access=private",
+    "publish:dry": "tensorify publish --dry-run"
+  }
+}
+```
+
+## 📚 Resources
+
+- 📖 **Documentation**: [docs.tensorify.io](https://docs.tensorify.io)
+- 🎓 **Plugin Development Guide**: [docs.tensorify.io/plugins](https://docs.tensorify.io/plugins)
+- 🔧 **SDK Documentation**: [@tensorify.io/sdk](https://npmjs.com/package/@tensorify.io/sdk)
+- 💬 **Community Discord**: [discord.gg/tensorify](https://discord.gg/tensorify)
+- 🐛 **Issue Tracker**: [github.com/tensorify/cli/issues](https://github.com/tensorify/cli/issues)
+- 📧 **Support**: support@tensorify.io
 
 ## 📄 License
 
-MIT © [Tensorify.io](https://tensorify.io)
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-**Made with ❤️ by the Tensorify.io team**
+**Made with ❤️ by the Tensorify Team**

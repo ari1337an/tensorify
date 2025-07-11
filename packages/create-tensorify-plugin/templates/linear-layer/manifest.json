@@ -1,0 +1,15 @@
+{
+  "name": "{{packageName}}",
+  "version": "1.0.0",
+  "description": "{{description}}",
+  "author": "{{author}}",
+  "main": "dist/index.js",
+  "entrypointClassName": "TensorifyLinearLayer",
+  "keywords": ["tensorify", "plugin", "neural-network", "linear-layer", "pytorch"],
+  "scripts": {
+    "build": "tsc"
+  },
+  "tensorifySettings": {
+    "sdkVersion": "{{sdkVersion}}"
+  }
+} 
