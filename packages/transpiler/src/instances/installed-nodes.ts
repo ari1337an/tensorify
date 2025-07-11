@@ -1,12 +1,12 @@
 import fs from "fs";
 import path from "path";
-import { IUniversalNode } from "@tensorify.io/sdk";
+import { BaseNode } from "@tensorify.io/sdk";
 
 // The directory where your node modules are located
 const nodesDir = path.join(__dirname, "../nodes");
 
 // Object to store the dynamically imported nodes
-const InstalledNodes: { [key: string]: new () => IUniversalNode<any> } = {};
+const InstalledNodes: { [key: string]: new () => BaseNode } = {};
 
 // Read all files in the nodes directory
 fs.readdirSync(nodesDir).forEach((file) => {

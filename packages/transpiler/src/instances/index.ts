@@ -1,7 +1,7 @@
 import InstalledNodes from "./installed-nodes";
-import { IUniversalNode } from "@tensorify.io/sdk";
+import { BaseNode } from "@tensorify.io/sdk";
 
-export default function createNodeInstance(type: string): IUniversalNode<any> {
+export default function createNodeInstance(type: string): BaseNode {
   const NodeClass = InstalledNodes[type];
   if (!NodeClass) {
     throw new Error(`Unknown type: ${type}`);

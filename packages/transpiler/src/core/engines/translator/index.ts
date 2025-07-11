@@ -12,17 +12,17 @@ export default function translateJsonToBython(json: Model): string {
       // process
       const nodeInstance = createNodeInstance(layer.type);
       if (!layer.child) {
-        const code = nodeInstance.getTranslationCode(
+        const code = nodeInstance.codeGeneration.generateCode(
           layer.settings ?? null,
           layer.child ?? null
         );
-        layerCodes.push(code);
+        layerCodes.push(code.definitions.join("\n"));
       } else {
-        const code = nodeInstance.getTranslationCode(
+        const code = nodeInstance.codeGeneration.generateCode(
           layer.settings ?? null,
           layer.child ?? null
         );
-        layerCodes.push(code);
+        layerCodes.push(code.definitions.join("\n"));
       }
     }
   }

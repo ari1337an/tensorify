@@ -2,13 +2,13 @@
   "name": "backend.tensorify.io",
   "private": true,
   "workspaces": [
+    "packages/cli",
     "packages/sdk/v1",
     "packages/plugin-engine",
     "packages/shared",
     "packages/transpiler",
     "packages/create-tensorify-plugin/v1",
-    "services/api",
-    "services/plugin.tensorify.io"
+    "services/api"
   ],
   "scripts": {
     "dev:services:api": "turbo run build --filter='./packages/plugin-engine' && turbo run dev --filter='./packages/plugin-engine' --filter='./services/api' --parallel",
@@ -17,8 +17,12 @@
     "dev:packages:transpiler": "turbo run dev --filter='./packages/transpiler'",
     "dev:packages:shared": "turbo run dev --filter='./packages/shared'",
     "dev:packages:create-tensorify-plugin": "turbo run dev --filter='./packages/create-tensorify-plugin/v1'",
+    "dev:packages:cli": "turbo run dev --filter='./packages/cli'",
     "dev:services:plugin.tensorify.io": "turbo run dev --filter='./services/plugin.tensorify.io'",
     "build": "turbo run build",
+    "build:cli": "turbo run build --filter='./packages/cli'",
+    "cli": "npm run build:cli && node packages/cli/lib/bin/tensorify.js",
+    "tensorify": "npm run build:cli && node packages/cli/lib/bin/tensorify.js",
     "test": "turbo run test"
   },
   "devDependencies": {
