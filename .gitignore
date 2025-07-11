@@ -6,6 +6,7 @@ package-lock.json
 
 # Turborepo
 .turbo/
+.next/
 turbo.log
 
 # Build outputs
