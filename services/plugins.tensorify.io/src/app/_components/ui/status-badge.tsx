@@ -2,7 +2,7 @@
 
 import { AlertCircle, CheckCircle, Clock } from "lucide-react";
 import { ProcessingStatus } from "@/server/models/plugin";
-import { cn } from "@/lib/utils";
+import { cn } from "@/app/_lib/utils";
 
 const statusConfig = {
   queued: {
@@ -22,7 +22,8 @@ const statusConfig = {
   },
   failed: {
     icon: AlertCircle,
-    color: "text-red-500 bg-red-500/10 border-red-500/20 border rounded-sm px-3 py-1",
+    color:
+      "text-red-500 bg-red-500/10 border-red-500/20 border rounded-sm px-3 py-1",
     label: "Failed",
   },
 } as const;

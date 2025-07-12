@@ -11,7 +11,7 @@ import {
 } from "@/app/_components/ui/select";
 import { useState } from "react";
 import { Skeleton } from "@/app/_components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { cn } from "@/app/_lib/utils";
 
 interface VersionSwitcherProps {
   currentVersion: string;

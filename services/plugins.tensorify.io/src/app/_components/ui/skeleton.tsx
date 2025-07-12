@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/app/_lib/utils";
 
 function Skeleton({
   className,
@@ -14,4 +14,4 @@ function Skeleton({
   );
 }
 
-export { Skeleton }; 
+export { Skeleton };
