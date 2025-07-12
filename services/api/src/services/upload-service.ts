@@ -4,15 +4,10 @@ import {
   GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import { Request, Response } from "express";
-import { createClerkClient } from "@clerk/backend";
 import axios from "axios";
 import multer from "multer";
 import crypto from "crypto";
-
-// Initialize Clerk client
-const clerkClient = createClerkClient({
-  secretKey: process.env.CLERK_SECRET_KEY!,
-});
+import { getDecodedJwt } from "./auth-utils";
 
 /**
  * Upload metadata interface
@@ -50,10 +45,10 @@ export class UploadService {
   constructor() {
     // Initialize S3 client
     this.s3Client = new S3Client({
-      region: process.env.AWS_REGION || "us-east-1",
+      region: process.env.S3_REGION || "us-east-1",
       credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+        accessKeyId: process.env.S3_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
       },
     });
 
@@ -80,15 +75,14 @@ export class UploadService {
     const token = authHeader.substring(7);
 
     try {
-      // Simple token validation for now - decode JWT manually
-      // In production, you would properly verify the JWT signature
-      const parts = token.split(".");
-      if (parts.length !== 3) {
-        throw new Error("Invalid JWT format");
+      const result = await getDecodedJwt(token);
+
+      if (!result.success || !result.data) {
+        throw new Error(result.message);
       }
 
-      const payload = JSON.parse(Buffer.from(parts[1], "base64").toString());
-      const userId = payload.sub || payload.userId || "anonymous";
+      const decodedToken = result.data;
+      const userId = decodedToken.sub || decodedToken.id || "anonymous";
 
       console.log("Token validated for user:", userId);
       return {
@@ -165,7 +159,7 @@ export class UploadService {
           // Return success response
           const s3Url = `https://${
             process.env.S3_BUCKET_NAME || "tensorify-plugins"
-          }.s3.${process.env.AWS_REGION || "us-east-1"}.amazonaws.com/${s3Key}`;
+          }.s3.${process.env.S3_REGION || "us-east-1"}.amazonaws.com/${s3Key}`;
 
           res.status(200).json({
             success: true,
@@ -257,7 +251,7 @@ export class UploadService {
             const s3Url = `https://${
               process.env.S3_BUCKET_NAME || "tensorify-plugins"
             }.s3.${
-              process.env.AWS_REGION || "us-east-1"
+              process.env.S3_REGION || "us-east-1"
             }.amazonaws.com/${s3Key}`;
             uploadResults.push(s3Url);
           }
@@ -349,7 +343,8 @@ export class UploadService {
   ): Promise<boolean> {
     try {
       const frontendUrl =
-        process.env.FRONTEND_URL || "https://plugins.tensorify.io";
+        process.env.PLUGIN_REPOSITORY_WEBHOOK_WEBSITE_URL ||
+        "https://plugins.tensorify.io";
       const webhookUrl = `${frontendUrl}/api/webhooks/plugin-published`;
 
       console.log("Sending webhook to:", webhookUrl);
