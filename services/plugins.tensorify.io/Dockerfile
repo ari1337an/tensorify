@@ -26,6 +26,8 @@ RUN npm pkg delete packageManager && npm pkg set packageManager="npm@10.8.1" && 
     && find /app -name "*.tsx" -delete \
     && find /app -name "tsconfig.json" -delete
 
+# FROM pluginstensorifyio-api AS builder
+
 # Production stage - Ultra optimized
 FROM gcr.io/distroless/nodejs20-debian12 AS production
 
@@ -33,16 +35,17 @@ FROM gcr.io/distroless/nodejs20-debian12 AS production
 WORKDIR /app
 
 # Copy only necessary runtime artifacts from builder
-COPY --from=builder /app/node_modules /app/node_modules
-COPY --from=builder /app/services/plugins.tensorify.io/.next /app/services/plugins.tensorify.io/.next
-COPY --from=builder /app/services/plugins.tensorify.io/node_modules /app/services/plugins.tensorify.io/node_modules
-COPY --from=builder /app/services/plugins.tensorify.io/package.json /app/services/plugins.tensorify.io/package.json
-
-# Set working directory to the service
-WORKDIR /app/services/plugins.tensorify.io
+COPY --from=builder /app/services/plugins.tensorify.io/.next/standalone ./
+COPY --from=builder /app/services/plugins.tensorify.io/.next/static ./services/plugins.tensorify.io/.next/static
 
 # Expose port
 EXPOSE 3000
 
+WORKDIR /app/services/plugins.tensorify.io
+
 # Start application directly
-CMD ["../../node_modules/next/dist/bin/next", "start"]
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+CMD ["server.js"]

@@ -1,5 +1,5 @@
 services:
-  api:
+  plugins:
     build:
       context: ../../
       dockerfile: services/plugins.tensorify.io/Dockerfile
