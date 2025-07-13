@@ -10,6 +10,25 @@ const validatePackageName = require("validate-npm-package-name");
 
 const packageJson = require("./package.json");
 
+const TEMPLATES = {
+  "linear-layer": {
+    name: "Linear Layer",
+    description: "A Tensorify PyTorch linear layer plugin",
+    displayName: "Linear Layer - A Tensorify PyTorch linear layer plugin",
+    default: true,
+  },
+  minimal: {
+    name: "Minimal",
+    description: "A Tensorify plugin",
+    displayName: "Minimal - A basic Tensorify plugin",
+  },
+};
+
+const availableTemplates = Object.keys(TEMPLATES);
+const defaultTemplate = Object.keys(TEMPLATES).find(
+  (key) => TEMPLATES[key].default
+);
+
 console.log(
   chalk.cyan(`\n🚀 Create Tensorify Plugin v${packageJson.version}\n`)
 );
@@ -17,16 +36,6 @@ console.log(
 // Function to detect SDK version
 function detectSDKVersion() {
   try {
-    // First, try to find local SDK in monorepo
-    const localSDKPath = path.resolve(__dirname, "../sdk/package.json");
-    if (fs.existsSync(localSDKPath)) {
-      const localSDKPackage = JSON.parse(fs.readFileSync(localSDKPath, "utf8"));
-      console.log(
-        chalk.blue(`🔍 Found local SDK version: ${localSDKPackage.version}`)
-      );
-      return `file:../sdk`;
-    }
-
     // Try to get published version
     try {
       const result = execSync("npm view @tensorify.io/sdk version", {
@@ -80,8 +89,7 @@ program
   .option("-a, --author <author>", "author name")
   .option(
     "-t, --template <template>",
-    "template to use (minimal, linear-layer)",
-    "minimal"
+    `template to use (${availableTemplates.join(", ")})`
   )
   .option("-y, --yes", "accept all defaults and run non-interactively")
   .option("--skip-install", "skip installing dependencies")
@@ -93,8 +101,7 @@ program
 async function createPlugin(projectName, options) {
   try {
     // Validate template option
-    const availableTemplates = ["minimal", "linear-layer"];
-    if (!availableTemplates.includes(options.template)) {
+    if (options.template && !availableTemplates.includes(options.template)) {
       console.error(chalk.red(`\n❌ Invalid template: ${options.template}`));
       console.error(
         chalk.yellow(`Available templates: ${availableTemplates.join(", ")}`)
@@ -104,22 +111,18 @@ async function createPlugin(projectName, options) {
 
     // Get template-specific default description
     const getDefaultDescription = (template) => {
-      switch (template) {
-        case "linear-layer":
-          return "A Tensorify PyTorch linear layer plugin";
-        case "minimal":
-        default:
-          return "A Tensorify plugin";
-      }
+      return TEMPLATES[template]?.description || "A Tensorify plugin";
     };
 
     let targetPath;
     let finalProjectName;
+    let isCurrentDir = false;
 
     // Handle dot command for current directory
     if (projectName === ".") {
       targetPath = process.cwd();
       finalProjectName = path.basename(targetPath);
+      isCurrentDir = true;
 
       // Validate current directory name as package name
       const validation = validatePackageName(finalProjectName);
@@ -203,16 +206,13 @@ async function createPlugin(projectName, options) {
       finalProjectName = projectName;
       targetPath = path.resolve(projectName);
 
-      // Check if directory exists
+      // Check if directory exists (but don't create it yet)
       if (fs.existsSync(targetPath)) {
         console.error(
           chalk.red(`\n❌ Directory ${projectName} already exists!`)
         );
         process.exit(1);
       }
-
-      console.log(chalk.blue(`\n📁 Creating ${projectName}...`));
-      fs.ensureDirSync(targetPath);
     }
 
     // Prepare questions for missing information
@@ -224,7 +224,10 @@ async function createPlugin(projectName, options) {
         type: "input",
         name: "description",
         message: "Plugin description:",
-        default: getDefaultDescription(options.template),
+        default: (answers) =>
+          getDefaultDescription(
+            answers.template || options.template || defaultTemplate
+          ),
       });
     }
 
@@ -235,6 +238,25 @@ async function createPlugin(projectName, options) {
         name: "author",
         message: "Author name:",
         default: "",
+      });
+    }
+
+    // Ask for template if not provided via CLI and not in yes mode
+    if (!options.template && !options.yes) {
+      const templateChoices = Object.keys(TEMPLATES).map((key) => ({
+        name: TEMPLATES[key].displayName,
+        value: key,
+      }));
+
+      questions.push({
+        type: "list",
+        name: "template",
+        message: "Choose a template:",
+        choices: templateChoices.map((choice) => ({
+          ...choice,
+          name: `  ${choice.name}`,
+        })),
+        default: defaultTemplate,
       });
     }
 
@@ -254,10 +276,12 @@ async function createPlugin(projectName, options) {
       description:
         options.description ||
         answers.description ||
-        getDefaultDescription(options.template),
+        getDefaultDescription(
+          answers.template || options.template || defaultTemplate
+        ),
       author: options.author || answers.author || "Tensorify Developer",
       sdkVersion: sdkVersion,
-      template: options.template,
+      template: options.template || answers.template || defaultTemplate,
     };
 
     if (options.yes) {
@@ -268,6 +292,12 @@ async function createPlugin(projectName, options) {
       console.log(chalk.gray(`  Author: ${pluginConfig.author || "(none)"}`));
       console.log(chalk.gray(`  Template: ${pluginConfig.template}`));
       console.log(chalk.gray(`  SDK Version: ${pluginConfig.sdkVersion}`));
+    }
+
+    // NOW CREATE THE FOLDER - After all inputs are collected
+    if (!isCurrentDir) {
+      console.log(chalk.blue(`\n📁 Creating ${projectName}...\n`));
+      fs.ensureDirSync(targetPath);
     }
 
     // Copy template files
@@ -314,7 +344,7 @@ async function createPlugin(projectName, options) {
     }
     console.log(chalk.cyan("  npm run build"));
     console.log(chalk.cyan("  npm test"));
-    console.log("\nHappy coding! 🚀");
+    console.log("\nHappy tensoring! 🦾");
   } catch (error) {
     console.error(chalk.red("\n❌ Error creating plugin:"), error.message);
     process.exit(1);
@@ -328,7 +358,11 @@ async function copyTemplate(targetPath, variables) {
     console.error(
       chalk.red(`Template directory not found: ${variables.template}`)
     );
-    console.error(chalk.yellow(`Available templates: minimal, linear-layer`));
+    console.error(
+      chalk.yellow(
+        `Available templates: ${availableTemplates.join(", ")}`
+      )
+    );
     process.exit(1);
   }
 

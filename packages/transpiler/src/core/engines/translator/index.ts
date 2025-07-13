@@ -1,5 +1,6 @@
 import createNodeInstance from "../../../instances/index";
 import { Model } from "../../../core/types/global";
+import { LayerSettings } from "@tensorify.io/sdk";
 
 export default function translateJsonToBython(json: Model): string {
   const layerCodes: string[] = [];
@@ -12,17 +13,17 @@ export default function translateJsonToBython(json: Model): string {
       // process
       const nodeInstance = createNodeInstance(layer.type);
       if (!layer.child) {
-        const code = nodeInstance.codeGeneration.generateCode(
-          layer.settings ?? null,
+        const code = nodeInstance.getTranslationCode(
+          layer.settings as LayerSettings,
           layer.child ?? null
         );
-        layerCodes.push(code.definitions.join("\n"));
+        layerCodes.push(code ?? "");
       } else {
-        const code = nodeInstance.codeGeneration.generateCode(
-          layer.settings ?? null,
+        const code = nodeInstance.getTranslationCode(
+          layer.settings as LayerSettings,
           layer.child ?? null
         );
-        layerCodes.push(code.definitions.join("\n"));
+        layerCodes.push(code ?? "");
       }
     }
   }

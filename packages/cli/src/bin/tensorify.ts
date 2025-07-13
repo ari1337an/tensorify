@@ -6,6 +6,9 @@ import { logoutCommand } from "../commands/logout";
 import { whoamiCommand } from "../commands/whoami";
 import { publishCommand } from "../commands/publish";
 import chalk from "chalk";
+import packageJson from "../../package.json";
+
+const packageVersion = packageJson.version;
 
 // Set up the CLI program
 program
@@ -13,7 +16,7 @@ program
   .description(
     "Official CLI for Tensorify.io - Build, test, and deploy Tensorify plugins"
   )
-  .version("0.0.1", "-v, --version", "Show version number");
+  .version(packageVersion, "-v, --version", "Show version number");
 
 // Add commands
 program.addCommand(loginCommand);
