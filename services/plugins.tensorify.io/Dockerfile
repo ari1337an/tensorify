@@ -26,9 +26,7 @@ RUN npm pkg delete packageManager && npm pkg set packageManager="npm@10.8.1" && 
     && find /app -name "*.tsx" -delete \
     && find /app -name "tsconfig.json" -delete
 
-# FROM pluginstensorifyio-api AS builder
-
-# Production stage - Ultra optimized
+# # # Production stage - Ultra optimized
 FROM gcr.io/distroless/nodejs20-debian12 AS production
 
 # Set root working directory
