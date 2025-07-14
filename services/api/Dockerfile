@@ -13,9 +13,6 @@ COPY packages/plugin-engine/package.json ./packages/plugin-engine/
 # Copy API service package.json
 COPY services/api/package.json ./services/api/
 
-# Install dependencies for the entire workspace
-RUN npm install --legacy-peer-deps
-
 # Copy all source code
 COPY packages/plugin-engine/ ./packages/plugin-engine/
 COPY services/api/src/ ./services/api/src/
@@ -23,9 +20,9 @@ COPY services/api/scripts/ ./services/api/scripts/
 COPY services/api/tsconfig.json ./services/api/
 COPY services/api/ecosystem.config.js ./services/api/
 
-# Use Turborepo to build everything with proper dependency management
-RUN npx turbo build --filter=./services/api && \
-    mkdir -p services/api/logs && \
+# Install dependencies for the entire workspace
+RUN npm install --workspace=@tensorify.io/backend-api --legacy-peer-deps && \
+    npx turbo build  --filter=@tensorify.io/backend-api && \
     npm prune --production --legacy-peer-deps && \
     npm cache clean --force
 
