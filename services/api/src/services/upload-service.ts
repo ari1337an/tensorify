@@ -138,8 +138,7 @@ export class UploadService {
 
         try {
           // Generate unique S3 key
-          const uploadId = crypto.randomUUID();
-          const s3Key = `uploads/${uploadId}`;
+          const s3Key = `${auth.userId}/${metadata.pluginName}:${metadata.pluginVersion}/${file.originalname}`;
 
           // Upload to S3
           const putCommand = new PutObjectCommand({
@@ -166,7 +165,7 @@ export class UploadService {
             success: true,
             message: "File uploaded successfully",
             s3Url: s3Url,
-            uploadId: uploadId,
+            uploadId: s3Key, // Return the S3 key as uploadId
             metadata: metadata,
           });
         } catch (uploadError) {
@@ -230,8 +229,7 @@ export class UploadService {
           // Upload each file
           for (const [fieldName, fileArray] of Object.entries(files)) {
             const file = fileArray[0];
-            const uploadId = crypto.randomUUID();
-            const s3Key = `uploads/${uploadId}`;
+            const s3Key = `${auth.userId}/${pluginName}:${pluginVersion}/${file.originalname}`;
 
             const putCommand = new PutObjectCommand({
               Bucket: process.env.S3_BUCKET_NAME || "tensorify-plugins",

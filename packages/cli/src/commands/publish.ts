@@ -8,6 +8,7 @@ import FormData from "form-data";
 import axios from "axios";
 import { validatePlugin } from "@tensorify.io/sdk";
 import { getAuthToken, getConfig } from "../auth/session-storage";
+import { authService } from "../auth/auth-service";
 
 interface PublishOptions {
   access: "public" | "private";
@@ -85,6 +86,7 @@ class PluginPublisher {
   private manifestJson: ManifestJson;
   private authToken: string;
   private sdkVersion: string;
+  private username: string; // Added to store the username
 
   constructor(options: PublishOptions) {
     this.options = this.resolveOptions(options);
@@ -93,6 +95,7 @@ class PluginPublisher {
     this.manifestJson = {} as ManifestJson;
     this.authToken = "";
     this.sdkVersion = this.getSDKVersion();
+    this.username = ""; // Initialize username
   }
 
   /**
@@ -186,22 +189,25 @@ class PluginPublisher {
     // Step 2: Pre-flight validation
     await this.validatePrerequisites();
 
-    // Step 3: Authentication check
-    await this.checkAuthentication();
+    // Step 3: Authentication check and fetch user profile
+    await this.checkAuthenticationAndFetchProfile();
 
     // Step 4: Validate plugin
     await this.validatePluginStructure();
 
-    // Step 5: Validate access level consistency
+    // Step 5: Validate plugin name (namespace)
+    await this.validatePluginName();
+
+    // Step 6: Validate access level consistency
     await this.validateAccessLevel();
 
-    // Step 6: Check version conflicts
+    // Step 7: Check version conflicts
     await this.checkVersionConflicts();
 
-    // Step 7: Build and bundle
+    // Step 8: Build and bundle
     await this.buildAndBundle();
 
-    // Step 8: Upload files
+    // Step 9: Upload files
     await this.uploadFiles();
 
     console.log(chalk.green("✅ Plugin published successfully!"));
@@ -214,29 +220,47 @@ class PluginPublisher {
     // If --dev flag was not explicitly set, check saved config
     if (this.options.dev === undefined) {
       const config = await getConfig();
-      const isDev = config.isDev || process.env.NODE_ENV === "development";
+      // Explicitly set this.options.dev based on saved config or NODE_ENV
+      this.options.dev = config.isDev || process.env.NODE_ENV === "development";
 
-      if (isDev) {
+      if (this.options.dev) {
         console.log(
           chalk.cyan("🔧 Using development environment (from saved config)")
         );
-
-        // Update options with development URLs if defaults are being used
-        if (
-          !this.options.backend ||
-          this.options.backend === "https://backend.tensorify.io"
-        ) {
-          this.options.backend = "http://localhost:3001";
-        }
-        if (
-          !this.options.frontend ||
-          this.options.frontend === "https://plugins.tensorify.io"
-        ) {
-          this.options.frontend = "http://localhost:3000";
-        }
       }
     } else if (this.options.dev) {
       console.log(chalk.cyan("🔧 Using development environment (--dev flag)"));
+    }
+
+    // Now, apply the URLs based on the resolved this.options.dev
+    if (this.options.dev) {
+      // Override URLs for development environment if not explicitly set
+      if (
+        !this.options.backend ||
+        this.options.backend === "https://backend.tensorify.io"
+      ) {
+        this.options.backend = "http://localhost:3001";
+      }
+      if (
+        !this.options.frontend ||
+        this.options.frontend === "https://plugins.tensorify.io"
+      ) {
+        this.options.frontend = "http://localhost:3000";
+      }
+    } else {
+      // Ensure production URLs are used if not in dev mode
+      if (
+        !this.options.backend ||
+        this.options.backend === "http://localhost:3001"
+      ) {
+        this.options.backend = "https://backend.tensorify.io";
+      }
+      if (
+        !this.options.frontend ||
+        this.options.frontend === "http://localhost:3000"
+      ) {
+        this.options.frontend = "https://plugins.tensorify.io";
+      }
     }
   }
 
@@ -411,18 +435,37 @@ class PluginPublisher {
   }
 
   /**
-   * Check if user is authenticated
+   * Check if user is authenticated and fetch profile
    */
-  private async checkAuthentication(): Promise<void> {
-    console.log(chalk.yellow("🔐 Checking authentication..."));
+  private async checkAuthenticationAndFetchProfile(): Promise<void> {
+    console.log(
+      chalk.yellow("🔐 Checking authentication and fetching user profile...")
+    );
 
     const token = await getAuthToken();
     if (!token) {
       throw new Error('Not authenticated. Please run "tensorify login" first.');
     }
-
     this.authToken = token;
-    console.log(chalk.green("✅ Authentication verified\n"));
+
+    try {
+      const userProfile = await authService.getUserProfile(this.options.dev);
+      if (!userProfile || !userProfile.username) {
+        // Assuming username field exists
+        throw new Error("Could not retrieve username from user profile.");
+      }
+      this.username = userProfile.username;
+      console.log(
+        chalk.green(`✅ Authenticated as: @${this.username}
+`)
+      );
+    } catch (error) {
+      throw new Error(
+        `Failed to fetch user profile: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
   }
 
   /**
@@ -927,6 +970,21 @@ class PluginPublisher {
   }
 
   /**
+   * Validate plugin name format (@username/plugin-name)
+   */
+  private async validatePluginName(): Promise<void> {
+    console.log(chalk.yellow("🔍 Validating plugin name..."));
+
+    const expectedPrefix = `@${this.username}/`;
+    if (!this.packageJson.name.startsWith(expectedPrefix)) {
+      throw new Error(
+        `Plugin name must be namespaced with your username. Expected format: ${expectedPrefix}plugin-name`
+      );
+    }
+    console.log(chalk.green("✅ Plugin name validated\n"));
+  }
+
+  /**
    * Upload files using form data
    */
   private async uploadFiles(): Promise<void> {
@@ -942,8 +1000,11 @@ class PluginPublisher {
       // Create form data
       const form = new FormData();
 
+      // Get the non-namespaced plugin name
+      const nonNamespacedPluginName = this.packageJson.name.split("/")[1];
+
       // Add plugin metadata
-      form.append("pluginName", this.packageJson.name);
+      form.append("pluginName", nonNamespacedPluginName);
       form.append("pluginVersion", this.packageJson.version);
 
       // Add files to form
@@ -975,7 +1036,7 @@ class PluginPublisher {
       if (response.data.success) {
         console.log(chalk.green("✅ All files uploaded successfully"));
 
-        // Send completion webhook
+        // The backend now returns the s3Key directly as part of the 'files' array
         await this.notifyUploadComplete(response.data.files);
 
         console.log(chalk.green("✅ Upload completed\n"));
@@ -1020,14 +1081,17 @@ class PluginPublisher {
   private async notifyUploadComplete(uploadedFiles: string[]): Promise<void> {
     console.log(chalk.yellow("🔔 Notifying upload completion..."));
 
+    // Get the non-namespaced plugin name
+    const nonNamespacedPluginName = this.packageJson.name.split("/")[1];
+
     try {
       await axios.post(
         `${this.options.backend}/api/publish-complete`,
         {
           pluginData: {
-            name: this.packageJson.name,
+            name: nonNamespacedPluginName,
             version: this.packageJson.version,
-            slug: `${this.packageJson.name}:${this.packageJson.version}`,
+            slug: `${nonNamespacedPluginName}:${this.packageJson.version}`,
             description: this.manifestJson.description,
             author: this.manifestJson.author,
             access: this.options.access,

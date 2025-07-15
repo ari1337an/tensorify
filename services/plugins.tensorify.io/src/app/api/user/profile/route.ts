@@ -8,6 +8,7 @@ const userProfileSchema = z.object({
   id: z.string(),
   fullName: z.string().nullable(),
   email: z.string(),
+  username: z.string().min(1),
 });
 
 export async function GET(request: NextRequest) {
@@ -50,8 +51,12 @@ export async function GET(request: NextRequest) {
     // Format user data for CLI consumption
     const userProfile = {
       id: verificationResult.data?.id,
-      fullName: verificationResult.data?.firstName + " " + verificationResult.data?.lastName,
+      fullName:
+        verificationResult.data?.firstName +
+        " " +
+        verificationResult.data?.lastName,
       email: verificationResult.data?.email,
+      username: verificationResult.data?.username,
     };
 
     // Validate the response data

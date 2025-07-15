@@ -32,12 +32,13 @@ export const whoamiCommand = new Command("whoami")
 
       // Fetch user profile from plugins.tensorify.io API
       const userProfile = await authService.getUserProfile(isDev);
-
+      
       // Display user information in a formatted way
       console.log("\n" + chalk.green("👤 User Profile"));
       console.log(chalk.gray("═".repeat(50)));
-
+      
       console.log(`${chalk.cyan("ID:")}\t\t${userProfile.id}`);
+      console.log(`${chalk.cyan("Username:")}\t${userProfile.username}`);
       console.log(
         `${chalk.cyan("Full Name:")}\t${
           userProfile.fullName || chalk.gray("Not set")
