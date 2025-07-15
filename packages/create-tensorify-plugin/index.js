@@ -46,19 +46,19 @@ function detectSDKVersion() {
       console.log(
         chalk.blue(`🔍 Found published SDK version: ${latestVersion}`)
       );
-      return `^${latestVersion}`;
+      return `${latestVersion}`;
     } catch (error) {
       console.log(
         chalk.yellow("⚠️  Could not fetch latest SDK version from npm")
       );
       // Fallback to a reasonable default
-      return "^0.0.4";
+      return "0.0.4";
     }
   } catch (error) {
     console.log(
       chalk.yellow("⚠️  Could not detect SDK version, using default")
     );
-    return "^0.0.4";
+    return "0.0.4";
   }
 }
 
