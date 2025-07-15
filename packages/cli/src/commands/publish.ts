@@ -134,56 +134,40 @@ class PluginPublisher {
    */
   private getSDKVersion(): string {
     try {
-      // Try to read CLI's package.json to get SDK version
-      const cliPackageJsonPath = path.resolve(__dirname, "../../package.json");
-      const cliPackageJson = JSON.parse(
-        fs.readFileSync(cliPackageJsonPath, "utf-8")
-      );
+      // Use npm list to get the installed SDK version directly
+      const npmListOutput = execSync(
+        `npm list --json --depth=0 "@tensorify.io/sdk"`,
+        { cwd: this.directory, encoding: "utf8", stdio: "pipe" }
+      ).toString();
 
-      // Check dependencies for @tensorify.io/sdk
-      const sdkDependency = cliPackageJson.dependencies?.["@tensorify.io/sdk"];
+      const parsedOutput = JSON.parse(npmListOutput);
 
-      if (sdkDependency) {
-        // If it's a file reference, try to read the actual SDK package.json
-        if (sdkDependency.startsWith("file:")) {
-          const sdkPath = path.resolve(
-            path.dirname(cliPackageJsonPath),
-            sdkDependency.replace("file:", "")
-          );
-          const sdkPackageJsonPath = path.join(sdkPath, "package.json");
+      // Navigate to find the SDK version in the dependencies
+      const sdkDependency = parsedOutput.dependencies?.["@tensorify.io/sdk"];
 
-          if (fs.existsSync(sdkPackageJsonPath)) {
-            const sdkPackageJson = JSON.parse(
-              fs.readFileSync(sdkPackageJsonPath, "utf-8")
-            );
-            return sdkPackageJson.version || "0.0.1";
-          }
-        }
-
-        // For version ranges like "^1.0.0", extract the base version
-        const versionMatch = sdkDependency.match(/(\d+\.\d+\.\d+)/);
-        if (versionMatch) {
-          return versionMatch[1];
-        }
-      }
-
-      // Fallback to reading from node_modules if available
-      const nodeModulesSDKPath = path.resolve(
-        __dirname,
-        "../../node_modules/@tensorify.io/sdk/package.json"
-      );
-      if (fs.existsSync(nodeModulesSDKPath)) {
-        const sdkPackageJson = JSON.parse(
-          fs.readFileSync(nodeModulesSDKPath, "utf-8")
+      if (sdkDependency && sdkDependency.version) {
+        console.log(
+          chalk.green(
+            `✅ SDK version detected: ${sdkDependency.version} (via npm list)`
+          )
         );
-        return sdkPackageJson.version || "0.0.1";
+        return sdkDependency.version;
       }
 
-      // Final fallback
+      // Fallback if npm list doesn't provide the version for some reason
+      console.warn(
+        chalk.yellow(
+          "⚠️ Could not determine SDK version via npm list, falling back to 0.0.1"
+        )
+      );
       return "0.0.1";
     } catch (error) {
       console.warn(
-        chalk.yellow("⚠️ Could not determine SDK version, using fallback 0.0.1")
+        chalk.yellow(
+          `⚠️ Could not determine SDK version via npm list: ${
+            error instanceof Error ? error.message : String(error)
+          }. Using fallback 0.0.1`
+        )
       );
       return "0.0.1";
     }

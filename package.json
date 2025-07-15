@@ -3,7 +3,7 @@
   "private": true,
   "workspaces": [
     "packages/cli",
-    "packages/sdk/v1",
+    "packages/sdk",
     "packages/plugin-engine",
     "packages/shared",
     "packages/transpiler",
