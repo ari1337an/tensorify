@@ -50,7 +50,7 @@ export class UploadService {
         accessKeyId: process.env.S3_ACCESS_KEY_ID!,
         secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
       },
-      endpoint: process.env.S3_ENDPOINT, // Add this line
+      endpoint: process.env.S3_ENDPOINT,
     });
 
     // Initialize multer for memory storage
@@ -97,11 +97,11 @@ export class UploadService {
   }
 
   /**
-   * Handle single file upload - FIXED VERSION
+   * Handle single file upload
    */
   async handleFileUpload(req: Request, res: Response): Promise<void> {
     try {
-      // Verify authentication first
+      // Verify authentication
       const auth = await this.verifyAuth(req);
       console.log("Authenticated user:", auth.userId);
 
@@ -137,28 +137,13 @@ export class UploadService {
         }
 
         try {
-          // Generate unique S3 key with proper path structure
+          // Generate unique S3 key
           const uploadId = crypto.randomUUID();
-          const fileExtension = file.originalname.split(".").pop() || "";
-          const s3Key = `uploads/${metadata.userId}/${metadata.pluginName}/${
-            metadata.pluginVersion
-          }/${uploadId}${fileExtension ? "." + fileExtension : ""}`;
+          const s3Key = `uploads/${uploadId}`;
 
-          // Validate environment variables
-          const bucketName = process.env.S3_BUCKET_NAME;
-          const region = process.env.S3_REGION || "us-east-1";
-
-          if (!bucketName) {
-            throw new Error("S3_BUCKET_NAME environment variable is required");
-          }
-
-          console.log(`Uploading file to S3: ${s3Key}`);
-          console.log(`File size: ${file.buffer.length} bytes`);
-          console.log(`Content type: ${file.mimetype}`);
-
-          // Upload to S3 with proper error handling
+          // Upload to S3
           const putCommand = new PutObjectCommand({
-            Bucket: bucketName,
+            Bucket: process.env.S3_BUCKET_NAME || "tensorify-plugins",
             Key: s3Key,
             Body: file.buffer,
             ContentType: file.mimetype,
@@ -167,46 +152,26 @@ export class UploadService {
               pluginName: metadata.pluginName || "",
               pluginVersion: metadata.pluginVersion || "",
               userId: metadata.userId || "",
-              uploadId: uploadId,
-              uploadedAt: new Date().toISOString(),
             },
-            // Add additional parameters for better reliability
-            ServerSideEncryption: "AES256",
-            StorageClass: "STANDARD",
           });
 
-          const uploadResult = await this.s3Client.send(putCommand);
-          console.log("S3 upload successful:", uploadResult.ETag);
+          await this.s3Client.send(putCommand);
 
-          // Construct S3 URL properly
-          const s3Url = `https://${bucketName}.s3.${region}.amazonaws.com/${s3Key}`;
+          // Return success response
+          const s3Url = `https://${
+            process.env.S3_BUCKET_NAME || "tensorify-plugins"
+          }.s3.${process.env.S3_REGION || "us-east-1"}.amazonaws.com/${s3Key}`;
 
           res.status(200).json({
             success: true,
             message: "File uploaded successfully",
             s3Url: s3Url,
             uploadId: uploadId,
-            s3Key: s3Key,
-            etag: uploadResult.ETag,
             metadata: metadata,
           });
         } catch (uploadError) {
           console.error("S3 upload error:", uploadError);
-
-          // More detailed error handling
-          if (uploadError instanceof Error) {
-            console.error("Error name:", uploadError.name);
-            console.error("Error message:", uploadError.message);
-            console.error("Error stack:", uploadError.stack);
-          }
-
-          res.status(500).json({
-            error: "Failed to upload file to storage",
-            details:
-              uploadError instanceof Error
-                ? uploadError.message
-                : "Unknown error",
-          });
+          res.status(500).json({ error: "Failed to upload file to storage" });
         }
       });
     } catch (error) {
@@ -303,12 +268,6 @@ export class UploadService {
             },
           });
         } catch (uploadError) {
-          console.log({
-            "s3 env": process.env.S3_BUCKET_NAME,
-            "s3 region": process.env.S3_REGION,
-            "s3 access key id": process.env.S3_ACCESS_KEY_ID,
-            "s3 secret access key": process.env.S3_SECRET_ACCESS_KEY,
-          });
           console.error("S3 upload error:", uploadError);
           res.status(500).json({ error: "Failed to upload files to storage" });
         }
