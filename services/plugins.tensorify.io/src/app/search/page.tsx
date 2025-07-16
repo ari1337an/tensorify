@@ -14,15 +14,12 @@ type SearchResultPlugin = {
   slug: string;
   authorName: string;
   tags: string | null;
-  tensorifyVersion: string;
+  sdkVersion: string;
   createdAt: Date;
   updatedAt: Date;
   githubUrl: string;
   isPublic: boolean;
   status: string;
-  processingStatus: string;
-  processingTitle: string | null;
-  processingMessage: string | null;
   // Add missing fields that SearchResultCard expects
   version: string;
   releaseTag: string | null;

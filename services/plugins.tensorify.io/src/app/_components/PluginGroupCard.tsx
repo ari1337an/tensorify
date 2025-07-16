@@ -1,7 +1,5 @@
 import { Plugin } from "@prisma/client";
 import Link from "@/app/_components/ui/link";
-import { PluginStatusIndicator } from "./PluginStatusIndicator";
-import { ProcessingStatus } from "@/server/models/plugin";
 import { Package, GitBranch, Calendar, Lock, Globe } from "lucide-react";
 
 interface PluginGroupCardProps {
@@ -51,11 +49,7 @@ export function PluginGroupCard({ baseSlug, versions }: PluginGroupCardProps) {
               <span>{baseSlug}</span>
             </div>
           </div>
-          <PluginStatusIndicator
-            processingStatus={
-              latestVersion.processingStatus as ProcessingStatus
-            }
-          />
+         
         </div>
 
         <p className="text-muted-foreground mb-6 line-clamp-2">

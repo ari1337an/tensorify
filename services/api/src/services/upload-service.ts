@@ -6,8 +6,8 @@ import {
 import { Request, Response } from "express";
 import axios from "axios";
 import multer from "multer";
-import crypto from "crypto";
 import { getDecodedJwt } from "./auth-utils";
+import { z } from "zod";
 
 /**
  * Upload metadata interface
@@ -19,6 +19,25 @@ interface UploadMetadata {
   pluginVersion?: string;
   userId?: string;
 }
+
+const pluginWebhookSchema = z.object({
+  slug: z.string().min(1, "Slug is required"),
+  name: z.string().min(1, "Name is required"),
+  version: z.string().min(1, "Version is required"),
+  description: z.string().optional(),
+  author: z.string().optional(), // Maps to PluginData.author
+  authorFullName: z.string().min(1, "Author full name is required"),
+  status: z.string().optional(), // Matches 'published'
+  isPublic: z.boolean(), // Maps to PluginData.access
+  githubUrl: z.string().url("Invalid GitHub URL").optional(), // Maps to PluginData.repository
+  entrypointClassName: z.string().min(1, "Entrypoint class name is required"),
+  files: z.array(z.string()).min(1, "Files array cannot be empty"),
+  authorId: z.string().min(1, "Author ID is required"),
+  publishedAt: z.string().optional(), // Generated on sending, optional in schema
+  readme: z.string().optional(),
+  sdkVersion: z.string().optional(), // Added sdkVersion
+  tags: z.string().optional(), // Added tags
+});
 
 /**
  * Plugin data interface for webhook
@@ -33,6 +52,13 @@ interface PluginData {
   entrypointClassName: string;
   repository?: string;
   files: string[];
+  readme?: string;
+  authorId: string;
+  sdkVersion?: string; // Added sdkVersion
+  tags?: string; // Added tags
+  // Properties added to align with webhook schema payload for validation
+  status?: string; // This is always 'published' for outgoing webhook, but schema expects optional
+  isPublic?: boolean; // Optional field in webhook schema
 }
 
 /**
@@ -44,6 +70,7 @@ export class UploadService {
 
   constructor() {
     // Initialize S3 client
+
     this.s3Client = new S3Client({
       region: process.env.S3_REGION || "us-east-1",
       credentials: {
@@ -51,6 +78,7 @@ export class UploadService {
         secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
       },
       endpoint: process.env.S3_ENDPOINT,
+      forcePathStyle: true,
     });
 
     // Initialize multer for memory storage
@@ -65,9 +93,12 @@ export class UploadService {
   /**
    * Verify authentication middleware
    */
-  async verifyAuth(
-    req: Request
-  ): Promise<{ userId: string; sessionId: string }> {
+  async verifyAuth(req: Request): Promise<{
+    userId: string;
+    sessionId: string;
+    username: string;
+    fullName: string;
+  }> {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       throw new Error("Authorization header required");
@@ -84,14 +115,15 @@ export class UploadService {
 
       const decodedToken = result.data;
       const userId = decodedToken.sub || decodedToken.id || "anonymous";
+      const username = decodedToken.username;
 
-      console.log("Token validated for user:", userId);
       return {
         userId: userId,
+        username: username,
+        fullName: decodedToken.firstName + " " + decodedToken.lastName,
         sessionId: token.substring(0, 20), // Use first 20 chars as session ID
       };
     } catch (error) {
-      console.error("Token verification failed:", error);
       throw new Error("Invalid or expired token");
     }
   }
@@ -103,12 +135,10 @@ export class UploadService {
     try {
       // Verify authentication
       const auth = await this.verifyAuth(req);
-      console.log("Authenticated user:", auth.userId);
 
       // Use multer to parse the uploaded file
       this.upload.single("file")(req, res, async (err) => {
         if (err) {
-          console.error("Multer error:", err);
           res.status(400).json({ error: "File upload error: " + err.message });
           return;
         }
@@ -138,11 +168,11 @@ export class UploadService {
 
         try {
           // Generate unique S3 key
-          const s3Key = `${auth.userId}/${metadata.pluginName}:${metadata.pluginVersion}/${file.originalname}`;
+          const s3Key = `@${auth.username}/${metadata.pluginName}:${metadata.pluginVersion}/${file.originalname}`;
 
           // Upload to S3
           const putCommand = new PutObjectCommand({
-            Bucket: process.env.S3_BUCKET_NAME || "tensorify-plugins",
+            Bucket: process.env.S3_BUCKET_NAME || "plugins.tensorify.io",
             Key: s3Key,
             Body: file.buffer,
             ContentType: file.mimetype,
@@ -157,9 +187,7 @@ export class UploadService {
           await this.s3Client.send(putCommand);
 
           // Return success response
-          const s3Url = `https://${
-            process.env.S3_BUCKET_NAME || "tensorify-plugins"
-          }.s3.${process.env.S3_REGION || "us-east-1"}.amazonaws.com/${s3Key}`;
+          const s3Url = s3Key;
 
           res.status(200).json({
             success: true,
@@ -169,12 +197,10 @@ export class UploadService {
             metadata: metadata,
           });
         } catch (uploadError) {
-          console.error("S3 upload error:", uploadError);
           res.status(500).json({ error: "Failed to upload file to storage" });
         }
       });
     } catch (error) {
-      console.error("Upload error:", error);
       res.status(401).json({
         error: error instanceof Error ? error.message : "Authentication failed",
       });
@@ -188,16 +214,15 @@ export class UploadService {
     try {
       // Verify authentication
       const auth = await this.verifyAuth(req);
-      console.log("Authenticated user:", auth.userId);
 
       // Use multer to parse multiple files
       this.upload.fields([
         { name: "bundle", maxCount: 1 },
         { name: "manifest", maxCount: 1 },
         { name: "icon", maxCount: 1 },
+        { name: "readme", maxCount: 1 }, // Add this line
       ])(req, res, async (err) => {
         if (err) {
-          console.error("Multer error:", err);
           res.status(400).json({ error: "File upload error: " + err.message });
           return;
         }
@@ -225,11 +250,16 @@ export class UploadService {
 
         try {
           const uploadResults: string[] = [];
+          let readmeContent: string | undefined;
 
           // Upload each file
           for (const [fieldName, fileArray] of Object.entries(files)) {
             const file = fileArray[0];
-            const s3Key = `${auth.userId}/${pluginName}:${pluginVersion}/${file.originalname}`;
+            const s3Key = `@${auth.username}/${pluginName}:${pluginVersion}/${file.originalname}`;
+
+            if (fieldName === "readme") {
+              readmeContent = file.buffer.toString("utf8");
+            }
 
             const putCommand = new PutObjectCommand({
               Bucket: process.env.S3_BUCKET_NAME || "tensorify-plugins",
@@ -247,11 +277,7 @@ export class UploadService {
 
             await this.s3Client.send(putCommand);
 
-            const s3Url = `https://${
-              process.env.S3_BUCKET_NAME || "tensorify-plugins"
-            }.s3.${
-              process.env.S3_REGION || "us-east-1"
-            }.amazonaws.com/${s3Key}`;
+            const s3Url = s3Key;
             uploadResults.push(s3Url);
           }
 
@@ -266,12 +292,10 @@ export class UploadService {
             },
           });
         } catch (uploadError) {
-          console.error("S3 upload error:", uploadError);
           res.status(500).json({ error: "Failed to upload files to storage" });
         }
       });
     } catch (error) {
-      console.error("Upload error:", error);
       res.status(401).json({
         error: error instanceof Error ? error.message : "Authentication failed",
       });
@@ -285,7 +309,6 @@ export class UploadService {
     try {
       // Verify authentication
       const auth = await this.verifyAuth(req);
-      console.log("Authenticated user:", auth.userId);
 
       const { pluginData } = req.body as { pluginData: PluginData };
 
@@ -311,9 +334,9 @@ export class UploadService {
       }
 
       // Send webhook to frontend
-      const webhookSuccess = await this.sendWebhookToFrontend(pluginData);
+      const webhookSuccess = await this.sendWebhookToFrontend(pluginData, auth);
 
-      if (webhookSuccess) {
+      if (webhookSuccess.success) {
         res.status(200).json({
           success: true,
           message: "Plugin published successfully",
@@ -322,11 +345,10 @@ export class UploadService {
       } else {
         res.status(500).json({
           success: false,
-          error: "Failed to notify frontend, but files were uploaded",
+          error: webhookSuccess.error || "Unknown error",
         });
       }
     } catch (error) {
-      console.error("Publish complete error:", error);
       res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
@@ -338,32 +360,49 @@ export class UploadService {
    * Send webhook notification to frontend
    */
   private async sendWebhookToFrontend(
-    pluginData: PluginData
-  ): Promise<boolean> {
+    pluginData: PluginData,
+    auth: { userId: string; username: string; fullName: string }
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       const frontendUrl =
         process.env.PLUGIN_REPOSITORY_WEBHOOK_WEBSITE_URL ||
         "https://plugins.tensorify.io";
       const webhookUrl = `${frontendUrl}/api/webhooks/plugin-published`;
 
-      console.log("Sending webhook to:", webhookUrl);
-      console.log("Plugin data:", pluginData);
+      const slug = `@${auth.username}/${pluginData.slug}`;
+
+      // Construct the webhook payload to match the expected schema precisely
+      const webhookPayload = {
+        slug: slug,
+        name: pluginData.name,
+        version: pluginData.version,
+        description: pluginData.description,
+        author: auth.username,
+        authorFullName: auth.fullName || auth.username,
+        status: "published", // Hardcoded status for now
+        isPublic: pluginData.access === "public", // Transform 'access' to 'isPublic'
+        githubUrl: pluginData.repository,
+        entrypointClassName: pluginData.entrypointClassName,
+        files: pluginData.files,
+        authorId: auth.userId,
+        publishedAt: new Date().toISOString(),
+        readme: pluginData.readme,
+        // Add other optional fields if they are consistently available and needed in the webhook
+        tags: pluginData.tags, // Added tags
+        sdkVersion: pluginData.sdkVersion, // Added sdkVersion
+      };
+
+      // Validate the constructed webhook payload
+      const validatedWebhookPayload =
+        pluginWebhookSchema.safeParse(webhookPayload);
+
+      if (!validatedWebhookPayload.success) {
+        return { success: false, error: validatedWebhookPayload.error.message };
+      }
 
       const response = await axios.post(
         webhookUrl,
-        {
-          slug: pluginData.slug,
-          name: pluginData.name,
-          version: pluginData.version,
-          description: pluginData.description,
-          author: pluginData.author,
-          status: "published",
-          isPublic: pluginData.access === "public",
-          githubUrl: pluginData.repository,
-          entrypointClassName: pluginData.entrypointClassName,
-          files: pluginData.files,
-          publishedAt: new Date().toISOString(),
-        },
+        validatedWebhookPayload, // Send the validated and correctly structured payload
         {
           headers: {
             "Content-Type": "application/json",
@@ -374,23 +413,12 @@ export class UploadService {
       );
 
       if (response.status >= 200 && response.status < 300) {
-        console.log("Webhook sent successfully:", response.status);
-        return true;
+        return { success: true };
       } else {
-        console.error(
-          "Webhook failed with status:",
-          response.status,
-          response.data
-        );
-        return false;
+        return { success: false, error: response.data.error };
       }
-    } catch (error) {
-      console.error("Webhook error:", error);
-      if (axios.isAxiosError(error)) {
-        console.error("Response data:", error.response?.data);
-        console.error("Response status:", error.response?.status);
-      }
-      return false;
+    } catch (error: any) {
+      return { success: false, error: error.response?.data?.error };
     }
   }
 
@@ -419,7 +447,6 @@ export class UploadService {
 
       return null;
     } catch (error) {
-      console.error("Error getting plugin file:", error);
       return null;
     }
   }

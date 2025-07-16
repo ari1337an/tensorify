@@ -1,7 +1,5 @@
 import { Plugin } from "@prisma/client";
 import Link from "@/app/_components/ui/link";
-import { PluginStatusIndicator } from "./PluginStatusIndicator";
-import { ProcessingStatus } from "@/server/models/plugin";
 import { Lock, Globe } from "lucide-react";
 
 interface PluginCardProps {
@@ -46,9 +44,7 @@ export default function PluginCard({
               <span className="bg-accent text-accent-foreground text-xs px-2.5 py-1 rounded-full">
                 {plugin.status}
               </span>
-              <PluginStatusIndicator
-                processingStatus={plugin.processingStatus as ProcessingStatus}
-              />
+             
             </div>
           </div>
           <p className="text-muted-foreground mb-4">{plugin.description}</p>

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
-
-const prisma = new PrismaClient();
+import db from "@/server/database/db";
 
 // Zod schema for webhook body validation
 const pluginWebhookSchema = z.object({
@@ -12,12 +10,10 @@ const pluginWebhookSchema = z.object({
   githubUrl: z.string().url("Invalid GitHub URL").optional(),
   status: z.string().optional(),
   tags: z.string().optional(),
-  tensorifyVersion: z.string().optional(),
+  sdkVersion: z.string().optional(),
   version: z.string().optional(),
-  releaseTag: z.string().optional(),
-  authorName: z.string().optional(),
+  author: z.string(),
   authorId: z.string().min(1, "Author ID is required"),
-  sha: z.string().optional(),
   isPublic: z.boolean().optional(),
   readme: z.string().optional(),
 });
@@ -27,7 +23,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Validate request body with Zod
-    const validationResult = pluginWebhookSchema.safeParse(body);
+    const validationResult = pluginWebhookSchema.safeParse(body.data);
 
     if (!validationResult.success) {
       return NextResponse.json(
@@ -42,6 +38,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // If user is not in the database, insert him
+    const user = await db.user.findUnique({
+      where: { id: validationResult.data.authorId },
+    });
+    if (!user) {
+      await db.user.create({
+        data: {
+          id: validationResult.data.authorId,
+          username: validationResult.data.author,
+        },
+      });
+    }
+
+    // Now Add a row in the database for this plugin
     const {
       slug,
       name,
@@ -49,54 +59,22 @@ export async function POST(request: NextRequest) {
       githubUrl,
       status,
       tags,
-      tensorifyVersion,
+      sdkVersion,
       version,
-      releaseTag,
-      authorName,
+      author,
       authorId,
-      sha,
       isPublic,
       readme,
     } = validationResult.data;
 
     // Check if plugin already exists
-    const existingPlugin = await prisma.plugin.findUnique({
+    const existingPlugin = await db.plugin.findUnique({
       where: { slug },
     });
 
-    if (existingPlugin) {
-      // Update existing plugin
-      const updatedPlugin = await prisma.plugin.update({
-        where: { slug },
-        data: {
-          name,
-          description: description || existingPlugin.description,
-          githubUrl: githubUrl || existingPlugin.githubUrl,
-          status: status || existingPlugin.status,
-          tags: tags || existingPlugin.tags,
-          tensorifyVersion: tensorifyVersion || existingPlugin.tensorifyVersion,
-          version: version || existingPlugin.version,
-          releaseTag: releaseTag || existingPlugin.releaseTag,
-          authorName: authorName || existingPlugin.authorName,
-          sha: sha || existingPlugin.sha,
-          isPublic: isPublic !== undefined ? isPublic : existingPlugin.isPublic,
-          readme: readme || existingPlugin.readme,
-          processingStatus: "published",
-          processingTitle: "Plugin published successfully",
-          processingMessage:
-            "This plugin has been published and is available for installation.",
-          updatedAt: new Date(),
-        },
-      });
-
-      return NextResponse.json({
-        success: true,
-        message: "Plugin updated successfully",
-        plugin: updatedPlugin,
-      });
-    } else {
+    if (!existingPlugin) {
       // Create new plugin
-      const newPlugin = await prisma.plugin.create({
+      const newPlugin = await db.plugin.create({
         data: {
           slug,
           name,
@@ -104,18 +82,12 @@ export async function POST(request: NextRequest) {
           githubUrl: githubUrl || "",
           status: status || "active",
           tags: tags || null,
-          tensorifyVersion: tensorifyVersion || "1.0.0",
+          sdkVersion: sdkVersion || "1.0.0",
           version: version || "1.0.0",
-          releaseTag: releaseTag || null,
-          authorName: authorName || "Unknown",
+          authorName: author || "Unknown",
           authorId,
-          sha: sha || null,
           isPublic: isPublic !== undefined ? isPublic : true,
           readme: readme || null,
-          processingStatus: "published",
-          processingTitle: "Plugin published successfully",
-          processingMessage:
-            "This plugin has been published and is available for installation.",
         },
       });
 
@@ -125,14 +97,21 @@ export async function POST(request: NextRequest) {
         plugin: newPlugin,
       });
     }
+    // If the plugin already exists, update it
+    else {
+      return NextResponse.json(
+        {
+          error: `Plugin ${slug} already exists. If you are trying to publish another version of the plugin, try running "npm version patch" before publishing again.`,
+        },
+        { status: 500 }
+      );
+    }
   } catch (error) {
-    console.error("Webhook error:", error);
+    console.log(error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 

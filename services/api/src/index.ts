@@ -1,3 +1,7 @@
+// Load environment variables
+import dotenv from "dotenv";
+dotenv.config({ path: ".env" });
+
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
@@ -7,11 +11,8 @@ import {
 } from "@ts-rest/express";
 import { contracts, actions, openapi } from "./loader";
 import swaggerUi from "swagger-ui-express";
-import dotenv from "dotenv";
-import { uploadService } from "./services/upload-service";
 
-// Load environment variables
-dotenv.config({ path: ".env" });
+import { uploadService } from "./services/upload-service";
 
 // Create Express app
 const app = express();

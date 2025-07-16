@@ -1,7 +1,5 @@
 import { Plugin } from "@prisma/client";
 import Link from "@/app/_components/ui/link";
-// import { PluginStatusIndicator } from "./PluginStatusIndicator";
-// import { ProcessingStatus } from "@/server/models/plugin";
 import { Lock, Globe } from "lucide-react";
 
 interface PluginCardProps {

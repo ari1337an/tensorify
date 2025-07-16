@@ -16,7 +16,7 @@ export async function GET(request: Request) {
         // Public plugins or user's own plugins
         { OR: [{ isPublic: true }, { authorName: username }] },
         // Include both published and processing plugins
-        { processingStatus: "published" },
+        { status: "published" },
       ] as Prisma.PluginWhereInput[],
     };
 
@@ -42,7 +42,7 @@ export async function GET(request: Request) {
 
     // Add version filter if specified
     // if (version) {
-    //   baseWhere.AND.push({ tensorifyVersion: version });
+    //   baseWhere.AND.push({ sdkVersion: version });
     // }
 
     // Add tags filter if specified
@@ -81,19 +81,14 @@ export async function GET(request: Request) {
         slug: true,
         authorName: true,
         tags: true,
-        tensorifyVersion: true,
+        sdkVersion: true,
         createdAt: true,
         updatedAt: true,
         githubUrl: true,
         isPublic: true,
         status: true,
-        processingStatus: true,
-        processingTitle: true,
-        processingMessage: true,
         version: true,
-        releaseTag: true,
         authorId: true,
-        sha: true,
         readme: true,
       },
     });

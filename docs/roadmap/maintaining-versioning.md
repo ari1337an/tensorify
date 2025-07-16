@@ -236,7 +236,7 @@ export function validateVersions(req: Request, res: Response, next: NextFunction
     res.setHeader('X-Tensorify-Warnings', validation.warnings.join('; '));
   }
 
-  req.tensorifyVersions = versions;
+  req.sdkVersion = versions;
   next();
 }
 ```

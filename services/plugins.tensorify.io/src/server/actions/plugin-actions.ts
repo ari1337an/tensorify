@@ -28,7 +28,7 @@ export async function getLatestPluginVersion(baseSlug: string) {
       slug: {
         startsWith: baseSlug,
       },
-      processingStatus: "published",
+      status: "published",
     },
     orderBy: {
       createdAt: "desc",

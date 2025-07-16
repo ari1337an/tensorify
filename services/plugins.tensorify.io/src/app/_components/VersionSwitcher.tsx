@@ -29,7 +29,7 @@ export function VersionSwitcher({
 
   // Filter out unpublished versions for non-owners
   const availableVersions = versions.filter(
-    (version) => isOwner || version.processingStatus === "published"
+    (version) => isOwner || version.status === "published"
   );
 
   const sortedVersions = [...availableVersions].sort(

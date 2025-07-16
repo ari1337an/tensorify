@@ -16,9 +16,6 @@ import {
   Lock,
 } from "lucide-react";
 import Link from "@/app/_components/ui/link";
-import { PluginStatusIndicator } from "@/app/_components/PluginStatusIndicator";
-import { ProcessingStatus } from "@/server/models/plugin";
-import { PluginProcessingBanner } from "@/app/_components/PluginProcessingBanner";
 import { VersionSwitcher } from "@/app/_components/VersionSwitcher";
 import { Suspense } from "react";
 import { Skeleton } from "@/app/_components/ui/skeleton";
@@ -26,7 +23,6 @@ import { CopyButton } from "@/app/_components/CopyButton";
 import { MarkdownContent } from "@/app/_components/MarkdownContent";
 import { getUserByUserId } from "@/server/actions/author-actions";
 import { Metadata } from "next/types";
-import { AutoRefreshStatus } from "@/app/_components/AutoRefreshStatus";
 
 // Define type for generateMetadata params
 type Props = {
@@ -304,7 +300,7 @@ export default async function PluginPage({
 
   const isPublic = plugin.isPublic;
 
-  const isPublished = plugin.processingStatus === "published";
+  const isPublished = plugin.status === "published";
 
   // public + unpublished + !isOwner -> 404
   // private + published + !isOwner -> 404
@@ -395,47 +391,14 @@ export default async function PluginPage({
                           <span data-testid="plugin-base-slug">{baseSlug}</span>
                         </div>
                       </div>
-
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
-                        {isOwner && (
-                          <PluginStatusIndicator
-                            processingStatus={
-                              plugin.processingStatus as ProcessingStatus
-                            }
-                          />
-                        )}
-                      </div>
                     </div>
-
-                    {/* Processing Banner */}
-                    {isOwner && plugin.processingStatus !== "published" && (
-                      <Suspense
-                        fallback={
-                          <Skeleton className="w-full h-[88px] rounded-xl" />
-                        }
-                      >
-                        <PluginProcessingBanner
-                          pluginId={plugin.id}
-                          processingStatus={
-                            plugin.processingStatus as ProcessingStatus
-                          }
-                          processingTitle={plugin.processingTitle}
-                          processingMessage={plugin.processingMessage}
-                        />
-                        <AutoRefreshStatus
-                          processingStatus={
-                            plugin.processingStatus as ProcessingStatus
-                          }
-                        />
-                      </Suspense>
-                    )}
                   </div>
                 </Suspense>
               </div>
             </div>
 
             {/* README Content with enhanced styling */}
-            {plugin.processingStatus === "published" ? (
+            {plugin.status === "published" ? (
               <div
                 className="group relative bg-card/40 hover:bg-card/50 backdrop-blur-xl 
                              border border-border/40 rounded-xl overflow-hidden
@@ -465,7 +428,7 @@ export default async function PluginPage({
             <div className="space-y-8 sticky top-8">
               <Suspense fallback={<InstallationSkeleton />}>
                 {/* Installation Card */}
-                {plugin.processingStatus === "published" && (
+                {plugin.status === "published" && (
                   <div
                     className="group relative bg-card/40 hover:bg-card/50 backdrop-blur-xl 
                                border border-border/40 rounded-xl overflow-hidden
@@ -614,25 +577,6 @@ export default async function PluginPage({
 
                         <div>
                           <dt className="text-sm text-muted-foreground mb-2">
-                            Last Updated
-                          </dt>
-                          <dd className="flex items-center gap-2 text-sm text-foreground">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span>
-                              <TimeAgo date={plugin.updatedAt} />
-                              <span className="text-xs text-muted-foreground ml-1.5">
-                                (
-                                {new Date(
-                                  plugin.updatedAt
-                                ).toLocaleDateString()}
-                                )
-                              </span>
-                            </span>
-                          </dd>
-                        </div>
-
-                        <div>
-                          <dt className="text-sm text-muted-foreground mb-2">
                             Published
                           </dt>
                           <dd className="flex items-center gap-2 text-sm text-foreground">
@@ -657,9 +601,7 @@ export default async function PluginPage({
                           <dd>
                             <a
                               href={
-                                plugin.githubUrl +
-                                "/releases/tag/" +
-                                plugin.releaseTag
+                                plugin.githubUrl
                               }
                               target="_blank"
                               rel="noopener noreferrer"
@@ -678,7 +620,7 @@ export default async function PluginPage({
                           Tensorify SDK Version
                         </dt>
                         <dd className="text-sm text-foreground">
-                          {plugin.tensorifyVersion}
+                          {plugin.sdkVersion}
                         </dd>
                       </div>
 

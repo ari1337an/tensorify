@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import db from "@/server/database/db";
 
 // Request schema for version checking
 const versionCheckSchema = z.object({
-  name: z.string().min(1, "Plugin name is required"),
-  version: z
-    .string()
-    .regex(/^\d+\.\d+\.\d+$/, "Version must follow semantic versioning"),
+  slug: z.string().min(1, "Plugin name is required"),
   access: z.enum(["public", "private"], {
     required_error: "Access level must be public or private",
   }),
@@ -23,17 +18,12 @@ export async function POST(request: NextRequest) {
   try {
     // Parse and validate request body
     const body = await request.json();
-    const { name, version, access } = versionCheckSchema.parse(body);
-
-    console.log(
-      `Checking version for plugin: ${name}@${version} with access: ${access}`
-    );
+    const { slug, access } = versionCheckSchema.parse(body);
 
     // Check if exact version already exists
-    const existingPlugin = await prisma.plugin.findFirst({
+    const existingPlugin = await db.plugin.findFirst({
       where: {
-        name: name,
-        version: version,
+        slug: slug,
       },
       select: {
         id: true,
@@ -47,30 +37,20 @@ export async function POST(request: NextRequest) {
 
     // If exact version exists, it's a conflict
     if (existingPlugin) {
-      const existingAccess = existingPlugin.isPublic ? "public" : "private";
       return NextResponse.json(
         {
           conflict: true,
-          existingAccess: existingAccess,
-          existingPlugin: {
-            id: existingPlugin.id,
-            name: existingPlugin.name,
-            version: existingPlugin.version,
-            status: existingPlugin.status,
-            createdAt: existingPlugin.createdAt,
-          },
-          message: `Plugin ${name}@${version} already exists with ${existingAccess} access`,
+          message: `Plugin ${slug} already exists.`,
         },
         { status: 409 }
       );
     }
 
     // Check for access level consistency with previous versions
-    const previousVersions = await prisma.plugin.findMany({
+    const previousVersions = await db.plugin.findMany({
       where: {
-        name: name,
-        NOT: {
-          version: version, // Exclude the current version we're checking
+        slug: {
+          startsWith: slug.split(":")[0],
         },
       },
       select: {
@@ -81,8 +61,12 @@ export async function POST(request: NextRequest) {
       orderBy: {
         createdAt: "desc",
       },
-      take: 10, // Check last 10 versions for pattern
+      take: 1,
     });
+
+    console.log({previousVersions})
+    console.log({slug})
+    console.log({access})
 
     // If there are previous versions, check access consistency
     if (previousVersions.length > 0) {
@@ -97,14 +81,8 @@ export async function POST(request: NextRequest) {
           {
             conflict: false,
             accessMismatch: true,
-            previousAccess: previousAccess,
-            requestedAccess: access,
-            previousVersions: previousVersions.map((v) => ({
-              version: v.version,
-              access: v.isPublic ? "public" : "private",
-              createdAt: v.createdAt,
-            })),
-            message: `Access level mismatch: Previous versions were ${previousAccess}, but requesting ${access}`,
+            available: false,
+            message: `Access level mismatch: Previous versions were ${previousAccess}, but currently you are requesting ${access}.`,
           },
           { status: 400 }
         );
@@ -117,13 +95,7 @@ export async function POST(request: NextRequest) {
         conflict: false,
         accessMismatch: false,
         available: true,
-        previousVersionsCount: previousVersions.length,
-        previousVersions: previousVersions.map((v) => ({
-          version: v.version,
-          access: v.isPublic ? "public" : "private",
-          createdAt: v.createdAt,
-        })),
-        message: `Plugin ${name}@${version} is available for publishing with ${access} access`,
+        message: `Plugin ${slug} is available for publishing with ${access} access`,
       },
       { status: 200 }
     );
@@ -155,35 +127,23 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * GET /api/plugins/version-check?name=...&version=...&access=...
+ * GET /api/plugins/version-check?slug=...
  * Alternative GET endpoint for version checking
  */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const name = searchParams.get("name");
-    const version = searchParams.get("version");
-    const access = searchParams.get("access");
+    const slug = searchParams.get("slug");
 
     // Validate query parameters
-    const {
-      name: validName,
-      version: validVersion,
-      access: validAccess,
-    } = versionCheckSchema.parse({
-      name,
-      version,
-      access,
-    });
+    const validatedSlug = versionCheckSchema.parse({ slug: slug });
 
     // Reuse the same logic as POST
     const postRequest = new Request(request.url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: validName,
-        version: validVersion,
-        access: validAccess,
+        slug: validatedSlug.slug,
       }),
     });
 

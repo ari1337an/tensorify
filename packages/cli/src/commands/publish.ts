@@ -43,6 +43,7 @@ interface ManifestJson {
   entrypointClassName: string;
   description?: string;
   author?: string;
+  keywords?: string[]; // Added for keywords
   [key: string]: any;
 }
 
@@ -87,6 +88,8 @@ class PluginPublisher {
   private authToken: string;
   private sdkVersion: string;
   private username: string; // Added to store the username
+  private keywords: string[]; // Added to store keywords
+  private readme: string;
 
   constructor(options: PublishOptions) {
     this.options = this.resolveOptions(options);
@@ -96,6 +99,8 @@ class PluginPublisher {
     this.authToken = "";
     this.sdkVersion = this.getSDKVersion();
     this.username = ""; // Initialize username
+    this.keywords = []; // Initialize keywords
+    this.readme = ""; // Initialize readme
   }
 
   /**
@@ -492,6 +497,17 @@ class PluginPublisher {
       fs.readFileSync(path.join(this.directory, "manifest.json"), "utf-8")
     );
 
+    // Extract keywords from manifest.json if available
+    if (
+      this.manifestJson.keywords &&
+      Array.isArray(this.manifestJson.keywords)
+    ) {
+      this.keywords = this.manifestJson.keywords;
+      console.log(
+        chalk.green(`  📚 Keywords detected: ${this.keywords.join(", ")}`)
+      );
+    }
+
     console.log(chalk.green("✅ Plugin structure validated\n"));
   }
 
@@ -760,7 +776,7 @@ class PluginPublisher {
     // Check consistency between package.json private flag and requested access
     if (requestedAccess === "public" && isPrivatePackage) {
       throw new Error(
-        'Cannot publish as public: package.json has "private": true'
+        'Cannot publish as public: package.json has "private": true. If the other versions were published as private then try with "--access=private" flag.'
       );
     }
 
@@ -790,8 +806,7 @@ class PluginPublisher {
       const response = await axios.post(
         `${this.options.frontend}/api/plugins/version-check`,
         {
-          name: this.packageJson.name,
-          version: this.packageJson.version,
+          slug: `${this.packageJson.name}:${this.packageJson.version}`,
           access: this.options.access,
         },
         {
@@ -817,14 +832,8 @@ class PluginPublisher {
       console.log(chalk.green("✅ No version conflicts found\n"));
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        if (error.response?.status === 404) {
-          console.log(chalk.green("✅ New plugin - no conflicts\n"));
-          return;
-        }
         throw new Error(
-          `Version check failed: ${
-            error.response?.data?.message || error.message
-          }`
+          `Version check failed: ${error.response?.data?.message}`
         );
       }
       throw error;
@@ -996,6 +1005,12 @@ class PluginPublisher {
       { path: "icon.svg", fieldName: "icon" },
     ];
 
+    const readmePath = path.join(this.directory, "README.md");
+    if (fs.existsSync(readmePath)) {
+      this.readme = fs.readFileSync(readmePath, "utf-8");
+      filesToUpload.push({ path: "README.md", fieldName: "readme" });
+    }
+
     try {
       // Create form data
       const form = new FormData();
@@ -1098,6 +1113,9 @@ class PluginPublisher {
             entrypointClassName: this.manifestJson.entrypointClassName,
             repository: this.packageJson.repository?.url,
             files: uploadedFiles,
+            sdkVersion: this.sdkVersion, // Pass sdkVersion
+            tags: this.keywords.join(","), // Pass keywords as comma-separated string
+            readme: this.readme,
           },
         },
         {
@@ -1111,11 +1129,7 @@ class PluginPublisher {
       console.log(chalk.green("✅ Upload completion notified"));
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        throw new Error(
-          `Notification failed: ${
-            error.response?.data?.message || error.message
-          }`
-        );
+        throw new Error(error.response?.data?.error);
       }
       throw error;
     }

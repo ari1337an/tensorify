@@ -60,7 +60,7 @@ export async function getAuthorDetails(
       plugins = await db.plugin.findMany({
         where: {
           authorName: authorIdWithoutAt,
-          processingStatus: "published",
+          status: "published",
         },
         orderBy: {
           createdAt: "desc",
@@ -70,7 +70,7 @@ export async function getAuthorDetails(
       plugins = await db.plugin.findMany({
         where: {
           authorName: authorIdWithoutAt,
-          processingStatus: "published",
+          status: "published",
           isPublic: true,
         },
         orderBy: {
