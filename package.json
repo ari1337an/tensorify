@@ -12,7 +12,7 @@
     "services/plugins.tensorify.io"
   ],
   "scripts": {
-    "dev": "turbo run dev --filter='./services/api' --filter='./services/plugins.tensorify.io' --parallel",
+    "dev": "turbo run dev --filter='./packages/plugin-engine' --filter='./services/api' --filter='./services/plugins.tensorify.io' --parallel",
     "dev:services:api": "turbo run build --filter='./packages/plugin-engine' && turbo run dev --filter='./packages/plugin-engine' --filter='./services/api' --parallel",
     "dev:packages:plugin-engine": "turbo run dev --filter='./packages/plugin-engine'",
     "dev:packages:sdk": "turbo run dev --filter='./packages/sdk/v1'",

@@ -881,11 +881,69 @@ class PluginPublisher {
         entryPoints: [entryPoint],
         bundle: true,
         outfile: bundleFile,
-        format: "cjs",
-        target: "node16",
-        external: ["@tensorify.io/sdk"],
-        minify: true,
+        format: "iife",
+        globalName: "PluginBundle",
+        target: "es2020",
+        external: ["fs", "path", "crypto", "os", "util", "stream", "events"], // Keep external
+        minify: false,
+        keepNames: true,
         sourcemap: false,
+        treeShaking: false,
+        packages: "bundle",
+        platform: "neutral",
+        define: {
+          "process.env.NODE_ENV": '"production"',
+          global: "globalThis",
+          process: "{}",
+        },
+        banner: {
+          js: `
+    // Polyfills for Node.js built-ins in isolated-vm
+    const polyfills = {
+      fs: {
+        existsSync: () => false,
+        readFileSync: () => '',
+        writeFileSync: () => {},
+        mkdirSync: () => {},
+        statSync: () => ({ isDirectory: () => false, isFile: () => false })
+      },
+      path: {
+        join: (...args) => args.filter(Boolean).join('/'),
+        resolve: (...args) => args.filter(Boolean).join('/'),
+        dirname: (p) => p.split('/').slice(0, -1).join('/') || '/',
+        basename: (p) => p.split('/').pop() || '',
+        extname: (p) => { const parts = p.split('.'); return parts.length > 1 ? '.' + parts.pop() : ''; }
+      },
+      crypto: {
+        createHash: () => ({ update: () => ({}), digest: () => 'mock-hash' })
+      },
+      os: {
+        platform: () => 'neutral',
+        tmpdir: () => '/tmp'
+      },
+      util: {
+        promisify: (fn) => fn
+      },
+      stream: {},
+      events: {
+        EventEmitter: class EventEmitter {
+          on() {}
+          emit() {}
+          removeListener() {}
+        }
+      }
+    };
+    
+    // Override require to use polyfills
+    globalThis.require = (id) => {
+      if (polyfills[id]) return polyfills[id];
+      throw new Error('Module not found: ' + id);
+    };
+    
+    // Also set them on globalThis for direct access
+    Object.assign(globalThis, polyfills);
+          `.trim(),
+        },
       });
       console.log(chalk.green("  ✅ Bundle created"));
     } catch (error) {

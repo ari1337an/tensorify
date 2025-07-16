@@ -12,7 +12,7 @@ import {
 import { contracts, actions, openapi } from "./loader";
 import swaggerUi from "swagger-ui-express";
 
-import { uploadService } from "./services/upload-service";
+import { uploadService } from "./utils/upload";
 
 // Create Express app
 const app = express();

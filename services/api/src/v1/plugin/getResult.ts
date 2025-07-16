@@ -84,8 +84,12 @@ export const mainFunction = async (
     // Get plugin result - test with PyTorch linear layer
     const result = await engine.getExecutionResult(
       slug,
-      { inFeatures: 784, outFeatures: 128, bias: true },
-      "generateLinearLayer"
+      {
+        inFeatures: 784,
+        outFeatures: 128,
+        bias: true,
+      },
+      "TensorifyPlugin"
     );
 
     // Clean up engine resources

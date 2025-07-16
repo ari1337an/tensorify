@@ -64,10 +64,6 @@ export async function POST(request: NextRequest) {
       take: 1,
     });
 
-    console.log({previousVersions})
-    console.log({slug})
-    console.log({access})
-
     // If there are previous versions, check access consistency
     if (previousVersions.length > 0) {
       const previousAccess = previousVersions[0].isPublic

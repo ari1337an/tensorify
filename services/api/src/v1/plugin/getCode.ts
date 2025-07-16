@@ -75,7 +75,7 @@ export const mainFunction = async (
                 process.env.S3_SESSION_TOKEN || process.env.AWS_SESSION_TOKEN,
             }
           : undefined,
-      forcePathStyle: !!process.env.S3_ENDPOINT,
+      forcePathStyle: true,
     };
 
     // Create plugin engine using the new clean API

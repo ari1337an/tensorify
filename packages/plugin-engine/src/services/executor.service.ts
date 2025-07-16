@@ -313,57 +313,63 @@ export class IsolatedVMExecutorService implements IExecutorService {
   private async executeWithContext(
     context: ivm.Context,
     payload: any,
-    entryPointString: string,
+    entryPointString: string, // This should be the className
     processedCode: string
   ): Promise<string> {
     const payloadJson = JSON.stringify(payload);
-    const entryPoint = entryPointString;
+    const className = entryPointString;
 
     // Create a single script that includes the plugin code and execution logic
     const combinedCode = `
-      // Set up minimal module system
-      var module = { exports: {} };
-      var exports = module.exports;
-      
       ${processedCode}
       
       (function() {
         try {
           var payload = JSON.parse('${payloadJson.replace(/'/g, "\\'")}');
-          var entryPoint = '${entryPoint}';
+          var className = '${className}';
           
-          var exported = module.exports;
+          // The IIFE bundle creates a global PluginBundle variable
+          if (typeof PluginBundle === 'undefined') {
+            return 'Error: PluginBundle not found. Make sure the bundle was created with globalName: "PluginBundle"';
+          }
           
-          // Handle different export patterns
-          var fn;
-          if (typeof exported === 'function') {
-            // Direct function export
-            fn = exported;
-          } else if (exported[entryPoint]) {
-            // Named export
-            fn = exported[entryPoint];
-          } else if (exported.default && exported.default[entryPoint]) {
-            // Default export with method
-            fn = exported.default[entryPoint];
-          } else if (exported.default && typeof exported.default === 'function') {
-            // Default function export
-            fn = exported.default;
+          var PluginClass;
+          
+          // Handle different export patterns for the class
+          if (typeof PluginBundle === 'function') {
+            // Direct class export
+            PluginClass = PluginBundle;
+          } else if (PluginBundle[className]) {
+            // Named class export
+            PluginClass = PluginBundle[className];
+          } else if (PluginBundle.default) {
+            // Default export (most common with esbuild IIFE)
+            PluginClass = PluginBundle.default;
           } else {
-            // Try to find method on any exported class instances
-            for (var key in exported) {
-              if (exported[key] && typeof exported[key][entryPoint] === 'function') {
-                fn = exported[key][entryPoint].bind(exported[key]);
+            // Try to find the class in the bundle
+            for (var key in PluginBundle) {
+              if (typeof PluginBundle[key] === 'function' && key === className) {
+                PluginClass = PluginBundle[key];
                 break;
               }
             }
           }
           
-          if (typeof fn !== 'function') {
-            return 'Error: Function ' + entryPoint + ' not found in exports. Available: ' + Object.keys(exported).join(', ');
+          if (typeof PluginClass !== 'function') {
+            return 'Error: Class ' + className + ' not found in PluginBundle. Available: ' + Object.keys(PluginBundle).join(', ');
           }
           
-          var result = fn(payload);
+          // Create an instance of the plugin class
+          var pluginInstance = new PluginClass();
+          
+          // Call getTranslationCode method with the payload
+          if (typeof pluginInstance.getTranslationCode !== 'function') {
+            return 'Error: getTranslationCode method not found on ' + className + '. Available methods: ' + Object.getOwnPropertyNames(pluginInstance).filter(p => typeof pluginInstance[p] === 'function').join(', ');
+          }
+          
+          var result = pluginInstance.getTranslationCode(payload);
           return String(result);
+          
         } catch (error) {
           return 'Error: ' + error.message + '\\nStack: ' + (error.stack || 'No stack trace');
         }

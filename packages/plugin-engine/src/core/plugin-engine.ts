@@ -314,7 +314,7 @@ export class PluginEngine {
    */
   private getPluginPath(pluginSlug: string): string {
     const basePath = this.config.basePath || "";
-    const pluginPath = `${pluginSlug}/index.js`;
+    const pluginPath = `${pluginSlug}/bundle.js`;
 
     return basePath ? `${basePath}/${pluginPath}` : pluginPath;
   }
