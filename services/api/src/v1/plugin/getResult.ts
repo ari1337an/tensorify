@@ -16,11 +16,12 @@ const c = initContract();
 export const contract = c.router({
   // RecursivelyProccessAppRouter
   contract: {
-    method: "GET",
+    method: "POST",
     path: "/plugin/getResult",
     query: z.object({
       slug: PluginSlugSchema,
     }),
+    body: z.record(z.any()), // Allow any JSON object as payload
     responses: {
       200: z.object({
         id: z.string(),
@@ -43,6 +44,7 @@ export const mainFunction = async (
   request: ContractRequest
 ): Promise<ContractResponse> => {
   const slug = request.query.slug;
+  const payload = request.body;
   try {
     // Get bucket name from environment
     const bucketName = process.env.S3_BUCKET_NAME;
@@ -84,11 +86,7 @@ export const mainFunction = async (
     // Get plugin result - test with PyTorch linear layer
     const result = await engine.getExecutionResult(
       slug,
-      {
-        inFeatures: 784,
-        outFeatures: 128,
-        bias: true,
-      },
+      payload,
       "TensorifyPlugin"
     );
 

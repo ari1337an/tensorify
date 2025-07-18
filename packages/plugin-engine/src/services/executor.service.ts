@@ -382,7 +382,18 @@ export class IsolatedVMExecutorService implements IExecutorService {
 
     // Execute everything as a single script to avoid transferable value issues
     const result = context.evalSync(combinedCode);
-    return String(result);
+    const resultString = String(result);
+
+    // TODO: fix this later, right now its mimicking docker id like random id
+    const randomId = Array.from({ length: 12 }, () =>
+      Math.floor(Math.random() * 16).toString(16)
+    ).join("");
+    const sanitizedResult = resultString.replace(
+      /<isolated-vm>/g,
+      `${randomId}`
+    );
+
+    return sanitizedResult;
   }
 
   /**

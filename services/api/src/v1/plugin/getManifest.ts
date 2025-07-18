@@ -10,6 +10,8 @@ import { PluginSlugSchema } from "../schema";
 import { createPluginEngine } from "@tensorify.io/plugin-engine";
 import { initServer } from "@ts-rest/express";
 
+import { v4 as uuidv4 } from "uuid";
+
 const s = initServer();
 const c = initContract();
 
@@ -17,23 +19,25 @@ export const contract = c.router({
   // RecursivelyProccessAppRouter
   contract: {
     method: "GET",
-    path: "/plugin",
+    path: "/plugin/getManifest",
     query: z.object({
       slug: PluginSlugSchema,
     }),
     responses: {
       200: z.object({
-        id: z.string(),
-        slug: z.string(),
-        code: z.string(),
-        manifest: z.string(),
+        success: z.literal(true),
+        data: z.record(z.any()),
+        meta: z.object({
+          request_id: z.string().uuid(),
+          timestamp: z.string().datetime(),
+        }),
       }),
       400: z.object({
         status: z.literal("error"),
         message: z.string(),
       }),
     },
-    summary: "Get plugin code by slug",
+    summary: "Get plugin manifest by slug",
     strictStatusCodes: true, // MUST as the upstream contracts require it
   },
 });
@@ -82,11 +86,8 @@ export const mainFunction = async (
     const engine = createPluginEngine(s3Config, bucketName, {
       debug: process.env.NODE_ENV === "development",
     });
-    
-    // Get plugin source code
-    const pluginCode = await engine.getPluginCode(slug);
 
-    const manifest = JSON.stringify(await engine.getPluginManifest(slug), null, 2);
+    const manifest = await engine.getPluginManifest(slug);
 
     // Clean up engine resources
     await engine.dispose();
@@ -94,10 +95,12 @@ export const mainFunction = async (
     return {
       status: 200,
       body: {
-        id: "1",
-        slug: slug,
-        code: pluginCode,
-        manifest: manifest,
+        success: true,
+        data: manifest,
+        meta: {
+          request_id: uuidv4(),
+          timestamp: new Date().toISOString(),
+        },
       },
     };
   } catch (error) {
@@ -112,7 +115,7 @@ export const mainFunction = async (
         message:
           error instanceof Error
             ? error.message
-            : "Failed to retrieve plugin code",
+            : "Failed to retrieve plugin manifest",
       },
     });
   }
