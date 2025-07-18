@@ -1,0 +1,268 @@
+// schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Enums
+
+enum ResourceType {
+  ORGANIZATION
+  TEAM
+  PROJECT
+  WORKFLOW
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+enum PermissionType {
+  ALLOW
+  DENY
+}
+
+enum MembershipRole {
+  MEMBER
+  ADMIN
+  OWNER
+}
+
+/// Models
+
+model User {
+  id        String @id @default(uuid())
+  email     String @unique
+  firstName String
+  lastName  String
+  imageUrl  String
+
+  /// Organizational memberships
+  createdOrgs Organization[]  @relation("OrgCreator")
+  memberships OrgMembership[] @relation("UserMemberships")
+  teams       Team[]          @relation("TeamMembers")
+  projects    Project[]       @relation("ProjectMembers")
+  workflows   Workflow[]      @relation("WorkflowMembers")
+
+  userRoles     UserRole[]
+  invitations   Invitation[]   @relation("Inviter")
+  auditLogs     AuditLog[]
+  userResources UserResource[] @relation("UserResourcesRelation")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrgMembership {
+  id             String         @id @default(uuid())
+  user           User           @relation("UserMemberships", fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  organization   Organization   @relation("OrgMemberships", fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  role           MembershipRole @default(MEMBER)
+  isDefault      Boolean        @default(false) // Indicates if this is the user's default organization
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
+}
+
+model Organization {
+  id          String @id @default(uuid())
+  name        String
+  slug        String @unique
+  createdBy   User   @relation("OrgCreator", fields: [createdById], references: [id])
+  createdById String
+
+  members OrgMembership[] @relation("OrgMemberships")
+  teams   Team[]          @relation("OrgTeams")
+  roles   Role[]          @relation("OrgRoles")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Team {
+  id          String       @id @default(uuid())
+  name        String
+  description String?
+  org         Organization @relation("OrgTeams", fields: [orgId], references: [id])
+  orgId       String
+
+  members  User[]    @relation("TeamMembers")
+  projects Project[] @relation("TeamProjects")
+  roles    Role[]    @relation("TeamRoles")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Project {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  team        Team    @relation("TeamProjects", fields: [teamId], references: [id])
+  teamId      String
+
+  members   User[]     @relation("ProjectMembers")
+  workflows Workflow[] @relation("ProjectWorkflows")
+  roles     Role[]     @relation("ProjectRoles")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Workflow {
+  id               String                     @id @default(uuid())
+  name             String
+  description      String
+  versions         WorkflowVersion[]          @relation("WorkflowVersions")
+  project          Project                    @relation("ProjectWorkflows", fields: [projectId], references: [id])
+  projectId        String
+  installedPlugins WorkflowInstalledPlugins[] @relation("WorkflowInstalledPlugins")
+
+  members User[] @relation("WorkflowMembers")
+  roles   Role[] @relation("WorkflowRoles")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WorkflowVersion {
+  id String @id @default(uuid())
+
+  // Version metadata
+  summary     String
+  description String?
+  version     String  @default("1.0.0")
+  code        Json    @default("{}")
+
+  workflow   Workflow @relation("WorkflowVersions", fields: [workflowId], references: [id])
+  workflowId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WorkflowInstalledPlugins {
+  id   String @id @default(uuid())
+  slug String
+
+  workflow   Workflow @relation("WorkflowInstalledPlugins", fields: [workflowId], references: [id])
+  workflowId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workflowId, slug])
+}
+
+model PermissionDefinition {
+  id     String           @id @default(uuid())
+  action String           @unique
+  roles  RolePermission[]
+}
+
+model Role {
+  id           String       @id @default(uuid())
+  name         String
+  description  String?
+  resourceType ResourceType
+  resourceId   String?
+
+  // Scoped inverse relations
+  organization   Organization? @relation("OrgRoles", fields: [organizationId], references: [id])
+  organizationId String?
+  team           Team?         @relation("TeamRoles", fields: [teamId], references: [id])
+  teamId         String?
+  project        Project?      @relation("ProjectRoles", fields: [projectId], references: [id])
+  projectId      String?
+  workflow       Workflow?     @relation("WorkflowRoles", fields: [workflowId], references: [id])
+  workflowId     String?
+
+  permissions   RolePermission[]
+  userRoles     UserRole[]
+  invitations   Invitation[]     @relation("RoleInvitations")
+  userResources UserResource[]   @relation("RoleResources")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RolePermission {
+  id           String               @id @default(uuid())
+  role         Role                 @relation(fields: [roleId], references: [id])
+  roleId       String
+  permission   PermissionDefinition @relation(fields: [permissionId], references: [id])
+  permissionId String
+  type         PermissionType       @default(ALLOW)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserRole {
+  id        String    @id @default(uuid())
+  user      User      @relation(fields: [userId], references: [id])
+  userId    String
+  role      Role      @relation(fields: [roleId], references: [id])
+  roleId    String
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Invitation {
+  id             String           @id @default(uuid())
+  email          String
+  token          String           @unique
+  resourcePath   String
+  propagateRoles Boolean          @default(false)
+  status         InvitationStatus @default(PENDING)
+  expiresAt      DateTime         @default(dbgenerated("now() + interval '72 hours'"))
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  role      Role   @relation("RoleInvitations", fields: [roleId], references: [id])
+  roleId    String
+  inviter   User   @relation("Inviter", fields: [inviterId], references: [id])
+  inviterId String
+
+  @@index([status])
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  action       String
+  details      Json?
+  outcome      String
+  resourcePath String
+  timestamp    DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+}
+
+model UserResource {
+  id            String   @id @default(uuid())
+  resourcePath  String
+  inheritedFrom String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user   User   @relation("UserResourcesRelation", fields: [userId], references: [id])
+  userId String
+
+  role   Role?   @relation("RoleResources", fields: [roleId], references: [id])
+  roleId String?
+}

@@ -1,0 +1,18 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+Sample Good TS-REST Test files are [onboardingSetup.test.ts](mdc:src/app/api/v1/_contracts/onboarding/onboardingSetup.test.ts) [onboardingQuestions.test.ts](mdc:src/app/api/v1/_contracts/onboarding/onboardingQuestions.test.ts) [getRoles.test.ts](mdc:src/app/api/v1/_contracts/roles/getRoles.test.ts)  [postRoles.test.ts](mdc:src/app/api/v1/_contracts/roles/postRoles.test.ts) [patchRole.test.ts](mdc:src/app/api/v1/_contracts/roles/patchRole.test.ts) (While you are in thinking stage, analyze these good test files to learn how to write tests for this project in what way to be consistent with the project)
+
+You have to write tests with using [test-utils.ts](mdc:src/app/api/v1/_contracts/test-utils.ts) in such a way that main functionality and edge cases are covered which includes but not limited to:
+1. Authentication Guard Check 
+2. Invalid Request that doesn't follow the schema 
+3. Edge cases that might break in real time and in some attacks (this is important for security reasons)
+
+Now, write tests in with file name [filename].test.ts for [filename].ts in the same directory of that [filename].ts. 
+
+You cannot ever run the whole test suite of the project, just check if your tests are correct by running this command: """npm run test:args -- src/app/api/v1/_contracts/[groupName]/[filename].test.ts""" for the tests of src/app/api/v1/_contracts/[groupName]/[filename].ts file.
+
+you cannot edit [auth-utils.ts](mdc:src/app/api/v1/_contracts/auth-utils.ts) or [test-utils.ts](mdc:src/app/api/v1/_contracts/test-utils.ts)

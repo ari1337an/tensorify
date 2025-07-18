@@ -1,0 +1,167 @@
+<context>
+# Overview  
+This document outlines the Product Requirements for tensorify.io, a visual AI development platform. Tensorify empowers students, researchers, and enterprise teams to construct AI pipelines by seamlessly connecting nodes on a canvas. The visual node editor’s JSON representation is then sent to the backend, where it undergoes parsing and generation of Python code through the Tensorify Transpiler (The Transpiler Microservice is Ready). Tensorify is a collaborative, enterprise-grade platform designed to optimize the development and management of AI-driven applications. It caters to organizations and teams seeking efficient building, sharing, and scaling of AI solutions, prioritizing security, extensibility, and a user-centric experience. Tensorify addresses the challenge of writing repetitive AI pipeline code for students who want to write PyTorch pipeline codes, researchers who want to rapidly develop experimental AI pipeline codes, teams who want to collaborate and build AI, and enterprises that want their different teams to lead AI projects all in a single platform. The nodes are installable plugins (we have already built the plugin repository and its API endpoints), making it valuable because we can reuse the blocks of AI pipelines and move quickly.
+
+# Core Features  
+- Role Based Access Controls 
+  - What it does: Access of different resources (Resources are: organizations, teams, projects,and workflows) are controllable to one who have appropiate roles. 
+  - Why it's important: Enables secure, role-based access and collaboration at scale.  The Tensorify Platform charges users per user seat so this access controls is the most crucial thing rather than the AI Pipeline Canvas thing.
+  - How it works: Administrators create roles (e.g., "Org Admin," "Project Manager") tied to specific resources (e.g., an organization or project). Each role is assigned permissions (e.g., read, edit, delete) that define allowed actions. Users are then assigned one or more roles. Then at the code level we check if a user has permission (e.g., hasPermission(UserObj, ResourceObj, actionString) where actionstring can be “team:invite”) and it will be either true if allowed or false if denied after appropiate checks according to the Users role and each roles permissions. Resources are connected like : Organization can have many teams, a team can have many projects, and a project can have many workflows. There would be people with audit permission who can audit this access controls system. Expiration of permissions is also in scope. 
+
+- Onboarding & Invitations 
+  - What it does: Streamlines onboarding for new users and handles invitation acceptance. 
+  - Why it's important: Reduces friction for new users, increases conversions, and ensures secure access. - How it works: Email-based invitations via a link, onboarding flows, and context-aware sign-up/sign-in. New users can create new org upon invitation and appropiate organization questions are being answerd at the onboarding stage. Then the user can invite felow teammates and assign custom roles that has necessary permissions so that teammates can prevail. The invitation link is sent to the email address and when the user click the invitation link they are also onboarded to the appropiate resources in a granular hirerarchial way. 
+
+- Workflow/Canvas 
+  - What it does: Provides a collaborative space for building and managing AI workflows or applications. 
+  - Why it's important: Centralizes AI Pipeline Experiment and enables real-time collaboration. 
+  - How it works: Interactive UI for creating, editing, and sharing AI pipelines. Different collaborations with appropiate permissions can drag and drop and build the pipeline in real time. They can share the workflow to others as needed (for perhaps their research papers they can export the canvas image) Nodes are plugins in this Tensorify. Nodes are installble components written by community or users themselves and nodes will be in the Tensorify Plugin Repository. In a workflow a user can install a plugin by submitting the plugins slug which are for example @faisalahmedsft/exai:1.0.0 like these for Explainable AI plugin of version 1.0.0). Workflow can have changes history, lock and unlock features so that no one can edit if required, comments, share, export buttons. Workflows will have multiple versions (v1.0.0, v1.0.1 etc version controls).
+
+# User Experience  
+
+Any user that is first who joined the platform without any invitation would signup and an onboarding screen in /onboarding route would be visible with some questions fetched from the onboarding questions api. After these 2-3 questions (depends on the API) are answered then they would be asked to name their organization and the size of the organization. After completting the onboarding the system would setup the account by sending the full data to the onboarding setup api endpoint that will do 1) send the onboarding responses to some backend 2) setup necessary rows in the database for the user 3) create some dummy projects, teams, and workflows. After the onboarding setup is success then the user is redirected to route “/“ of the org url they chose (in production this would be [org-slug].app.tensorify.io and in development it would be [org-slug].localhost:3000. This org-slug is chosen at onboarding stage by the user himself. 
+
+Now they can see left sidebar (collapsible) and right side have the canvas. The canvas would be a react-flow canvas. Top bar would have the Collapse button for sidebar, the breadcrump where the user is (which project and which workflow) on the left of topbar and on right topbar would be the collaborator avatars who is editing this workflow, the lock and unlock button (if the user has permission to lock this workflow), changes history of the workflow button, comments button, share button, export button (this sends the workflow JSON to the transpiler backend). Now, the left sidebar if opened then we can see the team selector at the top where the user can select which team they want to see (only invited and accessible teams list will be there for the user). Also there would be logout button. Under the team name there is organization name which this team belongs to and the count of memebers in that organization. A default team would be selected. Then there would be draft worflows that the user can draft their works under the team selector. By clicking any tiles in the draft tile in sidebar that workflow would be opened in the right canvas though like a Single Page App like loading.  Under the draft workflows sections there would be Projects sections and under each project tiles there would be workflow likes just like the draft workflow tiles. The project tiles and workflow tiles all are drag and drop orderable based on user preference for them only. Under the Project section, there is a gap and settings tile, archive tile (for drag and dropping any workflows there) There is also a trash tile. At the sidebar footer there is “Explore Plugins” and “Refer and Earn” tiles which are special buttons to send user to plugin repo and and affiliate program (affliate program for tensorify is coming soon). 
+
+If the settings tile is clicked then a big dialog box would appear where the settings UI is shown. Settings section has left and right part. Left has a settings sidepanel and right side has the necessary settings. Left panel has different groups: Account, Organization, Access Control. 
+
+In the settings dialog, in the Account left panel section there is sub sections in left panel: 1) [User Full name] 2) Preferences;  In the User full name panel if clicked (this will be the default opened one) then the right panel would have: First name, Last Name, Portrait Change, Email Change Field (But it should be disabled), And Logout of all devices button, and List of active Sessions. In the Preferences tab there is Theme Preference for the app: Light, Dark, System; The App is light and dark mode supported. In Organization Section there is General, People, Teamspaces tabs: General have List of other Organizations that the user can open and also the current organization card where there is a org name and org slug (org url) edit field (But these fields are disabled as it would require permissions and a paying customer account).  The people tab would have the data table for all users of this organization in list and this data table is filter supported and searchable and it have view filters also invite link button. The invitation button would open another dialog on top with email input and role inputs (bubbles, as a user can have multiple roles). The data table would have Name, Email, Status(Active, Invited), Roles (Some roles are truncated bubbles with +n with hover to see effect). The action button for the row of data table would have Remove member button that would soft delete the member and revoke all roles from this user and detach any membership with this organization. Teamspace tab also have this same Data table but with list of teams under this organization with columns: Name of team , Admin of team, Member count and action button (View list of members as datatable, View all Projects under this team as datatable (Which have its own action to view all workflows under this project as datatable etc…). Acces Control Section have Role Based Access Control Tab where it have Role creation form (Role Name, Permission name, and we can bound a permission to specific resource too here, expiration date can also be fixed here. and this form is too robust and UI/UX friendly)
+
+Enterpise Admin Persona manages org-wide governance, compliance, and billing. Only this One account is responsible for all the billings for the entire organization usage. 
+
+A user can be invited into some resource with some roles (which have permissions) via email link invite by another user who have that resource’s invite permission. When clicking the invite link the user will be redirected to accept invite page where they can accept the invite and enable the account. Necessary accounts are created during the invitation sending. 
+
+A user in a workflow who have the permission of read and update can drag and drop necessary plugins nodes into the workflow (canvas). And connect these react-flow nodes  with each other. (For example, Data loading -> Data Preprocessing -> Data Augmentation -> Branch -> Model A / Branch -> Model B -> Results is some flow) which the user will build. And after building they can export click and get the python code from the transpiler backend. Or Share the workflow react flow canvas via the share button if they have the permission of Share.  Other users can collaborate in real time (see live cursors and change history and comment throughout the AI Development Pipeline). Upon clicking on the preview button on the node they can see the generated code made by that node in a dialog or some sort.
+
+The org admin is charged with the number of people in the organization ($x/user seat/month) and this amount is only accounted for if that user accepts invite.
+
+A a onboarded/invited user can belong to multiple organizations. so the [org-slug].app.tensorify.io  or [org-slug].localhost:3000 ’s [org-slug] would be checked against to see if they have the permission to enter this url or not. If they visit app.tensorify.io or localhost:3000 only then they will be redirected to one of the organization they joined first. If that user is not onboarded to any organization then they will be redirected to [org-slug].localhost:3000/onboarding or app.tensorify.io/onboarding or app.tensorify.io /onboarding/accept-invitation as appropiately.
+</context>
+
+<PRD>
+# Technical Architecture  
+- System Components
+  - Frontend: Next.js + React Flow, Tailwind UI, Shadcn UI, Zustand for state, Prisma ORM with PostgreSQL, Clerk Authentication for User Signin/Signup handling and session management (Not using the orgnaization signup from Clerk, we are building our own as Clerk restricts the number of organization there)
+
+- Data Models
+User(id, email, firstName, lastName, imageUrl, createdAt, updatedAt)
+Organization(id, name, slug, createdById, createdAt, updatedAt)
+OrgMembership(id, userId, organizationId, role, isDefault, createdAt, updatedAt)
+Team(id, name, orgId, createdAt, updatedAt)
+Project(id, name, teamId, createdAt, updatedAt)
+Workflow(id, name, projectId, createdAt, updatedAt)
+Role(id, name, description?, resourceType, resourceId?, organizationId?, teamId?, projectId?, workflowId?, createdAt, updatedAt)
+PermissionDefinition(id, action)
+RolePermission(id, roleId, permissionId, type, createdAt, updatedAt)
+UserRole(id, userId, roleId, expiresAt?, createdAt, updatedAt)
+Invitation(id, email, token, resourcePath, propagateRoles, status, expiresAt, roleId, inviterId, createdAt, updatedAt)
+AuditLog(id, action, details?, outcome, resourcePath, timestamp, userId)
+UserResource(id, resourcePath, inheritedFrom?, userId, roleId?, createdAt, updatedAt)
+And the relations are: each User can have multiple OrgMembership records tying them to organizations, can create many Organizations, and can belong to multiple Teams, Projects, and Workflows; Users also hold any number of UserRole assignments, send multiple Invitations, generate numerous AuditLogs, and own multiple UserResources. An Organization is created by exactly one User and in turn has many OrgMemberships, Teams, and Roles, with each OrgMembership linking one User to one Organization. A Team belongs to a single Organization and may include many Users as members, host multiple Projects, and define its own Roles. Each Project lives under one Team and can have many Users assigned, many Workflows, and its own set of Roles. A Workflow is scoped to one Project and likewise may include multiple Users and define multiple Roles. Every Role may optionally be scoped to an Organization, Team, Project, or Workflow; it grants permissions through multiple RolePermissions, can be assigned to users via UserRoles, can be issued to external users through Invitations, and can govern direct resource assignments in UserResources. A PermissionDefinition enumerates possible actions and links via RolePermission entries—each ties exactly one Role to one PermissionDefinition and specifies whether that permission is allowed or denied. Each UserRole connects one User to one Role (with an optional expiration), each Invitation binds one Role to a target email and records its inviting User with status and expiry, each AuditLog records one User’s action against a resource path (capturing details, outcome, and timestamp), and each UserResource tracks one User’s direct access to a resource path, optionally inherited from a given Role.
+
+- APIs & Integrations  
+TS-REST is used for REST API Creation in NextJS. The api is versioned at v1 with prefix /api/v1 and strongly typed with schema. This is stored in src/app/api/v1  and in it the src/app/api/v1/_client/client.ts has the client server actions in NextJS that calls the endpoints rather than calling the api endpoints directly. all contracts are in src/app/api/v1/_contracts and all necessary types and zod schemas are in src/app/api/v1/_contracts/schema.ts 
+
+- Infrastructure
+  - NextJS (will be hosted in DigitalOcean Droplet VPS)
+  - PostgresSQL(will be hosted in DigitalOcean Droplet VPS)
+
+# Development Roadmap  
+- MVP Requirements:
+  - User authentication using Clerk
+  - Main layout of the app
+  - User onboarding flows
+  - Role creation
+  - Settings Dialog being fully functional
+  - User invitation flows
+  - Organization/team/project/workflow creation
+  - Organization/team/project/workflow access controls checks
+  - Workflow/Canvas being ready for AI workflows
+  - Plugin installation per workflow
+  - Installed Plugin drag and dropable
+  - Tensorify Transpiler Backend Integration with Export button
+  - Audit page for auditors
+  - Billing Management for Admin for accepted invitation users payments processing
+- Future Enhancements:
+  - Version controlling of workflow 
+  - Collaboration in workflow in real time 
+  - Comments in workflow 
+  - Sharing workflow links 
+  - Guest user invite 
+  - Advanced analytics and monitoring using Google Analytics 4 and Posthog
+
+# Logical Dependency Chain
+- User authentication using Clerk  
+- Main layout of the app UI (sidebar, top bar, and empty canvas)  
+- Dark mode and light mode  
+- Settings dialog fully functional with the datatables  
+- Organization creation flow  
+- Team creation flow  
+- Project creation flow  
+- Workflow creation flow  
+- Access control enforcement on all CRUD operations  
+- Onboarding flows (org selection/creation)  
+- Draft workflow creation embedded in onboarding  
+- Invitation flows (email‑based token invites, accept/revoke)  
+- Workflow UI with React Flow (canvas)  
+- Plugin installation per workflow  
+- Drag‑and‑drop plugin nodes onto the canvas  
+- Export button sending JSON to the Transpiler microservice via REST API  
+- Audit pages (complete change history)  
+- Billing Management for Admin (track accepted‑invitation users, process payments)   
+
+# Risks and Mitigations  
+- User authentication using Clerk  
+  - Risk: Delays due to unfamiliarity with Clerk’s APIs  
+  - Mitigation: Kick off with a dedicated spike, review official samples, and reserve time for integration  
+- Main layout of the app UI (sidebar, top bar, and empty canvas)  
+  - Risk: Inconsistent responsive behavior across viewports  
+  - Mitigation: Define breakpoints up front, leverage a proven CSS framework, and test early on devices  
+- Dark mode and light mode  
+  - Risk: Theme flicker or mismatched component styles  
+  - Mitigation: Centralize colors in CSS variables, build a toggle mockup, and smoke‑test on every page  
+- Settings dialog fully functional with the datatables  
+  - Risk: Performance degradation with large record sets  
+  - Mitigation: Implement server‑side pagination and lazy loading, benchmark with realistic datasets  
+- Organization, Team, Project & Workflow creation flows  
+  - Risk: Data integrity issues (orphaned resources)  
+  - Mitigation: Enforce referential integrity in the database and validate payloads in both frontend and backend  
+- Access control enforcement on all CRUD operations  
+  - Risk: Privilege escalation or unauthorized access loopholes  
+  - Mitigation: Centralize RBAC logic in middleware, write exhaustive endpoint tests, and conduct periodic audits  
+- Onboarding flows (org selection/creation + embedded draft workflow)  
+  - Risk: Overwhelming new users and high drop‑off rates  
+  - Mitigation: Wireframe for usability, allow skipping non‑critical steps, and iterate after a quick user test  
+- Invitation flows (email‑based token invites, accept/revoke)  
+  - Risk: Spam filtering or token replay attacks  
+  - Mitigation: Use a reputable email service (SPF/DKIM), implement single‑use, time‑limited tokens, and log all invite actions  
+- Workflow UI with React Flow (canvas)  
+  - Risk: Poor performance with large node graphs  
+  - Mitigation: Virtualize viewport, batch state updates, and profile with representative workloads  
+- Plugin installation per workflow & drag‑and‑drop nodes  
+  - Risk: Version conflicts and inconsistent UX across browsers  
+  - Mitigation: Enforce semantic versioning, sandbox plugin execution, and adopt a battle‑tested DnD library  
+- Export button sending JSON to the Transpiler microservice via REST API  
+  - Risk: Network failures or schema mismatches  
+  - Mitigation: Validate JSON schema on both ends, implement retries with exponential back‑off, and display clear error states  
+- Audit pages (complete change history)  
+  - Risk: Slow queries on large audit tables  
+  - Mitigation: Index critical columns, paginate results, and archive old logs if needed  
+- Billing Management for Admin (track accepted‑invitation users, process payments)  
+  - Risk: Inaccurate billing calculations or failed transactions  
+  - Mitigation: Integrate with a trusted payment gateway, build reconciliation scripts, and test thoroughly in sandbox mode  
+
+# Appendix  
+- Only the TS-REST API Endpoints will be tested using jest and supertest; For example src/app/api/v1/_contracts/account/getAccountUserId.ts will have test in src/app/api/v1/_contracts/account/getAccountUserId.test.ts
+- Access Controls Research Findings: The access control system is built on a robust, hierarchical role-based access control (RBAC) model, designed to manage user permissions across a multi-tiered structure of organizations, teams, projects, and workflows. It leverages a set of carefully defined models—User, Organization, Team, Project, Workflow, Role, PermissionDefinition, RolePermission, UserRole, Invitation, AuditLog, and UserResource—each playing a critical role in enforcing fine-grained access control. Users, represented by the User model, can create organizations, join as members with varying roles (e.g., MEMBER, ADMIN, OWNER), and participate directly in teams, projects, and workflows. The hierarchical structure ensures that permissions can be managed at different levels, with roles scoped to specific resource types and instances, allowing precise control over actions like reading, editing, or deleting resources. Permissions are explicitly defined in the PermissionDefinition model and linked to roles via the RolePermission model, where each permission can be set to ALLOW or DENY specific actions, providing a clear and enforceable access policy. The UserRole model assigns these roles to users, with optional expiration dates for temporary access, while the Invitation model facilitates secure onboarding by allowing users to invite others to specific resources with predefined roles, supporting statuses like PENDING, ACCEPTED, EXPIRED, or REVOKED. A comprehensive auditing mechanism is incorporated through the AuditLog model, which tracks user actions, outcomes, and resource paths involved, ensuring accountability and traceability. Additionally, the UserResource model enables granular tracking of user access to individual resources, including inherited permissions from parent resources, further enhancing the system's ability to manage complex access scenarios. Enums such as ResourceType, InvitationStatus, PermissionType, and MembershipRole provide type safety and clarity throughout the model. This architecture, implemented through Prisma and integrated with TS-Rest for API management, ensures secure, scalable access management, supports dynamic updates to roles and permissions with immediate reflection in access decisions, and provides a flexible, enterprise-grade solution for controlling access in collaborative environments.
+- TS-REST api endpoint v1 structure:
+```
+src/app/api/v1/
+├── _contracts/           # Contract definitions
+│   ├── index.ts         # Main contract router
+│   ├── schema.ts        # Shared schemas
+│   └── [feature]/       # Feature-specific contracts (have both test and the contract+api function itself) 
+├── _client/             # Generated client code
+└── [...ts-rest]/        # API route handler
+```
+</PRD>

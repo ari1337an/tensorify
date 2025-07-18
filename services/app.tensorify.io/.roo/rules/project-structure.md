@@ -1,0 +1,54 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Project Structure and Its Mandatory Maintainance Before Doing All the Changes & After All the changes
+
+Prisma database client: "import db from "@/server/database/db";" use it like await db.modelName.
+
+Follow the following rules strictly.
+
+- (Step 0) Start with writing "UNDERSTANDING THE MAINTAINED PROJECT STRUCTURE" at the end.
+- (Step 1) At the begining of your task, you must first understand the whole [PROJECT_STRUCTURE.md](mdc:src/PROJECT_STRUCTURE.md) file and then run the following command (denoted in tripple double quotation mark) to make sure the [PROJECT_STRUCTURE.md](mdc:src/PROJECT_STRUCTURE.md) is up to date with the help of any chat context (if present) """find ./src \( \
+  -name '.env' -o \
+  -name '.clerk' -o \
+  -name '.roo' -o \
+  -name '.next' -o \
+  -name '.git' -o \
+  -name 'node_modules' \
+\) -prune -o -type f \( \
+  -iname '*.ts' -o \
+  -iname '*.tsx' -o \
+  -iname '*.js' -o \
+  -iname '*.jsx' -o \
+  -iname '*.json' -o \
+  -iname '*.md' -o \
+  -iname '*.css' \
+\) -print"""
+- (Step 2) If the project is up to date then you have to write down your thoughts about the gist of the project to make sure you understand it. Your thoughts must be around 300 word at maximum. This thought needs to be in separate section.
+- (Step 3) Then you do the changes in the codebase.
+- (Step 4) After making any changes run the following command : """find ./src \( \
+  -name '.env' -o \
+  -name '.clerk' -o \
+  -name '.roo' -o \
+  -name '.next' -o \
+  -name '.git' -o \
+  -name 'node_modules' \
+\) -prune -o -type f \( \
+  -iname '*.ts' -o \
+  -iname '*.tsx' -o \
+  -iname '*.js' -o \
+  -iname '*.jsx' -o \
+  -iname '*.json' -o \
+  -iname '*.md' -o \
+  -iname '*.css' \
+\) -print | \
+  while IFS= read -r file; do \
+    file_path="${file/.\//}"; \
+    if git ls-files --modified --others --exclude-standard | grep -v -f <(git ls-files --deleted) | grep -qF -- "$file_path"; then \
+      echo "Newly modified files that needs to be updated in PROJECT_STRUCTURE.md file: $file_path"; \
+    fi; \
+  done""" and then update the updated files in [PROJECT_STRUCTURE.md](mdc:src/PROJECT_STRUCTURE.md) 
+- If you have successfully completed following the rules then write "PROJECT STRUCTURE RULE IS MAINTAINED" at the end.
