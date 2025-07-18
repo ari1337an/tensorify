@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://tensorify.io
+
+# Sitemaps
+Sitemap: https://tensorify.io/sitemap.xml

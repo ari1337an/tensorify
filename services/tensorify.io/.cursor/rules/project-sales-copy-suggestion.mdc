@@ -1,0 +1,88 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Tensorify: Solving Real AI Development Challenges
+
+## For the AI Professional Who's Had Enough
+
+### Headlines
+- "Stop Rewriting Boilerplate. Start Building AI That Matters."
+- "Your AI Architecture Shouldn't Take Weeks to Implement"
+- "Debug Your Model Architecture, Not Your Implementation Code"
+
+## The Problems You Face
+
+### For AI Researchers
+You spend 80% of your time implementing ideas rather than exploring them. Every experiment requires tedious code rewrites, slowing your research velocity and limiting creative exploration. Your brilliant concepts get buried under implementation details.
+
+"I had this idea for a novel attention mechanism last week. I'm still writing the code to test it."
+
+### For ML Engineers
+Your team keeps reinventing the wheel with every project. Knowledge is trapped in fragmented codebases, making collaboration inefficient. The gap between research papers and production code costs you weeks of translation work.
+
+"We spent three weeks reimplementing the architecture from that paper, only to find a critical design flaw after deployment."
+
+### For AI Team Leads
+Your experts waste valuable time on routine coding tasks instead of solving core business problems. Knowledge silos create bottlenecks, and onboarding new team members to your complex AI systems takes months instead of days.
+
+"Half my senior researchers are stuck debugging TensorFlow code instead of advancing our core technology."
+
+## How Tensorify Changes Everything
+
+### Accelerate Research Iteration
+Transform the research cycle from days to minutes. Test hypotheses immediately by reconfiguring nodes rather than rewriting code. When your crazy idea fails, you've lost minutes, not days—giving you the freedom to try more approaches.
+
+"I tested five different attention mechanisms before lunch. Last month, that would have taken me a week."
+
+### Bridge Implementation Gaps
+Instantly generate optimized implementation code from your architecture design. No more translating between research concepts and code—what you design is exactly what gets implemented, with all the optimizations built in.
+
+"We went from whiteboard to working prototype in a single afternoon. The paper-to-product gap has virtually disappeared."
+
+### Eliminate Documentation Debt
+Your visual model architecture is self-documenting. New team members can understand complex systems at a glance, without digging through thousands of lines of code or outdated documentation.
+
+"Our new hire understood our entire model architecture on day one. Previously, this took weeks of code review."
+
+### Debug at the Right Level
+Find architectural flaws before wasting time on implementation. Isolate issues visually, then fix them at the design level—where they belong—not in the resulting code.
+
+"We caught a critical data flow issue in the visual interface that would have taken days to track down in code."
+
+### Maintain Full Control
+Unlike black-box AI platforms, Tensorify gives you complete access to the generated code. Customize further when needed, while still maintaining the visual-code synchronization for future changes.
+
+"I can tweak the generated code when I need that extra 1% of performance, but I never have to start from scratch again."
+
+## Real Examples from AI Professionals
+
+> "Our team was spending 70% of our sprint capacity on boilerplate AI code. With Tensorify, that dropped to 10%. We're now shipping new features at three times our previous velocity."
+> — Lead ML Engineer at a Fortune 500 company
+
+> "I implemented a custom GAN architecture in 45 minutes that would have taken two days of coding. The best part? When I needed to radically change the discriminator structure, it took 5 minutes instead of starting over."
+> — AI Researcher at a top university
+
+> "Tensorify eliminated the communication gap between our research team and engineers. Now they speak the same visual language, and implementation delays have virtually disappeared."
+> — AI Director at a growing startup
+
+## The Technical Details That Matter
+
+- **Full Framework Compatibility**: Generate code for TensorFlow, PyTorch, JAX, or other frameworks
+- **Custom Node Creation**: Extend with your own proprietary components
+- **Version Control Integration**: Track architectural changes alongside code changes
+- **Computation Graph Optimization**: Automatically optimize for performance
+- **Distributed Training Configuration**: Set up multi-GPU and multi-node training visually
+- **Hyperparameter Experimentation**: Configure and track experiments without code changes
+- **Hardware-Specific Optimizations**: Target specific hardware with visual toggles
+
+## From Complexity to Clarity
+
+Stop getting lost in implementation details when your focus should be on breakthrough AI research and development. Tensorify keeps you working at the right level of abstraction—where innovation happens.
+
+Your time is too valuable to waste writing boilerplate code. With Tensorify, focus on the AI challenges that actually matter.
+
+[Start Free Trial: Solve Real Problems]  
+[Request Technical Demo]  
+[See Case Studies]
