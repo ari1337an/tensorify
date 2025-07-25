@@ -9,7 +9,11 @@
     "packages/transpiler",
     "packages/create-tensorify-plugin/v1",
     "services/api",
-    "services/plugins.tensorify.io"
+    "services/plugins.tensorify.io",
+    "services/app.tensorify.io",
+    "services/auth.tensorify.io",
+    "services/controls.tensorify.io",
+    "services/tensorify.io"
   ],
   "scripts": {
     "dev": "turbo run dev --filter='./packages/plugin-engine' --filter='./services/api' --filter='./services/plugins.tensorify.io' --parallel",
@@ -21,6 +25,10 @@
     "dev:packages:create-tensorify-plugin": "turbo run dev --filter='./packages/create-tensorify-plugin/v1'",
     "dev:packages:cli": "turbo run dev --filter='./packages/cli'",
     "dev:services:plugins.tensorify.io": "turbo run dev --filter='./services/plugins.tensorify.io'",
+    "dev:services:app.tensorify.io": "turbo run dev --filter='./services/app.tensorify.io'",
+    "dev:services:auth.tensorify.io": "turbo run dev --filter='./services/auth.tensorify.io'",
+    "dev:services:controls.tensorify.io": "turbo run dev --filter='./services/controls.tensorify.io'",
+    "dev:services:tensorify.io": "turbo run dev --filter='./services/tensorify.io'",
     "build": "turbo run build",
     "build:cli": "turbo run build --filter='./packages/cli'",
     "cli": "npm run build:cli && node packages/cli/lib/bin/tensorify.js",

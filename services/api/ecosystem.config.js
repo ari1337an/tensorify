@@ -47,8 +47,8 @@ module.exports = {
       // Health monitoring
       health_check_grace_period: 3000,
 
-      // Advanced options for stability
-      node_args: "--max-old-space-size=1024",
+      // Advanced options for stability (CRITICAL: --no-node-snapshot required for isolated-vm)
+      node_args: "--no-node-snapshot --max-old-space-size=1024",
 
       // Ignore specific watch patterns (if watch is enabled)
       ignore_watch: ["node_modules", "logs", "*.log", ".git"],

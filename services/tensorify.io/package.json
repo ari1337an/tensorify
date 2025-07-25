@@ -1,5 +1,5 @@
 {
-  "name": "tensorify.io",
+  "name": "@tensorify.io/services-tensorify-io",
   "version": "0.1.0",
   "private": true,
   "scripts": {

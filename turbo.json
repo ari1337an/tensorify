@@ -2,7 +2,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "lib/**", ".next/**"]
+      "outputs": ["dist/**", "lib/**", ".next/**", "build/**"]
     },
     "dev": {
       "cache": false,
@@ -11,6 +11,20 @@
     },
     "test": {
       "dependsOn": ["build"],
+      "outputs": []
+    },
+    "generate:tsrest": {
+      "cache": false,
+      "outputs": ["src/app/api/v1/_contracts/index.ts"]
+    },
+    "generate:tsrest:client": {
+      "cache": false,
+      "outputs": ["src/app/api/v1/_client/client.ts"]
+    },
+    "prisma": {
+      "cache": false
+    },
+    "lint": {
       "outputs": []
     }
   }
