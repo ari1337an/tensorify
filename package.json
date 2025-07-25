@@ -45,7 +45,10 @@
     "versions:sync": "./scripts/version-management.sh sync",
     "versions:build": "./scripts/version-management.sh build",
     "versions:publish": "./scripts/version-management.sh publish",
-    "versions:release": "./scripts/version-management.sh release"
+    "versions:release": "./scripts/version-management.sh release",
+    "db:start": "docker compose up -d postgres",
+    "db:stop": "docker compose down",
+    "prebuild": "npm run db:start && turbo run prebuild"
   },
   "devDependencies": {
     "turbo": "^2.5.4"

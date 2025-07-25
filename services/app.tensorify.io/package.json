@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run watch:tsrest\" \"npm run watch:tsrest:client\" \"npm run generate:tsrest; npm run generate:tsrest:client; next dev --turbopack\"",
+    "prebuild": "npm run generate:tsrest && npm run generate:tsrest:client && npx prisma generate && npx prisma db push",
     "build": "npm run generate:tsrest && npm run generate:tsrest:client && next build",
     "start": "next start",
     "lint": "next lint",

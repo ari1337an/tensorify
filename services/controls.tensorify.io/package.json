@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "prebuild": "node src/scripts/sync-admin-emails.js",
+    "dev": "next dev --turbopack --port 3003",
+    "prebuild": "node src/scripts/sync-admin-emails.js && npx prisma generate && npx prisma db push",
     "build": "next build",
-    "start": "next start",
+    "start": "next start --port 3003",
     "lint": "next lint",
     "sync-admin-emails": "node src/scripts/sync-admin-emails.js",
     "prisma": "npx prisma generate && npx prisma db push",
