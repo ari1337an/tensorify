@@ -20,7 +20,6 @@ import { useShallow } from "zustand/react/shallow";
 import CustomControl from "@workflow/controls/CustomControl";
 import useMiniMapFade from "@workflow/hooks/useMiniMapFade";
 import NodeSearch from "@workflow/components/NodeSearch";
-import WorkflowBreadcrumb from "@workflow/components/WorkflowBreadcrumb";
 import DevTools from "@workflow/components/DevTools";
 
 // Store and Context
@@ -176,9 +175,6 @@ function WorkflowCanvas() {
 
           {/* Node Search Panel */}
           <NodeSearch />
-
-          {/* Breadcrumb Navigation */}
-          <WorkflowBreadcrumb />
 
           {/* Development Tools */}
           <DevTools />
