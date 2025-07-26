@@ -2,16 +2,29 @@ import { type NodeProps } from "@xyflow/react";
 import { ReactNode, useRef, useState, useEffect } from "react";
 import React from "react";
 import { Sheet, SheetContent } from "@/app/_components/ui/sheet";
-import { DialogTitle } from "@radix-ui/react-dialog";
+import {
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/app/_components/ui/dialog";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/app/_components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/app/_components/ui/card";
 import { Label } from "@/app/_components/ui/label";
 import { Input } from "@/app/_components/ui/input";
 import { Textarea } from "@/app/_components/ui/textarea";
+import { Badge } from "@/app/_components/ui/badge";
+import { SettingsIcon, CodeIcon, TypeIcon } from "lucide-react";
 import useWorkflowStore, {
   addRouteLevel,
   type WorkflowNode,
@@ -135,58 +148,133 @@ export default function TNode({
           setIsOpen(open); // Update the state to match the sheet's desired state
         }}
       >
-        <SheetContent side="right" className="w-full sm:max-w-md">
-          <div className="flex flex-col gap-6 h-full">
-            <DialogTitle className="text-xl font-semibold text-center">
-              Node Settings - {data.label || id}
-            </DialogTitle>
+        <SheetContent
+          side="right"
+          className="w-full sm:max-w-md border-l border-border/50 backdrop-blur-xl p-4"
+        >
+          <div className="flex flex-col h-full">
+            <DialogHeader className="space-y-3 pb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <SettingsIcon className="h-5 w-5 text-primary-readable" />
+                </div>
+                <div className="flex-1">
+                  <DialogTitle className="text-xl font-semibold">
+                    Node Settings
+                  </DialogTitle>
+                  <DialogDescription className="text-sm text-muted-foreground">
+                    Configure properties and variables for this node
+                  </DialogDescription>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="font-medium">
+                  {data.label || id}
+                </Badge>
+                <Badge variant="outline" className="text-xs">
+                  {type?.split("/").pop() || "Node"}
+                </Badge>
+              </div>
+            </DialogHeader>
 
             <Tabs
               defaultValue="properties"
-              className="flex flex-col gap-4 flex-1"
+              className="flex flex-col flex-1 overflow-hidden"
             >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="properties">Properties</TabsTrigger>
-                <TabsTrigger value="scope">Variables</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger
+                  value="properties"
+                  className="flex items-center gap-2"
+                >
+                  <CodeIcon className="h-4 w-4" />
+                  Properties
+                </TabsTrigger>
+                <TabsTrigger value="scope" className="flex items-center gap-2">
+                  <TypeIcon className="h-4 w-4" />
+                  Variables
+                </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="properties" className="flex-1 space-y-4">
-                <div className="space-y-4">
-                  {Object.entries(data).map(([key, value]) => (
-                    <div key={key} className="space-y-2">
-                      <Label htmlFor={key} className="text-sm font-medium">
-                        {key}
-                      </Label>
-                      {typeof value === "string" ? (
-                        <Textarea
-                          id={key}
-                          value={value}
-                          onChange={(evt) =>
-                            updateNodeData(id, { [key]: evt.target.value })
-                          }
-                          placeholder={`Enter ${key}`}
-                          className="min-h-[80px] resize-none"
-                        />
-                      ) : (
-                        <Input
-                          id={key}
-                          type="text"
-                          value={value as string | number}
-                          onChange={(evt) =>
-                            updateNodeData(id, { [key]: evt.target.value })
-                          }
-                          placeholder={`Enter ${key}`}
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
+              <TabsContent value="properties" className="flex-1 overflow-auto">
+                <Card>
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-base">Node Properties</CardTitle>
+                    <CardDescription>
+                      Customize the behavior and appearance of this node
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {Object.entries(data).map(([key, value]) => (
+                      <div key={key} className="space-y-3">
+                        <Label
+                          htmlFor={key}
+                          className="text-sm font-medium flex items-center gap-2"
+                        >
+                          <span className="capitalize">
+                            {key.replace(/([A-Z])/g, " $1").trim()}
+                          </span>
+                          {key === "label" && (
+                            <Badge variant="outline" className="text-xs">
+                              Display Name
+                            </Badge>
+                          )}
+                        </Label>
+                        {typeof value === "string" && value.length > 50 ? (
+                          <Textarea
+                            id={key}
+                            value={value}
+                            onChange={(evt) =>
+                              updateNodeData(id, { [key]: evt.target.value })
+                            }
+                            placeholder={`Enter ${key
+                              .replace(/([A-Z])/g, " $1")
+                              .trim()
+                              .toLowerCase()}`}
+                            className="min-h-[100px] resize-none"
+                          />
+                        ) : (
+                          <Input
+                            id={key}
+                            type="text"
+                            value={value as string | number}
+                            onChange={(evt) =>
+                              updateNodeData(id, { [key]: evt.target.value })
+                            }
+                            placeholder={`Enter ${key
+                              .replace(/([A-Z])/g, " $1")
+                              .trim()
+                              .toLowerCase()}`}
+                            className="transition-colors"
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="scope" className="flex-1">
-                <div className="text-sm text-muted-foreground">
-                  View the current scope variables.
-                </div>
+                <Card>
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-base">Scope Variables</CardTitle>
+                    <CardDescription>
+                      Variables available in the current execution context
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-center h-32 text-center">
+                      <div className="space-y-2">
+                        <TypeIcon className="h-8 w-8 text-muted-foreground mx-auto" />
+                        <p className="text-sm text-muted-foreground">
+                          No variables available in current scope
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Variables will appear here during execution
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </TabsContent>
             </Tabs>
           </div>

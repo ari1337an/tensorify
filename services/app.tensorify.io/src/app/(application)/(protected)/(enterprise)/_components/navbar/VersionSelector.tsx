@@ -87,7 +87,7 @@ export function VersionSelector({
           )}
         >
           <span className="flex items-center gap-1">
-            <GitBranch className="h-3 w-3 text-green-500" />v
+            <GitBranch className="h-3 w-3 text-primary-readable" />v
             {currentVersion.version}
           </span>
           <ChevronDown className="h-3 w-3" />

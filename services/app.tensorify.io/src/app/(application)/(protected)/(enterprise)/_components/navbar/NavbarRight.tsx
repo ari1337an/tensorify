@@ -126,7 +126,7 @@ export function NavbarRight() {
         onClick={() => setIsPluginManagementModalOpen(true)}
         title="Install Plugin"
       >
-        <Package className="h-3 w-3 text-green-500" />
+        <Package className="h-3 w-3 text-primary-readable" />
         Plugin
       </Button>
 
