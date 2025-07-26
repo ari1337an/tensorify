@@ -402,7 +402,9 @@ export class UploadService {
 
       const response = await axios.post(
         webhookUrl,
-        validatedWebhookPayload, // Send the validated and correctly structured payload
+        {
+          data: validatedWebhookPayload.data, // Wrap the payload in a 'data' object
+        },
         {
           headers: {
             "Content-Type": "application/json",
@@ -418,7 +420,10 @@ export class UploadService {
         return { success: false, error: response.data.error };
       }
     } catch (error: any) {
-      return { success: false, error: error.response?.data?.error };
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message,
+      };
     }
   }
 

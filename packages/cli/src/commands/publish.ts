@@ -182,40 +182,72 @@ class PluginPublisher {
   }
 
   /**
+   * Clean up temporary files created during publish process
+   */
+  private async cleanupTempFiles(): Promise<void> {
+    const filesToCleanup = [
+      path.join(this.directory, "manifest.json"),
+      path.join(this.directory, "dist"),
+      path.join(this.directory, "dist/bundle.js"),
+    ];
+
+    for (const filePath of filesToCleanup) {
+      try {
+        if (fs.existsSync(filePath)) {
+          const stats = fs.statSync(filePath);
+          if (stats.isDirectory()) {
+            fs.rmSync(filePath, { recursive: true, force: true });
+          } else {
+            fs.unlinkSync(filePath);
+          }
+        }
+      } catch (error) {
+        // Silently ignore cleanup errors to not interfere with main process
+        console.warn(chalk.yellow(`⚠️ Could not clean up ${filePath}`));
+      }
+    }
+  }
+
+  /**
    * Main publish workflow
    */
   async publish(): Promise<void> {
-    // Resolve development environment from saved config if not explicitly set
-    await this.resolveDevelopmentEnvironment();
+    try {
+      // Resolve development environment from saved config if not explicitly set
+      await this.resolveDevelopmentEnvironment();
 
-    // Step 1: Check backend service health
-    await this.checkBackendHealth();
+      // Step 1: Check backend service health
+      await this.checkBackendHealth();
 
-    // Step 2: Pre-flight validation
-    await this.validatePrerequisites();
+      // Step 2: Pre-flight validation
+      await this.validatePrerequisites();
 
-    // Step 3: Authentication check and fetch user profile
-    await this.checkAuthenticationAndFetchProfile();
+      // Step 3: Authentication check and fetch user profile
+      await this.checkAuthenticationAndFetchProfile();
 
-    // Step 4: Validate plugin
-    await this.validatePluginStructure();
+      // Step 4: Validate plugin
+      await this.validatePluginStructure();
 
-    // Step 5: Validate plugin name (namespace)
-    await this.validatePluginName();
+      // Step 5: Validate plugin name (namespace)
+      await this.validatePluginName();
 
-    // Step 6: Validate access level consistency
-    await this.validateAccessLevel();
+      // Step 6: Validate access level consistency
+      await this.validateAccessLevel();
 
-    // Step 7: Check version conflicts
-    await this.checkVersionConflicts();
+      // Step 7: Check version conflicts
+      await this.checkVersionConflicts();
 
-    // Step 8: Build and bundle
-    await this.buildAndBundle();
+      // Step 8: Build and bundle
+      await this.buildAndBundle();
 
-    // Step 9: Upload files
-    await this.uploadFiles();
+      // Step 9: Upload files
+      await this.uploadFiles();
 
-    console.log(chalk.green("✅ Plugin published successfully!"));
+      console.log(chalk.green("✅ Plugin published successfully!"));
+    } finally {
+      // Always clean up temporary files, regardless of success or failure
+      await this.cleanupTempFiles();
+    }
   }
 
   /**
@@ -281,7 +313,7 @@ class PluginPublisher {
     }
 
     // Check for essential files
-    const essentialFiles = ["package.json", "manifest.json"];
+    const essentialFiles = ["package.json"];
     const missingEssentialFiles = essentialFiles.filter(
       (file) => !fs.existsSync(path.join(this.directory, file))
     );
@@ -331,18 +363,7 @@ class PluginPublisher {
       throw new Error("No valid TypeScript entry point found");
     }
 
-    // Check if manifest.json is valid JSON
-    try {
-      const manifestJsonContent = fs.readFileSync(
-        path.join(this.directory, "manifest.json"),
-        "utf-8"
-      );
-      JSON.parse(manifestJsonContent);
-    } catch (error) {
-      throw new Error(
-        "Invalid manifest.json file. Please check for syntax errors."
-      );
-    }
+    // manifest.json will be generated dynamically from package.json
 
     // Check if TypeScript is available
     try {
@@ -440,6 +461,34 @@ class PluginPublisher {
   }
 
   /**
+   * Generate manifest.json content from package.json
+   */
+  private generateManifestFromPackageJson(
+    packageJson: PackageJson
+  ): ManifestJson {
+    // Extract entrypoint class name from package.json or use default
+    const tensorifySettings: any = packageJson["tensorify-settings"] || {};
+    const entrypointClassName =
+      tensorifySettings.entrypointClassName || "TensorifyPlugin";
+
+    return {
+      name: packageJson.name,
+      version: packageJson.version,
+      description: packageJson.description,
+      author: packageJson.author,
+      main: packageJson.main || "dist/index.js",
+      entrypointClassName: entrypointClassName,
+      keywords: packageJson.keywords || [],
+      scripts: {
+        build: packageJson.scripts?.build || "tsc",
+      },
+      tensorifySettings: {
+        sdkVersion: tensorifySettings["sdk-version"] || "latest",
+      },
+    };
+  }
+
+  /**
    * Check if user is authenticated and fetch profile
    */
   private async checkAuthenticationAndFetchProfile(): Promise<void> {
@@ -447,9 +496,27 @@ class PluginPublisher {
       chalk.yellow("🔐 Checking authentication and fetching user profile...")
     );
 
-    const token = await getAuthToken();
+    let token = await getAuthToken();
     if (!token) {
-      throw new Error('Not authenticated. Please run "tensorify login" first.');
+      console.log(
+        chalk.yellow("🔑 No authentication found. Starting login flow...")
+      );
+      try {
+        await authService.login(this.options.dev);
+        token = await getAuthToken();
+        if (!token) {
+          throw new Error("Authentication failed. Unable to retrieve token.");
+        }
+        console.log(
+          chalk.green("✅ Login successful! Continuing with publish...")
+        );
+      } catch (error) {
+        throw new Error(
+          `Authentication failed: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
+      }
     }
     this.authToken = token;
 
@@ -489,13 +556,11 @@ class PluginPublisher {
       throw new Error("Plugin validation failed. Please fix the errors above.");
     }
 
-    // Load package.json and manifest.json for later use
+    // Load package.json and generate manifest.json dynamically
     this.packageJson = JSON.parse(
       fs.readFileSync(path.join(this.directory, "package.json"), "utf-8")
     );
-    this.manifestJson = JSON.parse(
-      fs.readFileSync(path.join(this.directory, "manifest.json"), "utf-8")
-    );
+    this.manifestJson = this.generateManifestFromPackageJson(this.packageJson);
 
     // Extract keywords from manifest.json if available
     if (
@@ -1057,6 +1122,10 @@ class PluginPublisher {
   private async uploadFiles(): Promise<void> {
     console.log(chalk.yellow("📤 Uploading plugin files..."));
 
+    // Generate manifest.json temporarily for upload
+    const manifestPath = path.join(this.directory, "manifest.json");
+    fs.writeFileSync(manifestPath, JSON.stringify(this.manifestJson, null, 2));
+
     const filesToUpload = [
       { path: "dist/bundle.js", fieldName: "bundle" },
       { path: "manifest.json", fieldName: "manifest" },
@@ -1186,6 +1255,7 @@ class PluginPublisher {
 
       console.log(chalk.green("✅ Upload completion notified"));
     } catch (error) {
+      console.log(error)
       if (axios.isAxiosError(error)) {
         throw new Error(error.response?.data?.error);
       }

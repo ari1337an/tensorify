@@ -9,6 +9,44 @@ const { execSync } = require("child_process");
 const validatePackageName = require("validate-npm-package-name");
 
 const packageJson = require("./package.json");
+const keytar = require("keytar");
+const axios = require("axios");
+
+// Session storage constants (same as CLI)
+const SERVICE_NAME = "tensorify-cli";
+const ACCOUNT_NAME = "session";
+
+// Authentication helper functions
+async function getAuthToken() {
+  try {
+    return await keytar.getPassword(SERVICE_NAME, ACCOUNT_NAME);
+  } catch (error) {
+    return null;
+  }
+}
+
+async function getUserProfile(isDev = false) {
+  const token = await getAuthToken();
+  if (!token) return null;
+
+  try {
+    const baseUrl = isDev
+      ? "http://localhost:3002"
+      : "https://plugins.tensorify.io";
+
+    const response = await axios.get(`${baseUrl}/api/cli/profile`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      timeout: 10000,
+    });
+
+    return response.data;
+  } catch (error) {
+    return null;
+  }
+}
 
 const TEMPLATES = {
   "linear-layer": {
@@ -62,19 +100,45 @@ function detectSDKVersion() {
   }
 }
 
-// Function to format plugin name for scoped packages
-function formatPluginName(name) {
-  // If it doesn't start with @, add @tensorify/ scope
-  if (!name.startsWith("@")) {
-    // Clean the name: remove special characters, convert to lowercase
-    const cleanName = name
-      .toLowerCase()
-      .replace(/[^a-z0-9-]/g, "-")
-      .replace(/--+/g, "-")
-      .replace(/^-+|-+$/g, "");
-    return `@tensorify/${cleanName}`;
+// Function to format plugin name for scoped packages with auto-namespace detection
+async function formatPluginName(name, isDev = false) {
+  // If it already starts with @, return as-is
+  if (name.startsWith("@")) {
+    return name;
   }
-  return name;
+
+  // Clean the name: remove special characters, convert to lowercase
+  const cleanName = name
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/--+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  // Try to get authenticated user's namespace
+  try {
+    const userProfile = await getUserProfile(isDev);
+    if (userProfile && userProfile.username) {
+      console.log(
+        chalk.blue(`🔍 Detected authenticated user: @${userProfile.username}`)
+      );
+      console.log(
+        chalk.green(
+          `📦 Auto-applying namespace: @${userProfile.username}/${cleanName}`
+        )
+      );
+      return `@${userProfile.username}/${cleanName}`;
+    }
+  } catch (error) {
+    // Silently fall back to default behavior
+  }
+
+  // Fallback to default @tensorify/ scope
+  console.log(
+    chalk.yellow(
+      `⚠️  No authenticated user detected, using default @tensorify/ namespace`
+    )
+  );
+  return `@tensorify/${cleanName}`;
 }
 
 program
@@ -94,6 +158,7 @@ program
   .option("-y, --yes", "accept all defaults and run non-interactively")
   .option("--skip-install", "skip installing dependencies")
   .option("--skip-git", "skip initializing git repository")
+  .option("--dev", "use development environment for authentication check")
   .action(async (projectName, options) => {
     await createPlugin(projectName, options);
   });
@@ -272,7 +337,7 @@ async function createPlugin(projectName, options) {
     // Use CLI options, prompt answers, or defaults for --yes mode
     const pluginConfig = {
       projectName: finalProjectName,
-      packageName: formatPluginName(finalProjectName),
+      packageName: await formatPluginName(finalProjectName, options.dev),
       description:
         options.description ||
         answers.description ||
@@ -359,9 +424,7 @@ async function copyTemplate(targetPath, variables) {
       chalk.red(`Template directory not found: ${variables.template}`)
     );
     console.error(
-      chalk.yellow(
-        `Available templates: ${availableTemplates.join(", ")}`
-      )
+      chalk.yellow(`Available templates: ${availableTemplates.join(", ")}`)
     );
     process.exit(1);
   }
@@ -392,7 +455,6 @@ async function copyTemplate(targetPath, variables) {
     "package.json",
     "README.md",
     "src/index.ts",
-    "manifest.json",
     "icon.svg",
   ];
 

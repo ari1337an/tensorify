@@ -186,9 +186,13 @@ export class PluginValidator {
     errors.push(...fileCheckResult.errors);
 
     if (fileCheckResult.valid) {
-      // 2. Validate manifest.json
-      const manifestResult = await this.validateManifest();
-      errors.push(...manifestResult.errors);
+      // 2. Validate manifest.json (optional - only if file exists)
+      let manifestResult: ValidationResult = { valid: true, errors: [] };
+      const manifestPath = path.join(this.currentDirectory, "manifest.json");
+      if (fs.existsSync(manifestPath)) {
+        manifestResult = await this.validateManifest();
+        errors.push(...manifestResult.errors);
+      }
 
       // 3. Validate package.json
       const packageResult = await this.validatePackageJson();
@@ -263,7 +267,7 @@ export class PluginValidator {
     }
 
     // Check other required files
-    const otherRequiredFiles = ["manifest.json", "icon.svg"];
+    const otherRequiredFiles = ["icon.svg"];
     for (const file of otherRequiredFiles) {
       const filePath = path.join(this.currentDirectory, file);
       if (!fs.existsSync(filePath)) {
@@ -464,10 +468,26 @@ export class PluginValidator {
     const errors: ValidationError[] = [];
 
     try {
-      // Read manifest to get expected class name
+      // Get expected class name from manifest.json or package.json
+      let manifest: any = {};
       const manifestPath = path.join(this.currentDirectory, "manifest.json");
-      const manifestContent = fs.readFileSync(manifestPath, "utf-8");
-      const manifest = JSON.parse(manifestContent);
+
+      if (fs.existsSync(manifestPath)) {
+        // Use manifest.json if it exists
+        const manifestContent = fs.readFileSync(manifestPath, "utf-8");
+        manifest = JSON.parse(manifestContent);
+      } else {
+        // Generate manifest from package.json if manifest.json doesn't exist
+        const packagePath = path.join(this.currentDirectory, "package.json");
+        const packageContent = fs.readFileSync(packagePath, "utf-8");
+        const packageJson = JSON.parse(packageContent);
+        const tensorifySettings = packageJson["tensorify-settings"] || {};
+
+        manifest = {
+          entrypointClassName:
+            tensorifySettings.entrypointClassName || "TensorifyPlugin",
+        };
+      }
 
       // Get the source index path (src/index.ts or index.ts)
       const sourceIndexPath =

@@ -34,6 +34,7 @@
     "url": "https://github.com/tensorify/{{projectName}}"
   },
   "tensorify-settings": {
-    "sdk-version": "{{sdkVersion}}"
+    "sdk-version": "{{sdkVersion}}",
+    "entrypointClassName": "{{classicProjectName}}Plugin"
   }
 } 

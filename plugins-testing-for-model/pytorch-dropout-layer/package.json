@@ -1,7 +1,7 @@
 {
-  "name": "{{packageName}}",
+  "name": "@ari1337an/pytorch-dropout-layer",
   "version": "1.0.0",
-  "description": "{{description}}",
+  "description": "A Tensorify plugin that implements a PyTorch dropout layer for regularization with customizable probability and inplace settings.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -15,12 +15,16 @@
     "plugin",
     "ml",
     "machine-learning",
-    "neural-network"
+    "neural-network",
+    "pytorch",
+    "dropout",
+    "regularization",
+    "deep-learning"
   ],
-  "author": "{{author}}",
+  "author": "Tensorify Developer <support@tensorify.io>",
   "license": "MIT",
   "dependencies": {
-    "@tensorify.io/sdk": "{{sdkVersion}}"
+    "@tensorify.io/sdk": "0.0.10"
   },
   "devDependencies": {
     "typescript": "^5.0.0",
@@ -31,10 +35,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/tensorify/{{projectName}}"
+    "url": "https://github.com/tensorify/pytorch-dropout-layer"
   },
   "tensorify-settings": {
-    "sdk-version": "{{sdkVersion}}",
-    "entrypointClassName": "{{classicProjectName}}Plugin"
+    "sdk-version": "0.0.10",
+    "entrypointClassName": "PytorchDropoutLayerPlugin"
   }
 } 
