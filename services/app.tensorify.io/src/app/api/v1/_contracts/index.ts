@@ -8,6 +8,7 @@ import { contract as patchAccountContract, action as patchAccountAction } from "
 import { contract as uploadPortraitContract, action as uploadPortraitAction } from "./account/uploadPortrait";
 import { contract as onboardingQuestionsContract, action as onboardingQuestionsAction } from "./onboarding/onboardingQuestions";
 import { contract as onboardingSetupContract, action as onboardingSetupAction } from "./onboarding/onboardingSetup";
+import { contract as getPermissionsContract, action as getPermissionsAction } from "./permissions/getPermissions";
 import { contract as getOrganizationContract, action as getOrganizationAction } from "./organization/getOrganization";
 import { contract as getOrganizationUsersContract, action as getOrganizationUsersAction } from "./organization/getOrganizationUsers";
 import { contract as getProjectContract, action as getProjectAction } from "./project/getProject";
@@ -15,7 +16,6 @@ import { contract as postProjectContract, action as postProjectAction } from "./
 import { contract as getRolesContract, action as getRolesAction } from "./roles/getRoles";
 import { contract as patchRoleContract, action as patchRoleAction } from "./roles/patchRole";
 import { contract as postRolesContract, action as postRolesAction } from "./roles/postRoles";
-import { contract as getPermissionsContract, action as getPermissionsAction } from "./permissions/getPermissions";
 import { contract as getTeamContract, action as getTeamAction } from "./team/getTeam";
 import { contract as postTeamContract, action as postTeamAction } from "./team/postTeam";
 import { contract as getUserRoleContract, action as getUserRoleAction } from "./user-roles/getUserRole";
@@ -34,6 +34,7 @@ export const contract = c.router({
   uploadPortrait: uploadPortraitContract,
   onboardingQuestions: onboardingQuestionsContract,
   onboardingSetup: onboardingSetupContract,
+  getPermissions: getPermissionsContract,
   getOrganization: getOrganizationContract,
   getOrganizationUsers: getOrganizationUsersContract,
   getProject: getProjectContract,
@@ -41,7 +42,6 @@ export const contract = c.router({
   getRoles: getRolesContract,
   patchRole: patchRoleContract,
   postRoles: postRolesContract,
-  getPermissions: getPermissionsContract,
   getTeam: getTeamContract,
   postTeam: postTeamContract,
   getUserRole: getUserRoleContract,
@@ -61,6 +61,7 @@ export const appRouter = tsr.routerWithMiddleware(contract)<{
   uploadPortrait: uploadPortraitAction,
   onboardingQuestions: onboardingQuestionsAction,
   onboardingSetup: onboardingSetupAction,
+  getPermissions: getPermissionsAction,
   getOrganization: getOrganizationAction,
   getOrganizationUsers: getOrganizationUsersAction,
   getProject: getProjectAction,
@@ -68,7 +69,6 @@ export const appRouter = tsr.routerWithMiddleware(contract)<{
   getRoles: getRolesAction,
   patchRole: patchRoleAction,
   postRoles: postRolesAction,
-  getPermissions: getPermissionsAction,
   getTeam: getTeamAction,
   postTeam: postTeamAction,
   getUserRole: getUserRoleAction,

@@ -1,6 +1,6 @@
 class UrlGenerator {
   private getBaseUrl(isDev: boolean): string {
-    return isDev ? "http://localhost:3000" : "https://plugins.tensorify.io";
+    return isDev ? "http://localhost:3004" : "https://plugins.tensorify.io";
   }
 
   getSignInUrl(isDev: boolean, redirectUrl: string): string {
@@ -19,7 +19,7 @@ class UrlGenerator {
   }
 
   getApiUrl(isDev: boolean): string {
-    return isDev ? "http://localhost:3000" : "https://plugins.tensorify.io";
+    return isDev ? "http://localhost:3004" : "https://plugins.tensorify.io";
   }
 
   getUserProfileUrl(isDev: boolean): string {

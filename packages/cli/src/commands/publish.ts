@@ -130,7 +130,7 @@ class PluginPublisher {
         !options.frontend ||
         options.frontend === "https://plugins.tensorify.io"
       ) {
-        resolvedOptions.frontend = "http://localhost:3000";
+        resolvedOptions.frontend = "http://localhost:3004";
       }
     }
 
@@ -250,7 +250,7 @@ class PluginPublisher {
         !this.options.frontend ||
         this.options.frontend === "https://plugins.tensorify.io"
       ) {
-        this.options.frontend = "http://localhost:3000";
+        this.options.frontend = "http://localhost:3004";
       }
     } else {
       // Ensure production URLs are used if not in dev mode
@@ -262,7 +262,7 @@ class PluginPublisher {
       }
       if (
         !this.options.frontend ||
-        this.options.frontend === "http://localhost:3000"
+        this.options.frontend === "http://localhost:3004"
       ) {
         this.options.frontend = "https://plugins.tensorify.io";
       }
