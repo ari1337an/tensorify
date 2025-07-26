@@ -1,7 +1,5 @@
 ---
-description: 
-globs: 
-alwaysApply: true
+alwaysApply: false
 ---
 1. To run a specific test file: "npm run test:args -- src/app/api/v1/_contracts/[groupName]/[fileName].test.ts"
 2. After creating an API endpoint file, you have to run "npm run generate:tsrest && npm run generate:tsrest:client" and do not ever edit manualy in the [index.ts](mdc:src/app/api/v1/_contracts/index.ts) and [client.ts](mdc:src/app/api/v1/_client/client.ts) ever as these two commands will generate them programatically and correctly than your dumbass.

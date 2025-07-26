@@ -1,9 +1,23 @@
 "use client";
 
 import * as React from "react";
-import { Settings, FileText, Trash2 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { MenuItem } from "./MenuItem";
 import { useSettingsDialog } from "@/app/(application)/(protected)/(enterprise)/_components/settings";
+
+// Dynamically import icons with no SSR to prevent hydration mismatches
+const Settings = dynamic(
+  () => import("lucide-react").then((mod) => ({ default: mod.Settings })),
+  { ssr: false }
+);
+const FileText = dynamic(
+  () => import("lucide-react").then((mod) => ({ default: mod.FileText })),
+  { ssr: false }
+);
+const Trash2 = dynamic(
+  () => import("lucide-react").then((mod) => ({ default: mod.Trash2 })),
+  { ssr: false }
+);
 
 type SettingsSectionProps = {
   activeItem: string;
