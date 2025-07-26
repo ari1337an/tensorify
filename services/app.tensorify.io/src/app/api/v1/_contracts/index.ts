@@ -6,16 +6,16 @@ import { z } from "zod";
 import { contract as getaccountuseridContract, action as getaccountuseridAction } from "./account/getaccountuserid";
 import { contract as patchAccountContract, action as patchAccountAction } from "./account/patchAccount";
 import { contract as uploadPortraitContract, action as uploadPortraitAction } from "./account/uploadPortrait";
-import { contract as getPermissionsContract, action as getPermissionsAction } from "./permissions/getPermissions";
-import { contract as onboardingQuestionsContract, action as onboardingQuestionsAction } from "./onboarding/onboardingQuestions";
-import { contract as onboardingSetupContract, action as onboardingSetupAction } from "./onboarding/onboardingSetup";
-import { contract as getOrganizationContract, action as getOrganizationAction } from "./organization/getOrganization";
-import { contract as getOrganizationUsersContract, action as getOrganizationUsersAction } from "./organization/getOrganizationUsers";
 import { contract as getProjectContract, action as getProjectAction } from "./project/getProject";
 import { contract as postProjectContract, action as postProjectAction } from "./project/postProject";
+import { contract as onboardingQuestionsContract, action as onboardingQuestionsAction } from "./onboarding/onboardingQuestions";
+import { contract as onboardingSetupContract, action as onboardingSetupAction } from "./onboarding/onboardingSetup";
 import { contract as getRolesContract, action as getRolesAction } from "./roles/getRoles";
 import { contract as patchRoleContract, action as patchRoleAction } from "./roles/patchRole";
 import { contract as postRolesContract, action as postRolesAction } from "./roles/postRoles";
+import { contract as getPermissionsContract, action as getPermissionsAction } from "./permissions/getPermissions";
+import { contract as getOrganizationContract, action as getOrganizationAction } from "./organization/getOrganization";
+import { contract as getOrganizationUsersContract, action as getOrganizationUsersAction } from "./organization/getOrganizationUsers";
 import { contract as getTeamContract, action as getTeamAction } from "./team/getTeam";
 import { contract as postTeamContract, action as postTeamAction } from "./team/postTeam";
 import { contract as getUserRoleContract, action as getUserRoleAction } from "./user-roles/getUserRole";
@@ -32,16 +32,16 @@ export const contract = c.router({
   getaccountuserid: getaccountuseridContract,
   patchAccount: patchAccountContract,
   uploadPortrait: uploadPortraitContract,
-  getPermissions: getPermissionsContract,
-  onboardingQuestions: onboardingQuestionsContract,
-  onboardingSetup: onboardingSetupContract,
-  getOrganization: getOrganizationContract,
-  getOrganizationUsers: getOrganizationUsersContract,
   getProject: getProjectContract,
   postProject: postProjectContract,
+  onboardingQuestions: onboardingQuestionsContract,
+  onboardingSetup: onboardingSetupContract,
   getRoles: getRolesContract,
   patchRole: patchRoleContract,
   postRoles: postRolesContract,
+  getPermissions: getPermissionsContract,
+  getOrganization: getOrganizationContract,
+  getOrganizationUsers: getOrganizationUsersContract,
   getTeam: getTeamContract,
   postTeam: postTeamContract,
   getUserRole: getUserRoleContract,
@@ -59,16 +59,16 @@ export const appRouter = tsr.routerWithMiddleware(contract)<{
   getaccountuserid: getaccountuseridAction,
   patchAccount: patchAccountAction,
   uploadPortrait: uploadPortraitAction,
-  getPermissions: getPermissionsAction,
-  onboardingQuestions: onboardingQuestionsAction,
-  onboardingSetup: onboardingSetupAction,
-  getOrganization: getOrganizationAction,
-  getOrganizationUsers: getOrganizationUsersAction,
   getProject: getProjectAction,
   postProject: postProjectAction,
+  onboardingQuestions: onboardingQuestionsAction,
+  onboardingSetup: onboardingSetupAction,
   getRoles: getRolesAction,
   patchRole: patchRoleAction,
   postRoles: postRolesAction,
+  getPermissions: getPermissionsAction,
+  getOrganization: getOrganizationAction,
+  getOrganizationUsers: getOrganizationUsersAction,
   getTeam: getTeamAction,
   postTeam: postTeamAction,
   getUserRole: getUserRoleAction,

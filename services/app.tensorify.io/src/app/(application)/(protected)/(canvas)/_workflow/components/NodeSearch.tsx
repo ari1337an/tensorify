@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Panel } from "@xyflow/react";
 import {
   Sheet,
@@ -55,7 +55,7 @@ const SearchBar = ({
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) => (
-  <div className="px-3 py-1 sticky top-0 z-10">
+  <div className="px-3 sticky top-0 z-10">
     <div className="relative">
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
       <Input
@@ -80,8 +80,27 @@ export default function NodeSearch() {
   const [searchTerm, setSearchTerm] = useState("");
   const [nestedSearchTerm, setNestedSearchTerm] = useState("");
 
-  const { setDraggedNodeType, setDraggedVersion, setIsDragging } =
-    useDragDrop();
+  const {
+    setDraggedNodeType,
+    setDraggedVersion,
+    setIsDragging,
+    setOnDropSuccessCallback,
+  } = useDragDrop();
+
+  // Auto-close both sheets when drop is successful
+  useEffect(() => {
+    const handleDropSuccess = () => {
+      setIsSheetOpen(false);
+      setIsNestedSheetOpen(false);
+    };
+
+    setOnDropSuccessCallback(handleDropSuccess);
+
+    // Cleanup: remove callback when component unmounts
+    return () => {
+      setOnDropSuccessCallback(() => {});
+    };
+  }, [setOnDropSuccessCallback]);
 
   const handleParentClick = (item: NodeItem) => {
     if (item.children && item.children.length > 0) {
@@ -160,14 +179,15 @@ export default function NodeSearch() {
         <SheetContent
           side="right"
           className="w-full sm:max-w-md border-l border-border/50 backdrop-blur-xl bg-card/90 p-0 flex flex-col"
+          showOverlay={false}
           onInteractOutside={(e) => {
             if (isNestedSheetOpen) {
               e.preventDefault();
             }
           }}
         >
-          <SheetHeader className="p-4 border-b border-border/50">
-            <SheetTitle className="text-xl font-semibold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+          <SheetHeader>
+            <SheetTitle className="text-xl font-semibold bg-gradient-to-r from-primary-readable to-primary/80 bg-clip-text text-transparent">
               Add Node
             </SheetTitle>
             <SheetDescription className="text-muted-foreground text-sm">
@@ -179,7 +199,7 @@ export default function NodeSearch() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <ScrollArea className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 dark:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50">
-            <div className="flex flex-col gap-1 p-3">
+            <div className="flex flex-col gap-1 pb-3 px-3">
               {filteredNodes.map((item) => (
                 <div
                   key={item.id}

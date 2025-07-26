@@ -28,7 +28,8 @@ type BreadcrumbSegment = {
 const getBreadcrumbSegments = (
   projectName?: string,
   workflowName?: string,
-  currentRoute?: string
+  currentRoute?: string,
+  nodes: any[] = []
 ): { name: string; path: string; type: "project" | "workflow" | "node" }[] => {
   const segments: {
     name: string;
@@ -61,8 +62,13 @@ const getBreadcrumbSegments = (
 
     routeLevels.forEach((level: string) => {
       accumulatedPath += `/${level}`;
+
+      // Find the node with this ID to get its label
+      const node = nodes.find((n) => n.id === level);
+      const nodeName = node?.data?.label || level; // Use label if available, fallback to ID
+
       segments.push({
-        name: level,
+        name: nodeName,
         path: accumulatedPath,
         type: "node",
       });
@@ -113,7 +119,7 @@ const getSmartSegments = (
 
 export function Breadcrumb() {
   const { currentWorkflow } = useStore();
-  const { currentRoute, setRoute } = useWorkflowStore();
+  const { currentRoute, setRoute, nodes } = useWorkflowStore();
   const [isExpanded, setIsExpanded] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const breadcrumbRef = useRef<HTMLDivElement>(null);
@@ -122,7 +128,8 @@ export function Breadcrumb() {
   const allSegments = getBreadcrumbSegments(
     currentWorkflow?.projectName,
     currentWorkflow?.name,
-    currentRoute
+    currentRoute,
+    nodes
   );
 
   const displaySegments: BreadcrumbSegment[] = isExpanded
@@ -258,7 +265,7 @@ export function Breadcrumb() {
                   ) : (
                     <BreadcrumbItem>
                       {index === displaySegments.length - 1 ? (
-                        <BreadcrumbPage className="font-medium text-foreground">
+                        <BreadcrumbPage className="font-medium text-foreground truncate max-w-[120px]">
                           {segment.name}
                         </BreadcrumbPage>
                       ) : (
@@ -269,7 +276,7 @@ export function Breadcrumb() {
                             handleNavigation(segment.path, segment.type);
                           }}
                           className={`
-                            text-sm transition-colors font-medium cursor-pointer
+                            text-sm transition-colors font-medium cursor-pointer truncate max-w-[120px]
                             ${
                               segment.type === "project"
                                 ? "text-primary-readable hover:text-primary-readable/80"

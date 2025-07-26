@@ -9,6 +9,7 @@ import {
   MiniMap,
   useReactFlow,
   SelectionMode,
+  type NodeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import "@workflow/style/flow.css";
@@ -23,7 +24,9 @@ import NodeSearch from "@workflow/components/NodeSearch";
 import DevTools from "@workflow/components/DevTools";
 
 // Store and Context
-import useWorkflowStore from "@workflow/store/workflowStore";
+import useWorkflowStore, {
+  type WorkflowNode,
+} from "@workflow/store/workflowStore";
 import {
   DragDropProvider,
   useDragDrop,
@@ -33,9 +36,8 @@ import {
 import CustomStandaloneNode from "@workflow/components/nodes/CustomStandaloneNode";
 import CustomNestedNode from "@workflow/components/nodes/CustomNestedNode";
 
-// ID generator for nodes
-let nodeId = 0;
-const getId = () => `node_${nodeId++}`;
+// ID generator for nodes using crypto.randomUUID for better uniqueness
+const getId = () => crypto.randomUUID();
 
 const selector = (state: ReturnType<typeof useWorkflowStore.getState>) => ({
   nodes: state.nodes,
@@ -49,6 +51,9 @@ const selector = (state: ReturnType<typeof useWorkflowStore.getState>) => ({
 });
 
 function WorkflowCanvas() {
+  // Always fire this to verify dev environment
+  console.log("🚀 WorkflowCanvas component is running - Console working!");
+
   const { theme } = useTheme();
   const { showMiniMap, onMoveStart, onMoveEnd } = useMiniMapFade();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -65,16 +70,48 @@ function WorkflowCanvas() {
   } = useWorkflowStore(useShallow(selector));
 
   const { screenToFlowPosition } = useReactFlow();
-  const { draggedNodeType, draggedVersion, setDraggedNodeType, setIsDragging } =
-    useDragDrop();
+  const {
+    draggedNodeType,
+    draggedVersion,
+    setDraggedNodeType,
+    setIsDragging,
+    onDropSuccess,
+  } = useDragDrop();
 
-  // Node types registry
-  const nodeTypes = useMemo(
-    () => ({
-      "@tensorify/core/CustomStandaloneNode": CustomStandaloneNode,
-      "@tensorify/core/CustomNestedNode": CustomNestedNode,
-    }),
-    []
+  // Node types registry - general approach: nested vs all others
+  const nodeTypes = useMemo(() => {
+    console.log("🟢 Node types registry created");
+
+    // Create a default mapping function
+    const createNodeTypeMap = () => {
+      const nodeMap: Record<
+        string,
+        React.ComponentType<NodeProps<WorkflowNode>>
+      > = {};
+
+      // Special case: nested nodes
+      nodeMap["@tensorify/core/CustomNestedNode"] = CustomNestedNode;
+
+      // All other nodes use CustomStandaloneNode as default
+      // This is a fallback - ReactFlow will use this for any unregistered types
+      return new Proxy(nodeMap, {
+        get: (target, prop) => {
+          if (typeof prop === "string" && prop in target) {
+            return target[prop];
+          }
+          // Default to CustomStandaloneNode for any other node type
+          return CustomStandaloneNode;
+        },
+      });
+    };
+
+    return createNodeTypeMap();
+  }, []);
+
+  // Debug nodes
+  console.log(
+    "🟢 WorkflowLayout render - nodes:",
+    nodes.map((n) => ({ id: n.id, type: n.type, selected: n.selected }))
   );
 
   // Default edge options
@@ -125,6 +162,9 @@ function WorkflowCanvas() {
       // Clean up drag state
       setDraggedNodeType(null);
       setIsDragging(false);
+
+      // Notify that drop was successful
+      onDropSuccess();
     },
     [
       screenToFlowPosition,
@@ -134,12 +174,14 @@ function WorkflowCanvas() {
       currentRoute,
       setDraggedNodeType,
       setIsDragging,
+      onDropSuccess,
     ]
   );
 
+  // DO NOT REMOVE THE "reactflow-wrapper" class as its neessary for dragging and dropping nodes.
   return (
     <div className="workflow-canvas h-full w-full">
-      <div ref={reactFlowWrapper} className="h-full w-full">
+      <div ref={reactFlowWrapper} className="h-full w-full reactflow-wrapper">
         <ReactFlow
           colorMode={theme as "dark" | "light" | "system"}
           nodes={nodes}

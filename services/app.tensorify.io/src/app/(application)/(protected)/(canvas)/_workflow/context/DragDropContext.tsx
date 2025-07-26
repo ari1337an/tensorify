@@ -7,6 +7,7 @@ import {
   useState,
   Dispatch,
   SetStateAction,
+  useCallback,
 } from "react";
 
 // Drag and drop context type
@@ -17,6 +18,8 @@ type DragDropContextType = {
   setDraggedVersion: Dispatch<SetStateAction<string | null>>;
   isDragging: boolean;
   setIsDragging: Dispatch<SetStateAction<boolean>>;
+  onDropSuccess: () => void;
+  setOnDropSuccessCallback: (callback: () => void) => void;
 };
 
 // Create the context
@@ -27,6 +30,19 @@ export const DragDropProvider = ({ children }: { children: ReactNode }) => {
   const [draggedNodeType, setDraggedNodeType] = useState<string | null>(null);
   const [draggedVersion, setDraggedVersion] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [dropSuccessCallback, setDropSuccessCallback] = useState<
+    (() => void) | null
+  >(null);
+
+  const onDropSuccess = useCallback(() => {
+    if (dropSuccessCallback) {
+      dropSuccessCallback();
+    }
+  }, [dropSuccessCallback]);
+
+  const setOnDropSuccessCallback = useCallback((callback: () => void) => {
+    setDropSuccessCallback(() => callback);
+  }, []);
 
   return (
     <DragDropContext.Provider
@@ -37,6 +53,8 @@ export const DragDropProvider = ({ children }: { children: ReactNode }) => {
         setDraggedVersion,
         isDragging,
         setIsDragging,
+        onDropSuccess,
+        setOnDropSuccessCallback,
       }}
     >
       {children}

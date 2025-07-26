@@ -151,3 +151,7 @@
     display: none;
   }
 }
+
+.reactflow-wrapper {
+  pointer-events: auto; /* Ensure it's not blocking events when dropping from shadcnsheet to reactflow canvas */
+}
