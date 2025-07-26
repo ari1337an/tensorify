@@ -16,6 +16,7 @@ import { Plus, Search, ChevronRight, ArrowLeft } from "lucide-react";
 import defaultNodes from "../data/defaultNodes";
 import { type NodeItem } from "../types/NodeItem";
 import { ScrollArea } from "@/app/_components/ui/scroll-area";
+import { useDragDrop } from "../context/DragDropContext";
 
 const NodeListItem = ({
   item,
@@ -79,6 +80,9 @@ export default function NodeSearch() {
   const [searchTerm, setSearchTerm] = useState("");
   const [nestedSearchTerm, setNestedSearchTerm] = useState("");
 
+  const { setDraggedNodeType, setDraggedVersion, setIsDragging } =
+    useDragDrop();
+
   const handleParentClick = (item: NodeItem) => {
     if (item.children && item.children.length > 0) {
       setNestedContent({ title: item.title, items: item.children });
@@ -89,10 +93,18 @@ export default function NodeSearch() {
 
   const onDragStart = (
     event: React.DragEvent<HTMLDivElement>,
-    nodeType: string
+    nodeType: string,
+    version?: string
   ) => {
+    setDraggedNodeType(nodeType);
+    setDraggedVersion(version || null);
+    setIsDragging(true);
     event.dataTransfer.setData("application/reactflow", nodeType);
     event.dataTransfer.effectAllowed = "move";
+  };
+
+  const onDragEnd = () => {
+    setIsDragging(false);
   };
 
   const matchSearch = (text: string, search: string) =>
@@ -138,11 +150,11 @@ export default function NodeSearch() {
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetTrigger asChild>
           <Button
-            variant="outline"
+            variant="default"
             size="icon"
-            className="size-12 rounded-lg ring-1 ring-card-foreground hover:ring-2 hover:ring-primary p-1.5"
+            className="h-12 w-12 rounded-full backdrop-blur-sm bg-primary/90 border-border/50 hover:bg-primary shadow-sm transition-all duration-200 hover:scale-105"
           >
-            <Plus className="size-6 text-white group-hover:text-primary" />
+            <Plus className="size-6 text-primary-foreground" />
           </Button>
         </SheetTrigger>
         <SheetContent
@@ -172,10 +184,13 @@ export default function NodeSearch() {
                 <div
                   key={item.id}
                   draggable={item.draggable}
-                  onDragStart={(e) => item.draggable && onDragStart(e, item.id)}
+                  onDragStart={(e) =>
+                    item.draggable && onDragStart(e, item.id, item.version)
+                  }
+                  onDragEnd={onDragEnd}
                   className={
                     item.draggable
-                      ? "cursor-grab"
+                      ? "cursor-grab active:cursor-grabbing"
                       : item.children && item.children.length > 0
                         ? "cursor-pointer"
                         : "cursor-default"
@@ -220,8 +235,13 @@ export default function NodeSearch() {
                 <div
                   key={item.id}
                   draggable={item.draggable}
-                  onDragStart={(e) => onDragStart(e, item.id)}
-                  className={item.draggable ? "cursor-grab" : "cursor-default"}
+                  onDragStart={(e) => onDragStart(e, item.id, item.version)}
+                  onDragEnd={onDragEnd}
+                  className={
+                    item.draggable
+                      ? "cursor-grab active:cursor-grabbing"
+                      : "cursor-default"
+                  }
                 >
                   <NodeListItem item={item} onClick={() => {}} />
                 </div>

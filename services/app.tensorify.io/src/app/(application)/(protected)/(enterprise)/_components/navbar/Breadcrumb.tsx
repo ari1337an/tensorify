@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/app/_components/ui/badge";
 import useStore from "@/app/_store/store";
 
 export function Breadcrumb() {
@@ -8,7 +9,7 @@ export function Breadcrumb() {
     <div className="w-full flex-shrink overflow-hidden">
       <div className="flex items-center overflow-hidden">
         <div className="flex items-center gap-1 overflow-hidden flex-shrink min-w-0">
-          <span className="font-bold text-primary truncate">
+          <span className="font-medium text-muted-foreground truncate">
             {currentWorkflow?.projectName || "Project Name"}
           </span>
         </div>
