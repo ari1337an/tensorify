@@ -1,5 +1,10 @@
-# Dependencies (exclude from context, but we need to copy package.json files explicitly)
-node_modules/*/node_modules
+# Dependencies (keep package.json files, exclude nested node_modules)
+node_modules
+!package.json
+!package-lock.json
+!turbo.json
+!packages/*/package.json
+!services/*/package.json
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -88,13 +93,20 @@ docs/
 .prettierrc*
 jest.config.*
 
-# Other service directories (only copy what we need)
+# Other service directories (exclude built artifacts but keep source)
 services/*/node_modules
 services/*/dist
 services/*/.next
 services/*/build
+!services/api/src
+!services/api/scripts
+!services/api/tsconfig.json
+!services/api/ecosystem.config.js
 
-# Package lib directories (we control these explicitly)
+# Package build directories (exclude built artifacts but keep source)
+packages/*/node_modules
 packages/*/lib
 packages/*/dist
-packages/*/build 
+packages/*/build
+!packages/*/src
+!packages/*/tsconfig.json 

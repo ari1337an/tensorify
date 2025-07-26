@@ -34,10 +34,7 @@ FROM ari1337an/node-20-python3-make-cpp:0.0.2 AS production
 # Install PM2 globally and curl for health checks, then clean up
 RUN npm install -g pm2@latest && \
     npm cache clean --force && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    apk add --no-cache curl
 
 # Set working directory
 WORKDIR /app
@@ -48,10 +45,8 @@ COPY --from=builder /app/services/api/ecosystem.config.js ./services/api/
 COPY --from=builder /app/services/api/package.json ./services/api/
 COPY --from=builder /app/node_modules ./node_modules
 # Only copy the built packages we need (not source)
-COPY --from=builder /app/packages/plugin-engine/lib ./packages/plugin-engine/lib
+COPY --from=builder /app/packages/plugin-engine/dist ./packages/plugin-engine/dist
 COPY --from=builder /app/packages/plugin-engine/package.json ./packages/plugin-engine/
-COPY --from=builder /app/packages/shared/src ./packages/shared/src
-COPY --from=builder /app/packages/shared/package.json ./packages/shared/
 
 # Create logs directory for PM2
 RUN mkdir -p /app/services/api/logs
