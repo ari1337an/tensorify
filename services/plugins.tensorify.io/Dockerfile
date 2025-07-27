@@ -37,13 +37,13 @@ COPY --from=builder /app/services/plugins.tensorify.io/.next/standalone ./
 COPY --from=builder /app/services/plugins.tensorify.io/.next/static ./services/plugins.tensorify.io/.next/static
 
 # Expose port
-EXPOSE 3000
+EXPOSE 3004
 
 WORKDIR /app/services/plugins.tensorify.io
 
 # Start application directly
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=3000
+ENV PORT=3004
 ENV HOSTNAME="0.0.0.0"
 CMD ["server.js"]

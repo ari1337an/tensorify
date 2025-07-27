@@ -4,7 +4,7 @@ services:
       context: ../../
       dockerfile: services/plugins.tensorify.io/Dockerfile
     ports:
-      - "3000:3000"
+      - "3004:3004"
     restart: unless-stopped
     env_file:
       - .env
