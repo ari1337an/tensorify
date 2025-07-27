@@ -271,6 +271,8 @@ describe("POST /workflow/:workflowId/plugin", () => {
     expect(dbPlugin).toBeDefined();
     expect(dbPlugin?.slug).toBe(pluginSlug);
     expect(dbPlugin?.description).toBeNull(); // No description provided
+    expect(dbPlugin?.pluginType).toBe("CUSTOM"); // Default pluginType when not found
+    expect(dbPlugin?.manifest).toEqual({}); // Default empty manifest when not available
     expect(dbPlugin?.workflowId).toBe(testWorkflow.id);
     expect(dbPlugin?.createdAt).toBeDefined();
     expect(dbPlugin?.updatedAt).toBeDefined();

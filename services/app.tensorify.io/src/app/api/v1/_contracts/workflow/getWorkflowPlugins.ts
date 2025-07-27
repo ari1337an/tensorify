@@ -19,6 +19,8 @@ const WorkflowInstalledPlugin = z.object({
   id: z.string().uuid(),
   slug: z.string(),
   description: z.string().nullable(),
+  pluginType: z.string(), // Added pluginType field
+  manifest: z.record(z.unknown()).nullable(), // Changed to use unknown instead of any
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -113,6 +115,8 @@ export const action = {
           id: plugin.id,
           slug: plugin.slug,
           description: plugin.description,
+          pluginType: plugin.pluginType,
+          manifest: plugin.manifest as Record<string, unknown> | null, // Type assertion to handle JsonValue
           createdAt: plugin.createdAt.toISOString(),
           updatedAt: plugin.updatedAt.toISOString(),
         }));

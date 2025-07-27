@@ -37,6 +37,7 @@ const pluginWebhookSchema = z.object({
   readme: z.string().optional(),
   sdkVersion: z.string().optional(), // Added sdkVersion
   tags: z.string().optional(), // Added tags
+  pluginType: z.string().optional(), // Added pluginType (nodeType from SDK)
 });
 
 /**
@@ -56,6 +57,7 @@ interface PluginData {
   authorId: string;
   sdkVersion?: string; // Added sdkVersion
   tags?: string; // Added tags
+  pluginType?: string; // Added pluginType (nodeType from SDK)
   // Properties added to align with webhook schema payload for validation
   status?: string; // This is always 'published' for outgoing webhook, but schema expects optional
   isPublic?: boolean; // Optional field in webhook schema
@@ -390,6 +392,7 @@ export class UploadService {
         // Add other optional fields if they are consistently available and needed in the webhook
         tags: pluginData.tags, // Added tags
         sdkVersion: pluginData.sdkVersion, // Added sdkVersion
+        pluginType: pluginData.pluginType, // Added pluginType
       };
 
       // Validate the constructed webhook payload

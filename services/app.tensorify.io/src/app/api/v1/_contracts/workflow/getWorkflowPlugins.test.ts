@@ -217,6 +217,8 @@ describe("GET /workflow/:workflowId/plugins", () => {
         id: expect.any(String),
         slug: "@johndoe/test-plugin:1.0.0",
         description: null, // No description provided
+        pluginType: expect.any(String), // Should have pluginType field
+        manifest: expect.any(Object), // Should have manifest field
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       });

@@ -559,6 +559,19 @@ export default async function PluginPage({
                         </dd>
                       </div>
 
+                      {/* Plugin Type */}
+                      <div className="bg-muted/30 rounded-lg p-4 border border-border/50">
+                        <dt className="text-sm text-muted-foreground mb-2">
+                          Plugin Type
+                        </dt>
+                        <dd>
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-primary/10 text-primary text-sm font-medium rounded-md border border-primary/20">
+                            <Package className="h-3.5 w-3.5" />
+                            {plugin.pluginType || "CUSTOM"}
+                          </span>
+                        </dd>
+                      </div>
+
                       {/* Meta Info Group */}
                       <div className="bg-muted/30 rounded-lg p-4 border border-border/50 space-y-4">
                         <div>
@@ -600,9 +613,7 @@ export default async function PluginPage({
                           </dt>
                           <dd>
                             <a
-                              href={
-                                plugin.githubUrl
-                              }
+                              href={plugin.githubUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-sm text-primary hover:underline inline-flex items-center gap-1.5"

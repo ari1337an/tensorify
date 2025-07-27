@@ -502,6 +502,34 @@ class PluginPublisher {
       tensorifySettings: {
         sdkVersion: tensorifySettings["sdk-version"] || "latest",
       },
+      // Enhanced metadata for app.tensorify.io
+      metadata: {
+        repository: packageJson.repository?.url,
+        license: packageJson.license,
+        homepage: packageJson.homepage,
+        bugs: packageJson.bugs,
+      },
+      // Placeholder for visual configuration - to be populated when plugin execution is implemented
+      visual: {
+        // This will be populated by executing the plugin and extracting visual config
+        // For now, provide basic structure based on pluginType
+        containerType: "DEFAULT",
+        size: { width: 240, height: 140 },
+        styling: {
+          borderRadius: 8,
+          borderWidth: 2,
+          shadowLevel: 1,
+          theme: "auto",
+        },
+        icons: {
+          primary: { type: "LUCIDE", value: "box" },
+          showIconBackground: true,
+        },
+        labels: {
+          title: packageJson.name.split("/")[1] || packageJson.name,
+          showLabels: true,
+        },
+      },
     };
   }
 

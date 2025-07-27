@@ -159,6 +159,8 @@ model WorkflowInstalledPlugins {
   id          String  @id @default(uuid())
   slug        String
   description String?
+  pluginType  String
+  manifest    Json
 
   workflow   Workflow @relation("WorkflowInstalledPlugins", fields: [workflowId], references: [id])
   workflowId String

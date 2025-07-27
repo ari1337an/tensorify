@@ -624,9 +624,21 @@ export default function NodeSearch() {
                               <p className="text-xs text-muted-foreground">
                                 {plugin.description}
                               </p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                by {plugin.authorName}
-                              </p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <p className="text-xs text-muted-foreground">
+                                  by {plugin.authorName}
+                                </p>
+                                {plugin.pluginType && (
+                                  <>
+                                    <span className="text-xs text-muted-foreground">
+                                      •
+                                    </span>
+                                    <span className="text-xs bg-muted/60 text-muted-foreground px-1.5 py-0.5 rounded-sm font-medium">
+                                      {plugin.pluginType.replace("_", " ")}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
                             </div>
                             <div className="flex gap-2">
                               <Button

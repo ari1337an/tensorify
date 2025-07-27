@@ -111,12 +111,70 @@ export const action = {
           });
         }
 
-        // Install the plugin atomically
+        // Fetch plugin metadata from plugins.tensorify.io
+        let pluginMetadata = null;
+        let manifestData = {};
+        try {
+          // Parse slug to extract plugin name and author for search
+          const slugMatch = slug.match(/^@([^/]+)\/([^:]+):(.+)$/);
+          if (!slugMatch) {
+            throw new TsRestResponseError(contract, {
+              status: 400,
+              body: {
+                status: "failed",
+                message: "Invalid plugin slug format",
+              },
+            });
+          }
+
+          const [, authorName, pluginName, version] = slugMatch;
+
+          // Fetch plugin metadata from plugins.tensorify.io
+          const isDevelopment = process.env.NODE_ENV === "development";
+          const baseUrl = isDevelopment
+            ? "http://localhost:3004"
+            : "https://plugins.tensorify.io";
+
+          const searchResponse = await fetch(
+            `${baseUrl}/api/plugins/search?q=${encodeURIComponent(pluginName)}`
+          );
+
+          if (searchResponse.ok) {
+            const searchData = await searchResponse.json();
+            pluginMetadata = searchData.plugins?.find(
+              (p: any) => p.name === pluginName && p.authorName === authorName
+            );
+          }
+
+          // Try to fetch manifest.json from S3 if available
+          try {
+            // TODO: Implement proper manifest fetching via API endpoint
+            // For now, use basic manifest structure with available data
+            manifestData = {
+              name: pluginName,
+              version: version,
+              pluginType: pluginMetadata?.pluginType || "CUSTOM",
+              entrypointClassName: "TensorifyPlugin", // Default value
+              description: pluginMetadata?.description,
+              author: authorName,
+            };
+          } catch (manifestError) {
+            console.warn("Failed to fetch manifest.json:", manifestError);
+            // Continue with empty manifest
+          }
+        } catch (error) {
+          console.warn("Failed to fetch plugin metadata:", error);
+          // Continue with installation but use defaults
+        }
+
+        // Install the plugin atomically with metadata
         await db.$transaction(async (tx) => {
           await tx.workflowInstalledPlugins.create({
             data: {
               slug,
-              description: description || null,
+              description: description || pluginMetadata?.description || null,
+              pluginType: pluginMetadata?.pluginType || "CUSTOM",
+              manifest: manifestData, // Use fetched manifest data
               workflowId: workflowId,
             },
           });

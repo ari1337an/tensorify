@@ -59,6 +59,7 @@ export async function GET(request: Request) {
         slug: true,
         authorName: true,
         tags: true,
+        pluginType: true, // Added pluginType for NodeSearch display
       },
       take: 5,
     });
