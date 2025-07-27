@@ -45,3 +45,7 @@ logs/
 # nextjs build files.
 .next/
 services/plugins.tensorify.io/.next
+
+# all */generated/client/** files removed
+generated/client/
+**/generated/client/**
