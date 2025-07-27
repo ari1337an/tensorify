@@ -10,14 +10,14 @@ import { contract as onboardingQuestionsContract, action as onboardingQuestionsA
 import { contract as onboardingSetupContract, action as onboardingSetupAction } from "./onboarding/onboardingSetup";
 import { contract as getOrganizationContract, action as getOrganizationAction } from "./organization/getOrganization";
 import { contract as getOrganizationUsersContract, action as getOrganizationUsersAction } from "./organization/getOrganizationUsers";
-import { contract as getProjectContract, action as getProjectAction } from "./project/getProject";
-import { contract as postProjectContract, action as postProjectAction } from "./project/postProject";
 import { contract as getPermissionsContract, action as getPermissionsAction } from "./permissions/getPermissions";
-import { contract as getTeamContract, action as getTeamAction } from "./team/getTeam";
-import { contract as postTeamContract, action as postTeamAction } from "./team/postTeam";
 import { contract as getRolesContract, action as getRolesAction } from "./roles/getRoles";
 import { contract as patchRoleContract, action as patchRoleAction } from "./roles/patchRole";
 import { contract as postRolesContract, action as postRolesAction } from "./roles/postRoles";
+import { contract as getProjectContract, action as getProjectAction } from "./project/getProject";
+import { contract as postProjectContract, action as postProjectAction } from "./project/postProject";
+import { contract as getTeamContract, action as getTeamAction } from "./team/getTeam";
+import { contract as postTeamContract, action as postTeamAction } from "./team/postTeam";
 import { contract as getUserRoleContract, action as getUserRoleAction } from "./user-roles/getUserRole";
 import { contract as postUserRoleContract, action as postUserRoleAction } from "./user-roles/postUserRole";
 import { contract as deleteWorkflowPluginContract, action as deleteWorkflowPluginAction } from "./workflow/deleteWorkflowPlugin";
@@ -37,14 +37,14 @@ export const contract = c.router({
   onboardingSetup: onboardingSetupContract,
   getOrganization: getOrganizationContract,
   getOrganizationUsers: getOrganizationUsersContract,
-  getProject: getProjectContract,
-  postProject: postProjectContract,
   getPermissions: getPermissionsContract,
-  getTeam: getTeamContract,
-  postTeam: postTeamContract,
   getRoles: getRolesContract,
   patchRole: patchRoleContract,
   postRoles: postRolesContract,
+  getProject: getProjectContract,
+  postProject: postProjectContract,
+  getTeam: getTeamContract,
+  postTeam: postTeamContract,
   getUserRole: getUserRoleContract,
   postUserRole: postUserRoleContract,
   deleteWorkflowPlugin: deleteWorkflowPluginContract,
@@ -65,14 +65,14 @@ export const appRouter = tsr.routerWithMiddleware(contract)<{
   onboardingSetup: onboardingSetupAction,
   getOrganization: getOrganizationAction,
   getOrganizationUsers: getOrganizationUsersAction,
-  getProject: getProjectAction,
-  postProject: postProjectAction,
   getPermissions: getPermissionsAction,
-  getTeam: getTeamAction,
-  postTeam: postTeamAction,
   getRoles: getRolesAction,
   patchRole: patchRoleAction,
   postRoles: postRolesAction,
+  getProject: getProjectAction,
+  postProject: postProjectAction,
+  getTeam: getTeamAction,
+  postTeam: postTeamAction,
   getUserRole: getUserRoleAction,
   postUserRole: postUserRoleAction,
   deleteWorkflowPlugin: deleteWorkflowPluginAction,
