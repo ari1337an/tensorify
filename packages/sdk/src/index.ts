@@ -1,156 +1,281 @@
 /**
  * @tensorify.io/sdk
  *
- * TypeScript SDK for creating Tensorify plugins with comprehensive frontend support,
- * React Flow node integration, and full plugin system capabilities.
+ * TypeScript SDK for developing Tensorify plugins with comprehensive validation,
+ * frontend enforcement, and publishing tools.
+ *
+ * @version 1.0.0
+ * @author AlphaWolf Ventures, Inc.
+ * @license ISC
  */
 
-// ===== NEW PLUGIN SYSTEM EXPORTS =====
+// ========================================
+// CORE CLASSES
+// ========================================
 
-// Core Plugin Types
-export type {
-  // Handle Types
+// Main abstract class that all plugins extend
+export { TensorifyPlugin } from "./core/TensorifyPlugin";
+
+// ========================================
+// TYPE DEFINITIONS
+// ========================================
+
+// Core types
+export {
+  CorePluginSettings,
+  PluginSettings,
+  PluginCodeGenerationContext,
+  NodeType,
+  PluginCapability,
+  PluginRequirements,
+} from "./types/core";
+
+// Visual configuration types
+export {
   HandleViewType,
-  EdgeType,
   HandlePosition,
-
-  // Visual Types
+  EdgeType,
+  HandleDataType,
+  HandleValidation,
+  InputHandle,
+  OutputHandle,
   NodeViewContainerType,
   IconType,
+  IconPosition,
   NodeIcon,
-
-  // Settings Types
-  SettingsFieldType,
-  SettingsDataType,
-
-  // Core Interfaces
-  HandleDefinition,
+  NodeSize,
+  NodePadding,
+  NodeStyling,
+  NodeIcons,
+  NodeLabels,
   NodeVisualConfig,
-  SettingsField,
-  IPluginDefinition,
-  PluginSettings,
-  FrontendPluginManifest,
-  PackageJsonInfo,
-  PluginValidationResult,
-  PluginCodeGenerationContext,
-} from "./types/plugin.types";
+} from "./types/visual";
 
-// Core Plugin Classes
-export { TensorifyPlugin } from "./base/TensorifyPlugin";
-
-// Plugin Validation Utilities
+// Settings field types
 export {
-  validatePlugin,
-  PluginValidator,
-  ManifestSchema,
-  PackageJsonSchema,
-  CURRENT_SDK_VERSION,
-  type ValidationError,
-  type ValidationResult,
-} from "./validation/index";
+  SettingsUIType,
+  SettingsDataType,
+  SelectOption,
+  FieldValidation,
+  ConditionalDisplay,
+  SettingsField,
+  SettingsGroup,
+  UI_TYPE_TO_DATA_TYPE_MAP,
+  DEFAULT_VALUES,
+} from "./types/settings";
 
-// NodeType enum for CLI compatibility
-export { NodeType } from "./interfaces/INode";
+// Plugin definition and manifest types
+export {
+  IPluginDefinition,
+  PackageJsonInfo,
+  FrontendPluginManifest,
+  PluginValidationResult,
+  PluginValidationError,
+  PluginValidationWarning,
+  PluginCreationResult,
+  PluginBuildOptions,
+  PluginExecutionContext,
+  PluginExecutionResult,
+  PluginExecutionError,
+} from "./types/plugin";
 
-// Plugin Utilities
+// Import types for local use in functions
+import { FrontendPluginManifest } from "./types/plugin";
+import { NodeType, PluginCapability } from "./types/core";
+import { NodeViewContainerType } from "./types/visual";
+
+// ========================================
+// UTILITY FUNCTIONS
+// ========================================
+
+// Plugin development utilities
 export {
   generatePluginManifest,
   readPackageJson,
   writeManifestFile,
   buildPluginManifest,
+  validatePlugin,
+  validatePluginSettings,
   createDefaultSettings,
-  mergeSettings,
-  generateDynamicLabel,
-  getPluginMetadata,
-  createPluginSummary,
-  validateSettingsWithFeedback,
-  autoDetectEntrypointClassName,
-  generateBuildScript,
-  createPluginTemplate,
-} from "./utils/plugin.utils";
-
-// Frontend Integration Utilities
-export {
-  pluginToNodeItem,
-  pluginsToNodeItems,
-  generateFrontendPluginMeta,
-  isTensorifyPluginNode,
-  extractPluginId,
-  getDefaultIconForCategory,
-  integratePluginIntoCategories,
-} from "./utils/frontend.utils";
-
-export type {
-  NodeItem,
-  FrontendSettingsFieldMeta,
-  FrontendHandleMeta,
-  FrontendPluginMeta,
-} from "./utils/frontend.utils";
-
-// Sample Plugin (for reference)
-export { AIChatAgentPlugin } from "./examples/AIChatAgentPlugin";
-
-// ===== LEGACY TYPES (Backward Compatibility) =====
-
-// Legacy core types - kept for backward compatibility
-export type {
-  Layer,
-  LayerSettings,
-  NestedLayerSettings,
-  Children,
-  PluginPayload,
-  PluginManifest,
-  PluginEntryPoint,
-  CodeGenerationContext,
-} from "./types";
-
-// Utilities - kept for backward compatibility
-export {
+  mergeSettingsWithDefaults,
+  processDynamicLabelTemplate,
   generateVariableName,
   sanitizeVariableName,
-  formatPythonCode,
-  camelToSnake,
-  snakeToCamel,
-  deepMerge,
-  normalizeSettings,
-  buildImports,
-  validateTensorDimensions,
-  formatTensorShape,
-  parseVersion,
-  compareVersions,
-} from "./utils";
+  indentCode,
+  autoDetectEntrypointClassName,
+  isValidPluginDirectory,
+  createPluginTemplate,
+  getPluginMetadata,
+} from "./utils/plugin-utils";
+
+// ========================================
+// CONSTANTS AND HELPERS
+// ========================================
 
 /**
- * SDK Version Information
- */
-export const SDK_VERSION = "2.0.0";
-export const PLUGIN_SYSTEM_VERSION = "1.0.0";
-
-/**
- * Supported Plugin Categories
+ * Supported node type categories for plugins
  */
 export const PLUGIN_CATEGORIES = [
-  "model_layer",
-  "model",
+  "custom",
   "trainer",
   "evaluator",
+  "model",
+  "model_layer",
   "dataloader",
-  "dataset",
+  "preprocessor",
+  "postprocessor",
+  "augmentation_stack",
   "optimizer",
-  "criterion",
   "loss_function",
   "metric",
   "scheduler",
   "regularizer",
-  "preprocessor",
-  "postprocessor",
-  "augmentation_stack",
-  "train_one_epoch_function",
-  "report",
   "function",
   "pipeline",
-  "custom",
-  "miscellaneous",
+  "report",
 ] as const;
 
+/**
+ * Plugin category type derived from constants
+ */
 export type PluginCategory = (typeof PLUGIN_CATEGORIES)[number];
+
+/**
+ * Current SDK version
+ */
+export const SDK_VERSION = "1.0.0";
+
+/**
+ * Minimum required TypeScript version
+ */
+export const MIN_TYPESCRIPT_VERSION = "4.5.0";
+
+/**
+ * Supported manifest format versions
+ */
+export const MANIFEST_VERSIONS = ["1.0.0"] as const;
+
+// ========================================
+// CONVENIENCE FUNCTIONS
+// ========================================
+
+/**
+ * Create a new plugin manifest with default values
+ *
+ * @param overrides Optional properties to override defaults
+ * @returns Plugin manifest with defaults applied
+ */
+export function createManifest(
+  overrides: Partial<FrontendPluginManifest> = {}
+): FrontendPluginManifest {
+  const defaults: FrontendPluginManifest = {
+    name: "my-plugin",
+    version: "1.0.0",
+    description: "A new Tensorify plugin",
+    author: "",
+    main: "dist/index.js",
+    entrypointClassName: "MyPlugin",
+    keywords: ["tensorify", "plugin"],
+
+    frontendConfigs: {
+      id: "my-plugin",
+      name: "My Plugin",
+      category: "custom",
+      nodeType: NodeType.CUSTOM,
+      visual: {
+        containerType: NodeViewContainerType.DEFAULT,
+        size: { width: 200, height: 120 },
+        padding: { inner: 16, outer: 8, extraPadding: false },
+        styling: {
+          borderRadius: 8,
+          borderWidth: 2,
+          shadowLevel: 1,
+          theme: "auto",
+        },
+        icons: { secondary: [], showIconBackground: true, iconSize: "medium" },
+        labels: { showLabels: true, labelPosition: "top" },
+      },
+      inputHandles: [],
+      outputHandles: [],
+      settingsFields: [],
+    },
+
+    capabilities: [PluginCapability.CODE_GENERATION],
+    requirements: {
+      minSdkVersion: SDK_VERSION,
+      dependencies: [],
+    },
+
+    sdkVersion: SDK_VERSION,
+    generatedAt: new Date().toISOString(),
+    manifestVersion: "1.0.0",
+  };
+
+  return { ...defaults, ...overrides };
+}
+
+/**
+ * Validate a plugin manifest structure
+ *
+ * @param manifest Manifest to validate
+ * @returns True if valid, throws error if invalid
+ */
+export function validateManifest(manifest: FrontendPluginManifest): boolean {
+  const required = [
+    "name",
+    "version",
+    "entrypointClassName",
+    "frontendConfigs",
+  ];
+
+  for (const field of required) {
+    if (
+      !(field in manifest) ||
+      !manifest[field as keyof FrontendPluginManifest]
+    ) {
+      throw new Error(`Required field '${field}' is missing from manifest`);
+    }
+  }
+
+  // Validate semantic versioning
+  const versionRegex = /^\d+\.\d+\.\d+$/;
+  if (!versionRegex.test(manifest.version)) {
+    throw new Error(`Invalid version format: ${manifest.version}`);
+  }
+
+  return true;
+}
+
+/**
+ * Create a plugin entry point for CLI usage
+ *
+ * @param description Entry point description
+ * @param parameters Entry point parameters
+ * @returns Plugin entry point object
+ */
+export function createEntryPoint(
+  description: string,
+  parameters: Record<string, any> = {}
+): { description: string; parameters: Record<string, any> } {
+  return {
+    description,
+    parameters: {
+      settings: {
+        type: "object",
+        required: true,
+        description: "Plugin settings object",
+      },
+      children: {
+        type: "any",
+        required: false,
+        description: "Connected child plugins",
+      },
+      context: {
+        type: "object",
+        required: false,
+        description: "Code generation context",
+      },
+      ...parameters,
+    },
+  };
+}

@@ -1,13 +1,15 @@
 {
   "name": "@tensorify.io/sdk",
-  "version": "0.0.11",
+  "version": "1.0.0",
   "private": false,
-  "description": "SDK for creating Tensorify plugins with TypeScript support and comprehensive base classes",
+  "description": "TypeScript SDK for developing Tensorify plugins with comprehensive validation, frontend enforcement, and publishing tools",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "src"
+    "src",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc",
@@ -19,11 +21,10 @@
     "test:coverage": "jest --coverage",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "prepublishOnly": "npm run clean && npm run build"
   },
-  "dependencies": {
-    "zod": "^4.0.5"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/jest": "^29.5.8",
     "@types/node": "^20.10.0",
@@ -48,6 +49,24 @@
     "sdk",
     "plugin",
     "machine-learning",
-    "typescript"
-  ]
+    "typescript",
+    "frontend",
+    "react-flow",
+    "validation"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tensorify/backend.tensorify.io.git",
+    "directory": "packages/sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/tensorify/backend.tensorify.io/issues"
+  },
+  "homepage": "https://tensorify.io",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

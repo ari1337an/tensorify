@@ -1,8 +1,8 @@
 # @tensorify.io/sdk
 
-> **TypeScript SDK for developing Tensorify plugins with comprehensive validation, base classes, and publishing tools.**
+> **TypeScript SDK for developing Tensorify plugins with comprehensive validation, frontend enforcement, and publishing tools.**
 
-The Tensorify SDK provides everything you need to create, validate, and publish machine learning plugins for the Tensorify ecosystem.
+The Tensorify SDK provides everything you need to create, validate, and publish machine learning plugins for the Tensorify ecosystem. With strong typing, visual configuration enforcement, and seamless CLI integration, building plugins has never been easier.
 
 ## 🚀 Quick Start
 
@@ -14,652 +14,803 @@ npm install @tensorify.io/sdk
 
 ### Create Your First Plugin
 
-1. **Initialize plugin structure:**
+```typescript
+import {
+  TensorifyPlugin,
+  IPluginDefinition,
+  PluginSettings,
+  PluginCodeGenerationContext,
+  NodeType,
+  PluginCapability,
+  HandleViewType,
+  HandlePosition,
+  EdgeType,
+  NodeViewContainerType,
+  IconType,
+  SettingsUIType,
+  SettingsDataType,
+} from "@tensorify.io/sdk";
 
-   ```bash
-   mkdir my-plugin && cd my-plugin
-   npm init -y
-   npm install @tensorify.io/sdk
-   ```
+export default class LinearLayerPlugin extends TensorifyPlugin {
+  constructor() {
+    const definition: IPluginDefinition = {
+      // Core Metadata
+      id: "pytorch-linear-layer",
+      name: "Linear Layer",
+      description: "PyTorch linear/fully-connected layer",
+      version: "1.0.0",
+      nodeType: NodeType.MODEL_LAYER,
 
-2. **Create required files:**
+      // Visual Configuration
+      visual: {
+        containerType: NodeViewContainerType.DEFAULT,
+        size: {
+          width: 220,
+          height: 140,
+        },
+        padding: {
+          inner: 16,
+          outer: 8,
+          extraPadding: false,
+        },
+        styling: {
+          borderRadius: 8,
+          borderWidth: 2,
+          shadowLevel: 1,
+          theme: "auto",
+        },
+        icons: {
+          primary: {
+            type: IconType.LUCIDE,
+            value: "layers",
+          },
+          secondary: [],
+          showIconBackground: true,
+          iconSize: "medium",
+        },
+        labels: {
+          title: "Linear Layer",
+          dynamicLabelTemplate: "{inFeatures} → {outFeatures}",
+          showLabels: true,
+          labelPosition: "top",
+        },
+      },
 
-   ```
-   my-plugin/
-   ├── package.json
-   ├── manifest.json
-   ├── icon.svg
-   ├── index.ts
-   └── dist/
-   ```
+      // Handle Configuration
+      inputHandles: [
+        {
+          id: "input",
+          position: HandlePosition.LEFT,
+          viewType: HandleViewType.DEFAULT,
+          required: true,
+          label: "Input",
+          edgeType: EdgeType.DEFAULT,
+          dataType: "any",
+        },
+      ],
 
-3. **Configure package.json:**
+      outputHandles: [
+        {
+          id: "output",
+          position: HandlePosition.RIGHT,
+          viewType: HandleViewType.DEFAULT,
+          label: "Output",
+          edgeType: EdgeType.DEFAULT,
+          dataType: "any",
+        },
+      ],
 
-   ```json
-   {
-     "name": "@your-namespace/my-plugin",
-     "version": "1.0.0",
-     "main": "dist/index.js",
-     "scripts": {
-       "build": "tsc"
-     },
-     "tensorify-settings": {
-       "sdk-version": "0.0.1"
-     },
-     "keywords": ["tensorify", "plugin", "ml"],
-     "author": "Your Name",
-     "repository": {
-       "type": "git",
-       "url": "https://github.com/your-username/my-plugin"
-     }
-   }
-   ```
+      // Settings Configuration
+      settingsFields: [
+        {
+          key: "inFeatures",
+          label: "Input Features",
+          type: SettingsUIType.INPUT_NUMBER,
+          dataType: SettingsDataType.NUMBER,
+          defaultValue: 784,
+          required: true,
+          description: "Number of input features",
+          validation: {
+            min: 1,
+            max: 100000,
+          },
+        },
+        {
+          key: "outFeatures",
+          label: "Output Features",
+          type: SettingsUIType.INPUT_NUMBER,
+          dataType: SettingsDataType.NUMBER,
+          defaultValue: 10,
+          required: true,
+          description: "Number of output features",
+          validation: {
+            min: 1,
+            max: 100000,
+          },
+        },
+        {
+          key: "bias",
+          label: "Use Bias",
+          type: SettingsUIType.TOGGLE,
+          dataType: SettingsDataType.BOOLEAN,
+          defaultValue: true,
+          required: false,
+          description: "Whether to include bias parameters",
+        },
+      ],
 
-4. **Create manifest.json:**
+      // Plugin Metadata
+      capabilities: [PluginCapability.CODE_GENERATION],
+      requirements: {
+        minSdkVersion: "1.0.0",
+        dependencies: ["torch"],
+      },
+    };
 
-   ```json
-   {
-     "name": "@your-namespace/my-plugin",
-     "version": "1.0.0",
-     "description": "My awesome Tensorify plugin",
-     "author": "Your Name",
-     "main": "dist/index.js",
-     "entrypointClassName": "MyPluginNode",
-     "keywords": ["tensorify", "plugin"],
-     "scripts": {
-       "build": "tsc"
-     },
-     "tensorifySettings": {
-       "sdkVersion": "0.0.1"
-     }
-   }
-   ```
+    super(definition);
+  }
 
-5. **Create your plugin class (index.ts):**
+  public getTranslationCode(
+    settings: PluginSettings,
+    children?: any,
+    context?: PluginCodeGenerationContext
+  ): string {
+    // Validate settings
+    const validation = this.validateSettings(settings);
+    if (!validation.isValid) {
+      throw new Error(
+        `Settings validation failed: ${validation.errors.map((e) => e.message).join(", ")}`
+      );
+    }
 
-   ```typescript
-   import { INode, NodeType, LayerSettings } from "@tensorify.io/sdk";
+    // Get settings values
+    const { variableName, inFeatures, outFeatures, bias } = settings;
 
-   export default class MyPluginNode implements INode {
-     readonly name = "MyPlugin";
-     readonly nodeType = NodeType.CUSTOM;
-     readonly inputLines = 1;
-     readonly outputLinesCount = 1;
-     readonly secondaryInputLinesCount = 0;
-     readonly translationTemplate = "my_plugin_template";
-     readonly settings: LayerSettings = {};
-
-     getTranslationCode(settings: LayerSettings): string {
-       return `# My Plugin Implementation
-   result = my_plugin_function(input_data)`;
-     }
-
-     validateSettings(settings: LayerSettings): boolean {
-       // Add your validation logic here
-       return true;
-     }
-
-     getDependencies(): string[] {
-       return ["numpy", "torch"];
-     }
-
-     getImports(): string[] {
-       return ["import torch", "import numpy as np"];
-     }
-   }
-   ```
-
-6. **Build and validate:**
-   ```bash
-   npm run build
-   npx tensorify validate  # Validates your plugin structure
-   ```
+    // Generate PyTorch code
+    return `# Linear Layer
+${variableName} = torch.nn.Linear(
+    in_features=${inFeatures},
+    out_features=${outFeatures},
+    bias=${bias ? "True" : "False"}
+)`;
+  }
+}
+```
 
 ## 📚 Core Concepts
 
-### Plugin Structure Requirements
+### Plugin Definition Structure
 
-Every Tensorify plugin must have:
-
-- **index.ts**: Main plugin file with default export implementing `INode`
-- **manifest.json**: Plugin metadata and configuration
-- **icon.svg**: Plugin icon (SVG format)
-- **package.json**: NPM package configuration with Tensorify settings
-
-### Validation Rules
-
-The SDK enforces these validation rules:
-
-#### 📁 **File Requirements**
-
-- ✅ `index.ts` exists
-- ✅ `manifest.json` exists
-- ✅ `icon.svg` exists
-- ✅ `package.json` exists
-
-#### 📝 **manifest.json Schema**
+Every Tensorify plugin is built using the `IPluginDefinition` interface:
 
 ```typescript
+interface IPluginDefinition {
+  // Core Metadata
+  id: string; // Unique plugin identifier
+  name: string; // Human-readable name
+  description: string; // Plugin description
+  version: string; // Semantic version
+  nodeType: NodeType; // Category (MODEL_LAYER, TRAINER, etc.)
+
+  // Visual Configuration
+  visual: NodeVisualConfig; // How the plugin appears in UI
+
+  // Handle Definitions
+  inputHandles: InputHandle[]; // Input connection points
+  outputHandles: OutputHandle[]; // Output connection points
+
+  // Settings Configuration
+  settingsFields: SettingsField[]; // User-configurable settings
+
+  // Capabilities & Requirements
+  capabilities: PluginCapability[]; // What the plugin can do
+  requirements: PluginRequirements; // What the plugin needs
+}
+```
+
+### Core Settings System
+
+All plugin settings must extend `CorePluginSettings`:
+
+```typescript
+interface CorePluginSettings {
+  variableName: string; // Internal variable identifier
+  labelName: string; // Display name for UI
+}
+
+// Your plugin settings extend this:
+interface MyPluginSettings extends CorePluginSettings {
+  myCustomField: string;
+  // ... other fields
+}
+```
+
+### Code Generation Method
+
+The heart of every plugin is the `getTranslationCode` method:
+
+```typescript
+public getTranslationCode(
+  settings: PluginSettings,           // Extended settings with variableName & labelName
+  children?: any,                     // Connected child plugins
+  context?: PluginCodeGenerationContext  // Input context for code generation
+): string {
+  // 1. Validate settings
+  const validation = this.validateSettings(settings);
+  if (!validation.isValid) {
+    throw new Error('Settings validation failed');
+  }
+
+  // 2. Access input data from handles
+  const inputData = this.getInput(context, 0); // Get data from handle 0
+
+  // 3. Generate and return code
+  return `# Generated code
+result = process_data("${settings.variableName}")`;
+}
+```
+
+## 🎨 Visual Configuration
+
+### Container Types
+
+```typescript
+enum NodeViewContainerType {
+  DEFAULT = "default", // Standard rectangular
+  BOX = "box", // Rounded rectangular
+  CIRCLE = "circle", // Circular
+  LEFT_ROUND = "left-round", // Left-rounded
+}
+```
+
+### Handle Configuration
+
+```typescript
+// Input handle with validation
 {
-  name: string;           // Plugin name
-  version: string;        // Semantic version (e.g., "1.0.0")
-  description: string;    // Plugin description
-  author: string;         // Author name
-  main: string;          // Entry point file
-  entrypointClassName: string; // Exported class name
-  keywords: string[];     // Keywords array
-  repository?: {          // Git repository (required for public plugins)
-    type: "git";
-    url: string;
-  };
-  scripts: {
-    build: string;        // Build script
-  };
-  tensorifySettings: {
-    sdkVersion: string;   // SDK version compatibility
-  };
+  id: "model-input",
+  position: HandlePosition.LEFT,
+  viewType: HandleViewType.DEFAULT,
+  required: true,           // Shows red star (*)
+  label: "Model",
+  edgeType: EdgeType.ACCENT,
+  dataType: "any",
+  validation: {
+    customValidator: "validateModelInput"
+  }
 }
 ```
 
-#### 📦 **package.json Requirements**
+### Handle Types & Positions
+
+**Handle View Types:**
+
+- `DEFAULT` - Standard circular handle
+- `VERTICAL_BOX` - Rectangular vertical handle
+- `CIRCLE_LG` - Large circular handle
+- `DIAMOND` - Diamond-shaped handle
+
+**Positions (8-point system):**
+
+- `TOP`, `TOP_RIGHT`, `RIGHT`, `BOTTOM_RIGHT`
+- `BOTTOM`, `BOTTOM_LEFT`, `LEFT`, `TOP_LEFT`
+
+**Edge Types:**
+
+- `DEFAULT`, `SOLID`, `DOTTED`, `DASHED`
+- `ACCENT`, `MUTED`, `SUCCESS`, `WARNING`, `ERROR`
+
+### Icons & Styling
 
 ```typescript
+// Icon configuration
+icons: {
+  primary: {
+    type: IconType.LUCIDE,     // or FONTAWESOME, SVG
+    value: "layers"            // icon identifier
+  },
+  secondary: [
+    {
+      type: IconType.FONTAWESOME,
+      value: "fa:lightning-bolt",
+      position: "top-right"
+    }
+  ],
+  showIconBackground: true,
+  iconSize: "medium"
+}
+```
+
+## ⚙️ Settings Configuration
+
+### UI Component Types
+
+```typescript
+enum SettingsUIType {
+  // Text Input
+  INPUT_TEXT = "input-text",
+  TEXTAREA = "textarea",
+
+  // Numeric Input
+  INPUT_NUMBER = "input-number",
+  SLIDER = "slider",
+
+  // Boolean Input
+  TOGGLE = "toggle",
+  CHECKBOX = "checkbox",
+
+  // Selection Input
+  DROPDOWN = "dropdown",
+  RADIO = "radio",
+  MULTI_SELECT = "multi-select",
+
+  // Advanced Input
+  CODE_EDITOR = "code-editor",
+  FILE_UPLOAD = "file-upload",
+  COLOR_PICKER = "color-picker",
+  DATE_PICKER = "date-picker",
+}
+```
+
+### Field Configuration Examples
+
+```typescript
+// Dropdown with options
 {
-  name: string;           // Package name
-  version: string;        // Semantic version
-  main: string;          // Entry point
-  author: string;         // Author
-  keywords: string[];     // Keywords
-  scripts: {
-    build: string;        // Build script required
-  };
-  "tensorify-settings": {
-    "sdk-version": string; // Must match current SDK version
-  };
-  private?: boolean;      // Access level
-  repository?: {          // Required for public plugins
-    type: "git";
-    url: string;
-  };
+  key: "optimizer",
+  label: "Optimizer",
+  type: SettingsUIType.DROPDOWN,
+  dataType: SettingsDataType.STRING,
+  required: true,
+  options: [
+    { label: "Adam", value: "adam" },
+    { label: "SGD", value: "sgd" },
+    { label: "RMSprop", value: "rmsprop" }
+  ]
+}
+
+// Number input with validation
+{
+  key: "learningRate",
+  label: "Learning Rate",
+  type: SettingsUIType.INPUT_NUMBER,
+  dataType: SettingsDataType.NUMBER,
+  defaultValue: 0.001,
+  validation: {
+    min: 0.0001,
+    max: 1.0,
+    errorMessage: "Learning rate must be between 0.0001 and 1.0"
+  }
+}
+
+// Conditional field display
+{
+  key: "momentum",
+  label: "Momentum",
+  type: SettingsUIType.INPUT_NUMBER,
+  dataType: SettingsDataType.NUMBER,
+  defaultValue: 0.9,
+  conditionalDisplay: {
+    dependsOn: "optimizer",
+    condition: "equals",
+    value: "sgd"
+  }
 }
 ```
 
-#### 🏗️ **Class Requirements**
+## 🔧 Plugin Development
 
-- ✅ Single default export class
-- ✅ Class name matches `manifest.json` `entrypointClassName`
-- ✅ Implements `INode` interface
+### Building and Publishing
 
-## 🛠️ SDK API Reference
+1. **Build your plugin:**
 
-### Interfaces
+   ```bash
+   npm run build
+   ```
 
-#### INode Interface
+2. **Generate manifest:**
 
-The core interface all plugin classes must implement:
+   ```typescript
+   import { buildPluginManifest } from "@tensorify.io/sdk";
+   import MyPlugin from "./dist/index.js";
+
+   const plugin = new MyPlugin();
+   buildPluginManifest(
+     plugin,
+     "./package.json",
+     "MyPlugin",
+     "./dist/manifest.json"
+   );
+   ```
+
+3. **Publish with CLI:**
+   ```bash
+   npx tensorify publish
+   ```
+
+### Validation
+
+The SDK provides comprehensive validation:
 
 ```typescript
-interface INode<TSettings extends LayerSettings = LayerSettings> {
-  readonly name: string;
-  readonly translationTemplate: string;
-  readonly inputLines: number;
-  readonly outputLinesCount: number;
-  readonly secondaryInputLinesCount: number;
-  readonly nodeType: NodeType;
-  readonly settings: TSettings;
-  readonly child?: Children;
+// Validate plugin instance
+import { validatePlugin } from "@tensorify.io/sdk";
 
-  getTranslationCode(
-    settings: TSettings,
-    children?: Children,
-    context?: CodeGenerationContext
-  ): string;
+const plugin = new MyPlugin();
+const result = validatePlugin(plugin);
 
-  validateSettings?(settings: TSettings): boolean;
-  getDependencies?(): string[];
-  getImports?(context?: CodeGenerationContext): string[];
+if (!result.isValid) {
+  console.error("Validation errors:", result.errors);
 }
+
+// Validate specific settings
+const settingsValidation = plugin.validateSettings(userSettings);
 ```
 
-#### NodeType Enum
+### Utilities
+
+```typescript
+import {
+  generateVariableName,
+  sanitizeVariableName,
+  indentCode,
+  createPluginTemplate,
+  autoDetectEntrypointClassName,
+} from "@tensorify.io/sdk";
+
+// Generate unique variable names
+const varName = generateVariableName("linear_layer");
+
+// Clean variable names
+const clean = sanitizeVariableName("my-variable-name"); // → my_variable_name
+
+// Indent generated code
+const indented = indentCode(codeString, 2); // 2 levels of indentation
+
+// Create plugin template
+const template = createPluginTemplate(
+  "My Plugin",
+  "my-plugin",
+  NodeType.CUSTOM
+);
+```
+
+## 🎯 Plugin Categories
+
+### Available Node Types
 
 ```typescript
 enum NodeType {
+  // Core Types
   CUSTOM = "custom",
   TRAINER = "trainer",
   EVALUATOR = "evaluator",
   MODEL = "model",
   MODEL_LAYER = "model_layer",
+
+  // Data Processing
   DATALOADER = "dataloader",
-  OPTIMIZER = "optimizer",
-  REPORT = "report",
-  FUNCTION = "function",
-  PIPELINE = "pipeline",
-  AUGMENTATION_STACK = "augmentation_stack",
   PREPROCESSOR = "preprocessor",
   POSTPROCESSOR = "postprocessor",
+  AUGMENTATION_STACK = "augmentation_stack",
+
+  // Training Components
+  OPTIMIZER = "optimizer",
   LOSS_FUNCTION = "loss_function",
   METRIC = "metric",
   SCHEDULER = "scheduler",
   REGULARIZER = "regularizer",
+
+  // Workflow Components
+  FUNCTION = "function",
+  PIPELINE = "pipeline",
+  REPORT = "report",
 }
 ```
 
-### Base Classes
+Each node type has specific expectations for handles and behavior.
 
-The SDK provides base classes to extend:
+## 🔍 Advanced Features
 
-#### BaseNode
+### Dynamic Labels
+
+Create labels that update based on settings:
 
 ```typescript
-import { BaseNode } from "@tensorify.io/sdk";
+visual: {
+  labels: {
+    dynamicLabelTemplate: "Conv2d({inChannels}, {outChannels}, {kernelSize})";
+  }
+}
+```
 
-export default class MyPlugin extends BaseNode {
+### Input Data Access
+
+Access connected node data in your code generation:
+
+```typescript
+public getTranslationCode(
+  settings: PluginSettings,
+  children?: any,
+  context?: PluginCodeGenerationContext
+): string {
+  // Get input from specific handle
+  const modelInput = this.getInput(context, 0);
+  const dataInput = this.getInput(context, 1);
+
+  // Get all inputs as array
+  const allInputs = this.getAllInputs(context);
+
+  return `# Process inputs: ${allInputs.length} connected`;
+}
+```
+
+### Settings Groups
+
+Organize complex settings into groups:
+
+```typescript
+settingsGroups: [
+  {
+    id: "model-config",
+    label: "Model Configuration",
+    collapsible: true,
+    defaultExpanded: true,
+    fields: ["architecture", "layers", "activation"],
+  },
+  {
+    id: "training-config",
+    label: "Training Configuration",
+    collapsible: true,
+    defaultExpanded: false,
+    fields: ["epochs", "batchSize", "learningRate"],
+  },
+];
+```
+
+## 📦 Package Structure
+
+Your plugin package should follow this structure:
+
+```
+my-plugin/
+├── package.json          # NPM package configuration
+├── tsconfig.json         # TypeScript configuration
+├── src/
+│   └── index.ts         # Main plugin file
+├── dist/                # Compiled output (generated)
+│   ├── index.js
+│   └── manifest.json    # Generated by CLI
+└── README.md           # Plugin documentation
+```
+
+### package.json Requirements
+
+```json
+{
+  "name": "@your-org/my-plugin",
+  "version": "1.0.0",
+  "description": "My awesome Tensorify plugin",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@tensorify.io/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "keywords": ["tensorify", "plugin", "ml"],
+  "author": "Your Name",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/my-plugin"
+  }
+}
+```
+
+## 🆘 Best Practices
+
+### 1. Strong Typing
+
+Always use TypeScript interfaces for your plugin settings:
+
+```typescript
+interface LinearLayerSettings extends CorePluginSettings {
+  inFeatures: number;
+  outFeatures: number;
+  bias: boolean;
+}
+
+// Use in your plugin
+public getTranslationCode(settings: LinearLayerSettings, ...) {
+  // TypeScript will validate settings structure
+}
+```
+
+### 2. Validation
+
+Implement comprehensive validation:
+
+```typescript
+public getTranslationCode(settings: PluginSettings, ...) {
+  // Always validate first
+  const validation = this.validateSettings(settings);
+  if (!validation.isValid) {
+    throw new Error(`Invalid settings: ${validation.errors.map(e => e.message).join(', ')}`);
+  }
+
+  // Safe to use settings now
+  return generateCode(settings);
+}
+```
+
+### 3. Error Handling
+
+Provide clear error messages:
+
+```typescript
+if (!settings.modelPath) {
+  throw new Error("Model path is required for inference plugins");
+}
+
+if (settings.batchSize <= 0) {
+  throw new Error("Batch size must be a positive number");
+}
+```
+
+### 4. Documentation
+
+Document your settings fields:
+
+```typescript
+{
+  key: "learningRate",
+  label: "Learning Rate",
+  description: "Controls how quickly the model learns. Lower values = more stable but slower training."
+}
+```
+
+## 🔗 Integration
+
+### CLI Integration
+
+The Tensorify CLI automatically detects and validates SDK-based plugins:
+
+```bash
+# Validate plugin structure
+npx tensorify validate
+
+# Build and publish
+npx tensorify publish --access=public
+```
+
+### Frontend Integration
+
+The frontend automatically:
+
+1. Reads your plugin's manifest
+2. Renders React Flow nodes based on visual config
+3. Provides settings UI based on field definitions
+4. Calls your `getTranslationCode` method
+5. Executes generated code in workflows
+
+## 📄 API Reference
+
+### TensorifyPlugin Class
+
+**Constructor:** `new TensorifyPlugin(definition: IPluginDefinition)`
+
+**Abstract Methods:**
+
+- `getTranslationCode(settings, children?, context?)` - Generate code
+
+**Public Methods:**
+
+- `validateSettings(settings)` - Validate settings values
+- `generateManifest(packageInfo, className)` - Create manifest
+- `createDefaultSettings()` - Generate default settings
+- `generateDynamicLabel(settings)` - Process dynamic label template
+
+**Protected Methods:**
+
+- `getInput(context, handleNumber)` - Access input data
+- `getAllInputs(context)` - Get all input data
+
+### Utility Functions
+
+- `generatePluginManifest()` - Generate manifest from plugin
+- `validatePlugin()` - Validate plugin instance
+- `createPluginTemplate()` - Generate boilerplate code
+- `autoDetectEntrypointClassName()` - Find main class
+
+## 🚀 Examples
+
+### PyTorch Conv2D Layer
+
+```typescript
+export default class Conv2dPlugin extends TensorifyPlugin {
   constructor() {
     super({
-      name: "MyPlugin",
-      nodeType: NodeType.CUSTOM,
-      inputLines: 1,
-      outputLinesCount: 1,
+      id: "pytorch-conv2d",
+      name: "Conv2d Layer",
+      nodeType: NodeType.MODEL_LAYER,
+      visual: {
+        // ... visual config
+        labels: {
+          dynamicLabelTemplate:
+            "Conv2d({inChannels}, {outChannels}, {kernelSize})",
+        },
+      },
+      settingsFields: [
+        {
+          key: "inChannels",
+          label: "Input Channels",
+          type: SettingsUIType.INPUT_NUMBER,
+          dataType: SettingsDataType.NUMBER,
+          defaultValue: 3,
+          required: true,
+        },
+        // ... more fields
+      ],
     });
   }
 
-  getTranslationCode(settings: LayerSettings): string {
-    return "# Custom implementation";
-  }
-}
-```
-
-#### ModelLayerNode
-
-For neural network layers:
-
-```typescript
-import { ModelLayerNode, ModelLayerSettings } from "@tensorify.io/sdk";
-
-interface MyLayerSettings extends ModelLayerSettings {
-  units: number;
-  activation: string;
-}
-
-export default class MyLayerNode extends ModelLayerNode<MyLayerSettings> {
-  readonly settings: MyLayerSettings = {
-    units: 64,
-    activation: "relu",
-  };
-
-  getTranslationCode(settings: MyLayerSettings): string {
-    return `torch.nn.Linear(${settings.units})`;
-  }
-}
-```
-
-### Validation API
-
-#### Manual Validation
-
-```typescript
-import { validatePlugin, PluginValidator } from "@tensorify.io/sdk";
-
-// Simple validation
-const result = await validatePlugin("/path/to/plugin");
-if (!result.valid) {
-  console.error("Validation failed:", result.errors);
-}
-
-// Advanced validation with custom SDK version
-const validator = new PluginValidator("/path/to/plugin", "0.0.1");
-const detailedResult = await validator.validatePlugin();
-console.log(validator.getValidationReport(detailedResult));
-```
-
-#### Schema Validation
-
-```typescript
-import { ManifestSchema, PackageJsonSchema } from "@tensorify.io/sdk";
-
-// Validate manifest.json
-try {
-  const manifest = ManifestSchema.parse(manifestData);
-  console.log("Manifest is valid:", manifest);
-} catch (error) {
-  console.error("Manifest validation failed:", error.issues);
-}
-
-// Validate package.json
-try {
-  const pkg = PackageJsonSchema.parse(packageData);
-  console.log("Package.json is valid:", pkg);
-} catch (error) {
-  console.error("Package.json validation failed:", error.issues);
-}
-```
-
-## 🎯 Publishing Workflow
-
-### Using Tensorify CLI
-
-1. **Install CLI:**
-
-   ```bash
-   npm install -g @tensorify.io/cli
-   ```
-
-2. **Login:**
-
-   ```bash
-   tensorify login
-   ```
-
-3. **Validate plugin:**
-
-   ```bash
-   tensorify validate
-   ```
-
-4. **Publish:**
-
-   ```bash
-   # Public plugin (requires repository URL)
-   tensorify publish --access=public
-
-   # Private plugin
-   tensorify publish --access=private
-   ```
-
-### Publishing Process
-
-The publishing process includes:
-
-1. **🔍 Validation**: SDK rules enforcement
-2. **🏗️ Build**: TypeScript compilation
-3. **📦 Bundle**: ESBuild bundling
-4. **✅ Version Check**: Conflict detection
-5. **📤 Upload**: File upload to S3
-6. **🔔 Webhook**: Registry notification
-
-### Access Control
-
-- **Public Plugins**: Require git repository URL, visible to all users
-- **Private Plugins**: Require `"private": true` in package.json, restricted access
-- **Version Consistency**: Cannot change access level between versions
-
-## 🔧 Development Tools
-
-### Local Development
-
-```typescript
-import { BaseNode, NodeType } from "@tensorify.io/sdk";
-
-export default class DevelopmentNode extends BaseNode {
-  constructor() {
-    super({
-      name: "Development",
-      nodeType: NodeType.CUSTOM,
-      inputLines: 1,
-      outputLinesCount: 1,
-    });
-  }
-
-  getTranslationCode(settings: any): string {
-    // Your development code here
-    return `print("Development mode")`;
-  }
-
-  // Override for development
-  validateSettings(settings: any): boolean {
-    console.log("Development validation:", settings);
-    return true;
-  }
-}
-```
-
-### Testing
-
-```typescript
-import { validatePlugin } from "@tensorify.io/sdk";
-
-describe("My Plugin", () => {
-  it("should validate correctly", async () => {
-    const result = await validatePlugin("./");
-    expect(result.valid).toBe(true);
-  });
-
-  it("should generate correct code", () => {
-    const plugin = new MyPluginNode();
-    const code = plugin.getTranslationCode({});
-    expect(code).toContain("expected_output");
-  });
-});
-```
-
-## 🌟 Advanced Examples
-
-### Complex Plugin with Multiple Inputs
-
-```typescript
-import { INode, NodeType, LayerSettings, Children } from "@tensorify.io/sdk";
-
-interface ComplexSettings extends LayerSettings {
-  algorithm: "auto" | "manual";
-  parameters: Record<string, any>;
-}
-
-export default class ComplexPlugin implements INode<ComplexSettings> {
-  readonly name = "ComplexPlugin";
-  readonly nodeType = NodeType.FUNCTION;
-  readonly inputLines = 2;
-  readonly outputLinesCount = 1;
-  readonly secondaryInputLinesCount = 1;
-  readonly translationTemplate = "complex_template";
-  readonly settings: ComplexSettings = {
-    algorithm: "auto",
-    parameters: {},
-  };
-
-  getTranslationCode(
-    settings: ComplexSettings,
-    children?: Children,
-    context?: any
-  ): string {
-    const params = JSON.stringify(settings.parameters);
-    return `
-# Complex Plugin Implementation
-primary_input = input_data[0]
-secondary_input = input_data[1]
-additional_input = input_data[2]
-
-result = complex_algorithm(
-    primary_input,
-    secondary_input, 
-    additional_input,
-    algorithm="${settings.algorithm}",
-    parameters=${params}
+  getTranslationCode(settings: PluginSettings): string {
+    return `${settings.variableName} = torch.nn.Conv2d(
+  in_channels=${settings.inChannels},
+  out_channels=${settings.outChannels},
+  kernel_size=${settings.kernelSize}
 )`;
   }
-
-  validateSettings(settings: ComplexSettings): boolean {
-    if (!["auto", "manual"].includes(settings.algorithm)) {
-      throw new Error('Algorithm must be "auto" or "manual"');
-    }
-    return true;
-  }
-
-  getDependencies(): string[] {
-    return ["numpy", "scipy", "torch"];
-  }
-
-  getImports(): string[] {
-    return ["import numpy as np", "import scipy", "import torch"];
-  }
 }
 ```
 
-### Plugin with Dynamic Dependencies
+### Training Loop Plugin
 
 ```typescript
-import { BaseNode, NodeType, LayerSettings } from "@tensorify.io/sdk";
-
-interface DynamicSettings extends LayerSettings {
-  backend: "torch" | "tensorflow" | "jax";
-  optimization_level: number;
-}
-
-export default class DynamicPlugin extends BaseNode<DynamicSettings> {
-  readonly settings: DynamicSettings = {
-    backend: "torch",
-    optimization_level: 1,
-  };
-
+export default class TrainerPlugin extends TensorifyPlugin {
   constructor() {
     super({
-      name: "DynamicPlugin",
-      nodeType: NodeType.MODEL_LAYER,
-      inputLines: 1,
-      outputLinesCount: 1,
+      id: "pytorch-trainer",
+      name: "Training Loop",
+      nodeType: NodeType.TRAINER,
+      inputHandles: [
+        { id: "model", position: HandlePosition.LEFT /* ... */ },
+        { id: "optimizer", position: HandlePosition.LEFT /* ... */ },
+        { id: "dataloader", position: HandlePosition.TOP /* ... */ },
+      ],
+      // ... rest of config
     });
   }
 
-  getTranslationCode(settings: DynamicSettings): string {
-    switch (settings.backend) {
-      case "torch":
-        return `result = torch.nn.functional.dynamic_op(input_data, level=${settings.optimization_level})`;
-      case "tensorflow":
-        return `result = tf.nn.dynamic_op(input_data, level=${settings.optimization_level})`;
-      case "jax":
-        return `result = jax.nn.dynamic_op(input_data, level=${settings.optimization_level})`;
-      default:
-        throw new Error(`Unsupported backend: ${settings.backend}`);
-    }
-  }
+  getTranslationCode(
+    settings: PluginSettings,
+    children: any,
+    context: PluginCodeGenerationContext
+  ): string {
+    const model = this.getInput(context, 0);
+    const optimizer = this.getInput(context, 1);
+    const dataloader = this.getInput(context, 2);
 
-  getDependencies(): string[] {
-    const { backend } = this.settings;
-    const base = ["numpy"];
-
-    switch (backend) {
-      case "torch":
-        return [...base, "torch", "torchvision"];
-      case "tensorflow":
-        return [...base, "tensorflow"];
-      case "jax":
-        return [...base, "jax", "jaxlib"];
-      default:
-        return base;
-    }
-  }
-
-  getImports(context?: any): string[] {
-    const { backend } = this.settings;
-
-    switch (backend) {
-      case "torch":
-        return ["import torch", "import torch.nn.functional as F"];
-      case "tensorflow":
-        return ["import tensorflow as tf"];
-      case "jax":
-        return ["import jax", "import jax.numpy as jnp"];
-      default:
-        return ["import numpy as np"];
-    }
+    return `
+# Training Loop
+for epoch in range(${settings.epochs}):
+    for batch_idx, (data, target) in enumerate(${dataloader}):
+        ${optimizer}.zero_grad()
+        output = ${model}(data)
+        loss = criterion(output, target)
+        loss.backward()
+        ${optimizer}.step()
+`;
   }
 }
 ```
 
-## 🏷️ Version Management
+## 📊 Migration Guide
 
-### SDK Version Compatibility
-
-The SDK uses semantic versioning. Plugins must specify compatible SDK versions:
-
-```json
-{
-  "tensorify-settings": {
-    "sdk-version": "0.0.1"
-  }
-}
-```
-
-### Plugin Versioning
-
-- Follow semantic versioning: `MAJOR.MINOR.PATCH`
-- Cannot republish existing versions
-- Cannot change access level between versions
-- Each version is immutable once published
-
-## 🔒 Security & Best Practices
-
-### Code Security
-
-- Validate all inputs in `validateSettings()`
-- Sanitize user-provided data
-- Avoid dynamic code execution
-- Use type-safe interfaces
-
-### Performance
-
-- Minimize dependencies
-- Use efficient algorithms
-- Cache expensive computations
-- Profile code generation
-
-### Maintainability
-
-- Document all public methods
-- Use descriptive variable names
-- Follow TypeScript best practices
-- Write comprehensive tests
-
-## 🆘 Troubleshooting
-
-### Common Issues
-
-**❌ "Plugin validation failed"**
-
-```bash
-# Check validation details
-npx tensorify validate --verbose
-
-# Common fixes:
-# 1. Ensure all required files exist
-# 2. Check class name matches manifest
-# 3. Verify package.json structure
-```
-
-**❌ "SDK version mismatch"**
-
-```json
-// Update package.json
-{
-  "tensorify-settings": {
-    "sdk-version": "0.0.1" // Match current SDK version
-  }
-}
-```
-
-**❌ "Build failed"**
-
-```bash
-# Ensure TypeScript is configured
-npm install typescript --save-dev
-npx tsc --init
-
-# Check tsconfig.json
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "module": "CommonJS",
-    "outDir": "./dist"
-  }
-}
-```
-
-### Getting Help
-
-- 📖 **Documentation**: [docs.tensorify.io](https://docs.tensorify.io)
-- 💬 **Community**: [discord.gg/tensorify](https://discord.gg/tensorify)
-- 🐛 **Issues**: [github.com/tensorify/sdk/issues](https://github.com/tensorify/sdk/issues)
-- 📧 **Support**: support@tensorify.io
+If you're migrating from the old SDK, see our [Migration Guide](MIGRATION.md) for step-by-step instructions.
 
 ## 📄 License
 
