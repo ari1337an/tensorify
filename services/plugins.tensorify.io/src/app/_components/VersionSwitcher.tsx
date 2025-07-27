@@ -1,6 +1,6 @@
 "use client";
 
-import { Plugin } from "@prisma/client";
+import { Plugin } from "@/server/database/prisma/generated/client";
 import { useRouter } from "next/navigation";
 import {
   Select,

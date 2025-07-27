@@ -1,7 +1,7 @@
 import { User } from "@clerk/nextjs/server";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import { Organization } from "@prisma/client";
+import { Organization } from "@/server/database/prisma/generated/client";
 
 type SessionClaims = {
   azp: string;

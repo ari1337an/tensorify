@@ -3,7 +3,7 @@
 import { notFound } from "next/navigation";
 import PluginCard from "@/app/_components/PluginCard";
 import { getAuthorDetails } from "@/server/actions/author-actions";
-import { Plugin } from "@prisma/client";
+import { Plugin } from "@/server/database/prisma/generated/client";
 import Image from "next/image";
 
 interface PageProps {

@@ -3,7 +3,10 @@
 import { db } from "@/server/database";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { BlogPostStatus, BlogPostType } from "@prisma/client";
+import {
+  BlogPostStatus,
+  BlogPostType,
+} from "@/server/database/prisma/generated/client";
 import { auth } from "@clerk/nextjs/server";
 import { Block } from "@blocknote/core";
 import crypto from "crypto";

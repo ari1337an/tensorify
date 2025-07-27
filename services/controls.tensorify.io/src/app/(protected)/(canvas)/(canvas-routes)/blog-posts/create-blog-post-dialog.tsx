@@ -37,7 +37,7 @@ import {
   createBlogPost,
   CreateBlogPostInput,
 } from "@/server/actions/blog-posts";
-import { BlogPostType, BlogPostStatus } from "@prisma/client";
+import { BlogPostType, BlogPostStatus } from "@/server/database/prisma/generated/client";
 
 // Form schema for creating a new blog post
 const formSchema = z.object({

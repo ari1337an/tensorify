@@ -19,7 +19,7 @@ import {
 
 import { OnboardingSetupRequest } from "../schema";
 import db from "@/server/database/db";
-import { Organization, Prisma, Project, Team, Workflow } from "@prisma/client";
+import { Organization, Prisma, Project, Team, Workflow } from "@/server/database/prisma/generated/client";
 extendZodWithOpenApi(z);
 
 export const contract = c.router(

@@ -1,7 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import db from "@/server/database/db";
-import { QuestionType } from "@prisma/client";
+import { QuestionType } from "@/server/database/prisma/generated/client";
 
 // Get all onboarding tag versions
 export async function getOnboardingTagVersions() {

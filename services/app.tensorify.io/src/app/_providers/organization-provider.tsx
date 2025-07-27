@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import useStore from "@/app/_store/store";
-import { Organization } from "@prisma/client";
+import { Organization } from "@/server/database/prisma/generated/client";
 
 export function OrganizationProvider({
   children,

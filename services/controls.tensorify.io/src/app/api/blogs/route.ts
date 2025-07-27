@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/server/database";
-import { BlogPostStatus } from "@prisma/client";
+import { BlogPostStatus } from "@/server/database/prisma/generated/client";
 
 // Define interfaces for the content structure
 interface ContentItem {

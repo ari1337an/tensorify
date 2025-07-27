@@ -1,7 +1,7 @@
 "use server";
 
 import db from "@/server/database/db";
-import { Plugin } from "@prisma/client";
+import { Plugin } from "@/server/database/prisma/generated/client";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 
 interface AuthorDetails {

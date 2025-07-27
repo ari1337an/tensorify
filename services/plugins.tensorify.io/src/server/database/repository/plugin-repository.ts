@@ -1,4 +1,4 @@
-import { Plugin, Prisma } from "@prisma/client";
+import { Plugin, Prisma } from "@/server/database/prisma/generated/client";
 import db from "../db";
 
 export class PluginRepository {

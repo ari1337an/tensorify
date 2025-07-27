@@ -1,4 +1,4 @@
-import { Plugin } from "@prisma/client";
+import { Plugin } from "@/server/database/prisma/generated/client";
 import { PluginRepository } from "../database/repository/plugin-repository";
 
 export class PluginUseCase {

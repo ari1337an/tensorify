@@ -3,7 +3,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { PluginRepository } from "../database/repository/plugin-repository";
 import { PluginUseCase } from "../usecases/plugin-usecase";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@/server/database/prisma/generated/client";
 
 const pluginUseCase = new PluginUseCase(new PluginRepository());
 const prisma = new PrismaClient();

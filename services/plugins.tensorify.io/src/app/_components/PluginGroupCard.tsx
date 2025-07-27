@@ -1,4 +1,4 @@
-import { Plugin } from "@prisma/client";
+import { Plugin } from "@/server/database/prisma/generated/client";
 import Link from "@/app/_components/ui/link";
 import { Package, GitBranch, Calendar, Lock, Globe } from "lucide-react";
 

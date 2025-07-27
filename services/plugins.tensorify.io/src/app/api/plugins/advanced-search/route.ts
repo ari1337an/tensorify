@@ -1,7 +1,7 @@
 import db from "@/server/database/db";
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/server/database/prisma/generated/client";
 
 export async function GET(request: Request) {
   try {

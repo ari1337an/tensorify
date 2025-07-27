@@ -19,7 +19,7 @@ import {
   CardTitle,
 } from "@/app/_components/ui/card";
 import { Loader2 } from "lucide-react";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/server/database/prisma/generated/client";
 
 // Custom type to use string instead of InvitationStatus enum
 type InvitationWithOrg = {

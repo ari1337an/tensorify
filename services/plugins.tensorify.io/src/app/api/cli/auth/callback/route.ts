@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
-import { createClerkClient } from "@clerk/backend";
+import { auth, createClerkClient } from "@clerk/nextjs/server";
 import { getDecodedJwt } from "@/lib/auth-utils";
 
 export async function GET(request: NextRequest) {

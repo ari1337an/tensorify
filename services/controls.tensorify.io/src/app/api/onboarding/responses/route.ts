@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import db from "@/server/database/db";
 import { z } from "zod";
-import { IntentTag, OrgSizeBracket } from "@prisma/client";
+import { IntentTag, OrgSizeBracket } from "@/server/database/prisma/generated/client";
 
 // Validation schema for response submission
 const responseSchema = z
