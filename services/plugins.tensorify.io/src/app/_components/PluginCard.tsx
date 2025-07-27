@@ -44,7 +44,6 @@ export default function PluginCard({
               <span className="bg-accent text-accent-foreground text-xs px-2.5 py-1 rounded-full">
                 {plugin.status}
               </span>
-             
             </div>
           </div>
           <p className="text-muted-foreground mb-4">{plugin.description}</p>

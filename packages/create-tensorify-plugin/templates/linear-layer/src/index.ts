@@ -1,111 +1,161 @@
 import {
-  INode,
-  ModelLayerNode,
-  ModelLayerSettings,
-  NodeType,
+  TensorifyPlugin,
+  type IPluginDefinition,
+  type PluginSettings,
+  type PluginCodeGenerationContext,
 } from "@tensorify.io/sdk";
 
 /**
- * Settings interface for the Linear Layer
- */
-export interface LinearLayerSettings extends ModelLayerSettings {
-  /** Number of input features */
-  inFeatures: number;
-  /** Number of output features */
-  outFeatures: number;
-  /** Whether to include bias term */
-  bias?: boolean;
-}
-
-/**
- * {{projectName}} - A simple Linear/Dense layer implementation
+ * {{projectName}} - A PyTorch Linear/Dense layer implementation
  * {{description}}
  */
-export default class TensorifyLinearLayer
-  extends ModelLayerNode<LinearLayerSettings>
-  implements INode<LinearLayerSettings>
-{
-  /** Name of the node */
-  public readonly name: string = "{{projectName}} Linear Layer";
+export default class LinearLayerPlugin extends TensorifyPlugin {
+  constructor() {
+    super({
+      // Basic plugin metadata
+      id: "{{packageName}}",
+      name: "{{projectName}}",
+      description: "{{description}}",
+      version: "1.0.0",
+      category: "model_layer", // Linear layer belongs to model_layer category
 
-  /** Template used for translation */
-  public readonly translationTemplate: string =
-    "{{variableProjectName}}_linear_layer";
+      // Visual configuration
+      visual: {
+        containerType: "default",
+        size: {
+          width: 250,
+          height: 120,
+        },
+        extraPadding: false,
 
-  /** Number of input lines */
-  public readonly inputLines: number = 1;
+        title: "Linear Layer",
+        titleDescription: "PyTorch Linear/Dense Layer",
 
-  /** Number of output lines */
-  public readonly outputLinesCount: number = 1;
+        // Icon for linear layer
+        primaryIcon: {
+          type: "lucide",
+          value: "Layers",
+          position: "center",
+        },
+        secondaryIcons: [],
 
-  /** Number of secondary input lines */
-  public readonly secondaryInputLinesCount: number = 0;
+        // Dynamic label showing layer dimensions
+        dynamicLabelTemplate: "Linear({inFeatures} → {outFeatures})",
+      },
 
-  /** Node type */
-  public readonly nodeType: NodeType = NodeType.MODEL_LAYER;
+      // Input/Output handles
+      inputHandles: [
+        {
+          id: "input",
+          position: "left",
+          viewType: "default",
+          required: true,
+          label: "Input Tensor",
+        },
+      ],
+      outputHandles: [
+        {
+          id: "output",
+          position: "right",
+          viewType: "default",
+          label: "Output Tensor",
+        },
+      ],
 
-  /** Default settings */
-  public readonly settings: LinearLayerSettings = {
-    inFeatures: 784,
-    outFeatures: 128,
-    bias: true,
-  };
+      // Settings fields for the frontend UI
+      settingsFields: [
+        {
+          key: "inFeatures",
+          label: "Input Features",
+          type: "input-number",
+          dataType: "number",
+          required: true,
+          defaultValue: 784,
+          description: "Number of input features",
+        },
+        {
+          key: "outFeatures",
+          label: "Output Features",
+          type: "input-number",
+          dataType: "number",
+          required: true,
+          defaultValue: 128,
+          description: "Number of output features",
+        },
+        {
+          key: "bias",
+          label: "Include Bias",
+          type: "toggle",
+          dataType: "boolean",
+          defaultValue: true,
+          description:
+            "Whether to include bias term in the linear transformation",
+        },
+      ],
+    });
+  }
 
   /**
    * Generate PyTorch Linear layer code
    */
   public getTranslationCode(
-    settings: LinearLayerSettings,
+    settings: PluginSettings,
     children?: any,
-    context?: any
+    context?: PluginCodeGenerationContext
   ): string {
-    // Validate required parameters
-    const { inFeatures, outFeatures, bias = true } = settings;
-
-    // Validate settings
+    // Validate settings first
     this.validateSettings(settings);
 
-    // Generate the linear layer code
+    // Get setting values with fallbacks
+    const inFeatures = settings.inFeatures || 784;
+    const outFeatures = settings.outFeatures || 128;
+    const bias = settings.bias !== undefined ? settings.bias : true;
+
+    // Generate the PyTorch Linear layer code
     const layerCode = `nn.Linear(${inFeatures}, ${outFeatures}, bias=${bias})`;
 
     return `
 # {{projectName}} Linear Layer: ${inFeatures} -> ${outFeatures} features
-${this.translationTemplate} = ${layerCode}
+# Generated from plugin: ${this.getName()} v${this.getVersion()}
+# PyTorch Linear/Dense layer implementation
+
+# Import required modules
+import torch
+import torch.nn as nn
+
+# Create the linear layer
+{{variableProjectName}}_linear = ${layerCode}
+
+# Layer info
+print(f"Created Linear layer: {inFeatures} -> {outFeatures} features, bias={bias}")
 `.trim();
   }
 
   /**
-   * Validate Linear layer settings
+   * Custom validation for linear layer parameters
    */
-  public validateSettings(settings: LinearLayerSettings): boolean {
-    // Validate input features
-    if (!settings.inFeatures || settings.inFeatures <= 0) {
+  public validateSettings(settings: PluginSettings): boolean {
+    // Call parent validation first
+    super.validateSettings(settings);
+
+    // Additional validation for linear layer
+    const inFeatures = settings.inFeatures;
+    const outFeatures = settings.outFeatures;
+
+    if (
+      inFeatures !== undefined &&
+      (typeof inFeatures !== "number" || inFeatures <= 0)
+    ) {
       throw new Error("inFeatures must be a positive number");
     }
 
-    // Validate output features
-    if (!settings.outFeatures || settings.outFeatures <= 0) {
+    if (
+      outFeatures !== undefined &&
+      (typeof outFeatures !== "number" || outFeatures <= 0)
+    ) {
       throw new Error("outFeatures must be a positive number");
     }
 
     return true;
-  }
-
-  /**
-   * Get required dependencies
-   */
-  public getDependencies(): string[] {
-    return ["torch"];
-  }
-
-  /**
-   * Get required imports
-   */
-  public getImports(context?: any): string[] {
-    return [
-      "import torch",
-      "import torch.nn as nn",
-      "# {{projectName}} - {{description}}",
-    ];
   }
 }

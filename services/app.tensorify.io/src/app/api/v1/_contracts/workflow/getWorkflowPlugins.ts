@@ -18,6 +18,7 @@ const c = initContract();
 const WorkflowInstalledPlugin = z.object({
   id: z.string().uuid(),
   slug: z.string(),
+  description: z.string().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -111,6 +112,7 @@ export const action = {
         const responseData = installedPlugins.map((plugin) => ({
           id: plugin.id,
           slug: plugin.slug,
+          description: plugin.description,
           createdAt: plugin.createdAt.toISOString(),
           updatedAt: plugin.updatedAt.toISOString(),
         }));

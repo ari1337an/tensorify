@@ -6,7 +6,7 @@ import { execSync } from "child_process";
 import { build } from "esbuild";
 import FormData from "form-data";
 import axios from "axios";
-import { validatePlugin } from "@tensorify.io/sdk";
+import { validatePlugin, NodeType } from "@tensorify.io/sdk";
 import { getAuthToken, getConfig } from "../auth/session-storage";
 import { authService } from "../auth/auth-service";
 
@@ -44,6 +44,7 @@ interface ManifestJson {
   description?: string;
   author?: string;
   keywords?: string[]; // Added for keywords
+  pluginType?: string; // Added for NodeType category from SDK
   [key: string]: any;
 }
 
@@ -471,6 +472,19 @@ class PluginPublisher {
     const entrypointClassName =
       tensorifySettings.entrypointClassName || "TensorifyPlugin";
 
+    // Extract plugin type from tensorify-settings, default to MISCELLANEOUS
+    const pluginType = tensorifySettings.pluginType || NodeType.MISCELLANEOUS;
+
+    // Validate that the plugin type is a valid NodeType
+    const validNodeTypes = Object.values(NodeType);
+    if (!validNodeTypes.includes(pluginType as NodeType)) {
+      console.warn(
+        chalk.yellow(
+          `⚠️  Invalid plugin type "${pluginType}" in package.json. Using "${NodeType.MISCELLANEOUS}" as default.`
+        )
+      );
+    }
+
     return {
       name: packageJson.name,
       version: packageJson.version,
@@ -479,6 +493,9 @@ class PluginPublisher {
       main: packageJson.main || "dist/index.js",
       entrypointClassName: entrypointClassName,
       keywords: packageJson.keywords || [],
+      pluginType: validNodeTypes.includes(pluginType as NodeType)
+        ? pluginType
+        : NodeType.MISCELLANEOUS,
       scripts: {
         build: packageJson.scripts?.build || "tsc",
       },
@@ -546,6 +563,18 @@ class PluginPublisher {
   private async validatePluginStructure(): Promise<void> {
     console.log(chalk.yellow("🔍 Validating plugin structure..."));
 
+    // First, load package.json and generate manifest.json dynamically
+    this.packageJson = JSON.parse(
+      fs.readFileSync(path.join(this.directory, "package.json"), "utf-8")
+    );
+    this.manifestJson = this.generateManifestFromPackageJson(this.packageJson);
+
+    // Write the generated manifest.json to disk for validation
+    const manifestPath = path.join(this.directory, "manifest.json");
+    fs.writeFileSync(manifestPath, JSON.stringify(this.manifestJson, null, 2));
+    console.log(chalk.green("📄 Generated manifest.json from package.json"));
+
+    // Now validate the plugin structure
     const validationResult = await validatePlugin(
       this.directory,
       this.sdkVersion
@@ -555,12 +584,6 @@ class PluginPublisher {
       this.displayValidationErrors(validationResult);
       throw new Error("Plugin validation failed. Please fix the errors above.");
     }
-
-    // Load package.json and generate manifest.json dynamically
-    this.packageJson = JSON.parse(
-      fs.readFileSync(path.join(this.directory, "package.json"), "utf-8")
-    );
-    this.manifestJson = this.generateManifestFromPackageJson(this.packageJson);
 
     // Extract keywords from manifest.json if available
     if (
@@ -1243,6 +1266,7 @@ class PluginPublisher {
             sdkVersion: this.sdkVersion, // Pass sdkVersion
             tags: this.keywords.join(","), // Pass keywords as comma-separated string
             readme: this.readme,
+            pluginType: this.manifestJson.pluginType || NodeType.MISCELLANEOUS, // Pass plugin type
           },
         },
         {
@@ -1255,7 +1279,7 @@ class PluginPublisher {
 
       console.log(chalk.green("✅ Upload completion notified"));
     } catch (error) {
-      console.log(error)
+      console.log(error);
       if (axios.isAxiosError(error)) {
         throw new Error(error.response?.data?.error);
       }

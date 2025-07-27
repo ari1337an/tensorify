@@ -129,6 +129,26 @@ describe("POST /workflow/:workflowId/plugin", () => {
     await revokeSession(sessionId);
   });
 
+  it("should return 400 if description is too long", async () => {
+    await flushDatabase(expect);
+    const { jwt, sessionId, workflowId } = await setupUserAndOrg(1);
+
+    const res = await request(server)
+      .post(`/workflow/${workflowId}/plugin`)
+      .set("Authorization", `Bearer ${jwt}`)
+      .send({
+        slug: "@testuser/demo-plugin:1.0.0",
+        description: "a".repeat(501), // Exceeds 500 character limit
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toContain(
+      "Description must be less than 500 characters"
+    );
+
+    await revokeSession(sessionId);
+  });
+
   it("should return 400 for invalid slug formats", async () => {
     await flushDatabase(expect);
     const { jwt, sessionId, workflowId } = await setupUserAndOrg(1);
@@ -250,6 +270,47 @@ describe("POST /workflow/:workflowId/plugin", () => {
 
     expect(dbPlugin).toBeDefined();
     expect(dbPlugin?.slug).toBe(pluginSlug);
+    expect(dbPlugin?.description).toBeNull(); // No description provided
+    expect(dbPlugin?.workflowId).toBe(testWorkflow.id);
+    expect(dbPlugin?.createdAt).toBeDefined();
+    expect(dbPlugin?.updatedAt).toBeDefined();
+
+    await revokeSession(sessionId);
+  });
+
+  it("should successfully install a plugin with description", async () => {
+    await flushDatabase(expect);
+    const { jwt, sessionId, projectId } = await setupUserAndOrg(1);
+
+    // Create a test workflow
+    const testWorkflow = await createTestWorkflow(projectId);
+
+    const pluginSlug = "@testuser/described-plugin:1.0.0";
+    const pluginDescription =
+      "This is a comprehensive plugin for data processing and visualization";
+
+    const res = await request(server)
+      .post(`/workflow/${testWorkflow.id}/plugin`)
+      .set("Authorization", `Bearer ${jwt}`)
+      .send({
+        slug: pluginSlug,
+        description: pluginDescription,
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.message).toBe("Plugin installed successfully.");
+
+    // Verify in database
+    const dbPlugin = await db.workflowInstalledPlugins.findFirst({
+      where: {
+        workflowId: testWorkflow.id,
+        slug: pluginSlug,
+      },
+    });
+
+    expect(dbPlugin).toBeDefined();
+    expect(dbPlugin?.slug).toBe(pluginSlug);
+    expect(dbPlugin?.description).toBe(pluginDescription);
     expect(dbPlugin?.workflowId).toBe(testWorkflow.id);
     expect(dbPlugin?.createdAt).toBeDefined();
     expect(dbPlugin?.updatedAt).toBeDefined();

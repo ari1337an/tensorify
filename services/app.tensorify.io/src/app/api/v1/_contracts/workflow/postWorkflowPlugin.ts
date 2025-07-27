@@ -67,7 +67,7 @@ export const action = {
       body,
     }: ContractRequest): Promise<ContractResponse> => {
       const { workflowId } = params;
-      const { slug } = body;
+      const { slug, description } = body;
 
       try {
         // Verify the workflow exists
@@ -116,6 +116,7 @@ export const action = {
           await tx.workflowInstalledPlugins.create({
             data: {
               slug,
+              description: description || null,
               workflowId: workflowId,
             },
           });

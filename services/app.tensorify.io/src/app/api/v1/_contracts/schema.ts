@@ -489,6 +489,10 @@ export const InstallPluginRequest = z
       .regex(/^@[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+:(?:latest|\d+\.\d+\.\d+)$/, {
         message: "Plugin slug must follow format @username/plugin:version",
       }),
+    description: z
+      .string()
+      .max(500, { message: "Description must be less than 500 characters." })
+      .optional(),
   })
   .strict();
 

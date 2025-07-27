@@ -1,6 +1,7 @@
 import { z } from "zod";
 import * as fs from "fs";
 import * as path from "path";
+import { NodeType } from "../interfaces/INode";
 
 /**
  * Zod schema for manifest.json validation
@@ -19,6 +20,7 @@ export const ManifestSchema = z
     main: z.string().min(1, "Main entry point file is required"),
     entrypointClassName: z.string().min(1, "Entrypoint class name is required"),
     keywords: z.array(z.string()).min(1, "At least one keyword is required"),
+    pluginType: z.enum(Object.values(NodeType) as [string, ...string[]]), // pluginType should be a valid NodeType
     repository: z
       .object({
         type: z.literal("git"),
@@ -97,81 +99,13 @@ export interface ValidationResult {
 export class PluginValidator {
   private currentDirectory: string;
   private sdkVersion: string;
-  private packageJson: any;
-  private sourceIndexPath: string | null = null;
 
-  constructor(directory: string = process.cwd(), sdkVersion: string = "0.0.4") {
+  constructor(
+    directory: string = process.cwd(),
+    sdkVersion: string = "0.0.11"
+  ) {
     this.currentDirectory = directory;
     this.sdkVersion = sdkVersion;
-  }
-
-  /**
-   * Determine the TypeScript source file path from package.json main field
-   */
-  private determineSourceIndexPath(): string | null {
-    if (this.sourceIndexPath) {
-      return this.sourceIndexPath;
-    }
-
-    try {
-      const packagePath = path.join(this.currentDirectory, "package.json");
-      if (!fs.existsSync(packagePath)) {
-        return null;
-      }
-
-      this.packageJson = JSON.parse(fs.readFileSync(packagePath, "utf-8"));
-      const mainField = this.packageJson.main;
-
-      if (!mainField) {
-        return null;
-      }
-
-      // Convert main field (dist/index.js) to TypeScript source path
-      // Examples:
-      // "dist/index.js" -> "src/index.ts" or "index.ts"
-      // "lib/index.js" -> "src/index.ts" or "index.ts"
-      // "index.js" -> "index.ts"
-
-      let possibleSourcePaths: string[] = [];
-
-      if (mainField.includes("/")) {
-        // If main field has directory structure (e.g., "dist/index.js")
-        const mainName = path.basename(mainField, path.extname(mainField));
-
-        // Try src/ directory first (most common)
-        possibleSourcePaths.push(`src/${mainName}.ts`);
-
-        // Try replacing the output directory with src
-        const mainDir = path.dirname(mainField);
-        possibleSourcePaths.push(`src/${mainName}.ts`);
-
-        // Try root directory
-        possibleSourcePaths.push(`${mainName}.ts`);
-      } else {
-        // If main field is just filename (e.g., "index.js")
-        const mainName = path.basename(mainField, path.extname(mainField));
-
-        // Try src/ directory first
-        possibleSourcePaths.push(`src/${mainName}.ts`);
-
-        // Try root directory
-        possibleSourcePaths.push(`${mainName}.ts`);
-      }
-
-      // Find the first existing source file
-      for (const sourcePath of possibleSourcePaths) {
-        const fullSourcePath = path.join(this.currentDirectory, sourcePath);
-        if (fs.existsSync(fullSourcePath)) {
-          this.sourceIndexPath = sourcePath;
-          return sourcePath;
-        }
-      }
-
-      // Fallback: if no TypeScript file found, return null
-      return null;
-    } catch (error) {
-      return null;
-    }
   }
 
   /**
@@ -186,29 +120,21 @@ export class PluginValidator {
     errors.push(...fileCheckResult.errors);
 
     if (fileCheckResult.valid) {
-      // 2. Validate manifest.json (optional - only if file exists)
-      let manifestResult: ValidationResult = { valid: true, errors: [] };
-      const manifestPath = path.join(this.currentDirectory, "manifest.json");
-      if (fs.existsSync(manifestPath)) {
-        manifestResult = await this.validateManifest();
-        errors.push(...manifestResult.errors);
-      }
-
-      // 3. Validate package.json
+      // 2. Validate package.json
       const packageResult = await this.validatePackageJson();
       errors.push(...packageResult.errors);
 
-      // 4. Validate index.ts structure
+      // 3. Validate index.ts structure
       const indexResult = await this.validateIndexTs();
       errors.push(...indexResult.errors);
 
-      // 5. Validate class implementation
-      if (manifestResult.valid && indexResult.valid) {
+      // 4. Validate class implementation (skip manifest check - CLI generates it)
+      if (indexResult.valid) {
         const classResult = await this.validateClassImplementation();
         errors.push(...classResult.errors);
       }
 
-      // 6. Validate SDK version compatibility
+      // 5. Validate SDK version compatibility
       if (packageResult.valid) {
         const versionResult = this.validateSdkVersion();
         errors.push(...versionResult.errors);
@@ -227,48 +153,21 @@ export class PluginValidator {
    */
   private checkRequiredFiles(): ValidationResult {
     const errors: ValidationError[] = [];
+    const requiredFiles = ["icon.svg"]; // Removed manifest.json - CLI generates it dynamically
 
-    // Check for package.json first (needed to determine source index path)
-    const packagePath = path.join(this.currentDirectory, "package.json");
-    if (!fs.existsSync(packagePath)) {
+    // Check for TypeScript entry point (either index.ts or src/index.ts)
+    const indexTsPath = path.join(this.currentDirectory, "index.ts");
+    const srcIndexTsPath = path.join(this.currentDirectory, "src/index.ts");
+
+    if (!fs.existsSync(indexTsPath) && !fs.existsSync(srcIndexTsPath)) {
       errors.push({
         type: "missing_file",
-        message: "Required file missing: package.json",
-        file: "package.json",
+        message: `Required file missing: index.ts (should be either in root or src/ directory)`,
+        file: "index.ts",
       });
     }
 
-    // Determine TypeScript source file path dynamically
-    const sourceIndexPath = this.determineSourceIndexPath();
-
-    // Check for TypeScript source file
-    if (!sourceIndexPath) {
-      // Fallback: try common locations
-      const commonLocations = ["src/index.ts", "index.ts"];
-      let found = false;
-
-      for (const location of commonLocations) {
-        const filePath = path.join(this.currentDirectory, location);
-        if (fs.existsSync(filePath)) {
-          this.sourceIndexPath = location;
-          found = true;
-          break;
-        }
-      }
-
-      if (!found) {
-        errors.push({
-          type: "missing_file",
-          message:
-            "Required TypeScript source file missing. Expected src/index.ts or index.ts based on package.json main field",
-          file: "index.ts",
-        });
-      }
-    }
-
-    // Check other required files
-    const otherRequiredFiles = ["icon.svg"];
-    for (const file of otherRequiredFiles) {
+    for (const file of requiredFiles) {
       const filePath = path.join(this.currentDirectory, file);
       if (!fs.existsSync(filePath)) {
         errors.push({
@@ -303,7 +202,7 @@ export class PluginValidator {
         errors.push({
           type: "schema_error",
           message: `Manifest validation failed: ${error.issues
-            .map((e: any) => e.message)
+            .map((e) => e.message)
             .join(", ")}`,
           file: "manifest.json",
           details: error.issues,
@@ -342,13 +241,8 @@ export class PluginValidator {
         return { valid: false, errors };
       }
 
-      // Use cached packageJson if available, otherwise read it
-      let packageJson = this.packageJson;
-      if (!packageJson) {
-        const packageContent = fs.readFileSync(packagePath, "utf-8");
-        packageJson = JSON.parse(packageContent);
-        this.packageJson = packageJson;
-      }
+      const packageContent = fs.readFileSync(packagePath, "utf-8");
+      const packageJson = JSON.parse(packageContent);
 
       // Validate against schema
       const result = PackageJsonSchema.safeParse(packageJson);
@@ -356,7 +250,7 @@ export class PluginValidator {
         errors.push({
           type: "schema_error",
           message: `Package.json validation failed: ${result.error.issues
-            .map((e: any) => e.message)
+            .map((e) => e.message)
             .join(", ")}`,
           file: "package.json",
           details: result.error.issues,
@@ -370,28 +264,6 @@ export class PluginValidator {
           message: "Public plugins must have a repository URL in package.json",
           file: "package.json",
         });
-      }
-
-      // Validate that main field points to a valid output location
-      if (packageJson.main) {
-        const mainPath = path.join(this.currentDirectory, packageJson.main);
-        const mainDir = path.dirname(mainPath);
-
-        // Check if the output directory exists or can be created (not requiring the actual built file)
-        // This is important for validation before build
-        if (!fs.existsSync(mainDir)) {
-          // Only warn if it's not a standard build directory
-          const buildDirs = ["dist", "lib", "build"];
-          const outputDirName = path.basename(mainDir);
-
-          if (!buildDirs.includes(outputDirName)) {
-            errors.push({
-              type: "schema_error",
-              message: `Main field points to non-standard output directory: ${packageJson.main}. Expected output to standard build directories like dist/, lib/, or build/`,
-              file: "package.json",
-            });
-          }
-        }
       }
     } catch (error) {
       errors.push({
@@ -410,26 +282,28 @@ export class PluginValidator {
   }
 
   /**
-   * Validate TypeScript source file has single default export
+   * Validate index.ts has single default export
    */
   private async validateIndexTs(): Promise<ValidationResult> {
     const errors: ValidationError[] = [];
 
-    // Get the source index path (src/index.ts or index.ts)
-    const sourceIndexPath =
-      this.sourceIndexPath || this.determineSourceIndexPath();
+    // Try to find index.ts in either root or src directory
+    const rootIndexPath = path.join(this.currentDirectory, "index.ts");
+    const srcIndexPath = path.join(this.currentDirectory, "src/index.ts");
 
-    if (!sourceIndexPath) {
+    let indexPath: string;
+    if (fs.existsSync(rootIndexPath)) {
+      indexPath = rootIndexPath;
+    } else if (fs.existsSync(srcIndexPath)) {
+      indexPath = srcIndexPath;
+    } else {
       errors.push({
         type: "missing_file",
-        message:
-          "Cannot find TypeScript source file. Expected src/index.ts or index.ts",
+        message: "index.ts file not found in root or src directory",
         file: "index.ts",
       });
       return { valid: false, errors };
     }
-
-    const indexPath = path.join(this.currentDirectory, sourceIndexPath);
 
     try {
       const indexContent = fs.readFileSync(indexPath, "utf-8");
@@ -441,17 +315,17 @@ export class PluginValidator {
       if (!match) {
         errors.push({
           type: "invalid_content",
-          message: `${sourceIndexPath} must have a single default class export`,
-          file: sourceIndexPath,
+          message: "index.ts must have a single default class export",
+          file: "index.ts",
         });
       }
     } catch (error) {
       errors.push({
         type: "invalid_content",
-        message: `Failed to read ${sourceIndexPath}: ${
+        message: `Failed to read index.ts: ${
           error instanceof Error ? error.message : "Unknown error"
         }`,
-        file: sourceIndexPath,
+        file: "index.ts",
       });
     }
 
@@ -468,107 +342,51 @@ export class PluginValidator {
     const errors: ValidationError[] = [];
 
     try {
-      // Get expected class name from manifest.json or package.json
-      let manifest: any = {};
-      const manifestPath = path.join(this.currentDirectory, "manifest.json");
+      // Read index.ts to check class implementation
+      // Try to find index.ts in either root or src directory
+      const rootIndexPath = path.join(this.currentDirectory, "index.ts");
+      const srcIndexPath = path.join(this.currentDirectory, "src/index.ts");
 
-      if (fs.existsSync(manifestPath)) {
-        // Use manifest.json if it exists
-        const manifestContent = fs.readFileSync(manifestPath, "utf-8");
-        manifest = JSON.parse(manifestContent);
+      let indexPath: string;
+      if (fs.existsSync(rootIndexPath)) {
+        indexPath = rootIndexPath;
+      } else if (fs.existsSync(srcIndexPath)) {
+        indexPath = srcIndexPath;
       } else {
-        // Generate manifest from package.json if manifest.json doesn't exist
-        const packagePath = path.join(this.currentDirectory, "package.json");
-        const packageContent = fs.readFileSync(packagePath, "utf-8");
-        const packageJson = JSON.parse(packageContent);
-        const tensorifySettings = packageJson["tensorify-settings"] || {};
-
-        manifest = {
-          entrypointClassName:
-            tensorifySettings.entrypointClassName || "TensorifyPlugin",
-        };
-      }
-
-      // Get the source index path (src/index.ts or index.ts)
-      const sourceIndexPath =
-        this.sourceIndexPath || this.determineSourceIndexPath();
-
-      if (!sourceIndexPath) {
         errors.push({
-          type: "interface_error",
-          message:
-            "Cannot find TypeScript source file to validate class implementation",
+          type: "missing_file",
+          message: "index.ts file not found in root or src directory",
           file: "index.ts",
         });
         return { valid: false, errors };
       }
 
-      // Read TypeScript source file to check class name
-      const indexPath = path.join(this.currentDirectory, sourceIndexPath);
       const indexContent = fs.readFileSync(indexPath, "utf-8");
 
-      // Extract class name from TypeScript source
+      // Check for valid default export class
       const defaultExportRegex = /export\s+default\s+class\s+(\w+)/;
       const match = indexContent.match(defaultExportRegex);
-
-      if (match) {
-        const actualClassName = match[1];
-        const expectedClassName = manifest.entrypointClassName;
-
-        if (actualClassName !== expectedClassName) {
-          errors.push({
-            type: "interface_error",
-            message: `Class name mismatch. Expected "${expectedClassName}" from manifest.json, but found "${actualClassName}" in ${sourceIndexPath}`,
-            file: sourceIndexPath,
-          });
-        }
-      }
-
-      // Check for proper SDK imports
-      const requiredImports = [
-        { name: "INode", type: "interface" },
-        { name: "ModelLayerNode", type: "class" },
-        { name: "ModelLayerSettings", type: "interface" },
-        { name: "NodeType", type: "type" },
-      ];
-
-      const missingImports = requiredImports.filter((imp) => {
-        const importRegex = new RegExp(
-          `import\\s*{[^}]*\\b${imp.name}\\b[^}]*}\\s*from\\s*["']@tensorify\\.io/sdk["']`
-        );
-        return !importRegex.test(indexContent);
-      });
-
-      if (missingImports.length > 0) {
+      if (!match) {
         errors.push({
           type: "interface_error",
-          message: `Missing required SDK imports: ${missingImports
-            .map((imp) => imp.name)
-            .join(", ")}. Please import them from "@tensorify.io/sdk"`,
-          file: sourceIndexPath,
+          message: "index.ts must have a default class export",
+          file: "index.ts",
         });
       }
 
-      // Check for INode implementation (enhanced check)
-      const implementsINodeRegex = /implements\s+INode/;
-      if (!implementsINodeRegex.test(indexContent)) {
-        errors.push({
-          type: "interface_error",
-          message:
-            "Exported class must implement INode interface. Example: 'class MyClass extends ModelLayerNode<MySettings> implements INode<MySettings>'",
-          file: sourceIndexPath,
-        });
-      }
+      // Check for INode implementation OR TensorifyPlugin extension (basic check)
+      const hasINodeImplementation =
+        indexContent.includes("implements") && indexContent.includes("INode");
+      const hasTensorifyPluginExtension =
+        indexContent.includes("extends") &&
+        indexContent.includes("TensorifyPlugin");
 
-      // Check for proper base class extension
-      const extendsBaseClassRegex =
-        /extends\s+(ModelLayerNode|DataNode|TrainerNode|BaseNode)/;
-      if (!extendsBaseClassRegex.test(indexContent)) {
+      if (!hasINodeImplementation && !hasTensorifyPluginExtension) {
         errors.push({
           type: "interface_error",
           message:
-            "Exported class must extend one of the base classes: ModelLayerNode, DataNode, TrainerNode, or BaseNode",
-          file: sourceIndexPath,
+            "Exported class must either implement INode interface or extend TensorifyPlugin",
+          file: "index.ts",
         });
       }
     } catch (error) {
@@ -593,14 +411,9 @@ export class PluginValidator {
     const errors: ValidationError[] = [];
 
     try {
-      // Use cached packageJson if available, otherwise read it
-      let packageJson = this.packageJson;
-      if (!packageJson) {
-        const packagePath = path.join(this.currentDirectory, "package.json");
-        const packageContent = fs.readFileSync(packagePath, "utf-8");
-        packageJson = JSON.parse(packageContent);
-        this.packageJson = packageJson;
-      }
+      const packagePath = path.join(this.currentDirectory, "package.json");
+      const packageContent = fs.readFileSync(packagePath, "utf-8");
+      const packageJson = JSON.parse(packageContent);
 
       const requiredSdkVersion =
         packageJson["tensorify-settings"]?.["sdk-version"];
@@ -638,7 +451,6 @@ export class PluginValidator {
     } else {
       report += "❌ Plugin validation failed!\n\n";
       report += "Errors:\n";
-
       result.errors.forEach((error, index) => {
         report += `${index + 1}. [${error.type.toUpperCase()}] ${
           error.message
@@ -666,7 +478,7 @@ export class PluginValidator {
  */
 export async function validatePlugin(
   directory: string = process.cwd(),
-  sdkVersion: string = "0.0.4"
+  sdkVersion: string = "0.0.11"
 ): Promise<ValidationResult> {
   const validator = new PluginValidator(directory, sdkVersion);
   return await validator.validatePlugin();
@@ -674,6 +486,5 @@ export async function validatePlugin(
 
 /**
  * Export current SDK version for version checking
- * This should match the version in package.json
  */
-export const CURRENT_SDK_VERSION = "0.0.4";
+export const CURRENT_SDK_VERSION = "0.0.11";

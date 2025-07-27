@@ -31,6 +31,7 @@ import { toast } from "sonner";
 import {
   getWorkflowPlugins,
   postWorkflowPlugin,
+  deleteWorkflowPlugin,
 } from "@/app/api/v1/_client/client";
 import useStore from "@/app/_store/store";
 import { format } from "timeago.js";
@@ -38,6 +39,7 @@ import { format } from "timeago.js";
 interface InstalledPlugin {
   id: string;
   slug: string;
+  description: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -63,6 +65,7 @@ export function PluginManagementDialog({
 
   // Install plugin state
   const [slug, setSlug] = useState("");
+  const [description, setDescription] = useState("");
   const [slugError, setSlugError] = useState("");
   const [isInstallingPlugin, setIsInstallingPlugin] = useState(false);
 
@@ -122,12 +125,16 @@ export function PluginManagementDialog({
     try {
       const response = await postWorkflowPlugin({
         params: { workflowId: currentWorkflow.id },
-        body: { slug },
+        body: {
+          slug,
+          ...(description.trim() && { description: description.trim() }),
+        },
       });
 
       if (response.status === 201) {
         toast.success(`Plugin ${slug} installed successfully!`);
         setSlug("");
+        setDescription("");
         setSlugError("");
 
         // Refresh the installed plugins list
@@ -143,6 +150,45 @@ export function PluginManagementDialog({
       toast.error("An unexpected error occurred while installing the plugin.");
     } finally {
       setIsInstallingPlugin(false);
+    }
+  };
+
+  const handleDeletePlugin = async (pluginId: string, pluginSlug: string) => {
+    if (!currentWorkflow?.id) {
+      toast.error("No workflow selected. Please select a workflow first.");
+      return;
+    }
+
+    // Confirm deletion
+    const confirmed = window.confirm(
+      `Are you sure you want to uninstall "${pluginSlug}"? This action cannot be undone.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const response = await deleteWorkflowPlugin({
+        params: {
+          workflowId: currentWorkflow.id,
+          pluginId: pluginId,
+        },
+      });
+
+      if (response.status === 200) {
+        toast.success(`Plugin ${pluginSlug} uninstalled successfully!`);
+
+        // Refresh the installed plugins list
+        await fetchInstalledPlugins();
+      } else {
+        toast.error(response.body.message || "Failed to uninstall plugin");
+      }
+    } catch (error) {
+      console.error("Error uninstalling plugin:", error);
+      toast.error(
+        "An unexpected error occurred while uninstalling the plugin."
+      );
     }
   };
 
@@ -186,6 +232,7 @@ export function PluginManagementDialog({
   useEffect(() => {
     if (!isOpen) {
       setSlug("");
+      setDescription("");
       setSlugError("");
       setSearchTerm("");
       setActiveTab("installed");
@@ -285,6 +332,7 @@ export function PluginManagementDialog({
                   <TableHeader>
                     <TableRow>
                       <TableHead>Plugin</TableHead>
+                      <TableHead>Description</TableHead>
                       <TableHead>Version</TableHead>
                       <TableHead>Installed</TableHead>
                       <TableHead className="w-[100px]">Actions</TableHead>
@@ -303,6 +351,19 @@ export function PluginManagementDialog({
                               <span className="text-sm text-muted-foreground">
                                 {plugin.slug}
                               </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="max-w-xs">
+                              {plugin.description ? (
+                                <span className="text-sm text-muted-foreground">
+                                  {plugin.description}
+                                </span>
+                              ) : (
+                                <span className="text-sm text-muted-foreground italic">
+                                  No description
+                                </span>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell>
@@ -325,6 +386,9 @@ export function PluginManagementDialog({
                               size="sm"
                               className="text-destructive hover:text-destructive"
                               title="Uninstall Plugin"
+                              onClick={() =>
+                                handleDeletePlugin(plugin.id, plugin.slug)
+                              }
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -355,6 +419,23 @@ export function PluginManagementDialog({
                 )}
                 <p className="text-xs text-muted-foreground">
                   Examples: @johndoe/conv2d:5.0.2, @johndoe/dropout:latest
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description (Optional)</Label>
+                <Input
+                  id="description"
+                  type="text"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Brief description of what this plugin does..."
+                  disabled={isInstallingPlugin}
+                  maxLength={500}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Add a description to help identify this plugin's purpose (max
+                  500 characters)
                 </p>
               </div>
 

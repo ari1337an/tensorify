@@ -1,6 +1,6 @@
 {
   "name": "@tensorify.io/sdk",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "private": false,
   "description": "SDK for creating Tensorify plugins with TypeScript support and comprehensive base classes",
   "main": "dist/index.js",

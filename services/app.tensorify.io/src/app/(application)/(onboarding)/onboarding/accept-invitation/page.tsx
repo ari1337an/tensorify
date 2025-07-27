@@ -117,7 +117,14 @@ export default function AcceptInvitationPage() {
     }
 
     fetchInvitation();
-  }, [userId, isLoaded, isSignedIn, router, invitationToken, session?.user?.emailAddresses]);
+  }, [
+    userId,
+    isLoaded,
+    isSignedIn,
+    router,
+    invitationToken,
+    session?.user?.emailAddresses,
+  ]);
 
   const handleAccept = async () => {
     if (!invitation) return;

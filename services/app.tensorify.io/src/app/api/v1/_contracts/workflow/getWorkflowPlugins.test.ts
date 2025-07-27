@@ -71,12 +71,18 @@ describe("GET /workflow/:workflowId/plugins", () => {
   async function installPlugin(
     accessToken: string,
     workflowId: string,
-    slug: string
+    slug: string,
+    description?: string
   ) {
+    const payload: { slug: string; description?: string } = { slug };
+    if (description !== undefined) {
+      payload.description = description;
+    }
+
     return await request(server)
       .post(`/workflow/${workflowId}/plugin`)
       .set("Authorization", `Bearer ${accessToken}`)
-      .send({ slug })
+      .send(payload)
       .expect(201);
   }
 
@@ -193,7 +199,7 @@ describe("GET /workflow/:workflowId/plugins", () => {
     it("should return installed plugins with correct structure", async () => {
       const userData = await setupUserAndOrg();
 
-      // Install a plugin
+      // Install a plugin without description
       await installPlugin(
         userData.jwt,
         userData.workflowId,
@@ -210,6 +216,7 @@ describe("GET /workflow/:workflowId/plugins", () => {
       expect(response.body.data[0]).toMatchObject({
         id: expect.any(String),
         slug: "@johndoe/test-plugin:1.0.0",
+        description: null, // No description provided
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       });
@@ -222,6 +229,34 @@ describe("GET /workflow/:workflowId/plugins", () => {
       // Verify ISO date format
       expect(new Date(response.body.data[0].createdAt)).toBeInstanceOf(Date);
       expect(new Date(response.body.data[0].updatedAt)).toBeInstanceOf(Date);
+    });
+
+    it("should return installed plugins with descriptions when provided", async () => {
+      const userData = await setupUserAndOrg();
+
+      // Install a plugin with description
+      const pluginDescription = "A test plugin for data processing";
+      await installPlugin(
+        userData.jwt,
+        userData.workflowId,
+        "@johndoe/test-plugin:1.0.0",
+        pluginDescription
+      );
+
+      const response = await request(server)
+        .get(`/workflow/${userData.workflowId}/plugins`)
+        .set("Authorization", `Bearer ${userData.jwt}`)
+        .expect(200);
+
+      expect(response.body.status).toBe("success");
+      expect(response.body.data).toHaveLength(1);
+      expect(response.body.data[0]).toMatchObject({
+        id: expect.any(String),
+        slug: "@johndoe/test-plugin:1.0.0",
+        description: pluginDescription,
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+      });
     });
 
     it("should return multiple installed plugins ordered by creation date (newest first)", async () => {

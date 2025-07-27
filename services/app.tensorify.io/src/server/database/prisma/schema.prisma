@@ -1,6 +1,7 @@
 // schema.prisma
 generator client {
   provider = "prisma-client-js"
+  output   = "../../../../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -155,8 +156,9 @@ model WorkflowVersion {
 }
 
 model WorkflowInstalledPlugins {
-  id   String @id @default(uuid())
-  slug String
+  id          String  @id @default(uuid())
+  slug        String
+  description String?
 
   workflow   Workflow @relation("WorkflowInstalledPlugins", fields: [workflowId], references: [id])
   workflowId String

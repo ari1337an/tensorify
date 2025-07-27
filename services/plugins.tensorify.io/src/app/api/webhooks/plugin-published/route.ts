@@ -16,6 +16,7 @@ const pluginWebhookSchema = z.object({
   authorId: z.string().min(1, "Author ID is required"),
   isPublic: z.boolean().optional(),
   readme: z.string().optional(),
+  pluginType: z.string().optional(), // Added plugin type from SDK NodeType enum
 });
 
 export async function POST(request: NextRequest) {
@@ -65,6 +66,7 @@ export async function POST(request: NextRequest) {
       authorId,
       isPublic,
       readme,
+      pluginType,
     } = validationResult.data;
 
     // Check if plugin already exists
@@ -88,6 +90,7 @@ export async function POST(request: NextRequest) {
           authorId,
           isPublic: isPublic !== undefined ? isPublic : true,
           readme: readme || null,
+          pluginType: pluginType || "miscellaneous",
         },
       });
 

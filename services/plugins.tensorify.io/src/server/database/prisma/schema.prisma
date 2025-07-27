@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../../../../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -21,11 +22,13 @@ model Plugin {
   authorId    String
   isPublic    Boolean  @default(true)
   readme      String? // README content from the plugin repository
+  pluginType  String   @default("miscellaneous") // NodeType category from SDK
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@unique([slug])
   @@index([authorId])
+  @@index([pluginType]) // Index for efficient category-based queries
 }
 
 model User {

@@ -16,7 +16,10 @@ export function PluginGroupCard({ baseSlug, versions }: PluginGroupCardProps) {
   const totalVersions = versions.length;
 
   return (
-    <div className="bg-card rounded-xl border border-border overflow-hidden transition-all hover:shadow-lg" data-testid="plugin-group-card">
+    <div
+      className="bg-card rounded-xl border border-border overflow-hidden transition-all hover:shadow-lg"
+      data-testid="plugin-group-card"
+    >
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div>
@@ -49,7 +52,6 @@ export function PluginGroupCard({ baseSlug, versions }: PluginGroupCardProps) {
               <span>{baseSlug}</span>
             </div>
           </div>
-         
         </div>
 
         <p className="text-muted-foreground mb-6 line-clamp-2">

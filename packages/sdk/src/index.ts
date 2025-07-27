@@ -1,14 +1,98 @@
 /**
  * @tensorify.io/sdk
  *
- * TypeScript SDK for creating Tensorify plugins with comprehensive base classes,
- * utilities, and full compatibility with both transpiler and plugin-engine systems.
+ * TypeScript SDK for creating Tensorify plugins with comprehensive frontend support,
+ * React Flow node integration, and full plugin system capabilities.
  */
 
-// Core interfaces
-export { INode, IPlugin, IUniversalNode, NodeType } from "./interfaces/INode";
+// ===== NEW PLUGIN SYSTEM EXPORTS =====
 
-// Core types
+// Core Plugin Types
+export type {
+  // Handle Types
+  HandleViewType,
+  EdgeType,
+  HandlePosition,
+
+  // Visual Types
+  NodeViewContainerType,
+  IconType,
+  NodeIcon,
+
+  // Settings Types
+  SettingsFieldType,
+  SettingsDataType,
+
+  // Core Interfaces
+  HandleDefinition,
+  NodeVisualConfig,
+  SettingsField,
+  IPluginDefinition,
+  PluginSettings,
+  FrontendPluginManifest,
+  PackageJsonInfo,
+  PluginValidationResult,
+  PluginCodeGenerationContext,
+} from "./types/plugin.types";
+
+// Core Plugin Classes
+export { TensorifyPlugin } from "./base/TensorifyPlugin";
+
+// Plugin Validation Utilities
+export {
+  validatePlugin,
+  PluginValidator,
+  ManifestSchema,
+  PackageJsonSchema,
+  CURRENT_SDK_VERSION,
+  type ValidationError,
+  type ValidationResult,
+} from "./validation/index";
+
+// NodeType enum for CLI compatibility
+export { NodeType } from "./interfaces/INode";
+
+// Plugin Utilities
+export {
+  generatePluginManifest,
+  readPackageJson,
+  writeManifestFile,
+  buildPluginManifest,
+  createDefaultSettings,
+  mergeSettings,
+  generateDynamicLabel,
+  getPluginMetadata,
+  createPluginSummary,
+  validateSettingsWithFeedback,
+  autoDetectEntrypointClassName,
+  generateBuildScript,
+  createPluginTemplate,
+} from "./utils/plugin.utils";
+
+// Frontend Integration Utilities
+export {
+  pluginToNodeItem,
+  pluginsToNodeItems,
+  generateFrontendPluginMeta,
+  isTensorifyPluginNode,
+  extractPluginId,
+  getDefaultIconForCategory,
+  integratePluginIntoCategories,
+} from "./utils/frontend.utils";
+
+export type {
+  NodeItem,
+  FrontendSettingsFieldMeta,
+  FrontendHandleMeta,
+  FrontendPluginMeta,
+} from "./utils/frontend.utils";
+
+// Sample Plugin (for reference)
+export { AIChatAgentPlugin } from "./examples/AIChatAgentPlugin";
+
+// ===== LEGACY TYPES (Backward Compatibility) =====
+
+// Legacy core types - kept for backward compatibility
 export type {
   Layer,
   LayerSettings,
@@ -20,13 +104,7 @@ export type {
   CodeGenerationContext,
 } from "./types";
 
-// Base classes
-export { BaseNode } from "./base/BaseNode";
-export { ModelLayerNode, ModelLayerSettings } from "./base/ModelLayerNode";
-export { TrainerNode, TrainerSettings } from "./base/TrainerNode";
-export { DataNode, DataSettings } from "./base/DataNode";
-
-// Utilities
+// Utilities - kept for backward compatibility
 export {
   generateVariableName,
   sanitizeVariableName,
@@ -42,80 +120,37 @@ export {
   compareVersions,
 } from "./utils";
 
-// Validation
-export {
-  PluginValidator,
-  validatePlugin,
-  ManifestSchema,
-  PackageJsonSchema,
-  CURRENT_SDK_VERSION,
-} from "./validation";
-export type { ValidationResult, ValidationError } from "./validation";
-
-// Import types for internal use
-import { PluginManifest, PluginEntryPoint } from "./types";
-
-// Version information
-export const SDK_VERSION = "0.0.1";
+/**
+ * SDK Version Information
+ */
+export const SDK_VERSION = "2.0.0";
+export const PLUGIN_SYSTEM_VERSION = "1.0.0";
 
 /**
- * Create a new plugin manifest with default values
+ * Supported Plugin Categories
  */
-export function createManifest(
-  overrides: Partial<PluginManifest> = {}
-): PluginManifest {
-  const defaultManifest: PluginManifest = {
-    slug: "my-plugin",
-    name: "My Plugin",
-    version: "1.0.0",
-    description: "A Tensorify plugin created with the SDK",
-    author: "",
-    engineVersion: "^0.0.1",
-    tags: [],
-    category: "general",
-    dependencies: [],
-    entryPoints: {},
-  };
+export const PLUGIN_CATEGORIES = [
+  "model_layer",
+  "model",
+  "trainer",
+  "evaluator",
+  "dataloader",
+  "dataset",
+  "optimizer",
+  "criterion",
+  "loss_function",
+  "metric",
+  "scheduler",
+  "regularizer",
+  "preprocessor",
+  "postprocessor",
+  "augmentation_stack",
+  "train_one_epoch_function",
+  "report",
+  "function",
+  "pipeline",
+  "custom",
+  "miscellaneous",
+] as const;
 
-  return { ...defaultManifest, ...overrides };
-}
-
-/**
- * Validate a plugin manifest
- */
-export function validateManifest(manifest: PluginManifest): boolean {
-  const required = ["slug", "name", "version"];
-
-  for (const field of required) {
-    if (!manifest[field as keyof PluginManifest]) {
-      throw new Error(`Manifest missing required field: ${field}`);
-    }
-  }
-
-  // Validate version format
-  if (manifest.version && !/^\d+\.\d+\.\d+/.test(manifest.version)) {
-    throw new Error(
-      `Invalid version format: ${manifest.version}. Use semantic versioning (e.g., 1.0.0)`
-    );
-  }
-
-  return true;
-}
-
-/**
- * Helper function to create entry point configuration
- */
-export function createEntryPoint(
-  description: string,
-  parameters: Record<string, any> = {}
-): PluginEntryPoint {
-  return {
-    description,
-    parameters: Object.fromEntries(
-      Object.entries(parameters).map(([key, config]) => [
-        key,
-        { description: "", ...config },
-      ])
-    ),
-  };
-}
+export type PluginCategory = (typeof PLUGIN_CATEGORIES)[number];
