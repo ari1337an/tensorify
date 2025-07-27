@@ -208,20 +208,104 @@ interface IPluginDefinition {
 }
 ```
 
+#### Understanding TensorifyPlugin Architecture
+
+**Key insights for plugin development (reverse-engineered from SDK):**
+
+1. **Visual Configuration is Mandatory**: Unlike optional documentation suggests, the `visual` field is required and heavily used by the frontend to render nodes.
+
+2. **Handle System**: The plugin uses an 8-point positioning system for handles:
+   ```typescript
+   enum HandlePosition {
+     TOP, TOP_RIGHT, RIGHT, BOTTOM_RIGHT,
+     BOTTOM, BOTTOM_LEFT, LEFT, TOP_LEFT
+   }
+   ```
+
+3. **Settings Field Types Map to UI Components**: 
+   ```typescript
+   SettingsUIType.SLIDER → Frontend renders slider component
+   SettingsUIType.INPUT_NUMBER → Frontend renders number input
+   SettingsUIType.TOGGLE → Frontend renders toggle switch
+   // The type directly determines UI rendering
+   ```
+
+4. **Dynamic Labels Use Template Strings**: The `dynamicLabelTemplate` in visual config supports variable substitution:
+   ```typescript
+   dynamicLabelTemplate: "Dropout (p={p})" // {p} gets replaced with settings.p value
+   ```
+
+5. **Context Parameter Can Be Undefined**: In `getTranslationCode`, the context parameter might be undefined, especially during testing:
+   ```typescript
+   // Always check context before using
+   const inputData = context ? this.getInput(context, 0) : null;
+   ```
+
+6. **Plugin Manifest Generation**: The CLI automatically generates manifest.json from your plugin definition - no manual manifest needed.
+
+7. **Settings Validation is Automatic**: The SDK enforces validation rules automatically when `validateSettings()` is called.
+
 ### Core Settings System
 
-All plugin settings must extend `CorePluginSettings`:
+**⚠️ CRITICAL REQUIREMENT**: All plugin settings MUST extend `CorePluginSettings` and include required fields.
+
+#### Required Core Fields
+
+Every plugin must implement these mandatory settings:
 
 ```typescript
 interface CorePluginSettings {
-  variableName: string; // Internal variable identifier
-  labelName: string; // Display name for UI
+  variableName: string; // REQUIRED: Internal variable identifier for code generation
+  labelName: string; // REQUIRED: Display name shown in the UI
+}
+```
+
+#### Implementation Example
+
+```typescript
+// Your plugin settings MUST extend CorePluginSettings
+interface MyPluginSettings extends CorePluginSettings {
+  // Required fields (inherited)
+  variableName: string; // e.g., "my_layer", "conv2d_block"
+  labelName: string; // e.g., "My Layer", "Conv2D Block"
+
+  // Your custom fields
+  myCustomField: string;
+  numericValue: number;
+  // ... other fields
+}
+```
+
+#### Usage in API Calls
+
+When calling plugin execution APIs, you MUST include both core fields:
+
+```javascript
+// ✅ CORRECT - Includes required core fields
+{
+  "variableName": "dropout_layer",
+  "labelName": "Dropout Layer",
+  "p": 0.2,
+  "inplace": false
 }
 
-// Your plugin settings extend this:
-interface MyPluginSettings extends CorePluginSettings {
-  myCustomField: string;
-  // ... other fields
+// ❌ INCORRECT - Missing labelName will cause validation error
+{
+  "variableName": "dropout_layer",
+  "p": 0.2
+}
+```
+
+#### Validation
+
+The SDK automatically validates that core settings are present:
+
+```typescript
+// This validation happens automatically in getTranslationCode
+const validation = this.validateSettings(settings);
+if (!validation.isValid) {
+  // Will throw error if variableName or labelName missing
+  throw new Error("Settings validation failed: labelName is required");
 }
 ```
 

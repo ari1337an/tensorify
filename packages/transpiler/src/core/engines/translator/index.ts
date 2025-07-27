@@ -1,6 +1,6 @@
 import createNodeInstance from "../../../instances/index";
 import { Model } from "../../../core/types/global";
-import { LayerSettings } from "@tensorify.io/sdk";
+// import { LayerSettings } from "@tensorify.io/sdk";
 
 export default function translateJsonToBython(json: Model): string {
   const layerCodes: string[] = [];
@@ -14,13 +14,13 @@ export default function translateJsonToBython(json: Model): string {
       const nodeInstance = createNodeInstance(layer.type);
       if (!layer.child) {
         const code = nodeInstance.getTranslationCode(
-          layer.settings as LayerSettings,
+          layer.settings as any,
           layer.child ?? null
         );
         layerCodes.push(code ?? "");
       } else {
         const code = nodeInstance.getTranslationCode(
-          layer.settings as LayerSettings,
+          layer.settings as any,
           layer.child ?? null
         );
         layerCodes.push(code ?? "");

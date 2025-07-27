@@ -1,161 +1,190 @@
 import {
   TensorifyPlugin,
-  type IPluginDefinition,
-  type PluginSettings,
-  type PluginCodeGenerationContext,
+  IPluginDefinition,
+  PluginSettings,
+  PluginCodeGenerationContext,
+  NodeType,
+  PluginCapability,
+  HandleViewType,
+  HandlePosition,
+  EdgeType,
+  NodeViewContainerType,
+  IconType,
+  SettingsUIType,
+  SettingsDataType,
 } from "@tensorify.io/sdk";
 
 /**
- * {{projectName}} - A PyTorch Linear/Dense layer implementation
- * {{description}}
+ * Linear Layer Plugin
+ * 
+ * This plugin demonstrates the complete structure for a PyTorch linear layer.
+ * Make sure you have the latest SDK linked: npm link @tensorify.io/sdk
  */
 export default class LinearLayerPlugin extends TensorifyPlugin {
   constructor() {
-    super({
-      // Basic plugin metadata
-      id: "{{packageName}}",
-      name: "{{projectName}}",
-      description: "{{description}}",
+    const definition: IPluginDefinition = {
+      // Core Metadata
+      id: "pytorch-linear-layer",
+      name: "Linear Layer",
+      description: "PyTorch linear/fully-connected layer",
       version: "1.0.0",
-      category: "model_layer", // Linear layer belongs to model_layer category
+      nodeType: NodeType.{{pluginType}},
 
-      // Visual configuration
+      // Visual Configuration (comprehensive and required)
       visual: {
-        containerType: "default",
+        containerType: NodeViewContainerType.DEFAULT,
         size: {
-          width: 250,
-          height: 120,
+          width: 240,
+          height: 140,
         },
-        extraPadding: false,
-
-        title: "Linear Layer",
-        titleDescription: "PyTorch Linear/Dense Layer",
-
-        // Icon for linear layer
-        primaryIcon: {
-          type: "lucide",
-          value: "Layers",
-          position: "center",
+        padding: {
+          inner: 16,
+          outer: 8,
+          extraPadding: false,
         },
-        secondaryIcons: [],
-
-        // Dynamic label showing layer dimensions
-        dynamicLabelTemplate: "Linear({inFeatures} → {outFeatures})",
+        styling: {
+          borderRadius: 8,
+          borderWidth: 2,
+          shadowLevel: 1,
+          theme: "auto",
+        },
+        icons: {
+          primary: {
+            type: IconType.LUCIDE,
+            value: "layers",
+          },
+          secondary: [],
+          showIconBackground: true,
+          iconSize: "medium",
+        },
+        labels: {
+          title: "Linear Layer",
+          dynamicLabelTemplate: "{inFeatures} → {outFeatures}",
+          showLabels: true,
+          labelPosition: "top",
+        },
       },
 
-      // Input/Output handles
+      // Handle Configuration
       inputHandles: [
         {
           id: "input",
-          position: "left",
-          viewType: "default",
+          position: HandlePosition.LEFT,
+          viewType: HandleViewType.DEFAULT,
           required: true,
-          label: "Input Tensor",
-        },
-      ],
-      outputHandles: [
-        {
-          id: "output",
-          position: "right",
-          viewType: "default",
-          label: "Output Tensor",
+          label: "Input",
+          edgeType: EdgeType.DEFAULT,
+          dataType: "any",
+          description: "Input tensor",
         },
       ],
 
-      // Settings fields for the frontend UI
+      outputHandles: [
+        {
+          id: "output",
+          position: HandlePosition.RIGHT,
+          viewType: HandleViewType.DEFAULT,
+          label: "Output",
+          edgeType: EdgeType.DEFAULT,
+          dataType: "any",
+          description: "Output tensor",
+        },
+      ],
+
+      // Settings Configuration (UI components automatically generated)
       settingsFields: [
         {
           key: "inFeatures",
           label: "Input Features",
-          type: "input-number",
-          dataType: "number",
-          required: true,
+          type: SettingsUIType.INPUT_NUMBER,
+          dataType: SettingsDataType.NUMBER,
           defaultValue: 784,
+          required: true,
           description: "Number of input features",
+          validation: {
+            min: 1,
+            max: 100000,
+          },
         },
         {
           key: "outFeatures",
           label: "Output Features",
-          type: "input-number",
-          dataType: "number",
+          type: SettingsUIType.INPUT_NUMBER,
+          dataType: SettingsDataType.NUMBER,
+          defaultValue: 10,
           required: true,
-          defaultValue: 128,
           description: "Number of output features",
+          validation: {
+            min: 1,
+            max: 100000,
+          },
         },
         {
           key: "bias",
-          label: "Include Bias",
-          type: "toggle",
-          dataType: "boolean",
+          label: "Use Bias",
+          type: SettingsUIType.TOGGLE,
+          dataType: SettingsDataType.BOOLEAN,
           defaultValue: true,
+          required: false,
           description:
-            "Whether to include bias term in the linear transformation",
+            "Whether to include bias parameters in the linear transformation",
         },
       ],
-    });
+
+      // Plugin Metadata
+      capabilities: [PluginCapability.CODE_GENERATION],
+      requirements: {
+        minSdkVersion: "1.0.0",
+        dependencies: ["torch"],
+        pythonPackages: ["torch"],
+      },
+    };
+
+    super(definition);
   }
 
-  /**
-   * Generate PyTorch Linear layer code
-   */
   public getTranslationCode(
     settings: PluginSettings,
     children?: any,
     context?: PluginCodeGenerationContext
   ): string {
-    // Validate settings first
-    this.validateSettings(settings);
+    // Validate settings (returns PluginValidationResult with isValid boolean)
+    const validation = this.validateSettings(settings);
+    if (!validation.isValid) {
+      throw new Error(
+        `Settings validation failed: ${validation.errors.map((e) => e.message).join(", ")}`
+      );
+    }
 
-    // Get setting values with fallbacks
+    // Extract settings values with defaults from CorePluginSettings
+    const variableName = settings.variableName || "linear_layer";
     const inFeatures = settings.inFeatures || 784;
-    const outFeatures = settings.outFeatures || 128;
+    const outFeatures = settings.outFeatures || 10;
     const bias = settings.bias !== undefined ? settings.bias : true;
 
-    // Generate the PyTorch Linear layer code
-    const layerCode = `nn.Linear(${inFeatures}, ${outFeatures}, bias=${bias})`;
-
-    return `
-# {{projectName}} Linear Layer: ${inFeatures} -> ${outFeatures} features
-# Generated from plugin: ${this.getName()} v${this.getVersion()}
-# PyTorch Linear/Dense layer implementation
-
-# Import required modules
-import torch
-import torch.nn as nn
-
-# Create the linear layer
-{{variableProjectName}}_linear = ${layerCode}
-
-# Layer info
-print(f"Created Linear layer: {inFeatures} -> {outFeatures} features, bias={bias}")
-`.trim();
-  }
-
-  /**
-   * Custom validation for linear layer parameters
-   */
-  public validateSettings(settings: PluginSettings): boolean {
-    // Call parent validation first
-    super.validateSettings(settings);
-
-    // Additional validation for linear layer
-    const inFeatures = settings.inFeatures;
-    const outFeatures = settings.outFeatures;
-
-    if (
-      inFeatures !== undefined &&
-      (typeof inFeatures !== "number" || inFeatures <= 0)
-    ) {
-      throw new Error("inFeatures must be a positive number");
+    // Additional validation for business logic
+    if (typeof inFeatures !== "number" || inFeatures <= 0) {
+      throw new Error("Input features must be a positive number");
     }
 
-    if (
-      outFeatures !== undefined &&
-      (typeof outFeatures !== "number" || outFeatures <= 0)
-    ) {
-      throw new Error("outFeatures must be a positive number");
+    if (typeof outFeatures !== "number" || outFeatures <= 0) {
+      throw new Error("Output features must be a positive number");
     }
 
-    return true;
+    // Safe context handling - getInput method available in TensorifyPlugin
+    const inputData = context ? this.getInput(context, 0) : null;
+
+    // Generate PyTorch Linear layer code
+    return `# Linear Layer: ${inFeatures} → ${outFeatures}
+${variableName} = torch.nn.Linear(
+    in_features=${inFeatures},
+    out_features=${outFeatures},
+    bias=${bias ? "True" : "False"}
+)
+
+# Initialize weights (optional)
+# torch.nn.init.xavier_uniform_(${variableName}.weight)
+# if ${variableName}.bias is not None:
+#     torch.nn.init.zeros_(${variableName}.bias)`;
   }
 }

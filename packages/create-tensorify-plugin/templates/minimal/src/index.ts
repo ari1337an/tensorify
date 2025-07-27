@@ -1,143 +1,169 @@
 import {
   TensorifyPlugin,
-  type IPluginDefinition,
-  type PluginSettings,
-  type PluginCodeGenerationContext,
+  IPluginDefinition,
+  PluginSettings,
+  PluginCodeGenerationContext,
+  NodeType,
+  PluginCapability,
+  HandleViewType,
+  HandlePosition,
+  EdgeType,
+  NodeViewContainerType,
+  IconType,
+  SettingsUIType,
+  SettingsDataType,
 } from "@tensorify.io/sdk";
 
 /**
- * {{projectName}} - A minimal Tensorify plugin for the frontend system
- * {{description}}
+ * Minimal Plugin
+ * 
+ * This plugin demonstrates the basic structure for a Tensorify plugin.
+ * Make sure you have the latest SDK linked: npm link @tensorify.io/sdk
  */
 export default class MinimalPlugin extends TensorifyPlugin {
   constructor() {
-    super({
-      // Basic plugin metadata
-      id: "{{packageName}}",
-      name: "{{projectName}}",
-      description: "{{description}}",
+    const definition: IPluginDefinition = {
+      // Core Metadata
+      id: "minimal-plugin",
+      name: "Minimal Plugin",
+      description: "A minimal example plugin for Tensorify",
       version: "1.0.0",
-      category: "miscellaneous", // Change this to your preferred category
+      nodeType: NodeType.{{pluginType}},
 
-      // Visual configuration
+      // Visual Configuration (comprehensive and required)
       visual: {
-        containerType: "default",
+        containerType: NodeViewContainerType.DEFAULT,
         size: {
           width: 200,
-          height: 100,
+          height: 120,
         },
-        extraPadding: false,
-
-        // Optional: Configure title and description
-        title: "{{projectName}}",
-        titleDescription: "{{description}}",
-
-        // Optional: Add icons (uncomment and customize)
-        // primaryIcon: {
-        //   type: "lucide",
-        //   value: "Package", // Lucide icon name
-        //   position: "center"
-        // },
-        secondaryIcons: [],
-
-        // Optional: Dynamic label template
-        // dynamicLabelTemplate: "{{projectName}}: {exampleSetting}"
+        padding: {
+          inner: 16,
+          outer: 8,
+          extraPadding: false,
+        },
+        styling: {
+          borderRadius: 8,
+          borderWidth: 2,
+          shadowLevel: 1,
+          theme: "auto",
+        },
+        icons: {
+          primary: {
+            type: IconType.LUCIDE,
+            value: "box",
+          },
+          secondary: [],
+          showIconBackground: true,
+          iconSize: "medium",
+        },
+        labels: {
+          title: "Minimal Plugin",
+          dynamicLabelTemplate: "Message: {message}",
+          showLabels: true,
+          labelPosition: "top",
+        },
       },
 
-      // Input/Output handles
+      // Handle Configuration
       inputHandles: [
         {
           id: "input",
-          position: "left",
-          viewType: "default",
-          required: true,
+          position: HandlePosition.LEFT,
+          viewType: HandleViewType.DEFAULT,
+          required: false,
           label: "Input",
+          edgeType: EdgeType.DEFAULT,
+          dataType: "any",
+          description: "Optional input data",
         },
       ],
+
       outputHandles: [
         {
           id: "output",
-          position: "right",
-          viewType: "default",
+          position: HandlePosition.RIGHT,
+          viewType: HandleViewType.DEFAULT,
           label: "Output",
+          edgeType: EdgeType.DEFAULT,
+          dataType: "any",
+          description: "Processed output",
         },
       ],
 
-      // Settings fields for the frontend UI
+      // Settings Configuration (UI components automatically generated)
       settingsFields: [
         {
-          key: "exampleSetting",
-          label: "Example Setting",
-          type: "input-text",
-          dataType: "string",
+          key: "message",
+          label: "Message",
+          type: SettingsUIType.INPUT_TEXT,
+          dataType: SettingsDataType.STRING,
+          defaultValue: "Hello World!",
           required: false,
-          defaultValue: "default-value",
-          description: "An example setting to demonstrate the plugin system",
+          description: "Message to display in generated code",
+          validation: {
+            minLength: 1,
+            maxLength: 100,
+          },
         },
-        // Add more settings fields here:
-        // {
-        //   key: "numericValue",
-        //   label: "Numeric Value",
-        //   type: "input-number",
-        //   dataType: "number",
-        //   required: true,
-        //   defaultValue: 42,
-        //   description: "A numeric input example"
-        // },
-        // {
-        //   key: "enableFeature",
-        //   label: "Enable Feature",
-        //   type: "toggle",
-        //   dataType: "boolean",
-        //   defaultValue: false,
-        //   description: "Toggle to enable/disable a feature"
-        // },
-        // {
-        //   key: "selectionOption",
-        //   label: "Selection Option",
-        //   type: "dropdown",
-        //   dataType: "string",
-        //   required: true,
-        //   defaultValue: "option1",
-        //   options: [
-        //     { label: "Option 1", value: "option1" },
-        //     { label: "Option 2", value: "option2" },
-        //     { label: "Option 3", value: "option3" }
-        //   ],
-        //   description: "Select one option from the dropdown"
-        // }
+        {
+          key: "showTimestamp",
+          label: "Show Timestamp",
+          type: SettingsUIType.TOGGLE,
+          dataType: SettingsDataType.BOOLEAN,
+          defaultValue: false,
+          required: false,
+          description: "Whether to include timestamp in output",
+        },
       ],
-    });
+
+      // Plugin Metadata
+      capabilities: [PluginCapability.CODE_GENERATION],
+      requirements: {
+        minSdkVersion: "1.0.0",
+        dependencies: [],
+      },
+    };
+
+    super(definition);
   }
 
-  /**
-   * Generate code for this plugin
-   * This is the main method that must be implemented by all plugins
-   */
   public getTranslationCode(
     settings: PluginSettings,
     children?: any,
     context?: PluginCodeGenerationContext
   ): string {
-    // Validate settings first
-    this.validateSettings(settings);
+    // Validate settings (returns PluginValidationResult with isValid boolean)
+    const validation = this.validateSettings(settings);
+    if (!validation.isValid) {
+      throw new Error(
+        `Settings validation failed: ${validation.errors.map((e) => e.message).join(", ")}`
+      );
+    }
 
-    // Get setting values with fallbacks
-    const exampleSetting =
-      settings.exampleSetting ||
-      this.getDefinition().settingsFields[0]?.defaultValue ||
-      "default-value";
+    // Extract settings values with defaults from CorePluginSettings
+    const variableName = settings.variableName || "minimal_plugin";
+    const message = settings.message || "Hello World!";
+    const showTimestamp = settings.showTimestamp || false;
 
-    // TODO: Implement your code generation logic here
-    // This is a placeholder implementation
-    return `
-# {{projectName}}: ${exampleSetting}
-# Generated from plugin: ${this.getName()} v${this.getVersion()}
-# Category: ${this.getCategory()}
+    // Safe context handling - getInput method available in TensorifyPlugin
+    const hasInput = context && context.inputData && Object.keys(context.inputData).length > 0;
 
-# TODO: Replace this with your actual code generation
-{{variableProjectName}}_result = "Hello from {{projectName}} plugin!"
-print(f"{{projectName}} executed with setting: {JSON.stringify(exampleSetting)}")
-`.trim();
+    // Generate code
+    let code = `# Minimal Plugin\n`;
+
+    if (hasInput) {
+      code += `input_data = ${JSON.stringify(context.inputData)}\n`;
+    }
+
+    code += `${variableName} = "${message}"`;
+
+    if (showTimestamp) {
+      code += `\n# Timestamp: ${new Date().toISOString()}`;
+    }
+
+    code += `\nprint(${variableName})`;
+
+    return code;
   }
 }

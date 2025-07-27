@@ -62,6 +62,54 @@ const TEMPLATES = {
   },
 };
 
+// NodeType options from SDK
+const NODE_TYPES = {
+  CUSTOM: { value: "CUSTOM", name: "Custom - General purpose plugin" },
+  TRAINER: { value: "TRAINER", name: "Trainer - Model training component" },
+  EVALUATOR: {
+    value: "EVALUATOR",
+    name: "Evaluator - Model evaluation component",
+  },
+  MODEL: { value: "MODEL", name: "Model - Complete model architecture" },
+  MODEL_LAYER: {
+    value: "MODEL_LAYER",
+    name: "Model Layer - Neural network layer",
+  },
+  DATALOADER: {
+    value: "DATALOADER",
+    name: "Data Loader - Data loading component",
+  },
+  PREPROCESSOR: {
+    value: "PREPROCESSOR",
+    name: "Preprocessor - Data preprocessing",
+  },
+  POSTPROCESSOR: {
+    value: "POSTPROCESSOR",
+    name: "Postprocessor - Data postprocessing",
+  },
+  AUGMENTATION_STACK: {
+    value: "AUGMENTATION_STACK",
+    name: "Augmentation Stack - Data augmentation",
+  },
+  OPTIMIZER: { value: "OPTIMIZER", name: "Optimizer - Training optimizer" },
+  LOSS_FUNCTION: {
+    value: "LOSS_FUNCTION",
+    name: "Loss Function - Loss computation",
+  },
+  METRIC: { value: "METRIC", name: "Metric - Performance metric" },
+  SCHEDULER: {
+    value: "SCHEDULER",
+    name: "Scheduler - Learning rate scheduler",
+  },
+  REGULARIZER: {
+    value: "REGULARIZER",
+    name: "Regularizer - Regularization technique",
+  },
+  FUNCTION: { value: "FUNCTION", name: "Function - Utility function" },
+  PIPELINE: { value: "PIPELINE", name: "Pipeline - Workflow pipeline" },
+  REPORT: { value: "REPORT", name: "Report - Analysis report generator" },
+};
+
 const availableTemplates = Object.keys(TEMPLATES);
 const defaultTemplate = Object.keys(TEMPLATES).find(
   (key) => TEMPLATES[key].default
@@ -74,7 +122,25 @@ console.log(
 // Function to detect SDK version
 function detectSDKVersion() {
   try {
-    // Try to get published version
+    // First, try to get the local installed version
+    try {
+      const result = execSync("npm list @tensorify.io/sdk --depth=0 --json", {
+        encoding: "utf8",
+        stdio: "pipe",
+      });
+      const packageInfo = JSON.parse(result);
+      const localVersion =
+        packageInfo.dependencies?.["@tensorify.io/sdk"]?.version;
+
+      if (localVersion) {
+        console.log(chalk.blue(`🔍 Found local SDK version: ${localVersion}`));
+        return localVersion;
+      }
+    } catch (localError) {
+      console.log(chalk.yellow("⚠️  Could not find local SDK version"));
+    }
+
+    // Fallback to published version
     try {
       const result = execSync("npm view @tensorify.io/sdk version", {
         encoding: "utf8",
@@ -84,12 +150,11 @@ function detectSDKVersion() {
       console.log(
         chalk.blue(`🔍 Found published SDK version: ${latestVersion}`)
       );
-      return `${latestVersion}`;
+      return latestVersion;
     } catch (error) {
       console.log(
         chalk.yellow("⚠️  Could not fetch latest SDK version from npm")
       );
-      // Fallback to a reasonable default
       return "0.0.4";
     }
   } catch (error) {
@@ -154,6 +219,10 @@ program
   .option(
     "-t, --template <template>",
     `template to use (${availableTemplates.join(", ")})`
+  )
+  .option(
+    "-p, --plugin-type <type>",
+    `plugin type/category (${Object.keys(NODE_TYPES).join(", ")})`
   )
   .option("-y, --yes", "accept all defaults and run non-interactively")
   .option("--skip-install", "skip installing dependencies")
@@ -325,6 +394,22 @@ async function createPlugin(projectName, options) {
       });
     }
 
+    // Ask for plugin type if not provided via CLI and not in yes mode
+    if (!options.pluginType && !options.yes) {
+      const nodeTypeChoices = Object.values(NODE_TYPES);
+
+      questions.push({
+        type: "list",
+        name: "pluginType",
+        message: "Choose the plugin type:",
+        choices: nodeTypeChoices.map((choice) => ({
+          name: `  ${choice.name}`,
+          value: choice.value,
+        })),
+        default: "CUSTOM",
+      });
+    }
+
     // Get additional information from prompts if needed
     let answers = {};
     if (questions.length > 0 && !options.yes) {
@@ -347,6 +432,7 @@ async function createPlugin(projectName, options) {
       author: options.author || answers.author || "Tensorify Developer",
       sdkVersion: sdkVersion,
       template: options.template || answers.template || defaultTemplate,
+      pluginType: options.pluginType || answers.pluginType || "CUSTOM",
     };
 
     if (options.yes) {
@@ -478,6 +564,7 @@ async function copyTemplate(targetPath, variables) {
         .replace(/{{description}}/g, variables.description)
         .replace(/{{author}}/g, variables.author)
         .replace(/{{sdkVersion}}/g, variables.sdkVersion)
+        .replace(/{{pluginType}}/g, variables.pluginType)
         .replace(/{{year}}/g, new Date().getFullYear().toString());
 
       await fs.writeFile(filePath, content);
