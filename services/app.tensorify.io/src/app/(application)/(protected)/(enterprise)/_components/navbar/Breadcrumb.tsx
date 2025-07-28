@@ -14,6 +14,7 @@ import { ChevronRight } from "lucide-react";
 import useStore from "@/app/_store/store";
 import useWorkflowStore, {
   getRouteLevels,
+  WorkflowNode,
 } from "../../../(canvas)/_workflow/store/workflowStore";
 
 // Define the segment type with optional ellipsis
@@ -29,7 +30,7 @@ const getBreadcrumbSegments = (
   projectName?: string,
   workflowName?: string,
   currentRoute?: string,
-  nodes: any[] = []
+  nodes: WorkflowNode[] = []
 ): { name: string; path: string; type: "project" | "workflow" | "node" }[] => {
   const segments: {
     name: string;

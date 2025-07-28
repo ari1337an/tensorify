@@ -68,7 +68,6 @@ export const action = {
         let formData: FormData;
         try {
           formData = await request.formData();
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (_) {
           throw new TsRestResponseError(contract, {
             status: 400,

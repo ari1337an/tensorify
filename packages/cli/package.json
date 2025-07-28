@@ -46,6 +46,7 @@
     "tus-js-client": "^4.3.1"
   },
   "devDependencies": {
+    "@repo/eslint-config": "*",
     "@types/inquirer": "^9.0.7",
     "@types/jest": "^29.5.8",
     "@types/node": "^20.10.0",

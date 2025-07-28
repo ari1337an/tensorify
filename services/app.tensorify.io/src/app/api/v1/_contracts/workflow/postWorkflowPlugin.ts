@@ -142,7 +142,8 @@ export const action = {
           if (searchResponse.ok) {
             const searchData = await searchResponse.json();
             pluginMetadata = searchData.plugins?.find(
-              (p: any) => p.name === pluginName && p.authorName === authorName
+              (p: { name: string; authorName: string }) =>
+                p.name === pluginName && p.authorName === authorName
             );
           }
 

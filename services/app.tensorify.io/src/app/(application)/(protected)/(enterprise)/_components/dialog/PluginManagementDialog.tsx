@@ -434,7 +434,7 @@ export function PluginManagementDialog({
                   maxLength={500}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Add a description to help identify this plugin's purpose (max
+                  Add a description to help identify this plugin&apos;s purpose (max
                   500 characters)
                 </p>
               </div>

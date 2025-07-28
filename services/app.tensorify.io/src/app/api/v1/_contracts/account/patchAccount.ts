@@ -169,9 +169,8 @@ export const action = {
             sessionsToRevoke.map(async (session) => {
               try {
                 await clerkClient.sessions.revokeSession(session.id);
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
-              } catch (error) {
-                // console.error(`Failed to revoke session ${session.id}:`, error);
+              } catch (_error) {
+                // console.error(`Failed to revoke session ${session.id}:`, _error);
                 // Continue with other sessions even if one fails
               }
             })

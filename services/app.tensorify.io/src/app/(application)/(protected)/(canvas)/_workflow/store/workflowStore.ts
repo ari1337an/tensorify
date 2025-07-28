@@ -16,7 +16,7 @@ import {
 // Custom node data interface
 export interface WorkflowNodeData {
   label: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // Extended node type with workflow-specific properties

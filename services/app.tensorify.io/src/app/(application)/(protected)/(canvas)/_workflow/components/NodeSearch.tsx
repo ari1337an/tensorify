@@ -194,6 +194,8 @@ export default function NodeSearch() {
                   );
                   description = matchingPlugin?.description || null;
                   pluginType = matchingPlugin?.pluginType || "miscellaneous";
+
+                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 } catch (error) {
                   // Silently fail, use fallback description and pluginType
                 }
@@ -318,6 +320,7 @@ export default function NodeSearch() {
 
     const debounceTimer = setTimeout(searchExternalPlugins, 300);
     return () => clearTimeout(debounceTimer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm]);
 
   const handleParentClick = (item: NodeItem) => {

@@ -73,7 +73,6 @@ import version from '${RELATIVE_CONTRACTS_PATH}/version.json';
 import { auth } from '@clerk/nextjs/server';
 
 // Initialize client without baseUrl (or with a default)
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const client = initClient(contract, {
   baseUrl: '', // Will override in each server action
   baseHeaders: {},

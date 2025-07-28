@@ -8,7 +8,6 @@ import {
   generateRequestBodyFromClerkDataForOnboardingSetup,
 } from "../test-utils";
 import db from "@/server/database/db";
-import { z } from "zod";
 
 let server: ReturnType<typeof createServer>;
 

@@ -8,6 +8,7 @@
     "packages/shared",
     "packages/transpiler",
     "packages/create-tensorify-plugin",
+    "packages/eslint-config",
     "services/api",
     "services/plugins.tensorify.io",
     "services/app.tensorify.io",
