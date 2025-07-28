@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack --port 3005",
-    "prebuild": "npx prisma generate && npx prisma db push",
+    "prebuild": "npx prisma generate",
     "build": "next build",
     "start": "next start --port 3005",
     "lint": "next lint",

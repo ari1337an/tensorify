@@ -5,11 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run watch:tsrest\" \"npm run watch:tsrest:client\" \"npm run generate:tsrest; npm run generate:tsrest:client; next dev\"",
-    "prebuild": "npm run generate:tsrest && npm run generate:tsrest:client && npx prisma generate && npx prisma db push",
+    "prebuild": "npm run generate:tsrest && npm run generate:tsrest:client && npx prisma generate",
     "build": "npm run generate:tsrest && npm run generate:tsrest:client && next build",
     "start": "next start",
     "lint": "next lint",
-    "prisma": "npx prisma generate && npx prisma db push && npm run prisma:seed",
+    "prisma": "npx prisma generate && npm run prisma:seed",
     "seed": "node --experimental-specifier-resolution=node src/server/database/prisma/seed.js",
     "prisma:migrate": "npx prisma migrate dev",
     "prisma:generate": "npx prisma generate",
