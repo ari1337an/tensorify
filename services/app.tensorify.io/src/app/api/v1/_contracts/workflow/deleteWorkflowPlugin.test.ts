@@ -65,6 +65,12 @@ describe("DELETE /workflow/:workflowId/plugin/:pluginId", () => {
         slug: "@johndoe/conv2d:5.0.2",
         description: "A 2D convolution plugin for neural networks",
         workflowId: workflow.id,
+        pluginType: "miscellaneous",
+        manifest: {
+          name: "Conv2D",
+          version: "5.0.2",
+          description: "A 2D convolution plugin for neural networks",
+        },
       },
     });
 
