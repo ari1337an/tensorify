@@ -198,6 +198,7 @@ function WorkflowCanvas() {
           onMoveEnd={onMoveEnd}
           fitView={false}
           panOnScroll={true}
+          zoomOnDoubleClick={false}
           selectionOnDrag={true}
           selectionMode={SelectionMode.Partial}
           proOptions={{ hideAttribution: true }}
