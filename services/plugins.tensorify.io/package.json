@@ -81,7 +81,7 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
-    "@repo/eslint-config": "*",
+    "@repo/eslint-config": "workspace:*",
     "@tailwindcss/typography": "^0.5.16",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -97,5 +97,5 @@
   "prisma": {
     "schema": "src/server/database/prisma/schema.prisma"
   },
-  "packageManager": "npm@10.8.1"
+  "packageManager": "pnpm@latest"
 }

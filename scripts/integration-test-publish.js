@@ -136,7 +136,7 @@ class IntegrationTestRunner {
     const cliBuiltPath = path.join(cliPath, "lib/bin/tensorify.js");
     if (!fs.existsSync(cliBuiltPath)) {
       this.log("Building CLI...");
-      execSync("npm run build", { cwd: cliPath, stdio: "pipe" });
+      execSync("pnpm run build", { cwd: cliPath, stdio: "pipe" });
       this.log("CLI built successfully");
     }
 
@@ -198,10 +198,9 @@ class IntegrationTestRunner {
         .join(" ");
 
       execSync(
-        `node ${path.join(
-          createPluginPath,
-          "index.js"
-        )} ${this.testPluginName} --yes ${cliOptions} --dev`,
+        `node ${path.join(createPluginPath, "index.js")} ${
+          this.testPluginName
+        } --yes ${cliOptions} --dev`,
         { cwd: this.tempDir, stdio: "pipe" }
       );
       this.log("Plugin created", { pluginDir: this.tempPluginDir });

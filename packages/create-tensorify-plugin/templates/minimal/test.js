@@ -76,5 +76,5 @@ console.log("\nNext steps:");
 console.log("1. Implement your plugin logic in src/index.ts");
 console.log("2. Update the settings interface for your specific use case");
 console.log("3. Add proper validation and code generation logic");
-console.log("4. Build and test: npm run build && npm test");
+console.log("4. Build and test: pnpm run build && npm test");
 console.log("5. Publish your plugin to the Tensorify registry");

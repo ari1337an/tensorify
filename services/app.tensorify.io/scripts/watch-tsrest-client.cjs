@@ -39,7 +39,7 @@ function runGenerateClient() {
   clearTimeout(timeout);
   timeout = setTimeout(() => {
     console.log("🛠️ Regenerating ts-rest client...");
-    exec("npm run generate:tsrest:client", (err, stdout, stderr) => {
+    exec("pnpm run generate:tsrest:client", (err, stdout, stderr) => {
       if (err) {
         console.error("❌ Error during client generation:", err);
         return;

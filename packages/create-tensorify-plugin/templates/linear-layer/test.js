@@ -72,5 +72,5 @@ console.log(
 console.log("\nNext steps:");
 console.log("1. Customize the linear layer implementation in src/index.ts");
 console.log("2. Add more features or validation as needed");
-console.log("3. Build and test: npm run build && npm test");
+console.log("3. Build and test: pnpm run build && npm test");
 console.log("4. Publish your plugin to the Tensorify registry");

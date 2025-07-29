@@ -10,13 +10,14 @@
     "start": "ts-node --require tsconfig-paths/register src/usage.ts"
   },
   "devDependencies": {
-    "@repo/eslint-config": "*",
+    "@repo/eslint-config": "workspace:*",
+    "@types/node": "^20.10.0",
     "typescript": "^5.0.0"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "commander": "^14.0.0",
-    "@tensorify.io/sdk": "*"
+    "@tensorify.io/sdk": "workspace:*"
   }
 }

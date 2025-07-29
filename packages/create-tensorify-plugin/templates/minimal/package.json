@@ -2,13 +2,14 @@
   "name": "{{packageName}}",
   "version": "1.0.0",
   "description": "{{description}}",
-  "main": "dist/index.js",
+  "main": "src/index.ts",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "npx tsc",
+    "build": "pnpm run clean && tsc",
+    "clean": "rm -rf dist",
     "dev": "npx tsc --watch",
     "test": "node test.js",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "pnpm run build"
   },
   "keywords": [
     "tensorify",
@@ -17,8 +18,8 @@
     "machine-learning",
     "neural-network"
   ],
-  "author": "{{author}}",
-  "license": "MIT",
+  "author": "",
+  "license": "ISC",
   "dependencies": {
     "@tensorify.io/sdk": "{{sdkVersion}}"
   },

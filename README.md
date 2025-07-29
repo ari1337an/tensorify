@@ -252,7 +252,7 @@ The CLI and services support different environments:
 
 ```bash
 # Development mode (automatic)
-NODE_ENV=development npm run cli -- login
+NODE_ENV=development pnpm run cli -- login
 
 # Development mode (explicit flag)
 npm run cli -- login --dev
@@ -390,9 +390,9 @@ npm publish
 5. **Make your changes and test:**
 
    ```bash
-   npm run build
-   npm run test
-   npm run cli -- --help  # Test CLI changes
+   pnpm run build
+   pnpm run test
+   pnpm run cli -- --help  # Test CLI changes
    ```
 
 6. **Commit and push:**

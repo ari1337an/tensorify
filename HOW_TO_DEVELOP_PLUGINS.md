@@ -321,7 +321,7 @@ cd test-plugins
 npx create-tensorify-plugin my-plugin --plugin-type MODEL_LAYER
 
 # 3. Build immediately (no errors!)
-cd my-plugin && npm run build
+cd my-plugin && pnpm run build
 
 # 4. Customize implementation
 # (edit src/index.ts with clear examples)

@@ -520,7 +520,7 @@ async function createPlugin(projectName, options) {
     if (options.skipInstall) {
       console.log(chalk.cyan("  npm install"));
     }
-    console.log(chalk.cyan("  npm run build"));
+    console.log(chalk.cyan("  pnpm run build"));
     console.log(chalk.cyan("  npm test"));
     console.log("\nHappy tensoring! 🦾");
   } catch (error) {

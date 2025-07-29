@@ -50,7 +50,7 @@ echo -e "${YELLOW}🔍 Checking required services...${NC}"
 # Check backend
 if ! curl -s http://localhost:3001/health > /dev/null 2>&1; then
     echo -e "${RED}❌ Backend API (localhost:3001) is not running${NC}"
-    echo -e "${YELLOW}   Start with: cd services/api && npm run dev${NC}"
+    echo -e "${YELLOW}   Start with: cd services/api && pnpm run dev${NC}"
     exit 1
 fi
 
@@ -59,7 +59,7 @@ echo -e "${GREEN}✅ Backend API (localhost:3001) is running${NC}"
 # Check frontend
 if ! curl -s http://localhost:3004/api/health > /dev/null 2>&1; then
     echo -e "${RED}❌ Frontend (localhost:3004) is not running${NC}"
-    echo -e "${YELLOW}   Start with: cd services/plugins.tensorify.io && npm run dev${NC}"
+    echo -e "${YELLOW}   Start with: cd services/plugins.tensorify.io && pnpm run dev${NC}"
     exit 1
 fi
 

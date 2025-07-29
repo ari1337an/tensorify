@@ -159,7 +159,9 @@ export default class LinearLayerPlugin extends TensorifyPlugin {
     const validation = this.validateSettings(settings);
     if (!validation.isValid) {
       throw new Error(
-        `Settings validation failed: ${validation.errors.map((e) => e.message).join(", ")}`
+        `Settings validation failed: ${validation.errors
+          .map((e) => e.message)
+          .join(", ")}`
       );
     }
 
@@ -215,14 +217,22 @@ interface IPluginDefinition {
 1. **Visual Configuration is Mandatory**: Unlike optional documentation suggests, the `visual` field is required and heavily used by the frontend to render nodes.
 
 2. **Handle System**: The plugin uses an 8-point positioning system for handles:
+
    ```typescript
    enum HandlePosition {
-     TOP, TOP_RIGHT, RIGHT, BOTTOM_RIGHT,
-     BOTTOM, BOTTOM_LEFT, LEFT, TOP_LEFT
+     TOP,
+     TOP_RIGHT,
+     RIGHT,
+     BOTTOM_RIGHT,
+     BOTTOM,
+     BOTTOM_LEFT,
+     LEFT,
+     TOP_LEFT,
    }
    ```
 
-3. **Settings Field Types Map to UI Components**: 
+3. **Settings Field Types Map to UI Components**:
+
    ```typescript
    SettingsUIType.SLIDER → Frontend renders slider component
    SettingsUIType.INPUT_NUMBER → Frontend renders number input
@@ -231,11 +241,13 @@ interface IPluginDefinition {
    ```
 
 4. **Dynamic Labels Use Template Strings**: The `dynamicLabelTemplate` in visual config supports variable substitution:
+
    ```typescript
-   dynamicLabelTemplate: "Dropout (p={p})" // {p} gets replaced with settings.p value
+   dynamicLabelTemplate: "Dropout (p={p})"; // {p} gets replaced with settings.p value
    ```
 
 5. **Context Parameter Can Be Undefined**: In `getTranslationCode`, the context parameter might be undefined, especially during testing:
+
    ```typescript
    // Always check context before using
    const inputData = context ? this.getInput(context, 0) : null;
@@ -489,7 +501,7 @@ enum SettingsUIType {
 1. **Build your plugin:**
 
    ```bash
-   npm run build
+   pnpm run build
    ```
 
 2. **Generate manifest:**

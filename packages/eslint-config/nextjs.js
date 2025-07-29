@@ -1,5 +1,6 @@
 const { FlatCompat } = require("@eslint/eslintrc");
 const js = require("@eslint/js");
+const nextPlugin = require("@next/eslint-plugin-next");
 
 const compat = new FlatCompat({
   baseDirectory: __dirname,
@@ -21,9 +22,13 @@ const nextJsConfig = [
       "**/coverage/**",
     ],
   },
-  ...compat.config({
-    extends: ["next/core-web-vitals", "next/typescript"],
+  {
+    plugins: {
+      "@next/next": nextPlugin,
+    },
     rules: {
+      ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs["core-web-vitals"].rules,
       "react/no-unescaped-entities": "error",
       "react-hooks/exhaustive-deps": "error",
       "@next/next/no-html-link-for-pages": "off",
@@ -40,7 +45,7 @@ const nextJsConfig = [
       "prefer-const": "error",
       "no-console": "off",
     },
-  }),
+  },
   // Disable reporting of unused eslint-disable directives globally
   {
     linterOptions: {

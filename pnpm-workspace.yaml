@@ -1,0 +1,26 @@
+packages:
+  - packages/**
+  - '!packages/create-tensorify-plugin/templates/**'
+  - services/**
+  - '!**/.next/**'
+  - scripts
+
+ignoredBuiltDependencies:
+  - '@clerk/shared'
+  - '@prisma/client'
+  - '@prisma/engines'
+  - '@scarf/scarf'
+  - '@tailwindcss/oxide'
+  - '@tree-sitter-grammars/tree-sitter-yaml'
+  - clientjs
+  - core-js
+  - core-js-pure
+  - esbuild
+  - isolated-vm
+  - keytar
+  - prisma
+  - protobufjs
+  - sharp
+  - tree-sitter
+  - tree-sitter-json
+  - unrs-resolver

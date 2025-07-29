@@ -95,7 +95,7 @@ show_disk_usage() {
     echo ""
     echo -e "${BLUE}You can now run:${NC}"
     echo "  npm install    # to reinstall dependencies"
-    echo "  npm run build  # to rebuild all packages"
+    echo "  pnpm run build  # to rebuild all packages"
     echo ""
 }
 

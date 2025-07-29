@@ -71,7 +71,7 @@ module.exports = {
       path: "/var/www/tensorify-api",
       "pre-deploy-local": "",
       "post-deploy":
-        "npm install && npm run build && pm2 reload ecosystem.config.js --env production",
+        "npm install && pnpm run build && pm2 reload ecosystem.config.js --env production",
       "pre-setup": "",
     },
   },
