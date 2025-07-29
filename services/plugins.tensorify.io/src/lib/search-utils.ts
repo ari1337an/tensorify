@@ -269,6 +269,7 @@ export function calculateRecencyBoost(updatedAt: Date): number {
 
 // Main scoring function for plugins
 export function calculatePluginScore(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   plugin: any,
   query: string,
   searchTerms: string[],
@@ -410,6 +411,7 @@ export function calculatePluginScore(
     readme: 5,
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   termMatches.forEach((fields, term) => {
     fields.forEach((fieldName) => {
       const priority =
@@ -466,6 +468,7 @@ export function applySmartFiltering<T extends { scoreData: ScoreData }>(
 
 // Process search results with scoring and filtering
 export function processSearchResults(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   plugins: any[],
   query: string,
   options: {

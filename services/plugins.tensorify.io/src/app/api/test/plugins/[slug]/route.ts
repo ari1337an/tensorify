@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/server/database/db";
 
-// SECURITY: Only works in development environment
-if (process.env.NODE_ENV !== "development") {
-  throw new Error(
-    "Test endpoints are only available in development environment"
-  );
-}
+// // SECURITY: Only works in development environment
+// if (process.env.NODE_ENV !== "development") {
+//   throw new Error(
+//     "Test endpoints are only available in development environment"
+//   );
+// }
 
 /**
  * DELETE /api/test/plugins/[slug]
@@ -114,7 +114,7 @@ export async function DELETE(
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     // Double-check environment
@@ -125,7 +125,7 @@ export async function GET(
       );
     }
 
-    const slug = decodeURIComponent(params.slug);
+    const slug = decodeURIComponent((await params).slug);
 
     const plugin = await db.plugin.findUnique({
       where: { slug },

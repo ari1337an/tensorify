@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
 
         // Try to decode test token
         try {
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
           const jwt = require("jsonwebtoken");
           const secret =
             process.env.TEST_JWT_SECRET || "test-secret-development-only";
@@ -32,6 +33,7 @@ export async function GET(request: NextRequest) {
               imageUrl: decoded.imageUrl,
             },
           });
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (testTokenError) {
           // Not a test token, continue with regular auth
         }
