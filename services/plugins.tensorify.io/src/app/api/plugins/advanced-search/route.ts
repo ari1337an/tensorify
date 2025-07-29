@@ -2,6 +2,7 @@ import db from "@/server/database/db";
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { Prisma } from "@/server/database/prisma/generated/client";
+import { processSearchResults } from "@/lib/search-utils";
 
 export async function GET(request: Request) {
   try {
@@ -51,88 +52,19 @@ export async function GET(request: Request) {
       },
     });
 
-    // Function to safely split and trim search terms
-    const splitTerms = (input: string): string[] =>
-      input
-        .split(/[\s,]+/) // Split by spaces and commas
-        .map((term) => term.trim())
-        .filter(Boolean);
-
-    // Function to calculate relevance score for a plugin
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const calculateScore = (plugin: any): number => {
-      if (!query) return 1; // If no query, all plugins have equal base score
-
-      let score = 0;
-      const searchText = query.toLowerCase();
-      const queryTerms = splitTerms(query);
-      const searchTerms = queryTerms.map((term) => term.toLowerCase());
-
-      const name = plugin.name.toLowerCase();
-      const description = plugin.description.toLowerCase();
-      const tags = (plugin.tags || "").toLowerCase();
-      const slug = plugin.slug.toLowerCase();
-      const readme = (plugin.readme || "").toLowerCase();
-
-      // Exact full query match (highest priority)
-      if (name.includes(searchText)) score += 100;
-      if (description.includes(searchText)) score += 80;
-      if (tags.includes(searchText)) score += 60;
-      if (slug.includes(searchText)) score += 40;
-      if (readme.includes(searchText)) score += 30;
-
-      // Count matching terms and give higher score for more matches
-      let matchingTerms = 0;
-      searchTerms.forEach((term) => {
-        if (name.includes(term)) {
-          score += 20;
-          matchingTerms++;
-        }
-        if (description.includes(term)) {
-          score += 15;
-          matchingTerms++;
-        }
-        if (tags.includes(term)) {
-          score += 10;
-          matchingTerms++;
-        }
-        if (slug.includes(term)) {
-          score += 5;
-          matchingTerms++;
-        }
-        if (readme.includes(term)) {
-          score += 3;
-          matchingTerms++;
-        }
-      });
-
-      // Bonus for matching multiple terms (indicates better relevance)
-      if (matchingTerms > 1) {
-        score += matchingTerms * 10;
+    // Process search results using shared logic (includes readme for advanced search)
+    const { plugins: searchedPlugins, searchMeta } = processSearchResults(
+      allPlugins,
+      query,
+      {
+        includeReadme: true, // Advanced search includes readme
+        limit: Infinity, // Don't limit here, we'll handle deduplication first
+        includeSearchMeta: !!query,
       }
-
-      // Bonus if the percentage of matched terms is high
-      const matchPercentage = matchingTerms / (searchTerms.length * 5); // 5 fields to search
-      score += matchPercentage * 50;
-
-      return score;
-    };
-
-    // Score and filter plugins if there's a search query
-    let filteredPlugins = allPlugins;
-    if (query) {
-      filteredPlugins = allPlugins
-        .map((plugin) => ({
-          ...plugin,
-          score: calculateScore(plugin),
-        }))
-        .filter((plugin) => plugin.score > 0) // Only include plugins with some relevance
-        .sort((a, b) => b.score - a.score) // Sort by score descending initially
-        .map(({ score: _, ...plugin }) => plugin); // Remove score from final result
-    }
+    );
 
     // Extract base slug (everything before the colon) and group plugins by it
-    const groupedPlugins = filteredPlugins.reduce(
+    const groupedPlugins = searchedPlugins.reduce(
       (result, plugin) => {
         // Extract the base slug (everything before the colon)
         const baseSlug = plugin.slug.split(":")[0];
@@ -146,11 +78,11 @@ export async function GET(request: Request) {
         }
         return result;
       },
-      {} as Record<string, (typeof filteredPlugins)[0]>
+      {} as Record<string, (typeof searchedPlugins)[0]>
     );
 
     // Convert back to array
-    let uniquePlugins = Object.values(groupedPlugins);
+    const uniquePlugins = Object.values(groupedPlugins);
 
     // Apply sorting after deduplication (only if not using relevance sorting or no query)
     if (sortBy !== "relevance" || !query) {
@@ -190,6 +122,12 @@ export async function GET(request: Request) {
         updatedAt: plugin.updatedAt.toISOString(),
       })),
       total: uniquePlugins.length,
+      searchMeta: query
+        ? {
+            ...searchMeta,
+            totalResults: uniquePlugins.length, // Update to reflect deduplicated count
+          }
+        : undefined,
     });
   } catch (error) {
     console.error("Advanced search error:", error);
