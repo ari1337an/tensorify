@@ -32,7 +32,7 @@ confirm_cleanup() {
     echo "  • All pnpm-lock.yaml files"
     echo ""
     
-    if [[ "${1:-}" != "--force" && "${1:-}" != "-f" ]]; then
+    if [[ "${1:-}" != "--force" && "${1:-}" != "-f" && "${1:-}" != "-y" ]]; then
         read -p "Are you sure you want to continue? (y/N): " -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -139,7 +139,7 @@ case "${1:-}" in
         echo "Usage: $0 [options]"
         echo ""
         echo "Options:"
-        echo "  --force, -f     Skip confirmation prompt"
+        echo "  --force, -f, -y     Skip confirmation prompt"
         echo "  --help, -h      Show this help message"
         echo ""
         echo "This script removes:"
@@ -157,8 +157,8 @@ case "${1:-}" in
         echo "  $0              # Interactive cleanup"
         echo "  $0 --force      # Force cleanup without confirmation"
         ;;
-    "--force"|"-f")
-        perform_cleanup "--force"
+    "--force"|"-f"|"-y")
+        perform_cleanup "$1"
         ;;
     "")
         perform_cleanup
