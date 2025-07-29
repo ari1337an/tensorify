@@ -1,10 +1,24 @@
+# Apply to root and all subdirectories
 mcp.json
+**/mcp.json
+
 .env
+**/.env
+
 .next/
+**/.next/
+
 .turbo/
+**/.turbo/
+
 .vscode/
+**/.vscode/
+
 .idea/
+**/.idea/
+
 .DS_Store
+**/.DS_Store
+
 .gitignore
-.gitignore
-.gitignore
+**/.gitignore
