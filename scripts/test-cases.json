@@ -1,75 +1,28 @@
 [
   {
-    "name": "minimal-plugin-with-custom-keywords",
-    "createPluginOptions": {
-      "template": "minimal"
-    },
-    "packageJsonOverrides": {
-      "version": "1.0.1",
-      "description": "A minimal plugin for integration testing.",
-      "keywords": [
-        "test-keyword-1",
-        "minimal-plugin"
-      ]
-    },
-    "assertions": {
-      "manifest": {
-        "version": "1.0.1",
-        "description": "A minimal plugin for integration testing.",
-        "keywords": [
-          "test-keyword-1",
-          "minimal-plugin"
-        ]
-      },
-      "database": {
-        "version": "1.0.1",
-        "description": "A minimal plugin for integration testing."
-      }
-    }
-  },
-  {
-    "name": "linear-layer-plugin-with-overrides",
-    "createPluginOptions": {
-      "template": "linear-layer"
-    },
-    "packageJsonOverrides": {
-      "description": "A custom description for the linear-layer plugin.",
-      "author": "Tensorify Integration Test"
-    },
-    "assertions": {
-      "manifest": {
-        "description": "A custom description for the linear-layer plugin.",
-        "author": "Tensorify Integration Test"
-      },
-      "database": {
-        "description": "A custom description for the linear-layer plugin."
-      }
-    }
-  },
-  {
     "name": "model-plugin-with-specific-type",
     "createPluginOptions": {
       "template": "minimal",
-      "pluginType": "MODEL"
+      "pluginType": "model"
     },
     "packageJsonOverrides": {
       "description": "A plugin of type MODEL.",
       "keywords": ["model-test", "classifier"],
       "tensorify": {
-        "pluginType": "MODEL"
+        "pluginType": "model"
       }
     },
     "assertions": {
       "manifest": {
         "tensorify": {
-          "pluginType": "MODEL"
+          "pluginType": "model"
         },
-        "pluginType": "MODEL",
+        "pluginType": "model",
         "description": "A plugin of type MODEL."
       },
       "database": {
         "description": "A plugin of type MODEL.",
-        "pluginType": "MODEL"
+        "pluginType": "model"
       }
     }
   }

@@ -33,6 +33,9 @@
     "type": "git",
     "url": "https://github.com/tensorify/{{projectName}}"
   },
+  "tensorify": {
+    "pluginType": "{{pluginType}}"
+  },
   "tensorify-settings": {
     "sdk-version": "{{sdkVersion}}",
     "entrypointClassName": "{{classicProjectName}}Plugin"

@@ -66,6 +66,7 @@ export function readPackageJson(packageJsonPath: string): PackageJsonInfo {
       dependencies: packageJson.dependencies,
       peerDependencies: packageJson.peerDependencies,
       repository: packageJson.repository,
+      tensorify: packageJson.tensorify,
     };
   } catch (error) {
     throw new Error(`Failed to read package.json: ${error}`);

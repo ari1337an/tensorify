@@ -87,6 +87,9 @@ export interface PackageJsonInfo {
     type: string;
     url: string;
   };
+  tensorify?: {
+    pluginType?: string;
+  };
 }
 
 /**
@@ -113,6 +116,12 @@ export interface FrontendPluginManifest {
   repository?: {
     type: string;
     url: string;
+  };
+  /** Plugin type from package.json tensorify section */
+  pluginType?: string;
+  /** Tensorify configuration from package.json */
+  tensorify?: {
+    pluginType?: string;
   };
 
   // Frontend Configuration (from plugin definition)

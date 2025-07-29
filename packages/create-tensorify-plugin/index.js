@@ -64,53 +64,80 @@ const TEMPLATES = {
 
 // NodeType options from SDK
 const NODE_TYPES = {
-  CUSTOM: { value: "CUSTOM", name: "Custom - General purpose plugin" },
-  TRAINER: { value: "TRAINER", name: "Trainer - Model training component" },
+  CUSTOM: { value: "custom", name: "Custom - General purpose plugin" },
+  TRAINER: { value: "trainer", name: "Trainer - Model training component" },
   EVALUATOR: {
-    value: "EVALUATOR",
+    value: "evaluator",
     name: "Evaluator - Model evaluation component",
   },
-  MODEL: { value: "MODEL", name: "Model - Complete model architecture" },
+  MODEL: { value: "model", name: "Model - Complete model architecture" },
   MODEL_LAYER: {
-    value: "MODEL_LAYER",
+    value: "model_layer",
     name: "Model Layer - Neural network layer",
   },
   DATALOADER: {
-    value: "DATALOADER",
+    value: "dataloader",
     name: "Data Loader - Data loading component",
   },
   PREPROCESSOR: {
-    value: "PREPROCESSOR",
+    value: "preprocessor",
     name: "Preprocessor - Data preprocessing",
   },
   POSTPROCESSOR: {
-    value: "POSTPROCESSOR",
+    value: "postprocessor",
     name: "Postprocessor - Data postprocessing",
   },
   AUGMENTATION_STACK: {
-    value: "AUGMENTATION_STACK",
+    value: "augmentation_stack",
     name: "Augmentation Stack - Data augmentation",
   },
-  OPTIMIZER: { value: "OPTIMIZER", name: "Optimizer - Training optimizer" },
+  OPTIMIZER: { value: "optimizer", name: "Optimizer - Training optimizer" },
   LOSS_FUNCTION: {
-    value: "LOSS_FUNCTION",
+    value: "loss_function",
     name: "Loss Function - Loss computation",
   },
-  METRIC: { value: "METRIC", name: "Metric - Performance metric" },
+  METRIC: { value: "metric", name: "Metric - Performance metric" },
   SCHEDULER: {
-    value: "SCHEDULER",
+    value: "scheduler",
     name: "Scheduler - Learning rate scheduler",
   },
   REGULARIZER: {
-    value: "REGULARIZER",
+    value: "regularizer",
     name: "Regularizer - Regularization technique",
   },
-  FUNCTION: { value: "FUNCTION", name: "Function - Utility function" },
-  PIPELINE: { value: "PIPELINE", name: "Pipeline - Workflow pipeline" },
-  REPORT: { value: "REPORT", name: "Report - Analysis report generator" },
+  FUNCTION: { value: "function", name: "Function - Utility function" },
+  PIPELINE: { value: "pipeline", name: "Pipeline - Workflow pipeline" },
+  REPORT: { value: "report", name: "Report - Analysis report generator" },
 };
 
 const availableTemplates = Object.keys(TEMPLATES);
+
+// Helper function to convert runtime pluginType to TypeScript enum key
+function getNodeTypeEnumKey(pluginTypeValue) {
+  const mapping = {
+    custom: "CUSTOM",
+    trainer: "TRAINER",
+    evaluator: "EVALUATOR",
+    model: "MODEL",
+    model_layer: "MODEL_LAYER",
+    dataloader: "DATALOADER",
+    preprocessor: "PREPROCESSOR",
+    postprocessor: "POSTPROCESSOR",
+    augmentation_stack: "AUGMENTATION_STACK",
+    optimizer: "OPTIMIZER",
+    loss_function: "LOSS_FUNCTION",
+    metric: "METRIC",
+    scheduler: "SCHEDULER",
+    regularizer: "REGULARIZER",
+    function: "FUNCTION",
+    pipeline: "PIPELINE",
+    report: "REPORT",
+  };
+  return mapping[pluginTypeValue] || "CUSTOM";
+}
+
+const DEFAULT_AUTHOR = "Tensorify Developer";
+
 const defaultTemplate = Object.keys(TEMPLATES).find(
   (key) => TEMPLATES[key].default
 );
@@ -564,7 +591,7 @@ async function copyTemplate(targetPath, variables) {
         .replace(/{{description}}/g, variables.description)
         .replace(/{{author}}/g, variables.author)
         .replace(/{{sdkVersion}}/g, variables.sdkVersion)
-        .replace(/{{pluginType}}/g, variables.pluginType)
+        .replace(/{{pluginType}}/g, getNodeTypeEnumKey(variables.pluginType))
         .replace(/{{year}}/g, new Date().getFullYear().toString());
 
       await fs.writeFile(filePath, content);

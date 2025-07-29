@@ -472,8 +472,12 @@ class PluginPublisher {
     const entrypointClassName =
       tensorifySettings.entrypointClassName || "TensorifyPlugin";
 
-    // Extract plugin type from tensorify-settings, default to MISCELLANEOUS
-    const pluginType = tensorifySettings.pluginType || NodeType.CUSTOM;
+    // Extract plugin type from tensorify section first, then fallback to tensorify-settings
+    const tensorifyConfig: any = packageJson["tensorify"] || {};
+    const pluginType =
+      tensorifyConfig.pluginType ||
+      tensorifySettings.pluginType ||
+      NodeType.CUSTOM;
 
     // Validate that the plugin type is a valid NodeType
     const validNodeTypes = Object.values(NodeType);
@@ -496,6 +500,9 @@ class PluginPublisher {
       pluginType: validNodeTypes.includes(pluginType as NodeType)
         ? pluginType
         : NodeType.CUSTOM,
+      tensorify: tensorifyConfig.pluginType
+        ? { pluginType: tensorifyConfig.pluginType }
+        : undefined,
       scripts: {
         build: packageJson.scripts?.build || "tsc",
       },

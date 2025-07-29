@@ -543,6 +543,8 @@ export abstract class TensorifyPlugin {
       entrypointClassName,
       keywords: packageInfo.keywords || this.definition.keywords || [],
       repository: packageInfo.repository,
+      pluginType: packageInfo.tensorify?.pluginType,
+      tensorify: packageInfo.tensorify,
 
       // Frontend Configuration
       frontendConfigs: {

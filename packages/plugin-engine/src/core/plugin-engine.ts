@@ -254,7 +254,7 @@ export class PluginEngine {
    */
   async dispose(): Promise<void> {
     await this.executorService.cleanup();
-    this.log("Plugin engine disposed");
+    // this.log("Plugin engine disposed");
   }
 
   /**
