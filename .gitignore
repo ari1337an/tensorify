@@ -50,3 +50,5 @@ services/plugins.tensorify.io/.next
 generated/client/
 **/generated/client/**
 services/tensorify.io/public/sitemap-0.xml
+
+.tmp-integration-tests

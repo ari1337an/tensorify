@@ -19,6 +19,8 @@ const { execSync } = require("child_process");
 const axios = require("axios");
 const chalk = require("chalk");
 const { v4: uuidv4 } = require("uuid");
+const testCases = require("./test-cases.json");
+const Table = require("cli-table3");
 
 // Security check - only run in development
 if (process.env.NODE_ENV !== "development") {
@@ -29,21 +31,26 @@ if (process.env.NODE_ENV !== "development") {
   process.exit(1);
 }
 
+const stripAnsi = (str) => str.replace(/\u001b\[[0-9;]*m/g, "");
+
 class IntegrationTestRunner {
-  constructor({ testId } = {}) {
+  constructor({ testId, testCase, tempDir } = {}) {
     this.verbose = !(
       process.argv.includes("--quiet") || process.argv.includes("-q")
     );
+    this.testCase = testCase;
     this.testId = testId || uuidv4().substring(0, 8);
     this.testUsername = "testing-bot-tensorify-dev"; // Fixed username for all tests
-    this.testPluginName = `test-plugin-${this.testId}`;
+    this.testPluginName = this.testId;
     this.backendUrl = "http://localhost:3001";
     this.frontendUrl = "http://localhost:3004";
-    this.tempPluginDir = path.join(process.cwd(), `test-plugin-${this.testId}`);
+    this.tempDir = tempDir;
+    this.tempPluginDir = path.join(this.tempDir, this.testPluginName);
     this.testToken = null;
     this.testUserId = null;
     this.createdPluginSlug = null;
     this.cleanup = [];
+    this.assertionResults = [];
 
     // Set up logging
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -53,7 +60,10 @@ class IntegrationTestRunner {
     if (!fs.existsSync(this.logDir)) {
       fs.mkdirSync(this.logDir, { recursive: true });
     }
-    this.log("Starting Integration Test", { testId: this.testId });
+    this.log(`Starting Integration Test`, {
+      testId: this.testId,
+      case: this.testCase.name,
+    });
   }
 
   log(message, data = {}) {
@@ -62,6 +72,7 @@ class IntegrationTestRunner {
       timestamp,
       message,
       testId: this.testId,
+      case: this.testCase.name,
       ...data,
     };
     fs.appendFileSync(this.logFile, JSON.stringify(logEntry) + "\n");
@@ -73,6 +84,17 @@ class IntegrationTestRunner {
     }
   }
 
+  checkAssertion(description, expected, actual) {
+    const passed = JSON.stringify(actual) === JSON.stringify(expected);
+    this.assertionResults.push({
+      description,
+      expected,
+      actual,
+      passed,
+    });
+    return passed;
+  }
+
   async run() {
     try {
       await this.preflightChecks();
@@ -82,16 +104,21 @@ class IntegrationTestRunner {
       await this.verifyBackendStorage();
       await this.verifyFrontendDatabase();
       await this.testPluginEngine();
-      await this.runAssertions();
-
-      this.log(chalk.green("✅ All tests passed!"));
-      return true;
+      const assertionsPassed = await this.runAssertions();
+      if (!assertionsPassed) {
+        throw new Error("Assertion failures detected.");
+      }
     } catch (error) {
-      this.log(chalk.red("❌ Test failed"), {
+      this.log(chalk.red("❌ Test run failed"), {
         error: error.message,
         stack: error.stack,
       });
-      return false;
+      // Re-throw to be caught by the main loop
+      throw new Error(
+        error.message.includes("Assertion failures")
+          ? error.message
+          : `A critical error occurred: ${error.message}`
+      );
     } finally {
       await this.cleanupResources();
     }
@@ -162,12 +189,20 @@ class IntegrationTestRunner {
       "packages/create-tensorify-plugin"
     );
     try {
+      const createOptions = this.testCase.createPluginOptions || {};
+      const cliOptions = Object.entries(createOptions)
+        .map(([key, value]) => {
+          const optionName = key.replace(/([A-Z])/g, "-$1").toLowerCase();
+          return `--${optionName} ${value}`;
+        })
+        .join(" ");
+
       execSync(
         `node ${path.join(
           createPluginPath,
           "index.js"
-        )} ${this.testPluginName} --yes --template linear-layer --dev`,
-        { cwd: process.cwd(), stdio: "pipe" }
+        )} ${this.testPluginName} --yes ${cliOptions} --dev`,
+        { cwd: this.tempDir, stdio: "pipe" }
       );
       this.log("Plugin created", { pluginDir: this.tempPluginDir });
 
@@ -176,6 +211,15 @@ class IntegrationTestRunner {
       const packageJsonPath = path.join(this.tempPluginDir, "package.json");
       const packageJson = fs.readJsonSync(packageJsonPath);
       packageJson.name = `@${this.testUsername}/${this.testPluginName}`;
+
+      // Apply package.json overrides from the test case
+      if (this.testCase.packageJsonOverrides) {
+        Object.assign(packageJson, this.testCase.packageJsonOverrides);
+        this.log("Applied package.json overrides", {
+          overrides: this.testCase.packageJsonOverrides,
+        });
+      }
+
       fs.writeJsonSync(packageJsonPath, packageJson, { spaces: 2 });
       this.log("package.json updated with new name", {
         newName: packageJson.name,
@@ -346,13 +390,75 @@ class IntegrationTestRunner {
     }
   }
 
+  printAssertionResults() {
+    const table = new Table({
+      head: [
+        chalk.bold.white("Status"),
+        chalk.bold.white("Assertion"),
+        chalk.bold.white("Expected"),
+        chalk.bold.white("Received"),
+      ],
+      colWidths: [10, 38, 32, 32],
+      wordWrap: true,
+      style: { head: [], border: ["grey"] },
+      chars: {
+        top: "═",
+        "top-mid": "╤",
+        "top-left": "╔",
+        "top-right": "╗",
+        bottom: "═",
+        "bottom-mid": "╧",
+        "bottom-left": "╚",
+        "bottom-right": "╝",
+        left: "║",
+        "left-mid": "╟",
+        mid: "─",
+        "mid-mid": "┼",
+        right: "║",
+        "right-mid": "╢",
+        middle: "│",
+      },
+    });
+
+    for (const result of this.assertionResults) {
+      const { description, expected, actual, passed } = result;
+      const status = passed ? chalk.green("✓ Pass") : chalk.red("✗ Fail");
+      const expectedStr =
+        expected === undefined
+          ? "undefined"
+          : JSON.stringify(expected, null, 2);
+      const actualStr =
+        actual === undefined ? "undefined" : JSON.stringify(actual, null, 2);
+
+      table.push([status, description, expectedStr, actualStr]);
+    }
+
+    console.log(table.toString());
+    console.log();
+  }
+
   async runAssertions() {
-    this.log(chalk.yellow("✅ Running final assertions..."));
-    await this.assertPluginExists();
-    await this.assertPluginExecutable();
+    console.log(chalk.yellow("\n▶️  Running Assertions..."));
+    this.assertionResults = []; // Reset results
+
+    await this.assertPluginExists(); // This one throws, it's a prerequisite
+    await this.assertPluginExecutable(); // So does this one
+
     await this.assertManifestValid();
     await this.assertDatabaseConsistency();
-    this.log("All assertions passed");
+
+    this.printAssertionResults();
+
+    const failures = this.assertionResults.filter((r) => !r.passed).length;
+    if (failures > 0) {
+      console.log(chalk.red(`\nFound ${failures} assertion failure(s).`));
+      return false;
+    }
+
+    if (this.verbose) {
+      console.log(chalk.green("✅ All assertions passed."));
+    }
+    return true;
   }
 
   async assertPluginExists() {
@@ -387,19 +493,12 @@ class IntegrationTestRunner {
         throw new Error("Plugin execution assertion failed");
       }
     } catch (error) {
-      if (process.env.NODE_ENV === "development") {
-        this.log(
-          chalk.yellow(
-            `⚠️ Plugin execution assertion failed (optional in development): ${error.message}`
-          )
-        );
-      } else {
-        throw error;
-      }
+      throw error;
     }
   }
 
   async assertManifestValid() {
+    this.log("  Asserting manifest validity...");
     try {
       const response = await axios.get(
         `${this.backendUrl}/api/v1/plugin/getManifest`,
@@ -409,26 +508,26 @@ class IntegrationTestRunner {
         }
       );
       const manifest = response.data.data;
-      const requiredFields = ["name", "version", "entrypointClassName"];
-      for (const field of requiredFields) {
-        if (!manifest[field]) {
-          throw new Error(`Manifest missing required field: ${field}`);
-        }
+      const expectedManifest = this.testCase.assertions.manifest;
+
+      for (const field in expectedManifest) {
+        this.checkAssertion(
+          `manifest.${field}`,
+          expectedManifest[field],
+          manifest[field]
+        );
       }
     } catch (error) {
-      if (process.env.NODE_ENV === "development") {
-        this.log(
-          chalk.yellow(
-            `⚠️ Manifest validation failed (optional in development): ${error.message}`
-          )
-        );
-      } else {
-        throw error;
-      }
+      this.checkAssertion(
+        "manifest.fetch",
+        "successful",
+        `failed: ${error.message}`
+      );
     }
   }
 
   async assertDatabaseConsistency() {
+    this.log("  Asserting database consistency...");
     try {
       const backendResponse = await axios.get(
         `${this.backendUrl}/api/v1/plugin/getManifest`,
@@ -446,56 +545,68 @@ class IntegrationTestRunner {
         frontendResponse.data.plugins || frontendResponse.data
       ).find((p) => p.slug === this.createdPluginSlug);
 
+      if (!this.checkAssertion("database.plugin.exists", true, !!plugin)) {
+        return; // Can't continue if plugin is not in DB
+      }
+
+      const expectedDbValues = this.testCase.assertions.database;
+      if (expectedDbValues) {
+        for (const [key, expectedValue] of Object.entries(expectedDbValues)) {
+          let actualValue;
+          if (key === "version") {
+            actualValue = plugin.slug.split(":")[1];
+          } else if (key === "pluginType") {
+            actualValue = plugin?.pluginType;
+          } else {
+            actualValue = plugin[key];
+          }
+          this.checkAssertion(`database.${key}`, expectedValue, actualValue);
+        }
+      }
+
       const manifestSimpleName = manifest.name.split("/").pop();
-      const versionMismatch = manifest.version !== plugin.slug.split(":")[1];
+      this.checkAssertion(
+        "database.name.consistent",
+        manifestSimpleName,
+        plugin.name
+      );
 
-      if (manifestSimpleName !== plugin.name || versionMismatch) {
-        this.log(chalk.red("Database consistency mismatch found!"), {
-          manifestName: manifest.name,
-          manifestSimpleName: manifestSimpleName,
-          dbPluginName: plugin.name,
-          manifestVersion: manifest.version,
-          dbPluginVersion: plugin.slug.split(":")[1],
-        });
-
-        // Only fail hard if the names don't match. Version can differ in dev.
-        if (manifestSimpleName !== plugin.name) {
-          throw new Error(
-            "Database consistency assertion failed: Names do not match."
-          );
-        }
-        if (versionMismatch) {
-          this.log(
-            chalk.yellow("⚠️ Version mismatch is ignored in development mode.")
-          );
-        }
-      }
+      const dbVersion = plugin.slug.split(":")[1];
+      this.checkAssertion(
+        "database.version.consistent",
+        manifest.version,
+        dbVersion
+      );
     } catch (error) {
-      if (process.env.NODE_ENV === "development") {
-        this.log(
-          chalk.yellow(
-            `⚠️ Database consistency check failed (optional in development): ${error.message}`
-          )
-        );
-      } else {
-        throw error;
-      }
+      this.checkAssertion(
+        "database.fetch",
+        "successful",
+        `failed: ${error.message}`
+      );
     }
   }
 
   async cleanupResources() {
     this.log(chalk.yellow("🧹 Starting cleanup..."));
+    console.log(chalk.gray("\n🧹 Running cleanup for test case..."));
+
     for (let i = this.cleanup.length - 1; i >= 0; i--) {
       try {
         await this.cleanup[i]();
       } catch (error) {
-        this.log(chalk.yellow(`⚠️ Cleanup step failed: ${error.message}`));
+        const message = `Cleanup step failed: ${error.message}`;
+        this.log(chalk.yellow(`⚠️ ${message}`));
+        console.log(chalk.yellow(`  - ${message}`));
       }
     }
     this.log("Cleanup completed");
   }
 
   async removePluginFromDatabase() {
+    if (!this.createdPluginSlug) {
+      this.log("Skipping DB cleanup, no plugin slug available.");
+      return;
+    }
     try {
       await axios.delete(
         `${this.frontendUrl}/api/test/plugins/${encodeURIComponent(
@@ -508,17 +619,21 @@ class IntegrationTestRunner {
           },
         }
       );
-      this.log("Plugin removed from database");
+      const message = "Plugin removed from database.";
+      this.log(message);
+      console.log(chalk.gray(`  - ${message}`));
     } catch (error) {
-      this.log(
-        chalk.yellow(
-          `⚠️ Failed to remove plugin from database: ${error.message}`
-        )
-      );
+      const message = `Failed to remove plugin from database: ${error.message}`;
+      this.log(chalk.yellow(`⚠️ ${message}`));
+      console.log(chalk.yellow(`  - ${message}`));
     }
   }
 
   async revokeTestAuthentication() {
+    if (!this.testUserId) {
+      this.log("Skipping auth revocation, no test user ID.");
+      return;
+    }
     try {
       await axios.delete(
         `${this.backendUrl}/api/test/auth/${this.testUserId}`,
@@ -529,33 +644,79 @@ class IntegrationTestRunner {
           },
         }
       );
-      this.log("Test authentication revoked");
+      const message = "Test authentication revoked.";
+      this.log(message);
+      console.log(chalk.gray(`  - ${message}`));
     } catch (error) {
-      this.log(
-        chalk.yellow(
-          `⚠️ Failed to revoke test authentication: ${error.message}`
-        )
-      );
+      const message = `Failed to revoke test authentication: ${error.message}`;
+      this.log(chalk.yellow(`⚠️ ${message}`));
+      console.log(chalk.yellow(`  - ${message}`));
     }
   }
 }
 
 async function main() {
-  const runner = new IntegrationTestRunner();
-  if (runner.verbose) {
-    console.log(
-      chalk.cyan("🧪 Tensorify Plugin Publishing Integration Test\n")
-    );
-  }
-  const success = await runner.run();
-  if (success) {
-    if (runner.verbose) {
-      console.log(chalk.green("\n🎉 Integration test completed successfully!"));
+  let allTestsPassed = true;
+  const testRunId = uuidv4().substring(0, 8);
+  const rootTempDir = path.join(process.cwd(), ".tmp-integration-tests");
+  fs.ensureDirSync(rootTempDir);
+  const tempDir = fs.mkdtempSync(
+    path.join(rootTempDir, `tensorify-integration-${testRunId}-`)
+  );
+  console.log(chalk.gray(`📝 Using temporary directory: ${tempDir}`));
+
+  try {
+    for (const testCase of testCases) {
+      const testSuffix = uuidv4().substring(0, 8);
+      const pluginName =
+        `test-plugin-${testCase.name}-${testSuffix}`.toLowerCase();
+
+      console.log(
+        chalk.cyan(
+          `\n🧪 Running Test Case: ${testCase.name} (Plugin: ${pluginName})`
+        )
+      );
+      const runner = new IntegrationTestRunner({
+        testId: pluginName,
+        testCase,
+        tempDir,
+      });
+      try {
+        await runner.run();
+        console.log(
+          chalk.green(
+            `\n✅ Test Case Passed: ${testCase.name} (Plugin: ${pluginName})`
+          )
+        );
+      } catch (error) {
+        allTestsPassed = false;
+        console.log(
+          chalk.red(
+            `\n💥 Test Case Failed: ${testCase.name} (Plugin: ${pluginName})`
+          )
+        );
+        console.error(chalk.red(error.message));
+        console.log(
+          chalk.yellow(`\n📝 Check full stack trace at: ${runner.logFile}`)
+        );
+      }
     }
+  } finally {
+    if (fs.existsSync(tempDir)) {
+      fs.removeSync(tempDir);
+      console.log(
+        chalk.gray(`\n🧹 Cleaned up temporary directory: ${tempDir}`)
+      );
+    }
+  }
+
+  if (allTestsPassed) {
+    console.log(
+      chalk.green("\n🎉 All integration tests completed successfully!")
+    );
     process.exit(0);
   } else {
-    console.log(chalk.red("\n💥 Integration test failed!"));
-    console.log(chalk.yellow(`📝 Check logs at: ${runner.logFile}`));
+    console.log(chalk.red("\n💥 Some integration tests failed!"));
     process.exit(1);
   }
 }

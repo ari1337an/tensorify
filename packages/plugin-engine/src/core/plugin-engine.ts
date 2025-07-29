@@ -49,17 +49,17 @@ export class PluginEngine {
     entryPointString: string
   ): Promise<PluginExecutionResult> {
     try {
-      this.log(`Starting execution for plugin: ${pluginSlug}`);
+      // this.log(`Starting execution for plugin: ${pluginSlug}`);
 
       // Step 1: Fetch the plugin code from storage
       const pluginCode = await this.fetchPluginCode(pluginSlug);
 
-      this.log(`Plugin code fetched: ${pluginCode.slice(0, 20)}...`);
+      // this.log(`Plugin code fetched: ${pluginCode.slice(0, 20)}...`);
 
       // Step 2: Validate the plugin structure (optional but recommended)
       await this.validatePluginCode(pluginCode);
 
-      this.log(`Plugin code validated`);
+      // this.log(`Plugin code validated`);
 
       // Step 3: Execute the plugin in isolated environment with TypeScript/SDK support
       const executionContext: EnhancedExecutionContext = {
@@ -83,7 +83,7 @@ export class PluginEngine {
         executorConfig
       );
 
-      this.log(`Plugin execution completed successfully for: ${pluginSlug}`);
+      // this.log(`Plugin execution completed successfully for: ${pluginSlug}`);
 
       return {
         code: executionResult.result,

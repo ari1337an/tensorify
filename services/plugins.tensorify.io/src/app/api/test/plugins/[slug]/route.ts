@@ -14,9 +14,11 @@ if (process.env.NODE_ENV !== "development") {
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const slugParam = (await params).slug;
+
     // Double-check environment in request handler
     if (process.env.NODE_ENV !== "development") {
       return NextResponse.json(
@@ -43,7 +45,7 @@ export async function DELETE(
       );
     }
 
-    const slug = decodeURIComponent(params.slug);
+    const slug = decodeURIComponent(slugParam);
 
     // Find the plugin
     const plugin = await db.plugin.findUnique({
@@ -57,7 +59,7 @@ export async function DELETE(
     // Additional safety check: only allow deletion of test plugins
     const isTestPlugin =
       plugin.slug.includes("test-plugin-") ||
-      plugin.authorName.includes("test-user-") ||
+      plugin.authorName.includes("testing-bot-tensorify-dev") ||
       plugin.name.includes("test-plugin-");
 
     if (!isTestPlugin) {

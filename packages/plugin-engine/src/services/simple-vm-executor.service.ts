@@ -99,20 +99,14 @@ export class SimpleVMExecutorService implements IExecutorService {
         );
         processedCode = compilationResult.code;
 
-        if (effectiveConfig.debug) {
-          console.log("Code compilation completed:", {
-            original: context.code.length,
-            processed: processedCode.length,
-            diagnostics: compilationResult.diagnostics,
-          });
-        }
+        // if (effectiveConfig.debug) {
+        //   console.log("Code compilation completed:", {
+        //     original: context.code.length,
+        //     processed: processedCode.length,
+        //     diagnostics: compilationResult.diagnostics,
+        //   });
+        // }
       }
-
-      if (effectiveConfig.debug) {
-        console.log("VM context setup completed");
-      }
-
-      console.log("Ready to execute plugin code");
 
       // Execute with timeout using processed code
       const result = await Promise.race([
@@ -214,12 +208,12 @@ export class SimpleVMExecutorService implements IExecutorService {
 
           code = compilationResult.code;
 
-          if (effectiveConfig.debug) {
-            console.log(
-              "Validation compilation completed, code length:",
-              code.length
-            );
-          }
+          // if (effectiveConfig.debug) {
+          //   console.log(
+          //     "Validation compilation completed, code length:",
+          //     code.length
+          //   );
+          // }
         } catch (error) {
           if (error instanceof PluginValidationError) {
             throw error;
@@ -493,10 +487,6 @@ export class SimpleVMExecutorService implements IExecutorService {
         }
       })()
     `;
-
-    if (config.debug) {
-      console.log("Combined script:", combinedCode.slice(0, 300) + "...");
-    }
 
     // Create and run the script
     const vmContext = vm.createContext(sandbox);

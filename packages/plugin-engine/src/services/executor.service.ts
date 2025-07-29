@@ -99,13 +99,13 @@ export class IsolatedVMExecutorService implements IExecutorService {
         );
         processedCode = compilationResult.code;
 
-        if (effectiveConfig.debug) {
-          console.log("Code compilation completed:", {
-            original: context.code.length,
-            processed: processedCode.length,
-            diagnostics: compilationResult.diagnostics,
-          });
-        }
+        // if (effectiveConfig.debug) {
+        //   console.log("Code compilation completed:", {
+        //     original: context.code.length,
+        //     processed: processedCode.length,
+        //     diagnostics: compilationResult.diagnostics,
+        //   });
+        // }
       }
 
       // Create isolated VM with memory limit
@@ -116,12 +116,6 @@ export class IsolatedVMExecutorService implements IExecutorService {
 
       // Create a new context
       const vmContext = await isolate.createContext();
-
-      if (effectiveConfig.debug) {
-        console.log("VM context setup completed");
-      }
-
-      console.log("Ready to execute plugin code");
 
       // Execute with timeout using processed code
       const result = await Promise.race([
@@ -375,10 +369,6 @@ export class IsolatedVMExecutorService implements IExecutorService {
         }
       })()
     `;
-
-    if (this.enhancedDefaultConfig.debug) {
-      console.log("Combined script:", combinedCode.slice(0, 300) + "...");
-    }
 
     // Execute everything as a single script to avoid transferable value issues
     const result = context.evalSync(combinedCode);
