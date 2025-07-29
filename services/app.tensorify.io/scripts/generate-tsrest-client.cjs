@@ -48,6 +48,7 @@ async function generateClient() {
   }
 
   const clientFunctionStrings = Array.from(contractKeys)
+    .sort() // Sort alphabetically for deterministic output
     .map((key) => {
       // Ensure the key is a valid identifier part
       // This basic check might need to be more robust depending on filenames

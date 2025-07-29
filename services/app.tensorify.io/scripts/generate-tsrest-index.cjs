@@ -26,6 +26,9 @@ async function generateIndex() {
     ],
   });
 
+  // Sort files for deterministic output
+  files.sort();
+
   const imports = [];
   const contractEntries = [];
   const actionEntries = [];
@@ -42,6 +45,11 @@ async function generateIndex() {
     contractEntries.push(`  ${key}: ${importAliasContract},`);
     actionEntries.push(`  ${key}: ${importAliasAction},`);
   }
+
+  // Sort arrays for deterministic output
+  imports.sort();
+  contractEntries.sort();
+  actionEntries.sort();
 
   const output = `import { initContract } from "@ts-rest/core";
 import { tsr } from "@ts-rest/serverless/next";
