@@ -2058,7 +2058,7 @@ export default function BlogPostPage() {
                         <TimeAgo
                           date={post.updatedAt}
                           key={post.updatedAt.toString()}
-                          formatter={(value, unit) => {
+                          formatter={(value: number, unit: string) => {
                             if (unit === "second") return "just now";
                             const plural = value !== 1 ? "s" : "";
                             return `${value} ${unit}${plural} ago`;

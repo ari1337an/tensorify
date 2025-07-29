@@ -38,7 +38,7 @@ function getClientJSInstance(): ClientJSInstance | null {
         // This is a special pattern needed for Next.js + ClientJS
         // Based on clientjs issue #140 (https://github.com/jackspirou/clientjs/issues/140)
         // TODO: Remove this once we have a better way to handle ClientJS
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
         const ClientJSModule = require('clientjs');
 
         // Access the ClientJS constructor from the module
