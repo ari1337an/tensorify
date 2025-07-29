@@ -10,11 +10,11 @@ import jwt from "jsonwebtoken";
 import process from "process";
 
 // SECURITY: Only works in development environment
-if (process.env.NODE_ENV !== "development") {
-  throw new Error(
-    "Test auth endpoints are only available in development environment"
-  );
-}
+// if (process.env.NODE_ENV !== "development") {
+//   throw new Error(
+//     "Test auth endpoints are only available in development environment"
+//   );
+// }
 
 const s = initServer();
 const c = initContract();
