@@ -49,6 +49,8 @@ services/plugins.tensorify.io/.next
 # all */generated/client/** files removed
 generated/client/
 **/generated/client/**
-services/tensorify.io/public/sitemap-0.xml
+
+# Generated sitemaps
+services/tensorify.io/public/sitemap*.xml
 
 .tmp-integration-tests
