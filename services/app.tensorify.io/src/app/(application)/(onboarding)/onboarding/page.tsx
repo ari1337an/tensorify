@@ -140,7 +140,7 @@ export default function OnboardingPage() {
   if (loading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-background">
-        <div className="animate-pulse text-primary">Loading...</div>
+        <div className="animate-pulse text-primary-readable">Loading...</div>
       </div>
     );
   }
@@ -160,7 +160,7 @@ export default function OnboardingPage() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent"
+            className="text-2xl font-bold bg-gradient-to-r from-primary-readable to-primary-readable/60 bg-clip-text text-transparent"
           >
             {getCurrentStepTitle()}
           </motion.h1>

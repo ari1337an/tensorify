@@ -265,7 +265,7 @@ export function AccountView() {
                                   "Unknown Device"}
                               </span>
                               {session.id === currentSession?.id && (
-                                <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                                <span className="text-xs text-primary-readable bg-primary/10 px-2 py-0.5 rounded-md">
                                   This Device
                                 </span>
                               )}

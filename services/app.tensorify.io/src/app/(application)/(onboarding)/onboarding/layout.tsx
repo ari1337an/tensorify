@@ -83,7 +83,7 @@ export default async function OnboardingLayout({
                 .animate-spin {
                   animation: spin 1.5s linear infinite;
                 }
-                .text-primary {
+                .text-primary-readable {
                   color: hsl(240 5.9% 10%);
                 }
                 .text-foreground {
@@ -93,7 +93,7 @@ export default async function OnboardingLayout({
                   background-color: hsl(0 0% 100%);
                 }
                 @media (prefers-color-scheme: dark) {
-                  .text-primary {
+                  .text-primary-readable {
                     color: hsl(240 5% 84.9%);
                   }
                   .text-foreground {
@@ -120,7 +120,7 @@ export default async function OnboardingLayout({
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="animate-spin text-primary"
+                  className="animate-spin text-primary-readable"
                 >
                   <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                 </svg>

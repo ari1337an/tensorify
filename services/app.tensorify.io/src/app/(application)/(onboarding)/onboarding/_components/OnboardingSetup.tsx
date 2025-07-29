@@ -148,7 +148,7 @@ export function OnboardingSetup({
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center space-y-6">
-          <Loader2 className="h-12 w-12 text-primary animate-spin" />
+          <Loader2 className="h-12 w-12 text-primary-readable animate-spin" />
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

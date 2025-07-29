@@ -92,7 +92,7 @@ export default function CustomStandaloneNode(props: NodeProps<WorkflowNode>) {
               />
             ) : (
               <p
-                className="text-sm font-medium text-foreground cursor-pointer hover:text-primary transition-colors truncate max-w-[100px]"
+                className="text-sm font-medium text-foreground cursor-pointer hover:text-primary-readable transition-colors truncate max-w-[100px]"
                 onDoubleClick={handleLabelDoubleClick}
                 title={`${data.label || "Custom Node"} - Double-click to edit`}
               >
