@@ -1,0 +1,24 @@
+{
+  "name": "@tensorify.io/scripts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Development and testing scripts for Tensorify",
+  "scripts": {
+    "integration-test": "NODE_ENV=development node integration-test-publish.js",
+    "test-publish": "npm run integration-test"
+  },
+  "dependencies": {
+    "fs-extra": "^11.1.1",
+    "axios": "^1.6.0",
+    "chalk": "^4.1.2",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "Tensorify Team",
+  "license": "UNLICENSED"
+} 

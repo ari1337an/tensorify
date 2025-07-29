@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import jwt from "jsonwebtoken";
-import { getDecodedJwt } from "@/lib/auth-utils";
 
 /**
- * GET /api/user/profile
+ * GET /api/cli/profile
  * Endpoint for CLI to fetch authenticated user profile
  * Supports both regular Clerk tokens and development test tokens
  */
@@ -23,9 +20,10 @@ export async function GET(request: NextRequest) {
             process.env.TEST_JWT_SECRET || "test-secret-development-only";
           const decoded = jwt.verify(token, secret, { algorithms: ["HS256"] });
 
-          // Return test user profile in the format CLI expects
+          // Return test user profile
           return NextResponse.json({
-            data: {
+            success: true,
+            user: {
               id: decoded.id,
               username: decoded.username,
               firstName: decoded.firstName,
@@ -42,24 +40,15 @@ export async function GET(request: NextRequest) {
 
     // TODO: Add regular Clerk authentication here for production
     // For now, return unauthorized for non-test tokens
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  } catch (error) {
-    console.error("User profile error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { success: false, error: "Unauthorized" },
+      { status: 401 }
+    );
+  } catch (error) {
+    console.error("CLI profile error:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }
-}
-
-// Handle CORS preflight requests
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    },
-  });
 }

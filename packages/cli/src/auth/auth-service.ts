@@ -379,7 +379,17 @@ class AuthService {
 
   async getUserProfile(isDev: boolean = false): Promise<any> {
     try {
-      const sessionToken = await this.getSession();
+      // Check for test token first in development
+      let sessionToken = null;
+      if (
+        process.env.NODE_ENV === "development" &&
+        process.env.TENSORIFY_TEST_TOKEN
+      ) {
+        sessionToken = process.env.TENSORIFY_TEST_TOKEN;
+      } else {
+        sessionToken = await this.getSession();
+      }
+
       if (!sessionToken) {
         throw new Error("No session token found. Please login first.");
       }

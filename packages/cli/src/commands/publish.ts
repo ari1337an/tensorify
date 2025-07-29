@@ -1158,9 +1158,25 @@ class PluginPublisher {
     console.log(chalk.yellow("🔍 Validating plugin name..."));
 
     const expectedPrefix = `@${this.username}/`;
-    if (!this.packageJson.name.startsWith(expectedPrefix)) {
+    const isValidUserNamespace =
+      this.packageJson.name.startsWith(expectedPrefix);
+
+    // In development mode with test tokens, also allow @tensorify/ or @testing-bot-tensorify-dev/ namespace
+    const isValidTensorifyNamespace =
+      process.env.NODE_ENV === "development" &&
+      process.env.TENSORIFY_TEST_TOKEN &&
+      (this.packageJson.name.startsWith("@tensorify/") ||
+        this.packageJson.name.startsWith("@testing-bot-tensorify-dev/"));
+
+    if (!isValidUserNamespace && !isValidTensorifyNamespace) {
+      const allowedFormats =
+        process.env.NODE_ENV === "development" &&
+        process.env.TENSORIFY_TEST_TOKEN
+          ? `${expectedPrefix}plugin-name or @tensorify/plugin-name or @testing-bot-tensorify-dev/plugin-name`
+          : `${expectedPrefix}plugin-name`;
+
       throw new Error(
-        `Plugin name must be namespaced with your username. Expected format: ${expectedPrefix}plugin-name`
+        `Plugin name must be namespaced correctly. Expected format: ${allowedFormats}`
       );
     }
     console.log(chalk.green("✅ Plugin name validated\n"));

@@ -99,6 +99,60 @@ app.post("/api/publish-complete", async (req, res) => {
   }
 });
 
+// Development-only test auth endpoints
+if (process.env.NODE_ENV === "development") {
+  try {
+    const {
+      createTestUser,
+      deleteTestUser,
+      getTestUsers,
+    } = require("./v1/test/auth");
+
+    app.post("/api/test/auth", async (req, res) => {
+      try {
+        const result = await createTestUser({
+          body: req.body,
+          headers: req.headers,
+        });
+        res.status(result.status).json(result.body);
+      } catch (error) {
+        console.error("Test auth creation error:", error);
+        res.status(500).json({ error: "Test auth creation failed" });
+      }
+    });
+
+    app.delete("/api/test/auth/:userId", async (req, res) => {
+      try {
+        const result = await deleteTestUser({
+          params: req.params,
+          headers: req.headers,
+        });
+        res.status(result.status).json(result.body);
+      } catch (error) {
+        console.error("Test auth deletion error:", error);
+        res.status(500).json({ error: "Test auth deletion failed" });
+      }
+    });
+
+    app.get("/api/test/auth", async (req, res) => {
+      try {
+        const result = await getTestUsers({ headers: req.headers });
+        res.status(result.status).json(result.body);
+      } catch (error) {
+        console.error("Test auth list error:", error);
+        res.status(500).json({ error: "Test auth list failed" });
+      }
+    });
+
+    console.log("✅ Test auth endpoints loaded for development");
+  } catch (error) {
+    console.warn(
+      "⚠️ Test auth endpoints not available:",
+      (error as Error).message
+    );
+  }
+}
+
 // Add health check endpoint
 app.get("/health", async (req, res) => {
   try {

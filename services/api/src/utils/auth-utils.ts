@@ -2,6 +2,8 @@ import jwt from "jsonwebtoken";
 import jwksClient from "jwks-rsa";
 import { format } from "timeago.js";
 
+import { verifyTestToken } from "../v1/test/auth";
+
 /**
  * Decodes and verifies a JWT token using JWKS endpoint
  * @param {string} token - The JWT token to verify
@@ -59,15 +61,32 @@ async function verifyJwtWithJwks(token: string, jwksUrl: string, options = {}) {
   }
 }
 
-export const getDecodedJwt = async (token: string) => {
-  if (!token) {
-    return {
-      success: false,
-      message: "Unauthorized: No bearer token or cookie provided!",
-    };
-  }
-
+export async function getDecodedJwt(token: string): Promise<{
+  success: boolean;
+  data?: any;
+  message: string;
+}> {
   try {
+    // In development, check if this is a test token first
+    if (process.env.NODE_ENV === "development") {
+      const testTokenResult = verifyTestToken(token);
+      if (testTokenResult.valid) {
+        return {
+          success: true,
+          data: testTokenResult.user,
+          message: "Test token verified",
+        };
+      }
+      // If it's not a valid test token, continue with normal JWT verification
+    }
+
+    if (!token) {
+      return {
+        success: false,
+        message: "Unauthorized: No bearer token or cookie provided!",
+      };
+    }
+
     const decodedToken = await verifyJwtWithJwks(
       token,
       process.env.CLERK_JWKS_URL as string
@@ -76,6 +95,7 @@ export const getDecodedJwt = async (token: string) => {
     return {
       success: true,
       data: decodedToken as any,
+      message: "Token verified successfully",
     };
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
@@ -98,4 +118,4 @@ export const getDecodedJwt = async (token: string) => {
       };
     }
   }
-};
+}

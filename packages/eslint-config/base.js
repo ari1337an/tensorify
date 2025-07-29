@@ -27,6 +27,9 @@ const baseConfig = [
   {
     files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
     languageOptions: {
+      globals: {
+        ...globals.node,
+      },
       parser: tsParser,
       parserOptions: {
         ecmaVersion: "latest",

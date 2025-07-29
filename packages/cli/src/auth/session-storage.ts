@@ -99,6 +99,14 @@ export const sessionStorage = new SessionStorage();
  * Get the current authentication token
  */
 export async function getAuthToken(): Promise<string | null> {
+  // In development, check for test token first
+  if (
+    process.env.NODE_ENV === "development" &&
+    process.env.TENSORIFY_TEST_TOKEN
+  ) {
+    return process.env.TENSORIFY_TEST_TOKEN;
+  }
+
   return await sessionStorage.getSession();
 }
 

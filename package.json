@@ -14,7 +14,8 @@
     "services/app.tensorify.io",
     "services/auth.tensorify.io",
     "services/controls.tensorify.io",
-    "services/tensorify.io"
+    "services/tensorify.io",
+    "scripts"
   ],
   "scripts": {
     "dev": "turbo run dev --filter='./packages/plugin-engine' --filter='./services/api' --filter='./services/plugins.tensorify.io' --filter='./services/app.tensorify.io' --parallel",
@@ -41,7 +42,9 @@
     "publish:all": "npm run build && npm publish --workspace=packages/cli --workspace=packages/sdk --workspace=packages/create-tensorify-plugin",
     "db:start": "docker compose up -d postgres",
     "db:stop": "docker compose down",
-    "prebuild": "npm run db:start && turbo run prebuild"
+    "prebuild": "npm run db:start && turbo run prebuild",
+    "test:integration": "NODE_ENV=development npm run integration-test --workspace=scripts",
+    "test:publish": "npm run test:integration"
   },
   "devDependencies": {
     "turbo": "^2.5.4"
