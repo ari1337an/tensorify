@@ -22,7 +22,8 @@
     "docker:down": "docker compose -f docker-compose.test.yml down",
     "migrate:postgres:test": "dotenv -e .env.test -- npx prisma db push --force-reset",
     "test": "npm run generate:tsrest; npm run generate:tsrest:client; npm run docker:up; npm run prisma:generate; npm run migrate:postgres:test; env-cmd -f .env.test jest; npm run docker:down",
-    "test:args": "npm run generate:tsrest; npm run generate:tsrest:client; npm run docker:up; npm run prisma:generate; npm run migrate:postgres:test; env-cmd -f .env.test jest --runInBand --verbose"
+    "test:args": "npm run generate:tsrest; npm run generate:tsrest:client; npm run docker:up; npm run prisma:generate; npm run migrate:postgres:test; env-cmd -f .env.test jest --runInBand --verbose",
+    "postinstall": "npx prisma generate"
   },
   "dependencies": {
     "@anatine/zod-openapi": "^2.2.8",
