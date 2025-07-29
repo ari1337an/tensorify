@@ -3,3 +3,10 @@ node_modules
 .next
 .git
 .gitignore
+
+.turbo
+.next 
+dist
+node_modules
+.env
+.env.*

@@ -44,3 +44,10 @@ next-env.d.ts
 /.clerk/
 
 .cursor/mcp.json
+
+.turbo
+.next 
+dist
+node_modules
+.env
+.env.*
