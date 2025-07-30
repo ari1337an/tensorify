@@ -6,7 +6,7 @@
         "env": ["NODE_ENV"]
       },
       "build": {
-        "dependsOn": ["^build"],
+        "dependsOn": ["prebuild", "^build"],
         "outputs": ["dist/**", "lib/**", ".next/**", "build/**"],
         "env": ["NODE_ENV"]
       },
