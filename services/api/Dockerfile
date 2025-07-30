@@ -14,8 +14,8 @@ COPY package*.json pnpm-workspace.yaml .npmrc turbo.json pnpm-lock.yaml ./
 COPY packages/ ./packages/
 COPY services/ ./services/
 
-# Install dependencies and build
-RUN pnpm install --frozen-lockfile --filter=@tensorify.io/backend-api
+# Install dependencies and build (the ... means the backend-api AND its workspace dependencies)
+RUN pnpm install --frozen-lockfile --filter=@tensorify.io/backend-api... 
 RUN pnpm build --filter=@tensorify.io/backend-api
 
 # Deploy stage - Create portable package with pnpm deploy

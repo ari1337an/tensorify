@@ -2,7 +2,7 @@
   "name": "tensorify",
   "private": true,
   "scripts": {
-    "build": "export NODE_ENV=production && turbo build",
+    "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
