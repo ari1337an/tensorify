@@ -6,7 +6,7 @@
     "dev": "turbo dev",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "prebuild": "pnpm install --frozen-lockfile && pnpm run db:start && turbo run prebuild",
+    "prebuild": "pnpm install --frozen-lockfile && turbo run prebuild",
     "db:start": "docker compose up -d postgres",
     "db:stop": "docker compose down",
     "version:patch": "sh scripts/version-management.sh patch",

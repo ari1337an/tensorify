@@ -4,29 +4,33 @@ FROM ari1337an/node-20-python3-make-cpp:0.0.2 AS builder
 # Set working directory
 WORKDIR /app
 
-# Copy workspace configuration first for better caching
-COPY package*.json turbo.json ./
+# Install pnpm
+RUN npm install -g pnpm@latest
 
-# Copy workspace packages needed for dependencies
-COPY packages/plugin-engine/package.json ./packages/plugin-engine/
+# Copy workspace configuration
+COPY package*.json pnpm-workspace.yaml .npmrc turbo.json pnpm-lock.yaml ./
 
-# Copy API service package.json
-COPY services/api/package.json ./services/api/
+# Copy all workspace packages and services
+COPY packages/ ./packages/
+COPY services/ ./services/
 
-# Install dependencies for the entire workspace
-RUN npm install --workspace=@tensorify.io/backend-api --legacy-peer-deps
+# Install dependencies and build
+RUN pnpm install --frozen-lockfile --filter=@tensorify.io/backend-api
+RUN pnpm build --filter=@tensorify.io/backend-api
 
-# Copy all source code
-COPY packages/plugin-engine/ ./packages/plugin-engine/
-COPY services/api/src/ ./services/api/src/
-COPY services/api/scripts/ ./services/api/scripts/
-COPY services/api/tsconfig.json ./services/api/
-COPY services/api/ecosystem.config.js ./services/api/
+# Deploy stage - Create portable package with pnpm deploy
+FROM ari1337an/node-20-python3-make-cpp:0.0.2 AS deployed
 
-# Build the application and prune dev dependencies
-RUN npx turbo build --filter=@tensorify.io/backend-api && \
-    npm prune --production --workspace=@tensorify.io/backend-api --legacy-peer-deps && \
-    npm cache clean --force
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm@latest
+
+# Copy the entire workspace for deployment
+COPY --from=builder /app .
+
+# Use pnpm deploy to create a portable package
+RUN pnpm --filter=@tensorify.io/backend-api --prod deploy deployed
 
 # Production stage - Ultra optimized
 FROM ari1337an/node-20-python3-make-cpp:0.0.2 AS production
@@ -39,20 +43,11 @@ RUN npm install -g pm2@latest && \
 # Set working directory
 WORKDIR /app
 
-# Copy only the built application and necessary files
-COPY --from=builder /app/services/api/dist ./services/api/dist
-COPY --from=builder /app/services/api/ecosystem.config.js ./services/api/
-COPY --from=builder /app/services/api/package.json ./services/api/
-COPY --from=builder /app/node_modules ./node_modules
-# Only copy the built packages we need (not source)
-COPY --from=builder /app/packages/plugin-engine/dist ./packages/plugin-engine/dist
-COPY --from=builder /app/packages/plugin-engine/package.json ./packages/plugin-engine/
+# Copy the deployed package (contains everything needed to run)
+COPY --from=deployed /app/deployed .
 
 # Create logs directory for PM2
-RUN mkdir -p /app/services/api/logs
-
-# Set working directory to API service
-WORKDIR /app/services/api
+RUN mkdir -p /app/logs
 
 # Expose port
 EXPOSE 3001
