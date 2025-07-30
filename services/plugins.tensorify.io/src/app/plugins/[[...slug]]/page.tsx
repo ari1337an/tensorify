@@ -567,7 +567,14 @@ export default async function PluginPage({
                         <dd>
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-primary/10 text-primary text-sm font-medium rounded-md border border-primary/20">
                             <Package className="h-3.5 w-3.5" />
-                            {plugin.pluginType || "CUSTOM"}
+                            {plugin.pluginType
+                              .split("_")
+                              .map(
+                                (word) =>
+                                  word.charAt(0).toUpperCase() +
+                                  word.slice(1).toLowerCase()
+                              )
+                              .join(" ") || "Custom"}
                           </span>
                         </dd>
                       </div>

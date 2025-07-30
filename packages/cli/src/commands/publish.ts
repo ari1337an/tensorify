@@ -1325,7 +1325,7 @@ class PluginPublisher {
             sdkVersion: this.sdkVersion, // Pass sdkVersion
             tags: this.keywords.join(","), // Pass keywords as comma-separated string
             readme: this.readme,
-            pluginType: this.manifestJson.pluginType || NodeType.CUSTOM, // Pass plugin type
+            pluginType: this.manifestJson.tensorify.pluginType.toLowerCase() || NodeType.CUSTOM, // Pass plugin type
           },
         },
         {
