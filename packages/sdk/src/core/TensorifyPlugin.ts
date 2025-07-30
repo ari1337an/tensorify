@@ -125,28 +125,28 @@ export abstract class TensorifyPlugin {
   // PLUGIN DEFINITION ACCESSORS
   // ========================================
 
-  /** Get plugin ID */
-  public getId(): string {
+  /** Get plugin ID (may be undefined if not provided in definition) */
+  public getId(): string | undefined {
     return this.definition.id;
   }
 
-  /** Get plugin name */
-  public getName(): string {
+  /** Get plugin name (may be undefined if not provided in definition) */
+  public getName(): string | undefined {
     return this.definition.name;
   }
 
-  /** Get plugin description */
-  public getDescription(): string {
+  /** Get plugin description (may be undefined if not provided in definition) */
+  public getDescription(): string | undefined {
     return this.definition.description;
   }
 
-  /** Get plugin version */
-  public getVersion(): string {
+  /** Get plugin version (may be undefined if not provided in definition) */
+  public getVersion(): string | undefined {
     return this.definition.version;
   }
 
-  /** Get node type */
-  public getNodeType(): NodeType {
+  /** Get node type (may be undefined if not provided in definition) */
+  public getNodeType(): NodeType | undefined {
     return this.definition.nodeType;
   }
 
@@ -278,13 +278,8 @@ export abstract class TensorifyPlugin {
   private validateDefinition(): void {
     const errors: string[] = [];
 
-    // Validate required properties
-    if (!this.definition.id) errors.push("Plugin id is required");
-    if (!this.definition.name) errors.push("Plugin name is required");
-    if (!this.definition.description)
-      errors.push("Plugin description is required");
-    if (!this.definition.version) errors.push("Plugin version is required");
-    if (!this.definition.nodeType) errors.push("Plugin nodeType is required");
+    // Note: All core metadata (including nodeType) can be derived from package.json
+    // Only visual configuration is truly required at definition time
 
     // Validate visual config
     if (!this.definition.visual) {
@@ -523,6 +518,48 @@ export abstract class TensorifyPlugin {
   // ========================================
 
   /**
+   * Derive plugin ID from package name
+   * @param packageName Package name (e.g., "@org/my-plugin" or "my-plugin")
+   * @returns Derived plugin ID
+   */
+  private derivePluginId(packageName: string): string {
+    // Remove scope prefix if present (@org/my-plugin -> my-plugin)
+    return packageName.replace(/^@[^/]+\//, "");
+  }
+
+  /**
+   * Derive nodeType from package.json tensorify.pluginType
+   * @param pluginType Plugin type from package.json tensorify section
+   * @returns Derived NodeType or default to CUSTOM
+   */
+  private deriveNodeType(pluginType?: string): NodeType {
+    if (!pluginType) return NodeType.CUSTOM;
+
+    // Map string values to NodeType enum
+    const typeMap: Record<string, NodeType> = {
+      custom: NodeType.CUSTOM,
+      trainer: NodeType.TRAINER,
+      evaluator: NodeType.EVALUATOR,
+      model: NodeType.MODEL,
+      model_layer: NodeType.MODEL_LAYER,
+      dataloader: NodeType.DATALOADER,
+      preprocessor: NodeType.PREPROCESSOR,
+      postprocessor: NodeType.POSTPROCESSOR,
+      augmentation_stack: NodeType.AUGMENTATION_STACK,
+      optimizer: NodeType.OPTIMIZER,
+      loss_function: NodeType.LOSS_FUNCTION,
+      metric: NodeType.METRIC,
+      scheduler: NodeType.SCHEDULER,
+      regularizer: NodeType.REGULARIZER,
+      function: NodeType.FUNCTION,
+      pipeline: NodeType.PIPELINE,
+      report: NodeType.REPORT,
+    };
+
+    return typeMap[pluginType.toLowerCase()] || NodeType.CUSTOM;
+  }
+
+  /**
    * Generate frontend manifest for CLI publishing
    *
    * @param packageInfo Package.json information
@@ -533,11 +570,33 @@ export abstract class TensorifyPlugin {
     packageInfo: PackageJsonInfo,
     entrypointClassName: string
   ): FrontendPluginManifest {
+    // Derive missing core metadata from package.json
+    const derivedId =
+      this.definition.id || this.derivePluginId(packageInfo.name);
+    const derivedName = this.definition.name || packageInfo.name;
+    const derivedDescription =
+      this.definition.description || packageInfo.description || "";
+    const derivedVersion = this.definition.version || packageInfo.version;
+    const derivedNodeType =
+      this.definition.nodeType ||
+      this.deriveNodeType(packageInfo.tensorify?.pluginType);
+
+    // Validate that we have all required information after derivation
+    if (!derivedId) {
+      throw new Error("Plugin ID could not be derived from package name");
+    }
+    if (!derivedName) {
+      throw new Error("Plugin name could not be derived from package name");
+    }
+    if (!derivedVersion) {
+      throw new Error("Plugin version could not be derived from package.json");
+    }
+
     const manifest: FrontendPluginManifest = {
       // Package Information
       name: packageInfo.name,
       version: packageInfo.version,
-      description: packageInfo.description || this.definition.description,
+      description: packageInfo.description || derivedDescription,
       author: packageInfo.author || this.definition.author || "",
       main: packageInfo.main || "dist/index.js",
       entrypointClassName,
@@ -548,10 +607,10 @@ export abstract class TensorifyPlugin {
 
       // Frontend Configuration
       frontendConfigs: {
-        id: this.definition.id,
-        name: this.definition.name,
-        category: this.definition.nodeType,
-        nodeType: this.definition.nodeType,
+        id: derivedId,
+        name: derivedName,
+        category: derivedNodeType,
+        nodeType: derivedNodeType,
         visual: this.definition.visual,
         inputHandles: this.definition.inputHandles,
         outputHandles: this.definition.outputHandles,
@@ -581,8 +640,8 @@ export abstract class TensorifyPlugin {
    */
   public createDefaultSettings(): PluginSettings {
     const settings: PluginSettings = {
-      variableName: `${this.definition.id}_${Date.now()}`,
-      labelName: this.definition.name,
+      variableName: `${this.definition.id || "plugin"}_${Date.now()}`,
+      labelName: this.definition.name || "Plugin",
     };
 
     for (const field of this.definition.settingsFields) {

@@ -111,7 +111,7 @@ class PluginPublisher {
     // Determine if we should use dev environment
     // Priority: explicit --dev flag > saved config > NODE_ENV
     let isDev = options.dev;
-    if (isDev === undefined) {
+    if (!isDev) {
       // We'll resolve this async in the publish method
       isDev = process.env.NODE_ENV === "development";
     }
@@ -744,7 +744,7 @@ class PluginPublisher {
       );
       console.error(chalk.gray(`        Issue: ${zodError.message}`));
 
-      if (zodError.received !== undefined) {
+      if (zodError.received) {
         console.error(
           chalk.gray(
             `        Received: ${chalk.red(JSON.stringify(zodError.received))}`

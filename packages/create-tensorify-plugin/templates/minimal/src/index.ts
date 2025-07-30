@@ -16,19 +16,15 @@ import {
 
 /**
  * Minimal Plugin
- * 
+ *
  * This plugin demonstrates the basic structure for a Tensorify plugin.
  * Make sure you have the latest SDK linked: npm link @tensorify.io/sdk
  */
 export default class MinimalPlugin extends TensorifyPlugin {
   constructor() {
     const definition: IPluginDefinition = {
-      // Core Metadata
-      id: "minimal-plugin",
-      name: "Minimal Plugin",
-      description: "A minimal example plugin for Tensorify",
-      version: "1.0.0",
-      nodeType: NodeType.{{pluginType}},
+      // Core Metadata (id, name, description, version, nodeType are derived from package.json)
+      // nodeType is derived from package.json tensorify.pluginType field
 
       // Visual Configuration (comprehensive and required)
       visual: {
@@ -147,7 +143,8 @@ export default class MinimalPlugin extends TensorifyPlugin {
     const showTimestamp = settings.showTimestamp || false;
 
     // Safe context handling - getInput method available in TensorifyPlugin
-    const hasInput = context && context.inputData && Object.keys(context.inputData).length > 0;
+    const hasInput =
+      context && context.inputData && Object.keys(context.inputData).length > 0;
 
     // Generate code
     let code = `# Minimal Plugin\n`;

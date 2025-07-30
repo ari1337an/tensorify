@@ -398,12 +398,8 @@ export function createPluginTemplate(
 export default class ${pluginName.replace(/[^a-zA-Z0-9]/g, "")}Plugin extends TensorifyPlugin {
   constructor() {
     const definition: IPluginDefinition = {
-      // Core Metadata
-      id: "${pluginId}",
-      name: "${pluginName}",
-      description: "A ${pluginName.toLowerCase()} plugin for Tensorify",
-      version: "1.0.0",
-      nodeType: NodeType.${nodeType.toUpperCase()},
+      // Core Metadata (id, name, description, version, nodeType are derived from package.json)
+      // nodeType is derived from package.json tensorify.pluginType field
 
       // Visual Configuration
       visual: {

@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
             key: "Access-Control-Allow-Origin",
             value:
               process.env.NODE_ENV === "production"
-                ? "https://backend.tensorify.io,https://app.tensorify.io"
+                ? "https://backend.tensorify.io,https://app.tensorify.io,https://*.app.tensorify.io"
                 : "*",
           },
           {

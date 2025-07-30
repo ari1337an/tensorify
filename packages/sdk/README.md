@@ -34,12 +34,8 @@ import {
 export default class LinearLayerPlugin extends TensorifyPlugin {
   constructor() {
     const definition: IPluginDefinition = {
-      // Core Metadata
-      id: "pytorch-linear-layer",
-      name: "Linear Layer",
-      description: "PyTorch linear/fully-connected layer",
-      version: "1.0.0",
-      nodeType: NodeType.MODEL_LAYER,
+      // Core Metadata (id, name, description, version, nodeType are derived from package.json)
+      // nodeType is derived from package.json tensorify.pluginType field
 
       // Visual Configuration
       visual: {
@@ -187,12 +183,12 @@ Every Tensorify plugin is built using the `IPluginDefinition` interface:
 
 ```typescript
 interface IPluginDefinition {
-  // Core Metadata
-  id: string; // Unique plugin identifier
-  name: string; // Human-readable name
-  description: string; // Plugin description
-  version: string; // Semantic version
-  nodeType: NodeType; // Category (MODEL_LAYER, TRAINER, etc.)
+  // Core Metadata (all optional - derived from package.json)
+  id?: string; // Unique plugin identifier (derived from package name)
+  name?: string; // Human-readable name (derived from package name)
+  description?: string; // Plugin description (derived from package.json)
+  version?: string; // Semantic version (derived from package.json)
+  nodeType?: NodeType; // Category (derived from package.json tensorify.pluginType)
 
   // Visual Configuration
   visual: NodeVisualConfig; // How the plugin appears in UI
@@ -214,9 +210,11 @@ interface IPluginDefinition {
 
 **Key insights for plugin development (reverse-engineered from SDK):**
 
-1. **Visual Configuration is Mandatory**: Unlike optional documentation suggests, the `visual` field is required and heavily used by the frontend to render nodes.
+1. **Core Metadata Derivation**: The SDK automatically derives `id`, `name`, `description`, `version`, and `nodeType` from your package.json, eliminating duplication. These fields are optional in `IPluginDefinition` and only need to be specified if you want to override the package.json values. The `nodeType` is derived from the `tensorify.pluginType` field in package.json.
 
-2. **Handle System**: The plugin uses an 8-point positioning system for handles:
+2. **Visual Configuration is Mandatory**: Unlike optional documentation suggests, the `visual` field is required and heavily used by the frontend to render nodes.
+
+3. **Handle System**: The plugin uses an 8-point positioning system for handles:
 
    ```typescript
    enum HandlePosition {
@@ -231,7 +229,7 @@ interface IPluginDefinition {
    }
    ```
 
-3. **Settings Field Types Map to UI Components**:
+4. **Settings Field Types Map to UI Components**:
 
    ```typescript
    SettingsUIType.SLIDER → Frontend renders slider component
@@ -240,22 +238,22 @@ interface IPluginDefinition {
    // The type directly determines UI rendering
    ```
 
-4. **Dynamic Labels Use Template Strings**: The `dynamicLabelTemplate` in visual config supports variable substitution:
+5. **Dynamic Labels Use Template Strings**: The `dynamicLabelTemplate` in visual config supports variable substitution:
 
    ```typescript
    dynamicLabelTemplate: "Dropout (p={p})"; // {p} gets replaced with settings.p value
    ```
 
-5. **Context Parameter Can Be Undefined**: In `getTranslationCode`, the context parameter might be undefined, especially during testing:
+6. **Context Parameter Can Be Undefined**: In `getTranslationCode`, the context parameter might be undefined, especially during testing:
 
    ```typescript
    // Always check context before using
    const inputData = context ? this.getInput(context, 0) : null;
    ```
 
-6. **Plugin Manifest Generation**: The CLI automatically generates manifest.json from your plugin definition - no manual manifest needed.
+7. **Plugin Manifest Generation**: The CLI automatically generates manifest.json from your plugin definition - no manual manifest needed.
 
-7. **Settings Validation is Automatic**: The SDK enforces validation rules automatically when `validateSettings()` is called.
+8. **Settings Validation is Automatic**: The SDK enforces validation rules automatically when `validateSettings()` is called.
 
 ### Core Settings System
 
@@ -702,6 +700,9 @@ my-plugin/
   "repository": {
     "type": "git",
     "url": "https://github.com/your-username/my-plugin"
+  },
+  "tensorify": {
+    "pluginType": "model_layer"
   }
 }
 ```
@@ -829,9 +830,7 @@ The frontend automatically:
 export default class Conv2dPlugin extends TensorifyPlugin {
   constructor() {
     super({
-      id: "pytorch-conv2d",
-      name: "Conv2d Layer",
-      nodeType: NodeType.MODEL_LAYER,
+      // Core metadata derived from package.json
       visual: {
         // ... visual config
         labels: {
@@ -869,9 +868,7 @@ export default class Conv2dPlugin extends TensorifyPlugin {
 export default class TrainerPlugin extends TensorifyPlugin {
   constructor() {
     super({
-      id: "pytorch-trainer",
-      name: "Training Loop",
-      nodeType: NodeType.TRAINER,
+      // Core metadata derived from package.json
       inputHandles: [
         { id: "model", position: HandlePosition.LEFT /* ... */ },
         { id: "optimizer", position: HandlePosition.LEFT /* ... */ },

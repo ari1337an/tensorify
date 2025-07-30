@@ -16,19 +16,15 @@ import {
 
 /**
  * Linear Layer Plugin
- * 
+ *
  * This plugin demonstrates the complete structure for a PyTorch linear layer.
  * Make sure you have the latest SDK linked: npm link @tensorify.io/sdk
  */
 export default class LinearLayerPlugin extends TensorifyPlugin {
   constructor() {
     const definition: IPluginDefinition = {
-      // Core Metadata
-      id: "pytorch-linear-layer",
-      name: "Linear Layer",
-      description: "PyTorch linear/fully-connected layer",
-      version: "1.0.0",
-      nodeType: NodeType.{{pluginType}},
+      // Core Metadata (id, name, description, version, nodeType are derived from package.json)
+      // nodeType is derived from package.json tensorify.pluginType field
 
       // Visual Configuration (comprehensive and required)
       visual: {

@@ -1,3 +1,4 @@
 {
-  "extends": "./packages/config/tsconfig/base.json"
+  "extends": "./packages/config/tsconfig/base.json",
+  "exclude": ["templates/**/*"]
 }

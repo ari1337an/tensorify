@@ -22,17 +22,17 @@ import { SettingsField, SettingsGroup } from "./settings";
  * This is what developers use to define their plugins
  */
 export interface IPluginDefinition {
-  // Core Metadata
-  /** Unique plugin identifier */
-  id: string;
-  /** Human-readable plugin name */
-  name: string;
-  /** Plugin description */
-  description: string;
-  /** Plugin version (semantic versioning) */
-  version: string;
-  /** Plugin category/type */
-  nodeType: NodeType;
+  // Core Metadata (optional - will be derived from package.json if not provided)
+  /** Unique plugin identifier (derived from package name if not provided) */
+  id?: string;
+  /** Human-readable plugin name (derived from package name if not provided) */
+  name?: string;
+  /** Plugin description (derived from package.json if not provided) */
+  description?: string;
+  /** Plugin version (derived from package.json if not provided) */
+  version?: string;
+  /** Plugin category/type (derived from package.json tensorify.pluginType if not provided) */
+  nodeType?: NodeType;
 
   // Visual Configuration
   /** Visual appearance and behavior */

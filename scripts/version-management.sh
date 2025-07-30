@@ -11,17 +11,40 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Package directories
+# Package directories in dependency order (SDK first, then CLI, then create-tensorify-plugin)
 PACKAGES=(
-  "packages/cli"
   "packages/sdk"
+  "packages/cli"
   "packages/create-tensorify-plugin"
 )
+
+# Dependency relationships
+CLI_PACKAGE="packages/cli"
+SDK_PACKAGE="packages/sdk"
 
 # Function to get current version from package.json
 get_version() {
   local package_dir=$1
   node -p "require('./$package_dir/package.json').version"
+}
+
+# Function to update SDK dependency in CLI package.json
+update_cli_sdk_dependency() {
+  local sdk_version=$1
+  
+  echo -e "${YELLOW}Updating CLI's SDK dependency to version $sdk_version...${NC}"
+  
+  # Use node to update the dependency
+  node -e "
+    const fs = require('fs');
+    const path = './$CLI_PACKAGE/package.json';
+    const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
+    if (pkg.dependencies && pkg.dependencies['@tensorify.io/sdk']) {
+      pkg.dependencies['@tensorify.io/sdk'] = '$sdk_version';
+      fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
+      console.log('✓ Updated CLI SDK dependency to $sdk_version');
+    }
+  "
 }
 
 # Function to update version in package.json
@@ -35,6 +58,11 @@ update_version() {
   cd "$package_dir"
   pnpm version "$new_version" --no-workspaces-update --no-git-tag-version
   cd - > /dev/null
+  
+  # If we just updated the SDK, update CLI's dependency on SDK
+  if [[ "$package_dir" == "$SDK_PACKAGE" ]]; then
+    update_cli_sdk_dependency "$new_version"
+  fi
 }
 
 # Function to display current versions
@@ -44,6 +72,11 @@ show_versions() {
     version=$(get_version "$package")
     echo "  $package: $version"
   done
+  
+  # Also show CLI's SDK dependency version
+  cli_sdk_dep=$(node -p "require('./$CLI_PACKAGE/package.json').dependencies['@tensorify.io/sdk'] || 'not found'" 2>/dev/null)
+  echo -e "${YELLOW}Dependencies:${NC}"
+  echo "  CLI → SDK: $cli_sdk_dep"
 }
 
 # Function to bump versions
@@ -52,9 +85,9 @@ bump_versions() {
   
   echo -e "${GREEN}Bumping all packages ($bump_type)...${NC}"
   
-  # Get current version from CLI package (use as reference)
-  local current_version=$(get_version "packages/cli")
-  echo "Current reference version: $current_version"
+  # Get current version from SDK package (use as reference since it's first in dependency chain)
+  local current_version=$(get_version "$SDK_PACKAGE")
+  echo "Current reference version (SDK): $current_version"
   
   # Calculate new version based on bump type
   local new_version
@@ -146,10 +179,16 @@ sync_versions() {
   
   echo "Syncing all packages to version: $highest_version"
   
-  # Update all packages to the highest version
+  # Update all packages to the highest version (maintaining dependency order)
   for package in "${PACKAGES[@]}"; do
-    update_version "$package" "$highest_version"
+    current_version=$(get_version "$package")
+    if [[ "$current_version" != "$highest_version" ]]; then
+      update_version "$package" "$highest_version"
+    fi
   done
+  
+  # Ensure CLI's SDK dependency is also synced
+  update_cli_sdk_dependency "$highest_version"
   
   echo -e "${GREEN}All packages synced to version $highest_version${NC}"
 }
@@ -193,7 +232,7 @@ case "${1:-}" in
     echo "Usage: $0 [command]"
     echo ""
     echo "Commands:"
-    echo "  show, status    - Show current versions"
+    echo "  show, status    - Show current versions and dependencies"
     echo "  patch           - Bump patch version for all packages"
     echo "  minor           - Bump minor version for all packages"
     echo "  major           - Bump major version for all packages"
@@ -203,10 +242,16 @@ case "${1:-}" in
     echo "  release         - Bump patch version and publish all packages"
     echo "  help            - Show this help message"
     echo ""
+    echo "Package Update Order:"
+    echo "  1. SDK (independent)"
+    echo "  2. CLI (depends on SDK - dependency auto-updated)"
+    echo "  3. create-tensorify-plugin (independent)"
+    echo ""
     echo "Examples:"
-    echo "  $0 show         - Display current versions"
+    echo "  $0 show         - Display current versions and dependencies"
     echo "  $0 patch        - Bump patch version (0.0.8 → 0.0.9)"
     echo "  $0 minor        - Bump minor version (0.0.8 → 0.1.0)"
+    echo "  $0 sync         - Sync all packages and fix dependency mismatches"
     echo "  $0 publish      - Build and publish all packages"
     echo "  $0 release      - Bump patch and publish in one command"
     ;;

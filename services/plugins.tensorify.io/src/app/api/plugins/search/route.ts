@@ -2,15 +2,18 @@ import db from "@/server/database/db";
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { processSearchResults } from "@/lib/search-utils";
+import { getCorsHeaders, createOptionsHandler } from "@/lib/cors-utils";
 
 export async function GET(request: Request) {
+  const corsHeaders = getCorsHeaders(request);
+
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q")?.trim() || "";
     const username = (await currentUser())?.username || "";
 
     if (!query) {
-      return NextResponse.json({ plugins: [] });
+      return NextResponse.json({ plugins: [] }, { headers: corsHeaders });
     }
 
     // Get all plugins that might match
@@ -38,15 +41,21 @@ export async function GET(request: Request) {
       includeSearchMeta: true,
     });
 
-    return NextResponse.json({
-      plugins,
-      searchMeta,
-    });
+    return NextResponse.json(
+      {
+        plugins,
+        searchMeta,
+      },
+      { headers: corsHeaders }
+    );
   } catch (error) {
     console.error("Search error:", error);
     return NextResponse.json(
       { error: "Failed to search plugins" },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
+
+// Handle CORS preflight requests
+export const OPTIONS = createOptionsHandler("GET, OPTIONS");
