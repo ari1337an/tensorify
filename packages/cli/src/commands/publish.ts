@@ -255,19 +255,11 @@ class PluginPublisher {
    * Resolve development environment configuration
    */
   private async resolveDevelopmentEnvironment(): Promise<void> {
-    // If --dev flag was not explicitly set, check saved config from login
-    if (this.options.dev === undefined) {
-      const config = await getConfig();
-      // Use saved environment from last login, default to production if no saved config
-      this.options.dev = config.isDev || false;
-
-      if (this.options.dev) {
-        console.log(
-          chalk.cyan("🔧 Using development environment (from saved login)")
-        );
-      } else {
-        console.log(chalk.cyan("🔧 Using production environment (default)"));
-      }
+    // Production is the default environment
+    // Only use development if --dev flag is explicitly provided
+    if (!this.options.dev) {
+      this.options.dev = false; // Default to production
+      console.log(chalk.cyan("🔧 Using production environment (default)"));
     } else if (this.options.dev) {
       console.log(chalk.cyan("🔧 Using development environment (--dev flag)"));
     } else {
