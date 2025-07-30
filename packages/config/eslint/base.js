@@ -1,7 +1,7 @@
 const { FlatCompat } = require("@eslint/eslintrc");
 const js = require("@eslint/js");
-const tseslint = require("@typescript-eslint/eslint-plugin");
-const tsParser = require("@typescript-eslint/parser");
+const tseslint = require("typescript-eslint");
+const globals = require("globals");
 
 const compat = new FlatCompat({
   baseDirectory: __dirname,
@@ -30,14 +30,14 @@ const baseConfig = [
       globals: {
         ...globals.node,
       },
-      parser: tsParser,
+      parser: tseslint.parser,
       parserOptions: {
         ecmaVersion: "latest",
         sourceType: "module",
       },
     },
     plugins: {
-      "@typescript-eslint": tseslint,
+      "@typescript-eslint": tseslint.plugin,
     },
     rules: {
       "@typescript-eslint/no-unused-vars": [

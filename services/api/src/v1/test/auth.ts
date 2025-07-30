@@ -7,7 +7,6 @@ import {
 import { z } from "zod";
 import { initServer } from "@ts-rest/express";
 import jwt from "jsonwebtoken";
-import process from "process";
 
 // SECURITY: Only works in development environment
 // if (process.env.NODE_ENV !== "development") {

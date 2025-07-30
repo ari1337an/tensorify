@@ -1,34 +1,19 @@
 {
+  "extends": "../../packages/config/tsconfig/nextjs.json",
   "compilerOptions": {
-    "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@canvas/*": ["./src/app/(protected)/(canvas)/*"],
-      "@onboarding/*": ["./src/app/(application)/(onboarding)/*"],
-      "@enterprise/*": ["./src/app/(application)/(protected)/(enterprise)/*"],
-      "@app/*": ["./src/app/*"],
       "@workflow/*": [
         "./src/app/(application)/(protected)/(canvas)/_workflow/*"
-      ]
-    }
+      ],
+      "@canvas/*": ["./src/app/(application)/(protected)/(canvas)/*"],
+      "@onboarding/*": ["./src/app/(application)/(onboarding)/*"],
+      "@enterprise/*": ["./src/app/(application)/(protected)/(enterprise)/*"],
+      "@app/*": ["./src/app/*"]
+    },
+    "isolatedModules": true
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "**/_deprecated_src/**"]
+  "exclude": ["node_modules"]
 }

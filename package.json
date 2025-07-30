@@ -1,12 +1,10 @@
 {
   "name": "tensorify",
   "private": true,
-  "packageManager": "pnpm@10.13.1",
   "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "test": "turbo run test",
-    "lint": "turbo run lint",
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "prebuild": "pnpm install --frozen-lockfile && pnpm run db:start && turbo run prebuild",
     "db:start": "docker compose up -d postgres",
@@ -17,14 +15,14 @@
     "publish:all": "sh scripts/version-management.sh publish"
   },
   "devDependencies": {
-    "@tailwindcss/typography": "^0.5.16",
-    "tailwindcss": "^3.4.1",
-    "tailwindcss-animate": "^1.0.7",
-    "ts-node": "^10.9.2",
-    "turbo": "^2.5.4",
-    "eslint": "^8.57.0"
+    "prettier": "^3.3.3",
+    "turbo": "^2.0.9",
+    "@repo/eslint-config": "workspace:*"
   },
-  "resolutions": {
-    "prosemirror-view": "1.37.2"
-  }
+  "packageManager": "pnpm@9.6.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "packages/config/*"
+  ]
 }
