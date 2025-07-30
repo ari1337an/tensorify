@@ -1,6 +1,7 @@
 packages:
   - packages/**
   - '!packages/create-tensorify-plugin/templates/**'
+  - '!packages/cli/lib/**'
   - services/**
   - '!**/.next/**'
   - scripts
