@@ -23,35 +23,6 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // Apply CORS headers to all API routes
-        source: "/api/:path*",
-        headers: [
-          {
-            key: "Access-Control-Allow-Origin",
-            value:
-              process.env.NODE_ENV === "production"
-                ? "https://backend.tensorify.io,https://app.tensorify.io,https://*.app.tensorify.io"
-                : "*",
-          },
-          {
-            key: "Access-Control-Allow-Methods",
-            value: "GET, POST, PUT, DELETE, OPTIONS",
-          },
-          {
-            key: "Access-Control-Allow-Headers",
-            value: "Content-Type, Authorization, X-Requested-With",
-          },
-          {
-            key: "Access-Control-Allow-Credentials",
-            value: "true",
-          },
-          {
-            key: "Access-Control-Max-Age",
-            value: "86400", // 24 hours
-          },
-        ],
-      },
-      {
         // Security headers for the application
         source: "/(.*)",
         headers: [
