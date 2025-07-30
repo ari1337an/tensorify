@@ -147,21 +147,43 @@ export const action = {
             );
           }
 
-          // Try to fetch manifest.json from S3 if available
+          // Try to fetch manifest.json from backend API
           try {
-            // TODO: Implement proper manifest fetching via API endpoint
-            // For now, use basic manifest structure with available data
-            manifestData = {
-              name: pluginName,
-              version: version,
-              pluginType: pluginMetadata?.pluginType || "CUSTOM",
-              entrypointClassName: "TensorifyPlugin", // Default value
-              description: pluginMetadata?.description,
-              author: authorName,
-            };
+            const isDevelopment = process.env.NODE_ENV === "development";
+            const backendBaseUrl = isDevelopment
+              ? "http://localhost:3001"
+              : "https://backend.tensorify.io";
+
+            const manifestResponse = await fetch(
+              `${backendBaseUrl}/api/v1/plugin/getManifest?slug=${encodeURIComponent(slug)}`
+            );
+
+            if (manifestResponse.ok) {
+              manifestData = await manifestResponse.json();
+            } else {
+              console.warn(
+                `Failed to fetch manifest for ${slug}:`,
+                manifestResponse.status
+              );
+              throw new TsRestResponseError(contract, {
+                status: 500,
+                body: {
+                  status: "failed",
+                  message:
+                    "Plugin service is temporarily unavailable. Please try again later.",
+                },
+              });
+            }
           } catch (manifestError) {
             console.warn("Failed to fetch manifest.json:", manifestError);
-            // Continue with empty manifest
+            throw new TsRestResponseError(contract, {
+              status: 500,
+              body: {
+                status: "failed",
+                message:
+                  "Plugin service is temporarily unavailable. Please try again later.",
+              },
+            });
           }
         } catch (error) {
           console.warn("Failed to fetch plugin metadata:", error);
