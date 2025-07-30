@@ -19,42 +19,7 @@ This guide walks through creating a PyTorch dropout layer plugin from scratch, s
 
 ## Step 1: Automated Development Environment Setup
 
-### 1.1 One-Command Setup ⚡
-
-The new automated setup eliminates all manual linking confusion:
-
-```bash
-pnpm run devtools:setup
-```
-
-**What this does automatically**:
-
-- ✅ Builds and links @tensorify.io/sdk
-- ✅ Builds and links @tensorify.io/cli
-- ✅ Links create-tensorify-plugin
-- ✅ Provides verification commands
-
-**Expected Output**:
-
-```
-🔧 Setting up Tensorify development tools...
-
-📦 Building and linking SDK...
-✅ SDK built and linked successfully
-
-📦 Building and linking CLI...
-✅ CLI built and linked successfully
-
-📦 Linking create-tensorify-plugin...
-✅ create-tensorify-plugin linked successfully
-
-🎉 Devtools setup completed successfully!
-
-🚀 You can now use local development versions:
-   • npx tensorify --version (uses local CLI)
-   • npx create-tensorify-plugin (uses local generator)
-   • npm link @tensorify.io/sdk (in plugin projects)
-```
+Use the local packages folders devtools directly.
 
 **Why this is better**: Previously took 30+ minutes of manual setup and confusion. Now takes 5 seconds and works reliably.
 
