@@ -6,7 +6,15 @@ import { execSync } from "child_process";
 import { build } from "esbuild";
 import FormData from "form-data";
 import axios from "axios";
-import { validatePlugin, NodeType } from "@tensorify.io/sdk";
+import {
+  validatePlugin,
+  NodeType,
+  HandlePosition,
+  HandleViewType,
+  EdgeType,
+  InputHandle,
+  OutputHandle,
+} from "@tensorify.io/sdk";
 import { getAuthToken, getConfig } from "../auth/session-storage";
 import { authService } from "../auth/auth-service";
 
@@ -45,6 +53,13 @@ interface ManifestJson {
   author?: string;
   keywords?: string[]; // Added for keywords
   pluginType?: string; // Added for NodeType category from SDK
+  inputHandles?: InputHandle[]; // Added for input handles
+  outputHandles?: OutputHandle[]; // Added for output handles
+  visual?: any; // Visual configuration from plugin
+  settingsFields?: any[]; // Settings fields from plugin
+  settingsGroups?: any[]; // Settings groups from plugin
+  capabilities?: any[]; // Plugin capabilities
+  requirements?: any; // Plugin requirements
   [key: string]: any;
 }
 
@@ -458,19 +473,282 @@ class PluginPublisher {
   }
 
   /**
-   * Generate manifest.json content from package.json
+   * Dynamically load and instantiate the plugin to extract configuration
    */
-  private generateManifestFromPackageJson(
+  private async loadPluginInstance(
+    packageJson: PackageJson,
+    entrypointClassName: string
+  ): Promise<any | null> {
+    try {
+      console.log(chalk.blue("🔍 Attempting to load plugin dynamically..."));
+
+      // Always build first to ensure we have the latest version
+      console.log(
+        chalk.yellow("🔨 Building plugin to extract configuration...")
+      );
+      await this.buildPlugin();
+
+      // Determine the built file path
+      // If main points to src/, convert to dist/, otherwise use as-is
+      let builtFile = packageJson.main || "dist/index.js";
+      if (builtFile.startsWith("src/") && builtFile.endsWith(".ts")) {
+        // Convert src/index.ts -> dist/index.js
+        builtFile = builtFile
+          .replace(/^src\//, "dist/")
+          .replace(/\.ts$/, ".js");
+      } else if (builtFile.endsWith(".ts")) {
+        // Convert any .ts to .js
+        builtFile = builtFile.replace(/\.ts$/, ".js");
+      }
+
+      const pluginPath = path.join(this.directory, builtFile);
+      console.log(chalk.gray(`📂 Looking for plugin at: ${pluginPath}`));
+
+      // Verify the built file exists after building
+      if (!fs.existsSync(pluginPath)) {
+        console.warn(chalk.yellow(`⚠️  Built file not found at ${pluginPath}`));
+        // Try alternative locations
+        const alternatives = [
+          "dist/index.js",
+          "lib/index.js",
+          "build/index.js",
+        ];
+        for (const alt of alternatives) {
+          const altPath = path.join(this.directory, alt);
+          if (fs.existsSync(altPath)) {
+            console.log(
+              chalk.yellow(`📂 Found plugin at alternative location: ${alt}`)
+            );
+            builtFile = alt;
+            break;
+          }
+        }
+
+        if (!fs.existsSync(path.join(this.directory, builtFile))) {
+          console.warn(
+            chalk.yellow("⚠️  No built file found in common locations")
+          );
+          return null;
+        }
+      }
+
+      // Dynamically import the plugin class
+      const absolutePath = path.resolve(this.directory, builtFile);
+      console.log(chalk.gray(`📥 Importing from: ${absolutePath}`));
+
+      const pluginModule = await import(absolutePath);
+      console.log(
+        chalk.gray(
+          `🔍 Available exports: ${Object.keys(pluginModule).join(", ")}`
+        )
+      );
+
+      // Try to find the plugin class with multiple strategies
+      let PluginClass =
+        pluginModule.default || pluginModule[entrypointClassName];
+
+      // If not found, try to auto-detect plugin classes
+      if (!PluginClass) {
+        console.log(
+          chalk.yellow(
+            `🔍 Auto-detecting plugin class (${entrypointClassName} not found)...`
+          )
+        );
+
+        // Look for any class that extends TensorifyPlugin or has getDefinition method
+        const pluginCandidates = Object.values(pluginModule).filter(
+          (exp: any) =>
+            typeof exp === "function" &&
+            exp.prototype &&
+            (exp.prototype.getDefinition || exp.prototype.getTranslationCode)
+        );
+
+        if (pluginCandidates.length > 0) {
+          PluginClass = pluginCandidates[0];
+          console.log(
+            chalk.green(`✅ Auto-detected plugin class: ${PluginClass.name}`)
+          );
+        }
+      }
+
+      if (!PluginClass) {
+        console.warn(
+          chalk.yellow(
+            `⚠️  Could not find plugin class "${entrypointClassName}" in ${builtFile}`
+          )
+        );
+        console.warn(
+          chalk.gray(
+            `Available exports: ${Object.keys(pluginModule).join(", ")}`
+          )
+        );
+        return null;
+      }
+
+      console.log(
+        chalk.green(
+          `✅ Found plugin class: ${PluginClass.name || entrypointClassName}`
+        )
+      );
+
+      // Instantiate the plugin
+      const pluginInstance = new PluginClass();
+
+      if (!pluginInstance.getDefinition) {
+        console.warn(
+          chalk.yellow("⚠️  Plugin instance does not have getDefinition method")
+        );
+        return null;
+      }
+
+      console.log(chalk.green("✅ Plugin instance created successfully"));
+      return pluginInstance;
+    } catch (error) {
+      console.warn(
+        chalk.yellow(
+          `⚠️  Failed to load plugin dynamically: ${error instanceof Error ? error.message : String(error)}`
+        )
+      );
+      return null;
+    }
+  }
+
+  /**
+   * Build the plugin using TypeScript compiler
+   */
+  private async buildPlugin(): Promise<void> {
+    try {
+      const buildCommand = this.packageJson.scripts?.build || "tsc";
+      execSync(buildCommand, {
+        cwd: this.directory,
+        stdio: "pipe",
+      });
+      console.log(chalk.green("✅ Plugin built successfully"));
+    } catch (error) {
+      throw new Error(
+        `Failed to build plugin: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  /**
+   * Generate manifest.json content from package.json with dynamic plugin configuration
+   */
+  private async generateManifestFromPackageJson(
     packageJson: PackageJson
-  ): ManifestJson {
+  ): Promise<ManifestJson> {
     // Extract entrypoint class name from package.json or use default
     const tensorifySettings: any = packageJson["tensorify-settings"] || {};
     const entrypointClassName =
       tensorifySettings.entrypointClassName || "TensorifyPlugin";
 
-    // Extract plugin type from tensorify section first, then fallback to tensorify-settings
+    // Try to load the plugin dynamically to extract actual configuration
+    const pluginInstance = await this.loadPluginInstance(
+      packageJson,
+      entrypointClassName
+    );
+
+    let pluginDefinition = null;
+    let dynamicConfig: {
+      visual?: any;
+      inputHandles?: any[];
+      outputHandles?: any[];
+      settingsFields?: any[];
+      settingsGroups?: any[];
+      capabilities?: any[];
+      requirements?: any;
+      nodeType?: any;
+    } = {};
+
+    if (pluginInstance) {
+      try {
+        console.log(chalk.blue("🔄 Extracting plugin definition..."));
+        pluginDefinition = pluginInstance.getDefinition();
+
+        console.log(
+          chalk.green("✅ Successfully extracted dynamic plugin configuration")
+        );
+        console.log(
+          chalk.gray(
+            `📊 Plugin definition keys: ${Object.keys(pluginDefinition).join(", ")}`
+          )
+        );
+
+        // Log specific configuration details
+        if (pluginDefinition.inputHandles) {
+          console.log(
+            chalk.gray(
+              `📥 Input handles: ${pluginDefinition.inputHandles.length} found`
+            )
+          );
+        }
+        if (pluginDefinition.outputHandles) {
+          console.log(
+            chalk.gray(
+              `📤 Output handles: ${pluginDefinition.outputHandles.length} found`
+            )
+          );
+        }
+        if (pluginDefinition.settingsFields) {
+          console.log(
+            chalk.gray(
+              `⚙️  Settings fields: ${pluginDefinition.settingsFields.length} found`
+            )
+          );
+        }
+        if (pluginDefinition.visual) {
+          console.log(
+            chalk.gray(
+              `🎨 Visual config: ${pluginDefinition.visual.icons?.primary?.value || "no icon"} icon`
+            )
+          );
+        }
+
+        dynamicConfig = {
+          visual: pluginDefinition.visual,
+          inputHandles: pluginDefinition.inputHandles,
+          outputHandles: pluginDefinition.outputHandles,
+          settingsFields: pluginDefinition.settingsFields,
+          settingsGroups: pluginDefinition.settingsGroups,
+          capabilities: pluginDefinition.capabilities,
+          requirements: pluginDefinition.requirements,
+          nodeType: pluginDefinition.nodeType,
+        };
+
+        console.log(
+          chalk.green(
+            `🎯 Dynamic config extracted with ${Object.keys(dynamicConfig).filter((k) => (dynamicConfig as any)[k]).length} properties`
+          )
+        );
+      } catch (error) {
+        console.warn(
+          chalk.yellow(
+            `⚠️  Failed to extract plugin definition: ${error instanceof Error ? error.message : String(error)}`
+          )
+        );
+      }
+    } else {
+      console.warn(
+        chalk.yellow(
+          "⚠️  Plugin instance is null - falling back to static configuration"
+        )
+      );
+      console.warn(chalk.gray(`💡 This could be due to:`));
+      console.warn(
+        chalk.gray(
+          `   • Class name mismatch (expected: "${entrypointClassName}")`
+        )
+      );
+      console.warn(chalk.gray(`   • Build failure or missing dist files`));
+      console.warn(
+        chalk.gray(`   • Plugin not extending TensorifyPlugin properly`)
+      );
+    }
+
+    // Extract plugin type from multiple sources
     const tensorifyConfig: any = packageJson["tensorify"] || {};
     const pluginType =
+      dynamicConfig.nodeType ||
       tensorifyConfig.pluginType ||
       tensorifySettings.pluginType ||
       NodeType.CUSTOM;
@@ -480,10 +758,55 @@ class PluginPublisher {
     if (!validNodeTypes.includes(pluginType as NodeType)) {
       console.warn(
         chalk.yellow(
-          `⚠️  Invalid plugin type "${pluginType}" in package.json. Using "${NodeType.CUSTOM}" as default.`
+          `⚠️  Invalid plugin type "${pluginType}". Using "${NodeType.CUSTOM}" as default.`
         )
       );
     }
+
+    // Create fallback configurations if dynamic loading failed
+    const fallbackVisual = {
+      containerType: "DEFAULT",
+      size: { width: 240, height: 140 },
+      styling: {
+        borderRadius: 8,
+        borderWidth: 2,
+        shadowLevel: 1,
+        theme: "auto",
+      },
+      icons: {
+        primary: { type: "LUCIDE", value: "box" },
+        showIconBackground: true,
+      },
+      labels: {
+        title: packageJson.name.split("/")[1] || packageJson.name,
+        showLabels: true,
+      },
+    };
+
+    const fallbackInputHandles = [
+      {
+        id: "input1",
+        position: HandlePosition.LEFT,
+        viewType: HandleViewType.DEFAULT,
+        required: true,
+        label: "Input 1",
+        edgeType: EdgeType.DEFAULT,
+        dataType: "any",
+        description: "Primary input tensor",
+      },
+    ];
+
+    const fallbackOutputHandles = [
+      {
+        id: "output1",
+        position: HandlePosition.RIGHT,
+        viewType: HandleViewType.DEFAULT,
+        label: "Output 1",
+        edgeType: EdgeType.DEFAULT,
+        dataType: "any",
+        description: "Primary output tensor",
+      },
+    ];
 
     return {
       name: packageJson.name,
@@ -512,26 +835,16 @@ class PluginPublisher {
         homepage: packageJson.homepage,
         bugs: packageJson.bugs,
       },
-      // Placeholder for visual configuration - to be populated when plugin execution is implemented
-      visual: {
-        // This will be populated by executing the plugin and extracting visual config
-        // For now, provide basic structure based on pluginType
-        containerType: "DEFAULT",
-        size: { width: 240, height: 140 },
-        styling: {
-          borderRadius: 8,
-          borderWidth: 2,
-          shadowLevel: 1,
-          theme: "auto",
-        },
-        icons: {
-          primary: { type: "LUCIDE", value: "box" },
-          showIconBackground: true,
-        },
-        labels: {
-          title: packageJson.name.split("/")[1] || packageJson.name,
-          showLabels: true,
-        },
+      // Use dynamic configuration if available, otherwise fallback to static
+      visual: dynamicConfig.visual || fallbackVisual,
+      inputHandles: dynamicConfig.inputHandles || fallbackInputHandles,
+      outputHandles: dynamicConfig.outputHandles || fallbackOutputHandles,
+      settingsFields: dynamicConfig.settingsFields || [],
+      settingsGroups: dynamicConfig.settingsGroups || [],
+      capabilities: dynamicConfig.capabilities || [],
+      requirements: dynamicConfig.requirements || {
+        minSdkVersion: "1.0.0",
+        dependencies: [],
       },
     };
   }
@@ -611,7 +924,9 @@ class PluginPublisher {
     this.packageJson = JSON.parse(
       fs.readFileSync(path.join(this.directory, "package.json"), "utf-8")
     );
-    this.manifestJson = this.generateManifestFromPackageJson(this.packageJson);
+    this.manifestJson = await this.generateManifestFromPackageJson(
+      this.packageJson
+    );
 
     // Write the generated manifest.json to disk for validation
     const manifestPath = path.join(this.directory, "manifest.json");
@@ -1325,7 +1640,9 @@ class PluginPublisher {
             sdkVersion: this.sdkVersion, // Pass sdkVersion
             tags: this.keywords.join(","), // Pass keywords as comma-separated string
             readme: this.readme,
-            pluginType: this.manifestJson.tensorify.pluginType.toLowerCase() || NodeType.CUSTOM, // Pass plugin type
+            pluginType:
+              this.manifestJson.tensorify.pluginType.toLowerCase() ||
+              NodeType.CUSTOM, // Pass plugin type
           },
         },
         {

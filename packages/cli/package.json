@@ -1,6 +1,6 @@
 {
   "name": "@tensorify.io/cli",
-  "version": "0.0.22",
+  "version": "0.0.24",
   "description": "Official CLI for Tensorify.io - Build, test, and deploy machine learning plugins",
   "main": "lib/index.js",
   "bin": {
@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "@clerk/backend": "^0.38.0",
-    "@tensorify.io/sdk": "0.0.22",
+    "@tensorify.io/sdk": "0.0.24",
     "axios": "^1.10.0",
     "chalk": "^4.1.2",
     "commander": "^11.1.0",
