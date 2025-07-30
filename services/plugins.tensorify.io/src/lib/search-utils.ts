@@ -1,4 +1,5 @@
 // Shared search utilities for plugin search functionality
+import * as semver from "semver";
 
 export type ScoreData = {
   score: number;
@@ -466,6 +467,42 @@ export function applySmartFiltering<T extends { scoreData: ScoreData }>(
   return scoredPlugins;
 }
 
+// Get the latest version of each plugin using semantic versioning
+function deduplicatePlugins<
+  T extends { slug: string; version: string; updatedAt: Date },
+>(plugins: T[]): T[] {
+  // Group plugins by their base slug (e.g., '@author/plugin-name')
+  const groupedByBaseSlug = plugins.reduce(
+    (acc, plugin) => {
+      const baseSlug = plugin.slug.split(":")[0];
+      if (!acc[baseSlug]) {
+        acc[baseSlug] = [];
+      }
+      acc[baseSlug].push(plugin);
+      return acc;
+    },
+    {} as Record<string, T[]>
+  );
+
+  // For each group, find the plugin with the latest version
+  return Object.values(groupedByBaseSlug).map((group) => {
+    return group.reduce((latest, current) => {
+      // Fallback to updatedAt if version comparison is not possible
+      if (
+        !semver.valid(latest.version) ||
+        !semver.valid(current.version) ||
+        semver.eq(latest.version, current.version)
+      ) {
+        return new Date(latest.updatedAt) > new Date(current.updatedAt)
+          ? latest
+          : current;
+      }
+      // Compare versions using semver
+      return semver.gt(latest.version, current.version) ? latest : current;
+    });
+  });
+}
+
 // Process search results with scoring and filtering
 export function processSearchResults(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -475,6 +512,7 @@ export function processSearchResults(
     includeReadme?: boolean;
     limit?: number;
     includeSearchMeta?: boolean;
+    deduplicate?: boolean; // New option to control deduplication
   } = {}
 ): {
   plugins: PluginSearchResult[];
@@ -488,11 +526,13 @@ export function processSearchResults(
     includeReadme = false,
     limit = 5,
     includeSearchMeta = true,
+    deduplicate = false, // Default to false to avoid breaking existing behavior
   } = options;
 
   if (!query.trim()) {
+    const results = deduplicate ? deduplicatePlugins(plugins) : plugins;
     return {
-      plugins: plugins.slice(0, limit).map((plugin) => ({
+      plugins: results.slice(0, limit).map((plugin) => ({
         ...plugin,
         createdAt: new Date(plugin.createdAt),
         updatedAt: new Date(plugin.updatedAt),
@@ -515,8 +555,13 @@ export function processSearchResults(
   // Apply smart filtering
   const filteredPlugins = applySmartFiltering(scoredPlugins, queryTerms);
 
+  // Deduplicate if requested, must happen before sorting and limiting
+  const uniquePlugins = deduplicate
+    ? deduplicatePlugins(filteredPlugins)
+    : filteredPlugins;
+
   // Sort by score and apply limit
-  const finalPlugins = filteredPlugins
+  const finalPlugins = uniquePlugins
     .sort((a, b) => b.scoreData.score - a.scoreData.score)
     .slice(0, limit)
     .map(({ scoreData, ...plugin }) => ({
@@ -540,7 +585,7 @@ export function processSearchResults(
     result.searchMeta = {
       query,
       processedTerms: queryTerms,
-      totalResults: filteredPlugins.length,
+      totalResults: uniquePlugins.length,
     };
   }
 

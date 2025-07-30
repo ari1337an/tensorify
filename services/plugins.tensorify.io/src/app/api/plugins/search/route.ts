@@ -20,6 +20,7 @@ export async function GET(request: Request) {
     const allPlugins = await db.plugin.findMany({
       where: {
         OR: [{ isPublic: true }, { authorName: username }],
+        status: "published",
       },
       select: {
         id: true,
@@ -31,14 +32,16 @@ export async function GET(request: Request) {
         pluginType: true,
         createdAt: true,
         updatedAt: true,
+        version: true,
       },
     });
 
-    // Process search results using shared logic
+    // Process search results using shared logic, now with deduplication
     const { plugins, searchMeta } = processSearchResults(allPlugins, query, {
       includeReadme: false, // Basic search doesn't include readme
       limit: 10,
       includeSearchMeta: true,
+      deduplicate: true, // Enable deduplication for basic search as well
     });
 
     return NextResponse.json(
