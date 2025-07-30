@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState, useEffect, useCallback } from "react";
 import { Panel } from "@xyflow/react";
+import semver from "semver";
 import {
   Sheet,
   SheetContent,
@@ -20,6 +21,8 @@ import {
   ExternalLink,
   Download,
   Package,
+  CheckCircle,
+  RefreshCw,
 } from "lucide-react";
 import defaultNodes from "../data/defaultNodes";
 import { type NodeItem } from "../types/NodeItem";
@@ -29,6 +32,7 @@ import { toast } from "sonner";
 import {
   postWorkflowPlugin,
   getWorkflowPlugins,
+  putWorkflowPlugin,
 } from "@/app/api/v1/_client/client";
 import useStore from "@/app/_store/store";
 
@@ -117,6 +121,7 @@ type ExternalPlugin = {
   authorName: string;
   tags: string | null;
   pluginType: string;
+  version: string;
 };
 
 type InstalledPlugin = {
@@ -523,6 +528,9 @@ export default function NodeSearch() {
   const [installingPlugins, setInstallingPlugins] = useState<Set<string>>(
     new Set()
   );
+  const [updatingPlugins, setUpdatingPlugins] = useState<Set<string>>(
+    new Set()
+  );
   const [installedPlugins, setInstalledPlugins] = useState<PluginWithDetails[]>(
     []
   );
@@ -645,91 +653,91 @@ export default function NodeSearch() {
     };
   }, [setOnDropSuccessCallback]);
 
+  const fetchInstalledPluginsWithDetails = useCallback(async () => {
+    if (!currentWorkflow?.id) {
+      setInstalledPlugins([]);
+      return;
+    }
+
+    try {
+      const response = await getWorkflowPlugins({
+        params: { workflowId: currentWorkflow.id },
+      });
+
+      if (response.status === 200) {
+        // Fetch plugin details for each installed plugin
+        const pluginsWithDetails = await Promise.all(
+          response.body.data.map(async (plugin: InstalledPlugin) => {
+            try {
+              // Parse plugin slug to extract details
+              const slugMatch = plugin.slug.match(/^@([^/]+)\/([^:]+):(.+)$/);
+              const name = slugMatch ? slugMatch[2] : plugin.slug;
+              const version = slugMatch ? slugMatch[3] : "unknown";
+              const authorName = slugMatch ? slugMatch[1] : "unknown";
+
+              // Try to fetch description and pluginType from plugins API (if available)
+              let description: string | null = null;
+              let pluginType: string = "miscellaneous"; // Default value
+              try {
+                const isDevelopment = process.env.NODE_ENV === "development";
+                const baseUrl = isDevelopment
+                  ? "http://localhost:3004"
+                  : "https://plugins.tensorify.io";
+                const pluginResponse = await fetch(
+                  `${baseUrl}/api/plugins/search?q=${encodeURIComponent(name)}`
+                );
+                const pluginData = await pluginResponse.json();
+
+                // Find matching plugin by name and author
+                const matchingPlugin = pluginData.plugins?.find(
+                  (p: ExternalPlugin) =>
+                    p.name === name && p.authorName === authorName
+                );
+                description = matchingPlugin?.description || null;
+                pluginType = matchingPlugin?.pluginType || "miscellaneous";
+
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              } catch (error) {
+                // Silently fail, use fallback description and pluginType
+              }
+
+              return {
+                ...plugin,
+                name,
+                description,
+                authorName,
+                version,
+                pluginType,
+              };
+            } catch (error) {
+              console.error("Error processing plugin:", plugin.slug, error);
+              return {
+                ...plugin,
+                name: plugin.slug,
+                description: null,
+                authorName: "unknown",
+                version: "unknown",
+                pluginType: "miscellaneous",
+              };
+            }
+          })
+        );
+
+        setInstalledPlugins(pluginsWithDetails);
+      } else {
+        console.error("Failed to fetch installed plugins");
+        setInstalledPlugins([]);
+      }
+    } catch (error) {
+      console.error("Error fetching installed plugins:", error);
+      setInstalledPlugins([]);
+    }
+  }, [currentWorkflow?.id]);
+
   // Fetch installed plugins with details when workflow changes
   useEffect(() => {
-    const fetchInstalledPluginsWithDetails = async () => {
-      if (!currentWorkflow?.id) {
-        setInstalledPlugins([]);
-        return;
-      }
-
-      try {
-        const response = await getWorkflowPlugins({
-          params: { workflowId: currentWorkflow.id },
-        });
-
-        if (response.status === 200) {
-          // Fetch plugin details for each installed plugin
-          const pluginsWithDetails = await Promise.all(
-            response.body.data.map(async (plugin: InstalledPlugin) => {
-              try {
-                // Parse plugin slug to extract details
-                const slugMatch = plugin.slug.match(/^@([^/]+)\/([^:]+):(.+)$/);
-                const name = slugMatch ? slugMatch[2] : plugin.slug;
-                const version = slugMatch ? slugMatch[3] : "unknown";
-                const authorName = slugMatch ? slugMatch[1] : "unknown";
-
-                // Try to fetch description and pluginType from plugins API (if available)
-                let description: string | null = null;
-                let pluginType: string = "miscellaneous"; // Default value
-                try {
-                  const isDevelopment = process.env.NODE_ENV === "development";
-                  const baseUrl = isDevelopment
-                    ? "http://localhost:3004"
-                    : "https://plugins.tensorify.io";
-                  const pluginResponse = await fetch(
-                    `${baseUrl}/api/plugins/search?q=${encodeURIComponent(name)}`
-                  );
-                  const pluginData = await pluginResponse.json();
-
-                  // Find matching plugin by name and author
-                  const matchingPlugin = pluginData.plugins?.find(
-                    (p: ExternalPlugin) =>
-                      p.name === name && p.authorName === authorName
-                  );
-                  description = matchingPlugin?.description || null;
-                  pluginType = matchingPlugin?.pluginType || "miscellaneous";
-
-                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                } catch (error) {
-                  // Silently fail, use fallback description and pluginType
-                }
-
-                return {
-                  ...plugin,
-                  name,
-                  description,
-                  authorName,
-                  version,
-                  pluginType,
-                };
-              } catch (error) {
-                console.error("Error processing plugin:", plugin.slug, error);
-                return {
-                  ...plugin,
-                  name: plugin.slug,
-                  description: null,
-                  authorName: "unknown",
-                  version: "unknown",
-                  pluginType: "miscellaneous",
-                };
-              }
-            })
-          );
-
-          setInstalledPlugins(pluginsWithDetails);
-        } else {
-          console.error("Failed to fetch installed plugins");
-          setInstalledPlugins([]);
-        }
-      } catch (error) {
-        console.error("Error fetching installed plugins:", error);
-        setInstalledPlugins([]);
-      }
-    };
-
     fetchInstalledPluginsWithDetails();
-  }, [currentWorkflow?.id]);
+  }, [currentWorkflow?.id, fetchInstalledPluginsWithDetails]);
 
   // Integrate installed plugins into defaultNodes categories based on pluginType
   const getNodesWithInstalledPlugins = (): NodeItem[] => {
@@ -838,8 +846,18 @@ export default function NodeSearch() {
           setInstalledPlugins([]);
         }
 
-        // Auto-close the sheet
+        // Auto-close the sheet and clear search
         setIsSheetOpen(false);
+        setSearchTerm("");
+        setDebouncedSearchTerm("");
+        setSearchState({
+          isSearching: false,
+          isSearchingExternal: false,
+          hasSearched: false,
+          query: "",
+          results: [],
+          error: null,
+        });
       } else {
         toast.error(response.body.message || "Failed to install plugin");
       }
@@ -850,6 +868,48 @@ export default function NodeSearch() {
       setInstallingPlugins((prev) => {
         const newSet = new Set(prev);
         newSet.delete(plugin.id);
+        return newSet;
+      });
+    }
+  };
+
+  const handleUpdatePlugin = async (
+    installedPlugin: PluginWithDetails,
+    newVersion: string
+  ) => {
+    if (!currentWorkflow?.id) {
+      toast.error("No workflow selected. Please select a workflow first.");
+      return;
+    }
+
+    const newSlug = `@${installedPlugin.authorName}/${installedPlugin.name}:${newVersion}`;
+
+    setUpdatingPlugins((prev) => new Set(prev).add(installedPlugin.id));
+
+    try {
+      const response = await putWorkflowPlugin({
+        params: {
+          workflowId: currentWorkflow.id,
+          pluginId: installedPlugin.id,
+        },
+        body: { slug: newSlug },
+      });
+
+      if (response.status === 200) {
+        toast.success(
+          `Plugin ${installedPlugin.name} updated to v${newVersion}!`
+        );
+        fetchInstalledPluginsWithDetails(); // Refresh the list
+      } else {
+        toast.error(response.body.message || "Failed to update plugin");
+      }
+    } catch (error) {
+      console.error("Error updating plugin:", error);
+      toast.error("An unexpected error occurred while updating the plugin.");
+    } finally {
+      setUpdatingPlugins((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(installedPlugin.id);
         return newSet;
       });
     }
@@ -1131,6 +1191,19 @@ export default function NodeSearch() {
 
                   {searchState.results.map((plugin) => {
                     const isInstalling = installingPlugins.has(plugin.id);
+                    const installedPlugin = installedPlugins.find(
+                      (p) => p.name === plugin.name
+                    );
+                    const isUpdating =
+                      installedPlugin &&
+                      updatingPlugins.has(installedPlugin.id);
+
+                    const canUpdate =
+                      installedPlugin &&
+                      semver.valid(plugin.version) &&
+                      semver.valid(installedPlugin.version) &&
+                      semver.gt(plugin.version, installedPlugin.version);
+
                     return (
                       <div
                         key={`external-${plugin.id}`}
@@ -1163,25 +1236,64 @@ export default function NodeSearch() {
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleInstallPlugin(plugin)}
-                            disabled={isInstalling}
-                            className="gap-1.5"
-                          >
-                            {isInstalling ? (
-                              <>
-                                <LoadingSpinner size="sm" />
-                                Installing...
-                              </>
+                          {installedPlugin ? (
+                            canUpdate ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleUpdatePlugin(
+                                    installedPlugin,
+                                    plugin.version
+                                  )
+                                }
+                                disabled={isUpdating}
+                                className="gap-1.5"
+                              >
+                                {isUpdating ? (
+                                  <>
+                                    <LoadingSpinner size="sm" />
+                                    Updating...
+                                  </>
+                                ) : (
+                                  <>
+                                    <RefreshCw className="h-3.5 w-3.5" />
+                                    Update to v{plugin.version}
+                                  </>
+                                )}
+                              </Button>
                             ) : (
-                              <>
-                                <Download className="h-3.5 w-3.5" />
-                                Install
-                              </>
-                            )}
-                          </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled
+                                className="gap-1.5 bg-green-500/10 border-green-500/20 text-green-500"
+                              >
+                                <CheckCircle className="h-3.5 w-3.5" />
+                                Installed
+                              </Button>
+                            )
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleInstallPlugin(plugin)}
+                              disabled={isInstalling}
+                              className="gap-1.5"
+                            >
+                              {isInstalling ? (
+                                <>
+                                  <LoadingSpinner size="sm" />
+                                  Installing...
+                                </>
+                              ) : (
+                                <>
+                                  <Download className="h-3.5 w-3.5" />
+                                  Install
+                                </>
+                              )}
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
