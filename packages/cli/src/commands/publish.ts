@@ -255,19 +255,23 @@ class PluginPublisher {
    * Resolve development environment configuration
    */
   private async resolveDevelopmentEnvironment(): Promise<void> {
-    // If --dev flag was not explicitly set, check saved config
+    // If --dev flag was not explicitly set, check saved config from login
     if (this.options.dev === undefined) {
       const config = await getConfig();
-      // Explicitly set this.options.dev based on saved config or NODE_ENV
-      this.options.dev = config.isDev || process.env.NODE_ENV === "development";
+      // Use saved environment from last login, default to production if no saved config
+      this.options.dev = config.isDev || false;
 
       if (this.options.dev) {
         console.log(
-          chalk.cyan("🔧 Using development environment (from saved config)")
+          chalk.cyan("🔧 Using development environment (from saved login)")
         );
+      } else {
+        console.log(chalk.cyan("🔧 Using production environment (default)"));
       }
     } else if (this.options.dev) {
       console.log(chalk.cyan("🔧 Using development environment (--dev flag)"));
+    } else {
+      console.log(chalk.cyan("🔧 Using production environment"));
     }
 
     // Now, apply the URLs based on the resolved this.options.dev
@@ -573,16 +577,29 @@ class PluginPublisher {
     this.authToken = token;
 
     try {
-      const userProfile = await authService.getUserProfile(this.options.dev);
-      if (!userProfile || !userProfile.username) {
-        // Assuming username field exists
-        throw new Error("Could not retrieve username from user profile.");
-      }
-      this.username = userProfile.username;
-      console.log(
-        chalk.green(`✅ Authenticated as: @${this.username}
+      // Check if using test token for integration tests
+      if (
+        process.env.NODE_ENV === "development" &&
+        process.env.TENSORIFY_TEST_TOKEN
+      ) {
+        // Use test username for integration tests
+        this.username = "testing-bot-tensorify-dev";
+        console.log(
+          chalk.green(`✅ Authenticated as: @${this.username} (test mode)
 `)
-      );
+        );
+      } else {
+        const userProfile = await authService.getUserProfile(this.options.dev);
+        if (!userProfile || !userProfile.username) {
+          // Assuming username field exists
+          throw new Error("Could not retrieve username from user profile.");
+        }
+        this.username = userProfile.username;
+        console.log(
+          chalk.green(`✅ Authenticated as: @${this.username}
+`)
+        );
+      }
     } catch (error) {
       throw new Error(
         `Failed to fetch user profile: ${

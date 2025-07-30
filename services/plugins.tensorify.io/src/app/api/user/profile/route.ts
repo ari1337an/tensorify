@@ -1,52 +1,118 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import jwt from "jsonwebtoken";
+import { getDecodedJwt } from "@/lib/auth-utils";
 
-/**
- * GET /api/user/profile
- * Endpoint for CLI to fetch authenticated user profile
- * Supports both regular Clerk tokens and development test tokens
- */
+// Response schema for user profile
+const userProfileSchema = z.object({
+  id: z.string(),
+  fullName: z.string().nullable(),
+  email: z.string(),
+  username: z.string().min(1),
+});
+
 export async function GET(request: NextRequest) {
   try {
-    // In development, check for test tokens first
-    if (process.env.NODE_ENV === "development") {
-      const authHeader = request.headers.get("authorization");
-      if (authHeader?.startsWith("Bearer ")) {
-        const token = authHeader.substring(7);
+    // Add CORS headers for CLI access
+    const headers = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Content-Type": "application/json",
+    };
 
-        // Try to decode test token
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-var-requires
-          const jwt = require("jsonwebtoken");
-          const secret =
-            process.env.TEST_JWT_SECRET || "test-secret-development-only";
-          const decoded = jwt.verify(token, secret, { algorithms: ["HS256"] });
+    // Get token from Authorization header
+    const authHeader = request.headers.get("Authorization");
+    const token = authHeader?.split(" ")[1]; // Bearer <token>
 
-          // Return test user profile in the format CLI expects
-          return NextResponse.json({
-            data: {
-              id: decoded.id,
-              username: decoded.username,
-              firstName: decoded.firstName,
-              lastName: decoded.lastName,
-              email: decoded.email,
-              imageUrl: decoded.imageUrl,
-            },
-          });
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (testTokenError) {
-          // Not a test token, continue with regular auth
-        }
-      }
+    if (!token) {
+      return NextResponse.json(
+        {
+          error: "Unauthorized",
+          message: "No valid authentication token provided",
+        },
+        { status: 401, headers }
+      );
     }
 
-    // TODO: Add regular Clerk authentication here for production
-    // For now, return unauthorized for non-test tokens
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  } catch (error) {
-    console.error("User profile error:", error);
+    // Verify JWT token
+    const verificationResult = await getDecodedJwt(token);
+
+    if (!verificationResult.success) {
+      return NextResponse.json(
+        {
+          error: "Unauthorized",
+          message: verificationResult.message || "Token verification failed",
+        },
+        { status: 401, headers }
+      );
+    }
+
+    // Format user data for CLI consumption
+    const userProfile = {
+      id: verificationResult.data?.id,
+      fullName:
+        verificationResult.data?.firstName +
+        " " +
+        verificationResult.data?.lastName,
+      email: verificationResult.data?.email,
+      username: verificationResult.data?.username,
+    };
+
+    // Validate the response data
+    const validatedProfile = userProfileSchema.parse(userProfile);
+
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      {
+        status: "success",
+        data: validatedProfile,
+        message: "User profile retrieved successfully",
+      },
+      { status: 200, headers }
+    );
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+
+    const headers = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Content-Type": "application/json",
+    };
+
+    if (error instanceof jwt.TokenExpiredError) {
+      return NextResponse.json(
+        {
+          error: "Unauthorized",
+          message: "Token expired",
+        },
+        { status: 401, headers }
+      );
+    } else if (error instanceof jwt.JsonWebTokenError) {
+      return NextResponse.json(
+        {
+          error: "Unauthorized",
+          message: "Invalid token",
+        },
+        { status: 401, headers }
+      );
+    } else if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        {
+          error: "Invalid user data",
+          message: "User profile data validation failed",
+          details: error.errors,
+        },
+        { status: 500, headers }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        error: "Internal server error",
+        message: "Failed to retrieve user profile",
+      },
+      { status: 500, headers }
     );
   }
 }

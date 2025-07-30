@@ -133,7 +133,7 @@ class IntegrationTestRunner {
     if (!fs.existsSync(cliPath)) {
       throw new Error("CLI package not found");
     }
-    const cliBuiltPath = path.join(cliPath, "lib/bin/tensorify.js");
+    const cliBuiltPath = path.join(cliPath, "lib/src/bin/tensorify.js");
     if (!fs.existsSync(cliBuiltPath)) {
       this.log("Building CLI...");
       execSync("pnpm run build", { cwd: cliPath, stdio: "pipe" });
@@ -256,7 +256,7 @@ class IntegrationTestRunner {
       execSync(
         `node ${path.join(
           cliPath,
-          "lib/bin/tensorify.js"
+          "lib/src/bin/tensorify.js"
         )} publish --dev --access public`,
         { cwd: this.tempPluginDir, env, stdio: "pipe" }
       );

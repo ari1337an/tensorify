@@ -5,11 +5,10 @@
   "main": "src/index.ts",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "pnpm run clean && tsc",
-    "clean": "rm -rf dist",
+    "build": "npx tsc",
     "dev": "npx tsc --watch",
     "test": "node test.js",
-    "prepublishOnly": "pnpm run build"
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "tensorify",
