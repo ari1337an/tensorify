@@ -24,7 +24,7 @@ This guide walks through creating a PyTorch dropout layer plugin from scratch, s
 The new automated setup eliminates all manual linking confusion:
 
 ```bash
-npm run devtools:setup
+pnpm run devtools:setup
 ```
 
 **What this does automatically**:
@@ -89,7 +89,7 @@ npx create-tensorify-plugin pytorch-dropout-layer \
 
 ```bash
 cd pytorch-dropout-layer
-npm run build
+pnpm run build
 ```
 
 **Expected Output**: ✅ Clean TypeScript compilation with no errors!
@@ -205,7 +205,7 @@ ${variableName} = nn.Dropout(p=${p}, inplace=${inplace})
 ### 3.2 Build Verification
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 **Expected Output**: ✅ Clean compilation with no errors (templates are now fixed)
@@ -304,7 +304,7 @@ curl --request GET \
 
 ### **After Fixes** ✨
 
-- ⚡ **5-second setup**: `npm run devtools:setup`
+- ⚡ **5-second setup**: `pnpm run devtools:setup`
 - ✅ **Zero build errors**: Templates work out of the box
 - 📚 **Clear documentation**: API requirements explicitly documented
 - 🔍 **Architecture insights**: No more reverse-engineering needed
@@ -314,7 +314,7 @@ curl --request GET \
 
 ```bash
 # 1. One-command setup (5 seconds)
-npm run devtools:setup
+pnpm run devtools:setup
 
 # 2. Create plugin with type selection
 cd test-plugins
@@ -340,7 +340,7 @@ curl --request POST \
 
 ### 1. **Automated Setup**
 
-- **New**: `npm run devtools:setup` handles everything automatically
+- **New**: `pnpm run devtools:setup` handles everything automatically
 - **Old**: Manual build and link commands that often failed
 
 ### 2. **Fixed Templates**

@@ -648,10 +648,10 @@ describe("Plugin Tests", () => {
 npm test
 
 # Run tests with coverage
-npm run test:coverage
+pnpm run test:coverage
 
 # Run tests in watch mode
-npm run test:watch
+pnpm run test:watch
 ```
 
 ## Migration Guide
@@ -1127,23 +1127,23 @@ await engine.dispose();
 
 ```bash
 # Build the package
-npm run build
+pnpm run build
 
 # Watch for changes
-npm run build:watch
+pnpm run build:watch
 
 # Type checking
-npm run type-check
+pnpm run type-check
 ```
 
 ### Linting
 
 ```bash
 # Check for linting issues
-npm run lint
+pnpm run lint
 
 # Fix linting issues
-npm run lint:fix
+pnpm run lint:fix
 ```
 
 ## Contributing

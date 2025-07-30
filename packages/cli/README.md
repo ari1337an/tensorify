@@ -221,36 +221,30 @@ tensorify publish [options]
 **Publishing Process:**
 
 1. **🔐 Authentication Check**
-
    - Verifies valid login token
    - Checks token expiration
 
 2. **🔍 Plugin Validation**
-
    - Runs complete SDK validation
    - Checks file structure
    - Validates schemas
 
 3. **🔒 Access Level Validation**
-
    - Ensures `package.json` `private` flag matches `--access`
    - Validates repository URL for public plugins
    - Checks access consistency with previous versions
 
 4. **✅ Version Conflict Check**
-
    - Queries registry for existing versions
    - Prevents duplicate version publishing
    - Validates access level consistency
 
 5. **🏗️ Build and Bundle**
-
-   - Runs TypeScript compilation (`npm run build`)
+   - Runs TypeScript compilation (`pnpm run build`)
    - Creates optimized bundle with ESBuild
    - Generates production-ready artifacts
 
 6. **📤 File Upload**
-
    - Uploads `bundle.js`, `manifest.json`, `icon.svg`
    - Uses secure multipart upload
    - Provides upload progress
@@ -579,7 +573,7 @@ tensorify validate --verbose
 
 ```bash
 # Check TypeScript compilation
-npm run build
+pnpm run build
 
 # Verify tsconfig.json exists
 # Ensure all dependencies installed

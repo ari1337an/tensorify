@@ -31,7 +31,7 @@ find . -name "package-lock.json" -delete
 npm install
 
 # 3. Build all packages
-npm run build
+pnpm run build
 ```
 
 ### Development Workflow
@@ -117,7 +117,7 @@ The production builds now work consistently because:
 ```bash
 # This will work consistently in any environment
 npm install --legacy-peer-deps
-npm run build
+pnpm run build
 ```
 
 ## Troubleshooting
@@ -132,7 +132,7 @@ npm run build
 
 1. Check that the package uses `@repo/eslint-config`
 2. Verify the correct config is imported (nextjs/library/api)
-3. Run `npm run lint` to see specific errors
+3. Run `pnpm run lint` to see specific errors
 
 ### If dependency resolution fails:
 
@@ -146,7 +146,7 @@ npm run build
 
 ```bash
 # Lint all packages
-npm run lint
+pnpm run lint
 
 # Lint specific workspace
 turbo run lint --filter=services/app.tensorify.io

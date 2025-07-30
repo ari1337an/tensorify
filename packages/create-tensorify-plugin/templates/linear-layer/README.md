@@ -43,10 +43,10 @@ The linear layer accepts the following settings:
 
 ```bash
 # Build TypeScript
-npm run build
+pnpm run build
 
 # Watch mode for development
-npm run dev
+pnpm run dev
 
 # Run tests
 npm test

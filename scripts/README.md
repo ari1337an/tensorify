@@ -46,7 +46,7 @@ The `integration-test-publish.js` script provides end-to-end testing of the comp
 
 ```bash
 cd scripts
-npm run integration-test
+pnpm run integration-test
 ```
 
 #### From the repository root:

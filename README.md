@@ -44,7 +44,7 @@ cd backend.tensorify.io
 npm install
 
 # Build all packages
-npm run build
+pnpm run build
 ```
 
 ## 🛠️ Development Workflow
@@ -57,13 +57,13 @@ The CLI is one of the most important tools in this monorepo. Here are all the wa
 
 ```bash
 # Build and run CLI from root
-npm run cli -- --version
-npm run cli -- login --help
-npm run cli -- login --dev
+pnpm run cli -- --version
+pnpm run cli -- login --help
+pnpm run cli -- login --dev
 
 # Alternative command (same functionality)
-npm run tensorify -- --version
-npm run tensorify -- login --dev
+pnpm run tensorify -- --version
+pnpm run tensorify -- login --dev
 ```
 
 #### **Method 2: Global Development Link**
@@ -85,7 +85,7 @@ npm unlink -g @tensorify.io/cli
 
 ```bash
 # Build CLI using workspace
-npm run build --workspace=packages/cli
+pnpm run build --workspace=packages/cli
 
 # Run directly with node
 node packages/cli/lib/bin/tensorify.js --version
@@ -96,10 +96,10 @@ node packages/cli/lib/bin/tensorify.js login --dev
 
 ```bash
 # Build CLI only (with caching)
-npm run build:cli
+pnpm run build:cli
 
 # Development mode with watch
-npm run dev:packages:cli
+pnpm run dev:packages:cli
 
 # Then run the built CLI
 node packages/cli/lib/bin/tensorify.js --version
@@ -109,9 +109,9 @@ node packages/cli/lib/bin/tensorify.js --version
 
 ```bash
 # Run any script from workspace directly
-npm run start --workspace=packages/cli -- --version
-npm run build --workspace=packages/cli
-npm run dev --workspace=packages/cli  # Watch mode
+pnpm run start --workspace=packages/cli -- --version
+pnpm run build --workspace=packages/cli
+pnpm run dev --workspace=packages/cli  # Watch mode
 ```
 
 ### Package Development
@@ -120,29 +120,29 @@ npm run dev --workspace=packages/cli  # Watch mode
 
 ```bash
 # SDK Development
-npm run dev:packages:sdk
+pnpm run dev:packages:sdk
 
 # Plugin Engine Development
-npm run dev:packages:plugin-engine
+pnpm run dev:packages:plugin-engine
 
 # Transpiler Development
-npm run dev:packages:transpiler
+pnpm run dev:packages:transpiler
 
 # CLI Development
-npm run dev:packages:cli
+pnpm run dev:packages:cli
 
 # Shared Package Development
-npm run dev:packages:shared
+pnpm run dev:packages:shared
 ```
 
 #### Service Development
 
 ```bash
 # API Service
-npm run dev:services:api
+pnpm run dev:services:api
 
 # Plugin Marketplace
-npm run dev:services:plugin.tensorify.io
+pnpm run dev:services:plugin.tensorify.io
 ```
 
 ## 📦 Package Reference
@@ -170,41 +170,41 @@ npm run dev:services:plugin.tensorify.io
 
 ```bash
 # Build all packages and services
-npm run build
+pnpm run build
 
 # Run tests across all packages
-npm run test
+pnpm run test
 
 # CLI shortcuts
-npm run cli -- [args]          # Build and run CLI
-npm run tensorify -- [args]     # Alternative CLI command
-npm run build:cli              # Build CLI only
+pnpm run cli -- [args]          # Build and run CLI
+pnpm run tensorify -- [args]     # Alternative CLI command
+pnpm run build:cli              # Build CLI only
 
 # Package development
-npm run dev:packages:cli
-npm run dev:packages:sdk
-npm run dev:packages:plugin-engine
-npm run dev:packages:transpiler
-npm run dev:packages:shared
+pnpm run dev:packages:cli
+pnpm run dev:packages:sdk
+pnpm run dev:packages:plugin-engine
+pnpm run dev:packages:transpiler
+pnpm run dev:packages:shared
 
 # Service development
-npm run dev:services:api
-npm run dev:services:plugin.tensorify.io
+pnpm run dev:services:api
+pnpm run dev:services:plugin.tensorify.io
 ```
 
 ### Package-Specific Scripts
 
 ```bash
 # CLI Package (packages/cli)
-npm run build --workspace=packages/cli
-npm run dev --workspace=packages/cli      # Watch mode
-npm run test --workspace=packages/cli
-npm run start --workspace=packages/cli -- [args]
+pnpm run build --workspace=packages/cli
+pnpm run dev --workspace=packages/cli      # Watch mode
+pnpm run test --workspace=packages/cli
+pnpm run start --workspace=packages/cli -- [args]
 
 # Other packages follow similar patterns
-npm run build --workspace=packages/[package-name]
-npm run dev --workspace=packages/[package-name]
-npm run test --workspace=packages/[package-name]
+pnpm run build --workspace=packages/[package-name]
+pnpm run dev --workspace=packages/[package-name]
+pnpm run test --workspace=packages/[package-name]
 ```
 
 ## 🧪 Testing
@@ -216,10 +216,10 @@ npm run test --workspace=packages/[package-name]
 npm test
 
 # CLI tests only
-npm run test --workspace=packages/cli
+pnpm run test --workspace=packages/cli
 
 # Plugin engine tests
-npm run test --workspace=packages/plugin-engine
+pnpm run test --workspace=packages/plugin-engine
 
 # With coverage
 npm test -- --coverage
@@ -229,14 +229,14 @@ npm test -- --coverage
 
 ```bash
 # Test CLI help
-npm run cli -- --help
-npm run cli -- login --help
+pnpm run cli -- --help
+pnpm run cli -- login --help
 
 # Test authentication flow (development)
-npm run cli -- login --dev
+pnpm run cli -- login --dev
 
 # Test authentication flow (production)
-npm run cli -- login
+pnpm run cli -- login
 
 # Direct testing
 node packages/cli/lib/bin/tensorify.js --version
@@ -255,10 +255,10 @@ The CLI and services support different environments:
 NODE_ENV=development pnpm run cli -- login
 
 # Development mode (explicit flag)
-npm run cli -- login --dev
+pnpm run cli -- login --dev
 
 # Production mode (default)
-npm run cli -- login
+pnpm run cli -- login
 ```
 
 #### Service Environment URLs
@@ -296,15 +296,15 @@ NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_public_key
 
 ```bash
 # 1. Start development mode
-npm run dev:packages:cli
+pnpm run dev:packages:cli
 
 # 2. Edit source files in packages/cli/src/commands/
 
 # 3. Test your changes
-npm run cli -- your-new-command --help
+pnpm run cli -- your-new-command --help
 
 # 4. Run tests
-npm run test --workspace=packages/cli
+pnpm run test --workspace=packages/cli
 ```
 
 ### Adding a New Package
@@ -329,13 +329,13 @@ npm install
 
 ```bash
 # Terminal 1: API Development
-npm run dev:services:api
+pnpm run dev:services:api
 
 # Terminal 2: Frontend Development
-npm run dev:services:plugin.tensorify.io
+pnpm run dev:services:plugin.tensorify.io
 
 # Terminal 3: CLI Testing
-npm run cli -- login --dev
+pnpm run cli -- login --dev
 ```
 
 ## 🚢 Deployment
@@ -344,11 +344,11 @@ npm run cli -- login --dev
 
 ```bash
 # Build all packages
-npm run build
+pnpm run build
 
 # Build specific packages
-npm run build:cli
-npm run build --workspace=packages/plugin-engine
+pnpm run build:cli
+pnpm run build --workspace=packages/plugin-engine
 ```
 
 ### Publishing Packages
@@ -426,7 +426,7 @@ npm publish
 ```bash
 cd packages/cli
 npm install
-npm run build
+pnpm run build
 ```
 
 **Workspace not found:**
@@ -448,8 +448,8 @@ export PATH=~/.npm-global/bin:$PATH
 
 ```bash
 # Clean and rebuild
-npm run clean --workspace=packages/cli
-npm run build --workspace=packages/cli
+pnpm run clean --workspace=packages/cli
+pnpm run build --workspace=packages/cli
 ```
 
 ### Getting Help
