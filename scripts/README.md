@@ -232,3 +232,140 @@ When adding new test cases:
 - `../packages/cli/` - Tensorify CLI
 - `../services/api/` - Backend API with test endpoints
 - `../services/plugins.tensorify.io/` - Frontend with cleanup endpoints
+
+## Services Build Script
+
+The `build-all-services.sh` script provides a single command to clean, install dependencies, and build all services in the Tensorify monorepo.
+
+### What it does:
+
+1. **Cleanup**: Runs the cleanup script to remove `node_modules`, `dist`, `.next`, and other build artifacts
+2. **Install**: Installs dependencies for all services using pnpm with workspace filters
+3. **Build**: Builds all services in the correct order with proper dependency handling
+
+### Features:
+
+- **Fail-Fast**: Stops execution immediately if any step fails
+- **Progress Tracking**: Shows clear progress indicators for each step
+- **Service Validation**: Verifies all service directories and package.json files exist
+- **Flexible Options**: Run individual steps or skip certain operations
+- **Color Output**: Uses colored output for better readability
+- **Comprehensive Error Handling**: Provides detailed error messages and exit codes
+
+### Prerequisites:
+
+1. **PNPM**: Must be installed and available in PATH
+2. **Repository Structure**: Must be run from the repository root
+3. **Service Directories**: All service directories must exist in `./services/`
+
+### Usage:
+
+#### Basic usage (full build):
+
+```bash
+./scripts/build-all-services.sh
+```
+
+#### Available options:
+
+```bash
+./scripts/build-all-services.sh --help          # Show help message
+./scripts/build-all-services.sh --cleanup-only  # Run only cleanup
+./scripts/build-all-services.sh --install-only  # Run only install (skip cleanup)
+./scripts/build-all-services.sh --build-only    # Run only build (skip cleanup and install)
+./scripts/build-all-services.sh --no-cleanup    # Skip cleanup, run install and build
+```
+
+### Services Processed:
+
+The script automatically processes these services:
+
+- `api` (`@tensorify.io/backend-api`)
+- `app.tensorify.io` (`@tensorify.io/services-app-tensorify-io`)
+- `auth.tensorify.io` (`@tensorify.io/services-auth-tensorify-io`)
+- `controls.tensorify.io` (`@tensorify.io/services-controls-tensorify-io`)
+- `plugins.tensorify.io` (`@tensorify/plugins.tensorify.io`)
+- `tensorify.io` (`@tensorify.io/services-tensorify-io`)
+
+### Error Handling:
+
+- **Exit on First Error**: Uses `set -e` to stop execution on any command failure
+- **Detailed Error Messages**: Provides context about which step and service failed
+- **Prerequisites Validation**: Checks all requirements before starting
+- **Error Trap**: Captures and reports unexpected errors with exit codes
+
+### Examples:
+
+#### Development workflow:
+
+```bash
+# Full clean rebuild of all services
+./scripts/build-all-services.sh
+
+# Quick rebuild without cleanup (faster for development)
+./scripts/build-all-services.sh --no-cleanup
+
+# Only build services (if dependencies are already installed)
+./scripts/build-all-services.sh --build-only
+```
+
+#### CI/CD workflow:
+
+```bash
+# Clean build for production deployment
+./scripts/build-all-services.sh
+
+# The script will exit with code 1 if any service fails to build
+# Perfect for CI/CD pipelines that need to fail fast
+```
+
+### Output Format:
+
+The script provides clear, colored output showing:
+
+```
+========================================
+  Tensorify Services Build Script
+========================================
+
+ℹ️  Verifying prerequisites...
+✅ Prerequisites verified
+
+▶️  Step 1/3: Running cleanup script...
+✅ Cleanup completed successfully
+
+▶️  Step 2/3: Installing dependencies for all services...
+
+▶️  Installing dependencies for api (@tensorify.io/backend-api)...
+✅ Dependencies installed for api
+
+[... continues for all services ...]
+
+▶️  Step 3/3: Building all services...
+
+▶️  Building api (@tensorify.io/backend-api)...
+✅ Build completed for api
+
+[... continues for all services ...]
+
+🎉 All operations completed successfully!
+
+Summary:
+  • Cleanup: ✅ Completed
+  • Install: ✅ Completed for 6 services
+  • Build: ✅ Completed for 6 services
+
+Services processed:
+  ✅ api
+  ✅ app.tensorify.io
+  ✅ auth.tensorify.io
+  ✅ controls.tensorify.io
+  ✅ plugins.tensorify.io
+  ✅ tensorify.io
+```
+
+### Related Files:
+
+- `build-all-services.sh` - Main build script
+- `cleanup-package-installs.sh` - Cleanup script (called by build script)
+- `../services/*/package.json` - Service package configurations
