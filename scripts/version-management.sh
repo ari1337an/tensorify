@@ -33,7 +33,7 @@ update_version() {
   
   # Update version in package.json
   cd "$package_dir"
-  pnpm version "$new_version" --no-git-tag-version
+  pnpm version "$new_version" --no-workspaces-update --no-git-tag-version
   cd - > /dev/null
 }
 
@@ -108,7 +108,7 @@ bump_versions() {
 # Function to build all packages
 build_packages() {
   echo -e "${GREEN}Building all packages...${NC}"
-  pnpm run build
+  pnpm run build --filter=@tensorify.io/cli --filter=@tensorify.io/sdk --filter=create-tensorify-plugin
   echo -e "${GREEN}Build completed${NC}"
 }
 
@@ -123,7 +123,7 @@ publish_packages() {
   for package in "${PACKAGES[@]}"; do
     echo -e "${YELLOW}Publishing $package...${NC}"
     cd "$package"
-    pnpm publish
+    pnpm publish --no-git-checks
     cd - > /dev/null
     echo -e "${GREEN}$package published successfully${NC}"
   done
