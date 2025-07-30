@@ -241,7 +241,7 @@ export function PluginManagementDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+      <DialogContent className="sm:max-w-6xl h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5 text-green-500" />
@@ -255,7 +255,7 @@ export function PluginManagementDialog({
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
-          className="flex-1 flex flex-col"
+          className="flex-1 flex flex-col p-6"
         >
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="installed" className="flex items-center gap-2">
@@ -303,7 +303,7 @@ export function PluginManagementDialog({
             </div>
 
             {/* Plugins Table */}
-            <div className="flex-1 overflow-auto border rounded-md">
+            <div className="flex-1 overflow-auto border rounded-md bg-card">
               {isLoadingPlugins ? (
                 <div className="flex items-center justify-center p-8">
                   <Loader2 className="h-6 w-6 animate-spin mr-2" />
@@ -331,11 +331,13 @@ export function PluginManagementDialog({
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Plugin</TableHead>
+                      <TableHead className="pl-6">Plugin</TableHead>
                       <TableHead>Description</TableHead>
                       <TableHead>Version</TableHead>
                       <TableHead>Installed</TableHead>
-                      <TableHead className="w-[100px]">Actions</TableHead>
+                      <TableHead className="w-[100px] text-right pr-6">
+                        Actions
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -343,7 +345,7 @@ export function PluginManagementDialog({
                       const parsed = parsePluginSlug(plugin.slug);
                       return (
                         <TableRow key={plugin.id}>
-                          <TableCell>
+                          <TableCell className="pl-6">
                             <div className="flex flex-col">
                               <span className="font-medium">
                                 {parsed.displayName}
@@ -368,11 +370,8 @@ export function PluginManagementDialog({
                           </TableCell>
                           <TableCell>
                             <Badge
-                              variant={
-                                parsed.version === "latest"
-                                  ? "default"
-                                  : "secondary"
-                              }
+                              variant="outline"
+                              className="bg-primary/10 text-primary-readable hover:bg-primary/20"
                             >
                               {parsed.version}
                             </Badge>
@@ -380,11 +379,11 @@ export function PluginManagementDialog({
                           <TableCell className="text-sm text-muted-foreground">
                             {formatDate(plugin.createdAt)}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="text-right pr-6">
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="text-destructive hover:text-destructive"
+                              className="text-red-400 hover:text-red-500"
                               title="Uninstall Plugin"
                               onClick={() =>
                                 handleDeletePlugin(plugin.id, plugin.slug)
@@ -434,8 +433,8 @@ export function PluginManagementDialog({
                   maxLength={500}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Add a description to help identify this plugin&apos;s purpose (max
-                  500 characters)
+                  Add a description to help identify this plugin&apos;s purpose
+                  (max 500 characters)
                 </p>
               </div>
 
