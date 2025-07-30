@@ -159,7 +159,16 @@ export const action = {
             );
 
             if (manifestResponse.ok) {
-              manifestData = await manifestResponse.json();
+              manifestData = (await manifestResponse.json()).data;
+              if (!manifestData) {
+                throw new TsRestResponseError(contract, {
+                  status: 500,
+                  body: {
+                    status: "failed",
+                    message: "Plugin service is temporarily unavailable. Please try again later.",
+                  },
+                });
+              }
             } else {
               console.warn(
                 `Failed to fetch manifest for ${slug}:`,
