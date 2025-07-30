@@ -37,7 +37,7 @@ export async function GET(request: Request) {
     // Process search results using shared logic
     const { plugins, searchMeta } = processSearchResults(allPlugins, query, {
       includeReadme: false, // Basic search doesn't include readme
-      limit: 5,
+      limit: 10,
       includeSearchMeta: true,
     });
 

@@ -3,8 +3,10 @@ import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { Prisma } from "@/server/database/prisma/generated/client";
 import { processSearchResults } from "@/lib/search-utils";
+import { getCorsHeaders, createOptionsHandler } from "@/lib/cors-utils";
 
 export async function GET(request: Request) {
+  const corsHeaders = getCorsHeaders(request);
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q") || "";
@@ -115,25 +117,31 @@ export async function GET(request: Request) {
     }
     // If sortBy is "relevance" and there's a query, plugins are already sorted by relevance score
 
-    return NextResponse.json({
-      plugins: uniquePlugins.map((plugin) => ({
-        ...plugin,
-        createdAt: plugin.createdAt.toISOString(),
-        updatedAt: plugin.updatedAt.toISOString(),
-      })),
-      total: uniquePlugins.length,
-      searchMeta: query
-        ? {
-            ...searchMeta,
-            totalResults: uniquePlugins.length, // Update to reflect deduplicated count
-          }
-        : undefined,
-    });
+    return NextResponse.json(
+      {
+        plugins: uniquePlugins.map((plugin) => ({
+          ...plugin,
+          createdAt: plugin.createdAt.toISOString(),
+          updatedAt: plugin.updatedAt.toISOString(),
+        })),
+        total: uniquePlugins.length,
+        searchMeta: query
+          ? {
+              ...searchMeta,
+              totalResults: uniquePlugins.length, // Update to reflect deduplicated count
+            }
+          : undefined,
+      },
+      { headers: corsHeaders }
+    );
   } catch (error) {
     console.error("Advanced search error:", error);
     return NextResponse.json(
       { error: "Failed to search plugins" },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
+
+// Handle CORS preflight requests
+export const OPTIONS = createOptionsHandler("GET, OPTIONS");
