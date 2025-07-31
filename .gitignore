@@ -52,5 +52,3 @@ generated/client/
 
 # Generated sitemaps
 services/tensorify.io/public/sitemap*.xml
-
-reactflow-documentation
