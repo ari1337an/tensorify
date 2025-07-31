@@ -65,6 +65,16 @@ type Workflow = {
   allVersions: WorkflowVersionSummary[];
 };
 
+type PluginManifest = {
+  id: string;
+  slug: string;
+  description: string | null;
+  pluginType: string;
+  manifest: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 interface StoreState {
   currentUser: SessionClaims | null;
   setCurrentUser: (user: SessionClaims) => void;
@@ -82,6 +92,9 @@ interface StoreState {
   // Plugin management
   pluginRefreshTrigger: number;
   triggerPluginRefresh: () => void;
+  pluginManifests: PluginManifest[];
+  setPluginManifests: (manifests: PluginManifest[]) => void;
+  fetchPluginManifests: (workflowId: string) => Promise<void>;
 }
 
 const useStore = create<StoreState>()(
@@ -127,10 +140,37 @@ const useStore = create<StoreState>()(
           undefined,
           "triggerPluginRefresh"
         ),
+      pluginManifests: [],
+      setPluginManifests: (manifests: PluginManifest[]) =>
+        set({ pluginManifests: manifests }, undefined, "setPluginManifests"),
+      fetchPluginManifests: async (workflowId: string) => {
+        try {
+          const { getWorkflowPlugins } = await import(
+            "@/app/api/v1/_client/client"
+          );
+          const response = await getWorkflowPlugins({
+            params: { workflowId },
+          });
+
+          if (response.status === 200) {
+            set(
+              { pluginManifests: response.body.data },
+              undefined,
+              "fetchPluginManifests"
+            );
+          } else {
+            console.error("Failed to fetch plugin manifests");
+            set({ pluginManifests: [] }, undefined, "fetchPluginManifests");
+          }
+        } catch (error) {
+          console.error("Error fetching plugin manifests:", error);
+          set({ pluginManifests: [] }, undefined, "fetchPluginManifests");
+        }
+      },
     }),
     { name: "AppStore" }
   )
 );
 
 export default useStore;
-export type { Workflow };
+export type { Workflow, PluginManifest };

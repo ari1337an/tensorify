@@ -538,8 +538,12 @@ export default function NodeSearch() {
     []
   );
 
-  const { currentWorkflow, pluginRefreshTrigger, triggerPluginRefresh } =
-    useStore();
+  const {
+    currentWorkflow,
+    pluginRefreshTrigger,
+    triggerPluginRefresh,
+    fetchPluginManifests,
+  } = useStore();
   const {
     setDraggedNodeType,
     setDraggedVersion,
@@ -767,6 +771,13 @@ export default function NodeSearch() {
     pluginRefreshTrigger,
     fetchInstalledPluginsWithDetails,
   ]);
+
+  // Fetch plugin manifests when workflow changes
+  useEffect(() => {
+    if (currentWorkflow?.id) {
+      fetchPluginManifests(currentWorkflow.id);
+    }
+  }, [currentWorkflow?.id, pluginRefreshTrigger, fetchPluginManifests]);
 
   // Integrate installed plugins into defaultNodes categories based on pluginType
   const getNodesWithInstalledPlugins = (): NodeItem[] => {
