@@ -11,7 +11,8 @@
     "version:patch": "sh scripts/version-management.sh patch",
     "version:minor": "sh scripts/version-management.sh minor",
     "version:major": "sh scripts/version-management.sh major",
-    "publish:all": "sh scripts/version-management.sh publish"
+    "publish:all": "sh scripts/version-management.sh publish",
+    "seed:test-plugins": "node seed-test-plugins-simple.js"
   },
   "devDependencies": {
     "prettier": "^3.3.3",

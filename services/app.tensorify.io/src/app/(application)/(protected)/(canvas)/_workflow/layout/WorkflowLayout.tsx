@@ -31,10 +31,12 @@ import {
   DragDropProvider,
   useDragDrop,
 } from "@workflow/context/DragDropContext";
+import useStore from "@/app/_store/store";
 
 // Node Types
 import CustomStandaloneNode from "@workflow/components/nodes/CustomStandaloneNode";
 import CustomNestedNode from "@workflow/components/nodes/CustomNestedNode";
+import CustomPluginNode from "@workflow/components/nodes/CustomPluginNode";
 
 // ID generator for nodes using crypto.randomUUID for better uniqueness
 const getId = () => crypto.randomUUID();
@@ -69,6 +71,9 @@ function WorkflowCanvas() {
     currentRoute,
   } = useWorkflowStore(useShallow(selector));
 
+  // Get plugin manifests from store
+  const pluginManifests = useStore((state) => state.pluginManifests);
+
   const { screenToFlowPosition } = useReactFlow();
   const {
     draggedNodeType,
@@ -92,6 +97,13 @@ function WorkflowCanvas() {
       // Special case: nested nodes
       nodeMap["@tensorify/core/CustomNestedNode"] = CustomNestedNode;
 
+      // Check if any plugin slugs should use CustomPluginNode
+      pluginManifests.forEach((manifest) => {
+        if (manifest.slug) {
+          nodeMap[manifest.slug] = CustomPluginNode;
+        }
+      });
+
       // All other nodes use CustomStandaloneNode as default
       // This is a fallback - ReactFlow will use this for any unregistered types
       return new Proxy(nodeMap, {
@@ -106,7 +118,7 @@ function WorkflowCanvas() {
     };
 
     return createNodeTypeMap();
-  }, []);
+  }, [pluginManifests]);
 
   // Debug nodes
   console.log(
@@ -144,6 +156,19 @@ function WorkflowCanvas() {
         y: event.clientY,
       });
 
+      // Check if this is a plugin node
+      const isPluginNode = pluginManifests.some(
+        (m) => m.slug === draggedNodeType
+      );
+      const manifest = pluginManifests.find((m) => m.slug === draggedNodeType);
+
+      // Extract label from manifest or use default
+      let nodeLabel = `${draggedNodeType.split("/").pop()} Node`;
+      if (manifest?.manifest?.visual) {
+        const visual = manifest.manifest.visual as any;
+        nodeLabel = visual.labels?.title || manifest.manifest.name || nodeLabel;
+      }
+
       const newNode = {
         id: getId(),
         type: draggedNodeType,
@@ -151,7 +176,8 @@ function WorkflowCanvas() {
         route: currentRoute,
         version: draggedVersion || "1.0.0",
         data: {
-          label: `${draggedNodeType.split("/").pop()} Node`,
+          label: nodeLabel,
+          ...(isPluginNode && { pluginId: draggedNodeType }),
         },
         selected: false,
         dragging: false,
@@ -175,6 +201,7 @@ function WorkflowCanvas() {
       setDraggedNodeType,
       setIsDragging,
       onDropSuccess,
+      pluginManifests,
     ]
   );
 

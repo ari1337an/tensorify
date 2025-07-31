@@ -42,7 +42,13 @@ export function WorkflowProvider({ children }: WorkflowProviderProps) {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  const { currentOrg, currentTeam, setCurrentWorkflow } = useStore();
+  const {
+    currentOrg,
+    currentTeam,
+    setCurrentWorkflow,
+    currentWorkflow,
+    fetchPluginManifests,
+  } = useStore();
 
   const fetchWorkflows = React.useCallback(async () => {
     if (!currentOrg?.id || !currentTeam?.id) {
@@ -111,6 +117,13 @@ export function WorkflowProvider({ children }: WorkflowProviderProps) {
   React.useEffect(() => {
     fetchWorkflows();
   }, [fetchWorkflows]);
+
+  // Fetch plugin manifests when current workflow changes
+  React.useEffect(() => {
+    if (currentWorkflow?.id) {
+      fetchPluginManifests(currentWorkflow.id);
+    }
+  }, [currentWorkflow?.id, fetchPluginManifests]);
 
   const selectWorkflow = React.useCallback(
     (workflow: WorkflowData) => {
