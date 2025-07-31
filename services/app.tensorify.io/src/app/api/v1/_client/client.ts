@@ -206,6 +206,12 @@ export async function patchRole(args: Parameters<typeof client.patchRole.contrac
 }
 
 
+export async function patchWorkflowVersionCode(args: Parameters<typeof client.patchWorkflowVersionCode.contract>[0]): Promise<ReturnType<typeof client.patchWorkflowVersionCode.contract>> {
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.patchWorkflowVersionCode.contract(args);
+}
+
+
 export async function postProject(args: Parameters<typeof client.postProject.contract>[0]): Promise<ReturnType<typeof client.postProject.contract>> {
   const dynamicClient = await getClientWithBaseUrl();
   return await dynamicClient.postProject.contract(args);

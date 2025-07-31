@@ -22,6 +22,7 @@ import CustomControl from "@workflow/controls/CustomControl";
 import useMiniMapFade from "@workflow/hooks/useMiniMapFade";
 import NodeSearch from "@workflow/components/NodeSearch";
 import DevTools from "@workflow/components/DevTools";
+import { useWorkflowPersistence } from "@workflow/hooks/useWorkflowPersistence";
 
 // Store and Context
 import useWorkflowStore, {
@@ -52,13 +53,16 @@ const selector = (state: ReturnType<typeof useWorkflowStore.getState>) => ({
   currentRoute: state.currentRoute,
 });
 
-function WorkflowCanvas() {
+function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
   // Always fire this to verify dev environment
   console.log("🚀 WorkflowCanvas component is running - Console working!");
 
   const { theme } = useTheme();
   const { showMiniMap, onMoveStart, onMoveEnd } = useMiniMapFade();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
+
+  // Use workflow persistence hook
+  useWorkflowPersistence({ workflow });
 
   const {
     nodes,
@@ -305,7 +309,7 @@ export function WorkflowLayout({ workflow }: { workflow: Workflow }) {
   return (
     <ReactFlowProvider>
       <DragDropProvider>
-        <WorkflowCanvas />
+        <WorkflowCanvas workflow={workflow} />
       </DragDropProvider>
     </ReactFlowProvider>
   );

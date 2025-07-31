@@ -18,6 +18,7 @@ import { contract as onboardingQuestionsContract, action as onboardingQuestionsA
 import { contract as onboardingSetupContract, action as onboardingSetupAction } from "./onboarding/onboardingSetup";
 import { contract as patchAccountContract, action as patchAccountAction } from "./account/patchAccount";
 import { contract as patchRoleContract, action as patchRoleAction } from "./roles/patchRole";
+import { contract as patchWorkflowVersionCodeContract, action as patchWorkflowVersionCodeAction } from "./workflow/patchWorkflowVersionCode";
 import { contract as postProjectContract, action as postProjectAction } from "./project/postProject";
 import { contract as postRolesContract, action as postRolesAction } from "./roles/postRoles";
 import { contract as postTeamContract, action as postTeamAction } from "./team/postTeam";
@@ -47,6 +48,7 @@ export const contract = c.router({
   onboardingSetup: onboardingSetupContract,
   patchAccount: patchAccountContract,
   patchRole: patchRoleContract,
+  patchWorkflowVersionCode: patchWorkflowVersionCodeContract,
   postProject: postProjectContract,
   postRoles: postRolesContract,
   postTeam: postTeamContract,
@@ -77,6 +79,7 @@ export const appRouter = tsr.routerWithMiddleware(contract)<{
   onboardingSetup: onboardingSetupAction,
   patchAccount: patchAccountAction,
   patchRole: patchRoleAction,
+  patchWorkflowVersionCode: patchWorkflowVersionCodeAction,
   postProject: postProjectAction,
   postRoles: postRolesAction,
   postTeam: postTeamAction,
