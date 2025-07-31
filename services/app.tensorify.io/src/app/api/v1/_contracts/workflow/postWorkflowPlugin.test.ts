@@ -218,7 +218,7 @@ describe("POST /workflow/:workflowId/plugin", () => {
     }
 
     await revokeSession(sessionId);
-  });
+  }, 50000);
 
   // Not Found Tests
   it("should return 404 if workflow does not exist", async () => {

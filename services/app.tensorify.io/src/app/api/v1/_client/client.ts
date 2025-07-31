@@ -248,6 +248,12 @@ export async function postWorkflowVersion(args: Parameters<typeof client.postWor
 }
 
 
+export async function putWorkflowPlugin(args: Parameters<typeof client.putWorkflowPlugin.contract>[0]): Promise<ReturnType<typeof client.putWorkflowPlugin.contract>> {
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.putWorkflowPlugin.contract(args);
+}
+
+
 export async function uploadPortrait(args: Parameters<typeof client.uploadPortrait.contract>[0]): Promise<ReturnType<typeof client.uploadPortrait.contract>> {
   const dynamicClient = await getClientWithBaseUrl();
   return await dynamicClient.uploadPortrait.contract(args);

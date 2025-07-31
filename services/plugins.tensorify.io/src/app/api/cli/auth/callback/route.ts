@@ -9,7 +9,13 @@ export async function GET(request: NextRequest) {
 
     if (!userId || !sessionId) {
       // Redirect to sign-in if not authenticated
-      const signInUrl = new URL("/sign-in", request.url);
+      // Use environment-specific base URLs to prevent Host header injection
+      const baseUrl =
+        process.env.NODE_ENV === "production"
+          ? "https://auth.tensorify.io"
+          : "http://localhost:3004";
+
+      const signInUrl = new URL("/sign-in", baseUrl);
       const callbackUrl =
         request.nextUrl.searchParams.get("redirect_url") ||
         request.nextUrl.searchParams.get("callback_url");

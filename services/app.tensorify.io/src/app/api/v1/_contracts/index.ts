@@ -25,6 +25,7 @@ import { contract as postUserRoleContract, action as postUserRoleAction } from "
 import { contract as postWorkflowContract, action as postWorkflowAction } from "./workflow/postWorkflow";
 import { contract as postWorkflowPluginContract, action as postWorkflowPluginAction } from "./workflow/postWorkflowPlugin";
 import { contract as postWorkflowVersionContract, action as postWorkflowVersionAction } from "./workflow/postWorkflowVersion";
+import { contract as putWorkflowPluginContract, action as putWorkflowPluginAction } from "./workflow/putWorkflowPlugin";
 import { contract as uploadPortraitContract, action as uploadPortraitAction } from "./account/uploadPortrait";
 
 const c = initContract();
@@ -52,6 +53,7 @@ export const contract = c.router({
   postWorkflow: postWorkflowContract,
   postWorkflowPlugin: postWorkflowPluginContract,
   postWorkflowVersion: postWorkflowVersionContract,
+  putWorkflowPlugin: putWorkflowPluginContract,
   uploadPortrait: uploadPortraitContract,
 });
 
@@ -80,5 +82,6 @@ export const appRouter = tsr.routerWithMiddleware(contract)<{
   postWorkflow: postWorkflowAction,
   postWorkflowPlugin: postWorkflowPluginAction,
   postWorkflowVersion: postWorkflowVersionAction,
+  putWorkflowPlugin: putWorkflowPluginAction,
   uploadPortrait: uploadPortraitAction,
 });

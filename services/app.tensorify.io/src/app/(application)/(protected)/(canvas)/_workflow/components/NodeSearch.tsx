@@ -525,6 +525,9 @@ export default function NodeSearch() {
     error: null,
   });
 
+  const [manualExternalSearchTriggered, setManualExternalSearchTriggered] =
+    useState(false);
+
   const [installingPlugins, setInstallingPlugins] = useState<Set<string>>(
     new Set()
   );
@@ -535,7 +538,8 @@ export default function NodeSearch() {
     []
   );
 
-  const { currentWorkflow } = useStore();
+  const { currentWorkflow, pluginRefreshTrigger, triggerPluginRefresh } =
+    useStore();
   const {
     setDraggedNodeType,
     setDraggedVersion,
@@ -631,11 +635,32 @@ export default function NodeSearch() {
     }
   }, []);
 
-  // Trigger search when debounced term changes
+  // Trigger search when debounced term changes - only auto-search if no local results
   useEffect(() => {
     if (debouncedSearchTerm.length >= MIN_SEARCH_LENGTH) {
-      searchExternalPlugins(debouncedSearchTerm);
+      const localResults = getLocalSearchResults(debouncedSearchTerm);
+      const hasLocalResults =
+        localResults.childrenMatches.length > 0 ||
+        localResults.parentMatches.length > 0;
+
+      // Only auto-search external plugins if no local results found
+      if (!hasLocalResults) {
+        searchExternalPlugins(debouncedSearchTerm);
+      } else {
+        // Reset external search state when we have local results and don't auto-search
+        setSearchState((prev) => ({
+          ...prev,
+          isSearching: false,
+          isSearchingExternal: false,
+          hasSearched: false,
+          query: debouncedSearchTerm,
+          results: [],
+          error: null,
+        }));
+      }
     }
+    // Reset manual search trigger when search term changes
+    setManualExternalSearchTriggered(false);
   }, [debouncedSearchTerm, searchExternalPlugins]);
 
   // Auto-close both sheets when drop is successful
@@ -734,10 +759,14 @@ export default function NodeSearch() {
     }
   }, [currentWorkflow?.id]);
 
-  // Fetch installed plugins with details when workflow changes
+  // Fetch installed plugins with details when workflow changes or plugin refresh is triggered
   useEffect(() => {
     fetchInstalledPluginsWithDetails();
-  }, [currentWorkflow?.id, fetchInstalledPluginsWithDetails]);
+  }, [
+    currentWorkflow?.id,
+    pluginRefreshTrigger,
+    fetchInstalledPluginsWithDetails,
+  ]);
 
   // Integrate installed plugins into defaultNodes categories based on pluginType
   const getNodesWithInstalledPlugins = (): NodeItem[] => {
@@ -800,6 +829,11 @@ export default function NodeSearch() {
     window.open(url, "_blank");
   };
 
+  const handleManualExternalSearch = () => {
+    setManualExternalSearchTriggered(true);
+    searchExternalPlugins(debouncedSearchTerm);
+  };
+
   const onDragStart = (
     event: React.DragEvent<HTMLDivElement>,
     nodeType: string,
@@ -837,14 +871,8 @@ export default function NodeSearch() {
       if (response.status === 201) {
         toast.success(`Plugin ${plugin.name} installed successfully!`);
 
-        // Refresh installed plugins list with details
-        const pluginsResponse = await getWorkflowPlugins({
-          params: { workflowId: currentWorkflow.id },
-        });
-        if (pluginsResponse.status === 200) {
-          // Re-fetch with details (trigger the useEffect)
-          setInstalledPlugins([]);
-        }
+        // Trigger plugin refresh in all components
+        triggerPluginRefresh();
 
         // Auto-close the sheet and clear search
         setIsSheetOpen(false);
@@ -899,7 +927,9 @@ export default function NodeSearch() {
         toast.success(
           `Plugin ${installedPlugin.name} updated to v${newVersion}!`
         );
-        fetchInstalledPluginsWithDetails(); // Refresh the list
+
+        // Trigger plugin refresh in all components
+        triggerPluginRefresh();
       } else {
         toast.error(response.body.message || "Failed to update plugin");
       }
@@ -1039,16 +1069,42 @@ export default function NodeSearch() {
 
   // Determine what to show in search results
   const shouldShowExternalResults =
-    debouncedSearchTerm.length >= MIN_SEARCH_LENGTH && searchState.hasSearched;
+    debouncedSearchTerm.length >= MIN_SEARCH_LENGTH &&
+    searchState.hasSearched &&
+    (manualExternalSearchTriggered || !hasLocalResults);
 
   const shouldShowExternalLoading =
     debouncedSearchTerm.length >= MIN_SEARCH_LENGTH &&
     (searchState.isSearching || searchState.isSearchingExternal) &&
+    !searchState.hasSearched &&
+    (manualExternalSearchTriggered || !hasLocalResults);
+
+  const shouldShowManualSearchButton =
+    debouncedSearchTerm.length >= MIN_SEARCH_LENGTH &&
+    hasLocalResults &&
+    !manualExternalSearchTriggered &&
     !searchState.hasSearched;
 
   return (
     <Panel position="top-right">
-      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+      <Sheet
+        open={isSheetOpen}
+        onOpenChange={(open) => {
+          setIsSheetOpen(open);
+          if (!open) {
+            // Reset search state when closing
+            setManualExternalSearchTriggered(false);
+            setSearchState({
+              isSearching: false,
+              isSearchingExternal: false,
+              hasSearched: false,
+              query: "",
+              results: [],
+              error: null,
+            });
+          }
+        }}
+      >
         <SheetTrigger asChild>
           <Button
             variant="default"
@@ -1140,6 +1196,23 @@ export default function NodeSearch() {
                   />
                 </div>
               ))}
+
+              {/* Manual external search button */}
+              {shouldShowManualSearchButton && (
+                <div className="flex items-center gap-3 py-3 my-2">
+                  <div className="flex-1 h-px bg-border"></div>
+                  <Button
+                    onClick={handleManualExternalSearch}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 text-xs font-medium"
+                  >
+                    <Search className="h-3.5 w-3.5" />
+                    Search External Plugins
+                  </Button>
+                  <div className="flex-1 h-px bg-border"></div>
+                </div>
+              )}
 
               {/* External plugin results */}
               {shouldShowExternalLoading && (

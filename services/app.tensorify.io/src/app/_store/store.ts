@@ -79,6 +79,9 @@ interface StoreState {
   currentWorkflow: Workflow | null;
   setCurrentWorkflow: (workflow: Workflow | null) => void;
   fetchWorkflows: () => Promise<void>;
+  // Plugin management
+  pluginRefreshTrigger: number;
+  triggerPluginRefresh: () => void;
 }
 
 const useStore = create<StoreState>()(
@@ -116,6 +119,14 @@ const useStore = create<StoreState>()(
           "fetchWorkflows called - should be implemented by provider"
         );
       },
+      // Plugin management
+      pluginRefreshTrigger: 0,
+      triggerPluginRefresh: () =>
+        set(
+          (state) => ({ pluginRefreshTrigger: state.pluginRefreshTrigger + 1 }),
+          undefined,
+          "triggerPluginRefresh"
+        ),
     }),
     { name: "AppStore" }
   )

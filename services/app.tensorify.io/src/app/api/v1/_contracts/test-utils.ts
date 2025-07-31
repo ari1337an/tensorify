@@ -137,7 +137,7 @@ export async function upsertPermissionsForTest() {
     }
   } catch (error) {
     console.error("Error upserting permissions:", error);
-  } 
+  }
 }
 
 /**
@@ -153,12 +153,15 @@ export async function flushDatabase(expect?: jest.Expect) {
 
   const tables = tablenames
     .map(({ tablename }) => tablename)
-    .filter((name) => name !== "_prisma_migrations")
-    .map((name) => `"public"."${name}"`)
-    .join(", ");
+    .filter((name) => name !== "_prisma_migrations");
 
   try {
-    await db.$executeRawUnsafe(`TRUNCATE TABLE ${tables} CASCADE;`);
+    // Truncate each table individually to avoid SQL syntax issues
+    for (const tablename of tables) {
+      await db.$executeRawUnsafe(
+        `TRUNCATE TABLE "public"."${tablename}" CASCADE;`
+      );
+    }
   } catch (error) {
     console.log({ error });
     throw error;

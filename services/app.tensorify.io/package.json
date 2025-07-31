@@ -5,14 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"pnpm run watch:tsrest\" \"pnpm run watch:tsrest:client\" \"pnpm run generate:tsrest; pnpm run generate:tsrest:client; next dev\"",
-    "prebuild": "pnpm run generate:tsrest && pnpm run generate:tsrest:client && npx prisma generate",
+    "prebuild": "pnpm run generate:tsrest && pnpm run generate:tsrest:client && npx prisma generate --schema=src/server/database/prisma/schema.prisma",
     "build": "pnpm run generate:tsrest && pnpm run generate:tsrest:client && next build",
     "start": "next start",
     "lint": "next lint",
     "prisma": "npx prisma generate && pnpm run prisma:seed",
     "seed": "node --experimental-specifier-resolution=node src/server/database/prisma/seed.js",
     "prisma:migrate": "npx prisma migrate dev",
-    "prisma:generate": "npx prisma generate",
+    "prisma:generate": "npx prisma generate --schema=src/server/database/prisma/schema.prisma",
     "prisma:seed": "pnpm run seed",
     "generate:tsrest": "node scripts/generate-tsrest-index.cjs",
     "generate:tsrest:client": "node scripts/generate-tsrest-client.cjs",
@@ -20,10 +20,10 @@
     "watch:tsrest:client": "node scripts/watch-tsrest-client.cjs",
     "docker:up": "docker compose -f docker-compose.test.yml up -d",
     "docker:down": "docker compose -f docker-compose.test.yml down",
-    "migrate:postgres:test": "dotenv -e .env.test -- npx prisma db push --force-reset",
+    "migrate:postgres:test": "dotenv -e .env.test -- npx prisma db push --force-reset --schema=src/server/database/prisma/schema.prisma",
     "test": "pnpm run generate:tsrest; pnpm run generate:tsrest:client; pnpm run docker:up; pnpm run prisma:generate; pnpm run migrate:postgres:test; env-cmd -f .env.test jest; pnpm run docker:down",
     "test:args": "pnpm run generate:tsrest; pnpm run generate:tsrest:client; pnpm run docker:up; pnpm run prisma:generate; pnpm run migrate:postgres:test; env-cmd -f .env.test jest --runInBand --verbose",
-    "postinstall": "npx prisma generate"
+    "postinstall": "npx prisma generate --schema=src/server/database/prisma/schema.prisma"
   },
   "dependencies": {
     "@anatine/zod-openapi": "^2.2.8",

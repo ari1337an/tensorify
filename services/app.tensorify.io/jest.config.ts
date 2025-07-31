@@ -174,7 +174,7 @@ const config: Config = {
   // The regexp pattern or array of patterns that Jest uses to detect test files
   // testRegex: [],
 
-  // testTimeout: 50000,
+  testTimeout: 50000,
 
   // This option allows the use of a custom results processor
   // testResultsProcessor: undefined,

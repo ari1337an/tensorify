@@ -53,7 +53,7 @@ export function PluginManagementDialog({
   isOpen,
   onClose,
 }: PluginManagementDialogProps) {
-  const { currentWorkflow } = useStore();
+  const { currentWorkflow, triggerPluginRefresh } = useStore();
   const [activeTab, setActiveTab] = useState("installed");
 
   // Installed plugins state
@@ -140,6 +140,9 @@ export function PluginManagementDialog({
         // Refresh the installed plugins list
         await fetchInstalledPlugins();
 
+        // Trigger plugin refresh in other components
+        triggerPluginRefresh();
+
         // Switch to installed tab to show the new plugin
         setActiveTab("installed");
       } else {
@@ -181,6 +184,9 @@ export function PluginManagementDialog({
 
         // Refresh the installed plugins list
         await fetchInstalledPlugins();
+
+        // Trigger plugin refresh in other components
+        triggerPluginRefresh();
       } else {
         toast.error(response.body.message || "Failed to uninstall plugin");
       }
