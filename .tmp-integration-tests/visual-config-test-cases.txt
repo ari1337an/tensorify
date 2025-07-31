@@ -1,0 +1,868 @@
+# CustomPluginNode Visual Configuration Test Cases
+# Complete coverage of all SDK visual types
+# Copy each JSON manifest one by one for testing
+
+# ============================================================================
+# TEST CASE 1: Basic DEFAULT setup with all handle view types
+# Tests: HandleViewType.DEFAULT, HandlePosition corners, EdgeType variations, basic validation
+# ============================================================================
+{
+  "id": "test-basic-handles",
+  "name": "Basic Handle Types Test",
+  "version": "1.0.0",
+  "pluginType": "custom",
+  "visual": {
+    "containerType": "default",
+    "size": { "width": 250, "height": 150 },
+    "padding": { "inner": 16, "outer": 8, "extraPadding": false },
+    "styling": { "borderRadius": 8, "borderWidth": 2, "shadowLevel": 1, "theme": "auto" },
+    "icons": {
+      "primary": { "type": "lucide", "value": "brain" },
+      "secondary": [],
+      "showIconBackground": true,
+      "iconSize": "medium"
+    },
+    "labels": { "title": "Test #1", "showLabels": true, "labelPosition": "top" }
+  },
+  "inputHandles": [
+    {
+      "id": "input1", "position": "left", "viewType": "default", "required": true,
+      "label": "Required Input (default)", "edgeType": "default", "dataType": "string",
+      "validation": { "minLength": 1, "maxLength": 100 },
+      "description": "This input is required and accepts strings"
+    },
+    {
+      "id": "input2", "position": "left", "viewType": "verticalBox", "required": false,
+      "label": "Optional Data (verticalBox)", "edgeType": "solid", "dataType": "number",
+      "description": "Optional numeric input with vertical box handle"
+    }
+  ],
+  "outputHandles": [
+    {
+      "id": "output1", "position": "right", "viewType": "default", "label": "Result",
+      "edgeType": "accent", "dataType": "object", "description": "Processed result object"
+    }
+  ]
+}
+
+# ============================================================================
+# TEST CASE 2: CIRCLE_LG handles with complex positioning and validation
+# Tests: HandleViewType.CIRCLE_LG, 8-point positioning, advanced EdgeTypes, HandleValidation
+# ============================================================================
+{
+  "id": "test-circle-lg-handles",
+  "name": "Large Circle Handles Test",
+  "version": "1.0.0",
+  "pluginType": "model",
+  "visual": {
+    "containerType": "box",
+    "size": { "width": 300, "height": 200, "minWidth": 200, "maxWidth": 400 },
+    "padding": { "inner": 20, "outer": 12, "extraPadding": true },
+    "styling": { "borderRadius": 12, "borderWidth": 3, "shadowLevel": 2, "theme": "light", "borderColor": "#3b82f6" },
+    "icons": {
+      "primary": { "type": "fontawesome", "value": "fa-solid fa-cog" },
+      "secondary": [{ "type": "lucide", "value": "settings", "position": "top" }],
+      "showIconBackground": false,
+      "iconSize": "large"
+    },
+    "labels": { "title": "Test #2", "titleDescription": "Advanced ML model", "showLabels": true, "labelPosition": "bottom" }
+  },
+  "inputHandles": [
+    {
+      "id": "data_input", "position": "top", "viewType": "circle-lg", "required": true,
+      "label": "Dataset (circle-lg)", "edgeType": "success", "dataType": "array",
+      "validation": { "minLength": 10, "customValidator": "validateDataset" },
+      "description": "Training dataset array with minimum 10 items"
+    },
+    {
+      "id": "config_input", "position": "bottom-left", "viewType": "circle-lg", "required": false,
+      "label": "Config (circle-lg)", "edgeType": "warning", "dataType": "object",
+      "validation": { "pattern": "^{.*}$" },
+      "description": "Optional configuration object"
+    }
+  ],
+  "outputHandles": [
+    {
+      "id": "model_output", "position": "top-right", "viewType": "circle-lg",
+      "label": "Trained Model", "edgeType": "success", "dataType": "object",
+      "description": "Trained ML model ready for inference"
+    },
+    {
+      "id": "metrics_output", "position": "bottom-right", "viewType": "circle-lg",
+      "label": "Metrics", "edgeType": "muted", "dataType": "object",
+      "description": "Training metrics and statistics"
+    }
+  ]
+}
+
+# ============================================================================
+# TEST CASE 3: DIAMOND and SQUARE handles with CIRCLE container
+# Tests: HandleViewType.DIAMOND/SQUARE, NodeViewContainerType.CIRCLE, complex icons
+# ============================================================================
+{
+  "id": "test-diamond-square-circle",
+  "name": "Diamond Square Circle Test",
+  "version": "1.0.0",
+  "pluginType": "preprocessor",
+  "visual": {
+    "containerType": "circle",
+    "size": { "width": 180, "height": 180, "aspectRatio": "fixed" },
+    "padding": { "inner": 12, "outer": 6, "extraPadding": false },
+    "styling": { "borderRadius": 90, "borderWidth": 4, "shadowLevel": 3, "theme": "dark", "backgroundColor": "#1f2937" },
+    "icons": {
+      "primary": { "type": "svg", "value": "<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 124 124' fill='none'><rect width='124' height='124' rx='24' fill='#F97316'/><path d='M19.375 36.7818V100.625C19.375 102.834 21.1659 104.625 23.375 104.625H87.2181C90.7818 104.625 92.5664 100.316 90.0466 97.7966L26.2034 33.9534C23.6836 31.4336 19.375 33.2182 19.375 36.7818Z' fill='white'/><circle cx='63.2109' cy='37.5391' r='18.1641' fill='black'/><rect opacity='0.4' x='81.1328' y='80.7198' width='17.5687' height='17.3876' rx='4' transform='rotate(-45 81.1328 80.7198)' fill='#FDBA74'/></svg>" },
+      "secondary": [
+        { "type": "lucide", "value": "filter", "position": "left" },
+        { "type": "lucide", "value": "shuffle", "position": "right" }
+      ],
+      "showIconBackground": true,
+      "iconSize": "medium"
+    },
+    "labels": { 
+      "title": "Test #3",
+      "dynamicLabelTemplate": "Filter {filterType}", 
+      "showLabels": true, 
+      "labelPosition": "overlay" 
+    }
+  },
+  "inputHandles": [
+    {
+      "id": "raw_data", "position": "left", "viewType": "diamond", "required": true,
+      "label": "Raw (diamond)", "edgeType": "dotted", "dataType": "any",
+      "description": "Raw input data of any type"
+    },
+    {
+      "id": "filter_params", "position": "top", "viewType": "square", "required": false,
+      "label": "Params (square)", "edgeType": "dashed", "dataType": "object",
+      "validation": { "customValidator": "validateFilterParams" },
+      "description": "Filter parameters configuration"
+    }
+  ],
+  "outputHandles": [
+    {
+      "id": "filtered_data", "position": "right", "viewType": "diamond",
+      "label": "Filtered", "edgeType": "dotted", "dataType": "any",
+      "description": "Processed and filtered data"
+    },
+    {
+      "id": "filter_stats", "position": "bottom", "viewType": "square",
+      "label": "Stats", "edgeType": "muted", "dataType": "object",
+      "description": "Filtering statistics and metadata"
+    }
+  ]
+}
+
+# ============================================================================
+# TEST CASE 4: TRIANGLE handles with LEFT_ROUND container and complex validation
+# Tests: HandleViewType.TRIANGLE, NodeViewContainerType.LEFT_ROUND, all EdgeTypes
+# ============================================================================
+{
+  "id": "test-triangle-left-round",
+  "name": "Triangle Left Round Test",
+  "version": "2.1.0",
+  "pluginType": "function",
+  "visual": {
+    "containerType": "left-round",
+    "size": { "width": 280, "height": 120, "minHeight": 100, "maxHeight": 200 },
+    "padding": { "inner": 18, "outer": 10, "extraPadding": true },
+    "styling": { "borderRadius": 15, "borderWidth": 1, "shadowLevel": 0, "theme": "auto", "borderColor": "#10b981" },
+    "icons": {
+      "primary": { "type": "lucide", "value": "zap" },
+      "secondary": [
+        { "type": "fontawesome", "value": "fa-regular fa-clock", "position": "bottom" },
+        { "type": "svg", "value": "<rect width='8' height='8' fill='red'/>", "position": "center" }
+      ],
+      "showIconBackground": false,
+      "iconSize": "medium"
+    },
+    "labels": { 
+      "title": "Test #4", 
+      "titleDescription": "High performance processor",
+      "showLabels": true, 
+      "labelPosition": "top" 
+    }
+  },
+  "inputHandles": [
+    {
+      "id": "func_input1", "position": "left", "viewType": "triangle", "required": true,
+      "label": "Input A (triangle)", "edgeType": "error", "dataType": "boolean",
+      "validation": { "customValidator": "validateBoolean" },
+      "description": "Boolean input with error edge styling"
+    },
+    {
+      "id": "func_input2", "position": "top-left", "viewType": "triangle", "required": true,
+      "label": "Input B (triangle)", "edgeType": "accent", "dataType": "number",
+      "validation": { "minLength": 0, "maxLength": 1000000 },
+      "description": "Numeric input with accent edge"
+    },
+    {
+      "id": "func_input3", "position": "bottom-left", "viewType": "triangle", "required": false,
+      "label": "Optional (triangle)", "edgeType": "warning", "dataType": "string",
+      "description": "Optional string parameter"
+    }
+  ],
+  "outputHandles": [
+    {
+      "id": "func_result", "position": "right", "viewType": "triangle",
+      "label": "Result", "edgeType": "success", "dataType": "any",
+      "description": "Function computation result"
+    },
+    {
+      "id": "func_debug", "position": "top-right", "viewType": "triangle",
+      "label": "Debug", "edgeType": "muted", "dataType": "string",
+      "description": "Debug information and logs"
+    }
+  ]
+}
+
+# ============================================================================
+# TEST CASE 5: VERTICAL_BOX handles with all icon positions
+# Tests: HandleViewType.VERTICAL_BOX, all IconPosition variations, complex styling
+# ============================================================================
+{
+  "id": "test-vertical-box-icons",
+  "name": "Vertical Box All Icons Test",
+  "version": "1.5.0",
+  "pluginType": "dataloader",
+  "visual": {
+    "containerType": "default",
+    "size": { "width": 320, "height": 180, "aspectRatio": "flexible" },
+    "padding": { "inner": 24, "outer": 14, "extraPadding": false },
+    "styling": { 
+      "borderRadius": 20, "borderWidth": 5, "shadowLevel": 2, "theme": "light",
+      "borderColor": "#f59e0b", "backgroundColor": "#fef3c7"
+    },
+    "icons": {
+      "primary": { "type": "lucide", "value": "database" },
+      "secondary": [
+        { "type": "lucide", "value": "upload", "position": "top" },
+        { "type": "lucide", "value": "download", "position": "bottom" },
+        { "type": "fontawesome", "value": "fa-solid fa-server", "position": "left" },
+        { "type": "svg", "value": "<path d='M12 2L2 7v10l10 5 10-5V7z' fill='currentColor'/>", "position": "right" }
+      ],
+      "showIconBackground": true,
+      "iconSize": "large"
+    },
+    "labels": { 
+      "title": "Test #5",
+      "titleDescription": "Multi-source data ingestion",
+      "dynamicLabelTemplate": "Loading {sourceType} data",
+      "showLabels": true, 
+      "labelPosition": "bottom" 
+    }
+  },
+  "inputHandles": [
+    {
+      "id": "source_config", "position": "top", "viewType": "verticalBox", "required": true,
+      "label": "Source Config (verticalBox)", "edgeType": "solid", "dataType": "object",
+      "validation": { "pattern": "^{\"source\":.+}$", "customValidator": "validateSourceConfig" },
+      "description": "Data source configuration object"
+    },
+    {
+      "id": "load_params", "position": "left", "viewType": "verticalBox", "required": false,
+      "label": "Load Params (verticalBox)", "edgeType": "default", "dataType": "object",
+      "description": "Optional loading parameters"
+    }
+  ],
+  "outputHandles": [
+    {
+      "id": "loaded_data", "position": "right", "viewType": "verticalBox",
+      "label": "Data", "edgeType": "solid", "dataType": "array",
+      "description": "Loaded data array"
+    },
+    {
+      "id": "load_metadata", "position": "bottom", "viewType": "verticalBox",
+      "label": "Metadata", "edgeType": "muted", "dataType": "object",
+      "description": "Loading metadata and statistics"
+    },
+    {
+      "id": "load_errors", "position": "bottom-right", "viewType": "verticalBox",
+      "label": "Errors", "edgeType": "error", "dataType": "array",
+      "description": "Any loading errors encountered"
+    }
+  ]
+}
+
+# ============================================================================
+# TEST CASE 6: Mixed handle types with maximum validation complexity
+# Tests: Multiple HandleViewTypes, extensive validation, all HandleDataTypes
+# ============================================================================
+{
+  "id": "test-mixed-validation-complex",
+  "name": "Mixed Handles Validation Test",
+  "version": "3.0.0",
+  "pluginType": "trainer",
+  "visual": {
+    "containerType": "box",
+    "size": { "width": 400, "height": 250, "minWidth": 300, "maxWidth": 500, "minHeight": 200 },
+    "padding": { "inner": 25, "outer": 15, "extraPadding": true },
+    "styling": { 
+      "borderRadius": 25, "borderWidth": 3, "shadowLevel": 3, "theme": "dark",
+      "borderColor": "#8b5cf6", "backgroundColor": "#322653"
+    },
+    "icons": {
+      "primary": { "type": "fontawesome", "value": "fa-solid fa-brain" },
+      "secondary": [
+        { "type": "lucide", "value": "cpu", "position": "top" },
+        { "type": "lucide", "value": "activity", "position": "center" }
+      ],
+      "showIconBackground": true,
+      "iconSize": "large"
+    },
+    "labels": { 
+      "title": "Test #6",
+      "titleDescription": "Advanced machine learning trainer",
+      "dynamicLabelTemplate": "Training {modelType} model",
+      "showLabels": true, 
+      "labelPosition": "overlay" 
+    }
+  },
+  "inputHandles": [
+    {
+      "id": "train_data", "position": "top-left", "viewType": "circle-lg", "required": true,
+      "label": "Training Data (circle-lg)", "edgeType": "success", "dataType": "array",
+      "validation": { "minLength": 100, "maxLength": 1000000, "customValidator": "validateTrainingData" },
+      "description": "Training dataset array (100-1M samples)"
+    },
+    {
+      "id": "model_config", "position": "left", "viewType": "square", "required": true,
+      "label": "Model Config (square)", "edgeType": "accent", "dataType": "object",
+      "validation": { "pattern": "^{\"architecture\":.+}$" },
+      "description": "Model architecture configuration"
+    },
+    {
+      "id": "train_params", "position": "bottom-left", "viewType": "diamond", "required": false,
+      "label": "Train Params (diamond)", "edgeType": "default", "dataType": "object",
+      "validation": { "customValidator": "validateTrainingParams" },
+      "description": "Training hyperparameters"
+    },
+    {
+      "id": "validation_data", "position": "top", "viewType": "verticalBox", "required": false,
+      "label": "Val Data (verticalBox)", "edgeType": "warning", "dataType": "array",
+      "validation": { "minLength": 10 },
+      "description": "Validation dataset"
+    },
+    {
+      "id": "early_stop", "position": "bottom", "viewType": "triangle", "required": false,
+      "label": "Early Stop (triangle)", "edgeType": "error", "dataType": "boolean",
+      "description": "Enable early stopping"
+    },
+    {
+      "id": "checkpoint_path", "position": "top-right", "viewType": "default", "required": false,
+      "label": "Checkpoint (default)", "edgeType": "muted", "dataType": "string",
+      "validation": { "pattern": "^/.*\\.ckpt$", "maxLength": 255 },
+      "description": "Checkpoint file path (.ckpt)"
+    }
+  ],
+  "outputHandles": [
+    {
+      "id": "trained_model", "position": "right", "viewType": "circle-lg",
+      "label": "Trained Model", "edgeType": "success", "dataType": "object",
+      "description": "Fully trained model"
+    },
+    {
+      "id": "training_history", "position": "bottom-right", "viewType": "square",
+      "label": "History", "edgeType": "solid", "dataType": "array",
+      "description": "Training history and metrics"
+    },
+    {
+      "id": "final_metrics", "position": "right", "viewType": "diamond",
+      "label": "Metrics", "edgeType": "accent", "dataType": "object",
+      "description": "Final evaluation metrics"
+    }
+  ]
+}
+
+# ============================================================================
+# TEST CASE 7: Minimal configuration test with defaults
+# Tests: Minimal required fields, default fallbacks, basic functionality
+# ============================================================================
+{
+  "id": "test-minimal-config",
+  "name": "Minimal Configuration Test",
+  "version": "1.0.0",
+  "pluginType": "custom",
+  "visual": {
+    "containerType": "default",
+    "size": { "width": 150, "height": 100 },
+    "padding": { "inner": 8, "outer": 4, "extraPadding": false },
+    "styling": { "borderRadius": 4, "borderWidth": 1, "shadowLevel": 0, "theme": "auto" },
+    "icons": {
+      "primary": { "type": "lucide", "value": "box" },
+      "secondary": [],
+      "showIconBackground": false,
+      "iconSize": "small"
+    },
+    "labels": { "title": "Test #7", "showLabels": true, "labelPosition": "top" }
+  },
+  "inputHandles": [
+    {
+      "id": "input", "position": "left", "viewType": "default", "required": false,
+      "label": "Input (default)", "edgeType": "default", "dataType": "any"
+    }
+  ],
+  "outputHandles": [
+    {
+      "id": "output", "position": "right", "viewType": "default",
+      "edgeType": "default", "dataType": "any"
+    }
+  ]
+}
+
+# ============================================================================
+# TEST CASE 8: Maximum complexity with all edge types and positions
+# Tests: All 9 EdgeTypes, all 8 HandlePositions, complex container styling
+# ============================================================================
+{
+  "id": "test-all-edge-types-positions",
+  "name": "All Edge Types & Positions Test",
+  "version": "4.2.0",
+  "pluginType": "pipeline",
+  "visual": {
+    "containerType": "left-round",
+    "size": { "width": 450, "height": 300, "aspectRatio": "flexible" },
+    "padding": { "inner": 30, "outer": 20, "extraPadding": true },
+    "styling": { 
+      "borderRadius": 30, "borderWidth": 6, "shadowLevel": 3, "theme": "auto",
+      "borderColor": "#ef4444", "backgroundColor": "#fee2e2"
+    },
+    "icons": {
+      "primary": { "type": "svg", "value": "<polygon points='12,2 15.09,8.26 22,9 17,14 18.18,21 12,17.77 5.82,21 7,14 2,9 8.91,8.26' fill='currentColor'/>" },
+      "secondary": [
+        { "type": "lucide", "value": "workflow", "position": "center" },
+        { "type": "fontawesome", "value": "fa-solid fa-gear", "position": "top" }
+      ],
+      "showIconBackground": true,
+      "iconSize": "large"
+    },
+    "labels": { 
+      "title": "Test #8",
+      "titleDescription": "Multi-stage data pipeline",
+      "showLabels": true, 
+      "labelPosition": "bottom" 
+    }
+  },
+  "inputHandles": [
+    {
+      "id": "in1", "position": "top", "viewType": "default", "required": true,
+      "label": "Default (default)", "edgeType": "default", "dataType": "string",
+      "description": "Default edge type input"
+    },
+    {
+      "id": "in2", "position": "top-right", "viewType": "circle-lg", "required": true,
+      "label": "Solid (circle-lg)", "edgeType": "solid", "dataType": "number",
+      "description": "Solid edge type input"
+    },
+    {
+      "id": "in3", "position": "right", "viewType": "square", "required": false,
+      "label": "Dotted (square)", "edgeType": "dotted", "dataType": "boolean",
+      "description": "Dotted edge type input"
+    },
+    {
+      "id": "in4", "position": "bottom-right", "viewType": "diamond", "required": false,
+      "label": "Dashed (diamond)", "edgeType": "dashed", "dataType": "object",
+      "description": "Dashed edge type input"
+    },
+    {
+      "id": "in5", "position": "bottom", "viewType": "triangle", "required": true,
+      "label": "Accent (triangle)", "edgeType": "accent", "dataType": "array",
+      "description": "Accent edge type input"
+    },
+    {
+      "id": "in6", "position": "bottom-left", "viewType": "verticalBox", "required": false,
+      "label": "Muted (verticalBox)", "edgeType": "muted", "dataType": "any",
+      "description": "Muted edge type input"
+    },
+    {
+      "id": "in7", "position": "left", "viewType": "default", "required": true,
+      "label": "Success (default)", "edgeType": "success", "dataType": "object",
+      "description": "Success edge type input"
+    },
+    {
+      "id": "in8", "position": "top-left", "viewType": "circle-lg", "required": false,
+      "label": "Warning (circle-lg)", "edgeType": "warning", "dataType": "string",
+      "description": "Warning edge type input"
+    }
+  ],
+  "outputHandles": [
+    {
+      "id": "out1", "position": "right", "viewType": "square",
+      "label": "Error Out", "edgeType": "error", "dataType": "array",
+      "description": "Error edge type output"
+    },
+    {
+      "id": "out2", "position": "bottom-right", "viewType": "diamond",
+      "label": "Results", "edgeType": "success", "dataType": "object",
+      "description": "Pipeline results"
+    }
+  ]
+}
+
+# ============================================================================
+# TEST CASE 9: Icon-focused test with all combinations
+# Tests: All IconType combinations, IconPosition variations, IconSize options
+# ============================================================================
+{
+  "id": "test-all-icon-combinations",
+  "name": "All Icon Combinations Test",
+  "version": "2.0.0",
+  "pluginType": "report",
+  "visual": {
+    "containerType": "circle",
+    "size": { "width": 200, "height": 200, "aspectRatio": "fixed" },
+    "padding": { "inner": 15, "outer": 10, "extraPadding": false },
+    "styling": { "borderRadius": 100, "borderWidth": 2, "shadowLevel": 2, "theme": "light" },
+    "icons": {
+      "primary": { "type": "lucide", "value": "bar-chart" },
+      "secondary": [
+        { "type": "svg", "value": "<circle cx='6' cy='6' r='4' fill='blue'/>", "position": "top" },
+        { "type": "fontawesome", "value": "fa-regular fa-file-pdf", "position": "right" },
+        { "type": "lucide", "value": "pie-chart", "position": "bottom" },
+        { "type": "svg", "value": "<rect x='2' y='2' width='8' height='8' fill='green'/>", "position": "left" }
+      ],
+      "showIconBackground": true,
+      "iconSize": "medium"
+    },
+    "labels": { 
+      "title": "Test #9",
+      "titleDescription": "Statistical reports and charts",
+      "showLabels": true, 
+      "labelPosition": "overlay" 
+    }
+  },
+  "inputHandles": [
+    {
+      "id": "data_input", "position": "left", "viewType": "verticalBox", "required": true,
+      "label": "Data (verticalBox)", "edgeType": "solid", "dataType": "array",
+      "description": "Input data for report generation"
+    },
+    {
+      "id": "template", "position": "top", "viewType": "square", "required": false,
+      "label": "Template (square)", "edgeType": "default", "dataType": "object",
+      "description": "Report template configuration"
+    }
+  ],
+  "outputHandles": [
+    {
+      "id": "pdf_report", "position": "right", "viewType": "diamond",
+      "label": "PDF", "edgeType": "success", "dataType": "string",
+      "description": "Generated PDF report path"
+    },
+    {
+      "id": "chart_data", "position": "bottom", "viewType": "triangle",
+      "label": "Charts", "edgeType": "accent", "dataType": "object",
+      "description": "Chart data and visualizations"
+    }
+  ]
+}
+
+# ============================================================================
+# TEST CASE 10: Label variations and dynamic templates
+# Tests: LabelPosition options, dynamic templates, titleDescription
+# ============================================================================
+{
+  "id": "test-label-variations",
+  "name": "Label Variations Test",
+  "version": "1.8.0",
+  "pluginType": "evaluator",
+  "visual": {
+    "containerType": "box",
+    "size": { "width": 280, "height": 160 },
+    "padding": { "inner": 20, "outer": 12, "extraPadding": false },
+    "styling": { "borderRadius": 16, "borderWidth": 2, "shadowLevel": 1, "theme": "dark" },
+    "icons": {
+      "primary": { "type": "fontawesome", "value": "fa-solid fa-chart-line" },
+      "secondary": [{ "type": "lucide", "value": "target", "position": "top" }],
+      "showIconBackground": false,
+      "iconSize": "large"
+    },
+    "labels": { 
+      "title": "Test #10",
+      "titleDescription": "Performance evaluation metrics",
+      "dynamicLabelTemplate": "Evaluating {modelName} on {datasetName}",
+      "showLabels": true, 
+      "labelPosition": "top" 
+    }
+  },
+  "inputHandles": [
+    {
+      "id": "model_input", "position": "left", "viewType": "circle-lg", "required": true,
+      "label": "Model (circle-lg)", "edgeType": "accent", "dataType": "object",
+      "description": "Model to evaluate"
+    },
+    {
+      "id": "test_data", "position": "top", "viewType": "diamond", "required": true,
+      "label": "Test Data (diamond)", "edgeType": "solid", "dataType": "array",
+      "validation": { "minLength": 50 },
+      "description": "Test dataset for evaluation"
+    },
+    {
+      "id": "metrics_config", "position": "bottom", "viewType": "square", "required": false,
+      "label": "Metrics (square)", "edgeType": "default", "dataType": "object",
+      "description": "Evaluation metrics configuration"
+    }
+  ],
+  "outputHandles": [
+    {
+      "id": "evaluation_results", "position": "right", "viewType": "verticalBox",
+      "label": "Results", "edgeType": "success", "dataType": "object",
+      "description": "Comprehensive evaluation results"
+    },
+    {
+      "id": "performance_score", "position": "bottom-right", "viewType": "triangle",
+      "label": "Score", "edgeType": "accent", "dataType": "number",
+      "description": "Overall performance score"
+    }
+  ]
+}
+
+# ============================================================================
+# TEST CASE 11: Size constraints and aspect ratio test
+# Tests: Size constraints (min/max), aspectRatio options, extreme dimensions
+# ============================================================================
+{
+  "id": "test-size-constraints",
+  "name": "Size Constraints Test",
+  "version": "1.0.0",
+  "pluginType": "model_layer",
+  "visual": {
+    "containerType": "default",
+    "size": { 
+      "width": 500, "height": 120, 
+      "minWidth": 300, "maxWidth": 800,
+      "minHeight": 80, "maxHeight": 200,
+      "aspectRatio": "fixed"
+    },
+    "padding": { "inner": 10, "outer": 5, "extraPadding": true },
+    "styling": { "borderRadius": 6, "borderWidth": 1, "shadowLevel": 1, "theme": "auto" },
+    "icons": {
+      "primary": { "type": "lucide", "value": "layers" },
+      "secondary": [],
+      "showIconBackground": true,
+      "iconSize": "small"
+    },
+    "labels": { 
+      "title": "Test #11",
+      "showLabels": true, 
+      "labelPosition": "top" 
+    }
+  },
+  "inputHandles": [
+    {
+      "id": "layer_input", "position": "left", "viewType": "verticalBox", "required": true,
+      "label": "Input (verticalBox)", "edgeType": "default", "dataType": "array",
+      "description": "Layer input tensor"
+    }
+  ],
+  "outputHandles": [
+    {
+      "id": "layer_output", "position": "right", "viewType": "verticalBox",
+      "label": "Output", "edgeType": "default", "dataType": "array",
+      "description": "Layer output tensor"
+    }
+  ]
+}
+
+# ============================================================================
+# TEST CASE 12: Extreme styling and shadow variations
+# Tests: All shadowLevel options, extreme styling values, border colors
+# ============================================================================
+{
+  "id": "test-extreme-styling",
+  "name": "Extreme Styling Test",
+  "version": "1.0.0",
+  "pluginType": "augmentation_stack",
+  "visual": {
+    "containerType": "box",
+    "size": { "width": 200, "height": 200 },
+    "padding": { "inner": 25, "outer": 15, "extraPadding": true },
+    "styling": { 
+      "borderRadius": 50, "borderWidth": 8, "shadowLevel": 3, "theme": "light",
+      "borderColor": "#dc2626", "backgroundColor": "#fef2f2"
+    },
+    "icons": {
+      "primary": { "type": "lucide", "value": "shuffle" },
+      "secondary": [
+        { "type": "fontawesome", "value": "fa-solid fa-magic", "position": "top" }
+      ],
+      "showIconBackground": true,
+      "iconSize": "large"
+    },
+    "labels": { 
+      "title": "Test #12",
+      "titleDescription": "Data augmentation pipeline",
+      "showLabels": true, 
+      "labelPosition": "bottom" 
+    }
+  },
+  "inputHandles": [
+    {
+      "id": "aug_input", "position": "top", "viewType": "circle-lg", "required": true,
+      "label": "Data (circle-lg)", "edgeType": "success", "dataType": "array",
+      "description": "Data to augment"
+    }
+  ],
+  "outputHandles": [
+    {
+      "id": "aug_output", "position": "bottom", "viewType": "circle-lg",
+      "label": "Augmented", "edgeType": "success", "dataType": "array",
+      "description": "Augmented dataset"
+    }
+  ]
+}
+
+# ============================================================================
+# TEST CASE 13: No icons, minimal styling test
+# Tests: Empty secondary icons, no primary icon, minimal visual configuration
+# ============================================================================
+{
+  "id": "test-no-icons-minimal",
+  "name": "No Icons Minimal Test",
+  "version": "1.0.0",
+  "pluginType": "optimizer",
+  "visual": {
+    "containerType": "default",
+    "size": { "width": 180, "height": 80 },
+    "padding": { "inner": 8, "outer": 4, "extraPadding": false },
+    "styling": { "borderRadius": 4, "borderWidth": 1, "shadowLevel": 0, "theme": "auto" },
+    "icons": {
+      "secondary": [],
+      "showIconBackground": false,
+      "iconSize": "small"
+    },
+    "labels": { 
+      "title": "Test #13",
+      "showLabels": true, 
+      "labelPosition": "top" 
+    }
+  },
+  "inputHandles": [
+    {
+      "id": "params", "position": "left", "viewType": "default", "required": true,
+      "label": "Parameters (default)", "edgeType": "default", "dataType": "object",
+      "description": "Optimization parameters"
+    }
+  ],
+  "outputHandles": [
+    {
+      "id": "optimized", "position": "right", "viewType": "default",
+      "label": "Optimized", "edgeType": "default", "dataType": "object",
+      "description": "Optimized parameters"
+    }
+  ]
+}
+
+# ============================================================================
+# TEST CASE 14: Complex validation patterns test
+# Tests: Advanced validation patterns, multiple validation rules, edge cases
+# ============================================================================
+{
+  "id": "test-complex-validation",
+  "name": "Complex Validation Test",
+  "version": "1.0.0",
+  "pluginType": "loss_function",
+  "visual": {
+    "containerType": "circle",
+    "size": { "width": 160, "height": 160, "aspectRatio": "fixed" },
+    "padding": { "inner": 12, "outer": 8, "extraPadding": false },
+    "styling": { "borderRadius": 80, "borderWidth": 3, "shadowLevel": 2, "theme": "dark" },
+    "icons": {
+      "primary": { "type": "lucide", "value": "target" },
+      "secondary": [],
+      "showIconBackground": true,
+      "iconSize": "medium"
+    },
+    "labels": { 
+      "title": "Test #14",
+      "showLabels": true, 
+      "labelPosition": "overlay" 
+    }
+  },
+  "inputHandles": [
+    {
+      "id": "predictions", "position": "top", "viewType": "square", "required": true,
+      "label": "Predictions (square)", "edgeType": "accent", "dataType": "array",
+      "validation": { 
+        "minLength": 1, "maxLength": 10000,
+        "pattern": "^\\[.*\\]$",
+        "customValidator": "validatePredictions"
+      },
+      "description": "Model predictions array"
+    },
+    {
+      "id": "targets", "position": "left", "viewType": "diamond", "required": true,
+      "label": "Targets (diamond)", "edgeType": "solid", "dataType": "array",
+      "validation": { 
+        "minLength": 1, "maxLength": 10000,
+        "customValidator": "validateTargets"
+      },
+      "description": "Ground truth targets"
+    },
+    {
+      "id": "weights", "position": "bottom", "viewType": "triangle", "required": false,
+      "label": "Weights (triangle)", "edgeType": "default", "dataType": "array",
+      "validation": { 
+        "pattern": "^\\[[0-9.,\\s]+\\]$",
+        "customValidator": "validateWeights"
+      },
+      "description": "Sample weights (optional)"
+    }
+  ],
+  "outputHandles": [
+    {
+      "id": "loss_value", "position": "right", "viewType": "circle-lg",
+      "label": "Loss", "edgeType": "error", "dataType": "number",
+      "description": "Computed loss value"
+    }
+  ]
+}
+
+# ============================================================================
+# TEST CASE 15: Error edge cases and fallback test
+# Tests: Invalid configurations, missing fields, fallback behaviors
+# ============================================================================
+{
+  "id": "test-error-fallbacks",
+  "name": "Error Fallbacks Test",
+  "version": "1.0.0",
+  "pluginType": "metric",
+  "visual": {
+    "containerType": "invalid_type",
+    "size": { "width": 220, "height": 140 },
+    "padding": { "inner": 16, "outer": 8, "extraPadding": false },
+    "styling": { "borderRadius": 8, "borderWidth": 2, "shadowLevel": 5, "theme": "invalid" },
+    "icons": {
+      "primary": { "type": "invalid_type", "value": "invalid_icon" },
+      "secondary": [
+        { "type": "lucide", "value": "nonexistent_icon", "position": "invalid_position" }
+      ],
+      "showIconBackground": true,
+      "iconSize": "invalid_size"
+    },
+    "labels": { 
+      "title": "Test #15",
+      "showLabels": true, 
+      "labelPosition": "invalid_position" 
+    }
+  },
+  "inputHandles": [
+    {
+      "id": "test_input", "position": "invalid_position", "viewType": "invalid_type", "required": true,
+      "label": "Test Input (invalid_type)", "edgeType": "invalid_edge", "dataType": "invalid_type",
+      "validation": { "minLength": -1, "maxLength": -1 },
+      "description": "Test input for fallback behavior"
+    }
+  ],
+  "outputHandles": [
+    {
+      "id": "test_output", "position": "invalid_position", "viewType": "invalid_type",
+      "label": "Test Output", "edgeType": "invalid_edge", "dataType": "invalid_type",
+      "description": "Test output with invalid configurations"
+    }
+  ]
+}
+
+# ============================================================================
+# End of test cases - 15 comprehensive tests covering all visual configuration options
+# Copy each JSON manifest individually for testing
+# ============================================================================

@@ -1,12 +1,22 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { Handle, type NodeProps, Position } from "@xyflow/react";
+import { type NodeProps } from "@xyflow/react";
 import * as LucideIcons from "lucide-react";
 import TNode from "./TNode/TNode";
 import { type WorkflowNode } from "../../store/workflowStore";
 import useWorkflowStore from "../../store/workflowStore";
 import useStore from "@/app/_store/store";
+import CustomHandle from "./handles/CustomHandle";
+import { useHandleValidation } from "./handles/useHandleValidation";
+import {
+  type InputHandle,
+  type OutputHandle,
+} from "@packages/sdk/src/types/visual";
+
+// Extended handle types with unique keys for React rendering
+type ExtendedInputHandle = InputHandle & { uniqueKey: string };
+type ExtendedOutputHandle = OutputHandle & { uniqueKey: string };
 
 // Icon size mapping
 const ICON_SIZE_MAP = {
@@ -24,17 +34,8 @@ const SHADOW_LEVEL_MAP = {
   4: "shadow-xl",
 };
 
-// Position mapping for handles (8-point system)
-const POSITION_MAP = {
-  left: Position.Left,
-  right: Position.Right,
-  top: Position.Top,
-  bottom: Position.Bottom,
-  "top-left": Position.Top,
-  "top-right": Position.Top,
-  "bottom-left": Position.Bottom,
-  "bottom-right": Position.Bottom,
-};
+// Legacy position mapping - now handled in CustomHandle component
+// Kept for backward compatibility with any remaining usage
 
 // Container type styling
 const CONTAINER_STYLES = {
@@ -44,18 +45,8 @@ const CONTAINER_STYLES = {
   "left-round": "rounded-l-full rounded-r-lg",
 };
 
-// Edge type colors
-const EDGE_TYPE_COLORS = {
-  default: "bg-muted-foreground",
-  solid: "bg-foreground",
-  dotted: "bg-muted-foreground",
-  dashed: "bg-muted-foreground",
-  accent: "bg-primary",
-  muted: "bg-muted",
-  success: "bg-green-500",
-  warning: "bg-yellow-500",
-  error: "bg-red-500",
-};
+// Legacy edge type colors - now handled in CustomHandle component
+// Kept for backward compatibility
 
 // NodeType category colors for badges
 const NODE_TYPE_COLORS = {
@@ -117,10 +108,23 @@ function IconWrapper({
 
   // Handle SVG icons
   if (iconType === "svg") {
+    // Parse and sanitize SVG to ensure it respects size constraints
+    const sanitizedSvg = iconValue.replace(
+      /<svg([^>]*)>/i,
+      (match: string, attributes: string) => {
+        // Remove existing width/height attributes and add responsive ones
+        const cleanAttributes = attributes
+          .replace(/\s*(width|height)\s*=\s*["'][^"']*["']/gi, "")
+          .trim();
+        return `<svg${cleanAttributes ? " " + cleanAttributes : ""} width="100%" height="100%" viewBox="0 0 24 24">`;
+      }
+    );
+
     return (
       <div
-        className={className}
-        dangerouslySetInnerHTML={{ __html: iconValue }}
+        className={`${className} flex items-center justify-center overflow-hidden`}
+        style={{ aspectRatio: "1/1" }}
+        dangerouslySetInnerHTML={{ __html: sanitizedSvg }}
       />
     );
   }
@@ -161,35 +165,8 @@ function getIconComponent(
   return icon || null;
 }
 
-// Get handle position based on 8-point system
-function getHandlePosition(
-  position: string,
-  index: number,
-  totalHandles: number
-) {
-  const offset = ((index + 1) / (totalHandles + 1)) * 100;
-
-  switch (position) {
-    case "left":
-      return { top: `${offset}%`, left: 0 };
-    case "right":
-      return { top: `${offset}%`, right: 0 };
-    case "top":
-      return { left: `${offset}%`, top: 0 };
-    case "bottom":
-      return { left: `${offset}%`, bottom: 0 };
-    case "top-left":
-      return { top: 0, left: 0 };
-    case "top-right":
-      return { top: 0, right: 0 };
-    case "bottom-left":
-      return { bottom: 0, left: 0 };
-    case "bottom-right":
-      return { bottom: 0, right: 0 };
-    default:
-      return { top: `${offset}%`, left: 0 };
-  }
-}
+// Handle positioning is now managed by CustomHandle component
+// This function has been replaced by calculateHandlePosition in CustomHandle.tsx
 
 export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
   const { data, selected, id } = props;
@@ -199,6 +176,7 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
   const inputRef = useRef<HTMLInputElement>(null);
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const pluginManifests = useStore((state) => state.pluginManifests);
+  const { isConnectionValid, validateNodeInputs } = useHandleValidation();
 
   // Find the manifest for this plugin node with error handling
   const manifest = useMemo(() => {
@@ -286,17 +264,39 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
     };
   }, [manifest, data.label]);
 
-  // Extract handle configurations
-  const { inputHandles, outputHandles } = useMemo(() => {
+  // Extract handle configurations with proper typing and ensure unique IDs
+  const { inputHandles, outputHandles } = useMemo((): {
+    inputHandles: ExtendedInputHandle[];
+    outputHandles: ExtendedOutputHandle[];
+  } => {
     if (!manifest?.manifest) {
       return { inputHandles: [], outputHandles: [] };
     }
 
-    return {
-      inputHandles: (manifest.manifest.inputHandles as any[]) || [],
-      outputHandles: (manifest.manifest.outputHandles as any[]) || [],
-    };
+    // Ensure unique IDs for handles to prevent React key conflicts
+    const inputHandles: ExtendedInputHandle[] =
+      (manifest.manifest.inputHandles as InputHandle[])?.map(
+        (handle, index) => ({
+          ...handle,
+          uniqueKey: `${handle.id}-${index}-${crypto.randomUUID().slice(0, 8)}`,
+        })
+      ) || [];
+
+    const outputHandles: ExtendedOutputHandle[] =
+      (manifest.manifest.outputHandles as OutputHandle[])?.map(
+        (handle, index) => ({
+          ...handle,
+          uniqueKey: `${handle.id}-${index}-${crypto.randomUUID().slice(0, 8)}`,
+        })
+      ) || [];
+
+    return { inputHandles, outputHandles };
   }, [manifest]);
+
+  // Validate node inputs
+  const inputValidationResults = useMemo(() => {
+    return validateNodeInputs(id, inputHandles, data);
+  }, [validateNodeInputs, id, inputHandles, data]);
 
   // Process dynamic label
   const processedLabel = useMemo(() => {
@@ -378,17 +378,97 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
     NODE_TYPE_COLORS[nodeType as keyof typeof NODE_TYPE_COLORS] ||
     NODE_TYPE_COLORS.custom;
 
+  // Theme-aware text styling
+  const getTextClasses = useMemo(() => {
+    const isDarkTheme = visualProps.theme === "dark";
+
+    return {
+      primary: isDarkTheme ? "text-white" : "text-foreground",
+      secondary: isDarkTheme ? "text-gray-300" : "text-muted-foreground",
+      primaryHover: isDarkTheme
+        ? "hover:text-gray-100"
+        : "hover:text-primary-readable",
+    };
+  }, [visualProps.theme]);
+
+  // Theme-aware icon styling
+  const getIconClasses = useMemo(() => {
+    const isDarkTheme = visualProps.theme === "dark";
+
+    return {
+      primary: isDarkTheme ? "text-gray-200" : "text-muted-foreground",
+      primarySelected: "text-primary",
+      secondary: isDarkTheme ? "text-gray-300" : "text-muted-foreground",
+      background: isDarkTheme ? "bg-gray-800/50" : "bg-muted/50",
+      backgroundHover: isDarkTheme
+        ? "group-hover:bg-gray-700/50"
+        : "group-hover:bg-muted",
+      backgroundSelected: "bg-primary/10",
+      secondaryBackground: isDarkTheme ? "bg-gray-800/80" : "bg-background/80",
+    };
+  }, [visualProps.theme]);
+
+  // Theme-aware background color
+  const getBackgroundColor = useMemo(() => {
+    const isDarkTheme = visualProps.theme === "dark";
+
+    // If explicit backgroundColor is set, use it
+    if (visualProps.backgroundColor) {
+      return visualProps.backgroundColor;
+    }
+
+    // Otherwise, provide theme-appropriate defaults
+    return isDarkTheme ? "#1f2937" : "#ffffff"; // gray-800 for dark, white for light
+  }, [visualProps.theme, visualProps.backgroundColor]);
+
+  // Calculate secondary icon position based on IconPosition
+  const calculateIconPosition = (position: string = "right"): string => {
+    switch (position) {
+      case "top":
+        return "absolute top-2 left-1/2 transform -translate-x-1/2";
+      case "bottom":
+        return "absolute bottom-2 left-1/2 transform -translate-x-1/2";
+      case "left":
+        return "absolute top-1/2 left-2 transform -translate-y-1/2";
+      case "right":
+        return "absolute top-1/2 right-2 transform -translate-y-1/2";
+      case "center":
+        return "absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
+      default:
+        return "absolute top-2 right-2"; // Fallback to original position
+    }
+  };
+
   // Handle error state
   if (hasError || !manifest) {
+    const isDarkTheme = visualProps.theme === "dark";
     return (
       <TNode {...props}>
-        <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-500 rounded-lg p-4 min-w-[180px] min-h-[80px]">
+        <div
+          className="rounded-lg p-4 min-w-[180px] min-h-[80px] border-2"
+          style={{
+            backgroundColor: isDarkTheme ? "#7f1d1d" : "#fef2f2", // red-900 for dark, red-50 for light
+            borderColor: isDarkTheme ? "#f87171" : "#ef4444", // red-400 for dark, red-500 for light
+          }}
+        >
           <div className="flex flex-col items-center justify-center space-y-2">
-            <LucideIcons.AlertCircle className="w-6 h-6 text-red-500" />
-            <p className="text-sm font-medium text-red-700 dark:text-red-300">
+            <LucideIcons.AlertCircle
+              className={`w-6 h-6 ${
+                isDarkTheme ? "text-red-400" : "text-red-500"
+              }`}
+            />
+            <p
+              className={`text-sm font-medium ${
+                isDarkTheme ? "text-red-200" : "text-red-700"
+              }`}
+            >
               Plugin Error
             </p>
-            <p className="text-xs text-red-600 dark:text-red-400">
+            <p
+              className={`text-xs ${
+                isDarkTheme ? "text-red-300" : "text-red-600"
+              }`}
+            >
               Missing manifest
             </p>
           </div>
@@ -402,7 +482,7 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
       <div
         className={`
           relative group
-          bg-card transition-all duration-200
+          transition-all duration-200
           ${containerStyle}
           ${shadowClass}
           ${selected ? "shadow-primary/20" : ""}
@@ -431,47 +511,21 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
           borderColor: selected
             ? "var(--primary)"
             : visualProps.borderColor || "var(--border)",
-          backgroundColor: visualProps.backgroundColor || undefined,
+          backgroundColor: getBackgroundColor,
           padding: `${visualProps.outerPadding}px`,
         }}
       >
         {/* Input Handles */}
         {inputHandles.map((handle, index) => (
-          <Handle
-            key={`input-${handle.id}`}
-            id={handle.id}
+          <CustomHandle
+            key={`input-${handle.uniqueKey}`}
+            handle={handle}
             type="target"
-            position={
-              POSITION_MAP[handle.position as keyof typeof POSITION_MAP] ||
-              Position.Left
-            }
-            className={`w-3 h-3 border-2 border-background ${
-              EDGE_TYPE_COLORS[
-                handle.edgeType as keyof typeof EDGE_TYPE_COLORS
-              ] || EDGE_TYPE_COLORS.default
-            }`}
-            style={{
-              top: getHandlePosition(
-                handle.position,
-                index,
-                inputHandles.length
-              ).top,
-              left: getHandlePosition(
-                handle.position,
-                index,
-                inputHandles.length
-              ).left,
-              right: getHandlePosition(
-                handle.position,
-                index,
-                inputHandles.length
-              ).right,
-              bottom: getHandlePosition(
-                handle.position,
-                index,
-                inputHandles.length
-              ).bottom,
-            }}
+            nodeId={id}
+            index={index}
+            totalHandles={inputHandles.length}
+            borderWidth={visualProps.borderWidth}
+            isValidConnection={isConnectionValid}
           />
         ))}
 
@@ -487,38 +541,39 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                 ${
                   visualProps.showIconBackground
                     ? selected
-                      ? "bg-primary/10 text-primary p-2"
-                      : "bg-muted/50 text-muted-foreground group-hover:bg-muted p-2"
+                      ? `${getIconClasses.backgroundSelected} ${getIconClasses.primarySelected} p-2`
+                      : `${getIconClasses.background} ${getIconClasses.primary} ${getIconClasses.backgroundHover} p-2`
                     : selected
-                      ? "text-primary"
-                      : "text-muted-foreground"
+                      ? getIconClasses.primarySelected
+                      : getIconClasses.primary
                 }
               `}
             >
               <IconWrapper
                 icon={visualProps.primaryIcon}
                 className={iconSizeClass}
-                iconUrl={data.iconUrl}
+                iconUrl={data.iconUrl as string | undefined}
               />
             </div>
           )}
 
           {/* Secondary Icons */}
-          {visualProps.secondaryIcons.length > 0 && (
-            <div className="absolute top-2 right-2 flex gap-1">
-              {visualProps.secondaryIcons.map((icon: any, idx: number) => (
+          {visualProps.secondaryIcons.length > 0 &&
+            visualProps.secondaryIcons.map((icon: any, idx: number) => (
+              <div
+                key={`secondary-icon-${idx}`}
+                className={calculateIconPosition(icon.position)}
+              >
                 <div
-                  key={`secondary-icon-${idx}`}
-                  className="p-1 bg-background/80 rounded"
+                  className={`p-1 rounded ${getIconClasses.secondaryBackground}`}
                 >
                   <IconWrapper
                     icon={icon}
-                    className="w-3 h-3 text-muted-foreground"
+                    className={`w-3 h-3 ${getIconClasses.secondary}`}
                   />
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
 
           {/* Label */}
           {visualProps.showLabels && (
@@ -531,12 +586,12 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                   onChange={(e) => setEditingLabel(e.target.value)}
                   onBlur={handleLabelSave}
                   onKeyDown={handleKeyDown}
-                  className="text-sm font-medium text-foreground bg-transparent border-none outline-none text-center w-full px-1 py-0.5 rounded border-b-2 border-primary focus:border-primary"
+                  className={`text-sm font-medium ${getTextClasses.primary} bg-transparent border-none outline-none text-center w-full px-1 py-0.5 rounded border-b-2 border-primary focus:border-primary`}
                   maxLength={50}
                 />
               ) : (
                 <p
-                  className="text-sm font-medium text-foreground cursor-pointer hover:text-primary-readable transition-colors truncate"
+                  className={`text-sm font-medium ${getTextClasses.primary} cursor-pointer ${getTextClasses.primaryHover} transition-colors truncate`}
                   onDoubleClick={handleLabelDoubleClick}
                   title={`${processedLabel} - Double-click to edit`}
                   style={{ maxWidth: `${visualProps.width - 40}px` }}
@@ -545,7 +600,7 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                 </p>
               )}
               {visualProps.titleDescription && (
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className={`text-xs ${getTextClasses.secondary} mt-1`}>
                   {visualProps.titleDescription}
                 </p>
               )}
@@ -556,11 +611,14 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                 >
                   {nodeType.replace(/_/g, " ")}
                 </div>
-                {manifest?.manifest?.version && (
-                  <span className="text-xs text-muted-foreground">
-                    v{manifest.manifest.version}
+                {manifest?.manifest?.version ? (
+                  <span className={`text-xs ${getTextClasses.secondary}`}>
+                    v
+                    {typeof manifest.manifest.version === "string"
+                      ? (manifest.manifest.version as string)
+                      : String(manifest.manifest.version)}
                   </span>
-                )}
+                ) : null}
               </div>
             </div>
           )}
@@ -568,41 +626,15 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
 
         {/* Output Handles */}
         {outputHandles.map((handle, index) => (
-          <Handle
-            key={`output-${handle.id}`}
-            id={handle.id}
+          <CustomHandle
+            key={`output-${handle.uniqueKey}`}
+            handle={handle}
             type="source"
-            position={
-              POSITION_MAP[handle.position as keyof typeof POSITION_MAP] ||
-              Position.Right
-            }
-            className={`w-3 h-3 border-2 border-background ${
-              EDGE_TYPE_COLORS[
-                handle.edgeType as keyof typeof EDGE_TYPE_COLORS
-              ] || EDGE_TYPE_COLORS.default
-            }`}
-            style={{
-              top: getHandlePosition(
-                handle.position,
-                index,
-                outputHandles.length
-              ).top,
-              left: getHandlePosition(
-                handle.position,
-                index,
-                outputHandles.length
-              ).left,
-              right: getHandlePosition(
-                handle.position,
-                index,
-                outputHandles.length
-              ).right,
-              bottom: getHandlePosition(
-                handle.position,
-                index,
-                outputHandles.length
-              ).bottom,
-            }}
+            nodeId={id}
+            index={index}
+            totalHandles={outputHandles.length}
+            borderWidth={visualProps.borderWidth}
+            isValidConnection={isConnectionValid}
           />
         ))}
       </div>

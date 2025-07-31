@@ -10,7 +10,8 @@
       "@canvas/*": ["./src/app/(application)/(protected)/(canvas)/*"],
       "@onboarding/*": ["./src/app/(application)/(onboarding)/*"],
       "@enterprise/*": ["./src/app/(application)/(protected)/(enterprise)/*"],
-      "@app/*": ["./src/app/*"]
+      "@app/*": ["./src/app/*"],
+      "@packages/*": ["../../packages/*"]
     },
     "isolatedModules": true
   },

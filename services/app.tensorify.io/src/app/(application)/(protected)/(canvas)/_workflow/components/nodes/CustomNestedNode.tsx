@@ -49,7 +49,7 @@ export default function CustomNestedNode(props: NodeProps<WorkflowNode>) {
         className={`
           relative group
           bg-card border-2 rounded-lg shadow-sm
-          min-w-[120px] min-h-[80px]
+          min-w-[160px] min-h-[100px]
           transition-all duration-200
           ${
             selected
