@@ -10,6 +10,7 @@ import { Message, ErrorResponse, JwtPayloadSchema, UUID } from "../schema";
 import { tsr } from "@ts-rest/serverless/next";
 import { secureByAuthentication } from "../auth-utils";
 import db from "@/server/database/db";
+import { InputJsonValue } from "@/server/database/prisma/generated/client/runtime/library";
 
 extendZodWithOpenApi(z);
 
@@ -110,7 +111,7 @@ export const action = {
             id: versionId,
           },
           data: {
-            code: code,
+            code: code === null ? {} : (code as InputJsonValue),
             updatedAt: new Date(),
           },
         });

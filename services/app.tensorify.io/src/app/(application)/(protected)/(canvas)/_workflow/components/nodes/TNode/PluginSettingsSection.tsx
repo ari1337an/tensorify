@@ -19,9 +19,9 @@ import useAppStore from "@/app/_store/store";
 import type {
   SettingsField as SettingsFieldType,
   SettingsGroup,
-  PluginManifest,
-  WorkflowNode,
-} from "../../../store/workflowStore";
+} from "@packages/sdk/src/types/settings";
+import type { WorkflowNode } from "../../../store/workflowStore";
+import type { PluginManifest } from "@/app/_store/store";
 
 interface PluginSettingsSectionProps {
   nodeId: string;
@@ -52,17 +52,27 @@ export function PluginSettingsSection({
   }, [pluginManifests, node, nodeId]);
 
   // Get current plugin settings from node data
-  const pluginSettings = node?.data.pluginSettings || {};
+  const pluginSettings = (node?.data.pluginSettings || {}) as Record<
+    string,
+    any
+  >;
   const [expandedGroups, setExpandedGroups] = React.useState<Set<string>>(
     new Set()
   );
 
   // Early return if no plugin manifest
-  if (!manifest?.manifest?.settingsFields?.length) {
+  if (
+    !manifest?.manifest ||
+    !Array.isArray((manifest.manifest as any)?.settingsFields) ||
+    (manifest.manifest as any).settingsFields.length === 0
+  ) {
     return null;
   }
 
-  const { settingsFields, settingsGroups = [] } = manifest.manifest;
+  const settingsFields = (manifest.manifest as any)
+    .settingsFields as SettingsFieldType[];
+  const settingsGroups = ((manifest.manifest as any).settingsGroups ||
+    []) as SettingsGroup[];
 
   // Initialize expanded groups based on defaultExpanded
   React.useEffect(() => {

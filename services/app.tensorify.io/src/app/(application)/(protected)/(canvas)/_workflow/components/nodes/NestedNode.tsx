@@ -25,6 +25,7 @@ export default function NestedNode(props: NodeProps<WorkflowNode>) {
     viewType: HandleViewType.CIRCLE_LG,
     edgeType: EdgeType.DEFAULT,
     dataType: "any",
+    required: false,
   };
 
   // Define the output handle for the nested node
@@ -58,7 +59,7 @@ export default function NestedNode(props: NodeProps<WorkflowNode>) {
               p-2 rounded-md transition-colors duration-200
               ${
                 selected
-                  ? "bg-primary/10 text-primary"
+                  ? "bg-primary-readable/10 text-primary-readable"
                   : "bg-muted/50 text-muted-foreground group-hover:bg-muted"
               }
             `}

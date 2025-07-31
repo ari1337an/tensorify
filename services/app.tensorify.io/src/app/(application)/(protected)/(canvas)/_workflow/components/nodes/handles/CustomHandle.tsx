@@ -177,35 +177,57 @@ function calculateHandlePosition(
   // Get the ReactFlow position (maps 8-point to 4-point)
   const reactFlowPosition = REACTFLOW_POSITION_MAP[position];
 
-  // Provide proper positioning: centering + directional offset
+  // Calculate handle distribution for multiple handles
+  const getDistributedPosition = (idx: number, total: number) => {
+    // Single handle → center
+    if (total <= 1) return 50;
+
+    /*
+     * Improved distribution algorithm
+     * 1. Treat the available side (0-100%) as divided into (total + 1) equal slices.
+     * 2. Place each handle in the center of its slice → ensures equal margins
+     *    between the first/last handle and the edges as well as between handles.
+     *    Position = ((idx + 1) / (total + 1)) * 100
+     * 3. Clamp to a minimal margin so handles never touch absolute edges even
+     *    when `total` is very large.
+     */
+    const MIN_MARGIN = 5; // percent – small buffer from the edge
+
+    const raw = ((idx + 1) / (total + 1)) * 100; // evenly spaced
+
+    // Ensure we keep a small buffer from the edges
+    return Math.min(100 - MIN_MARGIN, Math.max(MIN_MARGIN, raw));
+  };
+
+  // Provide proper positioning: centering + directional offset + distribution
   switch (reactFlowPosition) {
     case Position.Left:
       return {
-        top: "50%",
+        top: `${getDistributedPosition(index, totalHandles)}%`,
         left: -handleOffset,
         transform: "translateY(-50%)",
       };
     case Position.Right:
       return {
-        top: "50%",
+        top: `${getDistributedPosition(index, totalHandles)}%`,
         right: -handleOffset,
         transform: "translateY(-50%)",
       };
     case Position.Top:
       return {
-        left: "50%",
+        left: `${getDistributedPosition(index, totalHandles)}%`,
         top: -handleOffset,
         transform: "translateX(-50%)",
       };
     case Position.Bottom:
       return {
-        left: "50%",
+        left: `${getDistributedPosition(index, totalHandles)}%`,
         bottom: -handleOffset,
         transform: "translateX(-50%)",
       };
     default:
       return {
-        top: "50%",
+        top: `${getDistributedPosition(index, totalHandles)}%`,
         left: -handleOffset,
         transform: "translateY(-50%)",
       };
@@ -433,7 +455,7 @@ const CustomHandle = forwardRef<HTMLDivElement, CustomHandleProps>(
             className="w-5 h-5 rounded-full bg-transparent transition-all duration-200 hover:scale-110 relative z-10"
             style={
               {
-                border: `8px solid ${HANDLE_COLOR}`,
+                border: `5px solid ${HANDLE_COLOR}`,
                 backgroundColor: "white",
                 boxShadow: "inset 0 0 0 1px white",
               } as React.CSSProperties

@@ -20,6 +20,7 @@ import {
   Wrench,
   Activity,
   Play,
+  Square,
   BarChart3,
   Calculator,
   Clock,
@@ -30,6 +31,8 @@ import {
   Workflow,
   HelpCircle,
   Component,
+  Merge,
+  Split,
 } from "lucide-react";
 import { NodeItem } from "../types/NodeItem";
 
@@ -44,6 +47,16 @@ const defaultNodes: NodeItem[] = [
     description:
       "Workflow entry point that initiates your AI training or data processing pipeline. Essential for beginning any workflow execution.",
   },
+  // END NODE
+  {
+    id: "@tensorify/core/EndNode",
+    version: "1.0.0",
+    draggable: true,
+    Icon: Square,
+    title: "End Node",
+    description:
+      "Workflow exit point that marks the completion of your AI training or data processing pipeline. Can have multiple end nodes for different branches.",
+  },
   // NESTED NODE
   {
     id: "@tensorify/core/NestedNode",
@@ -53,6 +66,55 @@ const defaultNodes: NodeItem[] = [
     title: "Nested Node",
     description:
       "Design hierarchical nodes with child components for complex operations. Ideal for modular workflows and layered functionalities.",
+  },
+  // CONTROL FLOW category
+  {
+    id: "control_flow",
+    draggable: false,
+    Icon: GitBranch,
+    title: "Control Flow",
+    description:
+      "Control the flow of your workflow with branching, conditionals, and loops.",
+    children: [
+      {
+        id: "@tensorify/core/BranchNode",
+        version: "1.0.0",
+        draggable: true,
+        Icon: GitBranch,
+        title: "Branch",
+        description:
+          "Split your workflow into multiple parallel branches. Configure 2-20 output branches for parallel processing paths.",
+      },
+    ],
+  },
+  // MANIPULATION category
+  {
+    id: "manipulation",
+    draggable: false,
+    Icon: Wrench,
+    title: "Manipulation",
+    description:
+      "Data manipulation and signal routing components for complex workflow control.",
+    children: [
+      {
+        id: "@tensorify/core/MultiplexerNode",
+        version: "1.0.0",
+        draggable: true,
+        Icon: Merge,
+        title: "Multiplexer",
+        description:
+          "Combine multiple inputs into a single output. Configure 2-20 inputs for signal aggregation.",
+      },
+      {
+        id: "@tensorify/core/DemultiplexerNode",
+        version: "1.0.0",
+        draggable: true,
+        Icon: Split,
+        title: "Demultiplexer",
+        description:
+          "Split a single input into multiple outputs. Configure 2-20 outputs for signal distribution.",
+      },
+    ],
   },
   // MODEL_LAYER category
   {
@@ -239,16 +301,6 @@ const defaultNodes: NodeItem[] = [
       },
     ],
   },
-  // LOSS_FUNCTION category
-  {
-    id: "loss_function",
-    draggable: false,
-    Icon: Calculator,
-    title: "Loss Functions",
-    description:
-      "Advanced loss functions for specialized training objectives and model optimization.",
-    children: [],
-  },
   // METRIC category
   {
     id: "metric",
@@ -279,6 +331,7 @@ const defaultNodes: NodeItem[] = [
       "Prevent overfitting and improve model generalization with regularization techniques.",
     children: [],
   },
+
   // PREPROCESSOR category
   {
     id: "preprocessor",
@@ -339,6 +392,7 @@ const defaultNodes: NodeItem[] = [
       "Generate comprehensive reports and analytics for your training processes and model performance.",
     children: [],
   },
+
   // FUNCTION category
   {
     id: "function",

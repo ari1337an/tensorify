@@ -16,13 +16,16 @@ import "@workflow/style/flow.css";
 import { useTheme } from "next-themes";
 import { useCallback, useMemo, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { toast } from "sonner";
 
 // Components
 import CustomControl from "@workflow/controls/CustomControl";
 import useMiniMapFade from "@workflow/hooks/useMiniMapFade";
 import NodeSearch from "@workflow/components/NodeSearch";
 import DevTools from "@workflow/components/DevTools";
+import ValidationAlert from "@workflow/components/ValidationAlert";
 import { useWorkflowPersistence } from "@workflow/hooks/useWorkflowPersistence";
+import { useNodeValidation } from "@workflow/hooks/useNodeValidation";
 
 // Store and Context
 import useWorkflowStore, {
@@ -36,7 +39,11 @@ import useAppStore from "@/app/_store/store";
 
 // Node Types
 import StartNode from "@workflow/components/nodes/StartNode";
+import EndNode from "@workflow/components/nodes/EndNode";
 import NestedNode from "@workflow/components/nodes/NestedNode";
+import BranchNode from "@workflow/components/nodes/BranchNode";
+import MultiplexerNode from "@workflow/components/nodes/MultiplexerNode";
+import DemultiplexerNode from "@workflow/components/nodes/DemultiplexerNode";
 import CustomPluginNode from "@workflow/components/nodes/CustomPluginNode";
 
 // ID generator for nodes using crypto.randomUUID for better uniqueness
@@ -54,9 +61,6 @@ const selector = (state: ReturnType<typeof useWorkflowStore.getState>) => ({
 });
 
 function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
-  // Always fire this to verify dev environment
-  console.log("🚀 WorkflowCanvas component is running - Console working!");
-
   const { theme } = useTheme();
   const { showMiniMap, onMoveStart, onMoveEnd } = useMiniMapFade();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -89,8 +93,6 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
 
   // Node types registry - general approach: nested vs all others
   const nodeTypes = useMemo(() => {
-    console.log("🟢 Node types registry created");
-
     // Create a default mapping function
     const createNodeTypeMap = () => {
       const nodeMap: Record<
@@ -100,6 +102,18 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
 
       // Special case: nested nodes
       nodeMap["@tensorify/core/NestedNode"] = NestedNode;
+
+      // Special case: end nodes
+      nodeMap["@tensorify/core/EndNode"] = EndNode;
+
+      // Special case: branch nodes
+      nodeMap["@tensorify/core/BranchNode"] = BranchNode;
+
+      // Special case: multiplexer nodes
+      nodeMap["@tensorify/core/MultiplexerNode"] = MultiplexerNode;
+
+      // Special case: demultiplexer nodes
+      nodeMap["@tensorify/core/DemultiplexerNode"] = DemultiplexerNode;
 
       // Check if any plugin slugs should use CustomPluginNode
       pluginManifests.forEach((manifest) => {
@@ -124,18 +138,15 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
     return createNodeTypeMap();
   }, [pluginManifests]);
 
-  // Debug nodes
-  console.log(
-    "🟢 WorkflowLayout render - nodes:",
-    nodes.map((n) => ({ id: n.id, type: n.type, selected: n.selected }))
-  );
-
   // Default edge options
   const defaultEdgeOptions = useMemo(
     () => ({
       type: "smoothstep",
       animated: false,
-      style: { stroke: "hsl(var(--muted-foreground))", strokeWidth: 2 },
+      style: {
+        strokeWidth: 5,
+        stroke: "var(--xy-edge-stroke-default, hsl(var(--border)))",
+      },
     }),
     []
   );
@@ -185,6 +196,27 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
         });
       }
 
+      // Check if we're trying to add a start node
+      if (draggedNodeType === "@tensorify/core/StartNode") {
+        // Check if a start node already exists in the current route
+        const existingStartNode = nodes.find(
+          (node) =>
+            node.type === "@tensorify/core/StartNode" &&
+            node.route === currentRoute
+        );
+
+        if (existingStartNode) {
+          // Show error toast
+          toast.error(
+            `A start node already exists in route "${currentRoute}". Only one start node is allowed per route.`
+          );
+          // Clean up drag state and exit early
+          setDraggedNodeType(null);
+          setIsDragging(false);
+          return;
+        }
+      }
+
       const newNode: WorkflowNode = {
         id: getId(),
         type: draggedNodeType,
@@ -219,6 +251,7 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
       setIsDragging,
       onDropSuccess,
       pluginManifests,
+      nodes,
     ]
   );
 
@@ -228,6 +261,8 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
       <div ref={reactFlowWrapper} className="h-full w-full reactflow-wrapper">
         <ReactFlow
           colorMode={theme as "dark" | "light" | "system"}
+          nodesFocusable={true}
+          edgesFocusable={true}
           nodes={nodes}
           edges={edges}
           onNodesChange={onNodesChange}
@@ -265,6 +300,9 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
 
           {/* Development Tools */}
           <DevTools />
+
+          {/* Validation Alerts */}
+          <ValidationAlert />
 
           {/* Minimap */}
           <div

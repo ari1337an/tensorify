@@ -1,10 +1,5 @@
-"use server";
 import React from "react";
 
-export default async function layout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function layout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }

@@ -140,15 +140,18 @@ const useWorkflowStore = create<WorkflowCanvasState>()(
 
       // ReactFlow event handlers
       onNodesChange: (changes) => {
-        set((state) => ({
-          nodes: applyNodeChanges(
-            changes,
-            state.nodes.map((node) => ({
+        set((state) => {
+          // Apply changes first, then handle visibility
+          const updatedNodes = applyNodeChanges(changes, state.nodes);
+
+          // Apply visibility after changes are processed
+          return {
+            nodes: updatedNodes.map((node) => ({
               ...node,
               hidden: !isDirectMatchRoute(node.route, state.currentRoute),
-            }))
-          ),
-        }));
+            })),
+          };
+        });
       },
 
       onEdgesChange: (changes) => {

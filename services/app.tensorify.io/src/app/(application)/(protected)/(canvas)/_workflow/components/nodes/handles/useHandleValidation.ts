@@ -52,9 +52,13 @@ export function useHandleValidation(): UseHandleValidationReturn {
 
       if (!sourceNode || !targetNode) return false;
 
-      // Get handle definitions from node data
-      const sourceHandles = sourceNode.data?.outputHandles || [];
-      const targetHandles = targetNode.data?.inputHandles || [];
+      // Get handle definitions from node data with proper type checking
+      const sourceHandles = Array.isArray(sourceNode.data?.outputHandles)
+        ? (sourceNode.data.outputHandles as OutputHandle[])
+        : [];
+      const targetHandles = Array.isArray(targetNode.data?.inputHandles)
+        ? (targetNode.data.inputHandles as InputHandle[])
+        : [];
 
       const sourceHandle = sourceHandles.find(
         (h: OutputHandle) => h.id === params.sourceHandle

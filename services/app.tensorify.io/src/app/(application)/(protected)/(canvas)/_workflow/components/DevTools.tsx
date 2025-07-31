@@ -539,7 +539,7 @@ export default function DevTools() {
   const [viewportLoggerActive, setViewportLoggerActive] = useState(false);
   const [routeInspectorActive, setRouteInspectorActive] = useState(false);
 
-  const { nodes, edges, currentRoute, addNode } = useWorkflowStore();
+  const { nodes, edges, currentRoute, addNode, setEdges } = useWorkflowStore();
 
   if (process.env.NODE_ENV !== "development") {
     return null;
@@ -583,6 +583,75 @@ export default function DevTools() {
     };
 
     addNode(testNode);
+  };
+
+  // Function to create a test edge between existing nodes
+  const createTestEdge = () => {
+    if (nodes.length < 2) {
+      console.warn("⚠️ Need at least 2 nodes to create an edge");
+      return;
+    }
+
+    // Find a start node and an end node
+    const startNode = nodes.find((n) => n.type === "@tensorify/core/StartNode");
+    const endNode = nodes.find((n) => n.type === "@tensorify/core/EndNode");
+
+    if (!startNode || !endNode) {
+      console.warn("⚠️ Need both StartNode and EndNode to create test edge");
+      return;
+    }
+
+    const testEdge = {
+      id: `test-edge-${Date.now()}`,
+      source: startNode.id,
+      target: endNode.id,
+      sourceHandle: "start-output",
+      targetHandle: "end-input",
+      type: "smoothstep",
+    };
+
+    console.log("🔗 Creating test edge:", testEdge);
+    setEdges([...edges, testEdge]);
+
+    // Debug DOM after edge creation
+    setTimeout(() => {
+      const edgeElements = document.querySelectorAll(".react-flow__edge");
+      const edgePaths = document.querySelectorAll(".react-flow__edge path");
+      console.log("🔍 DOM Debug after edge creation:", {
+        edgeElements: edgeElements.length,
+        edgePaths: edgePaths.length,
+        edgeElementsArray: Array.from(edgeElements),
+        edgePathsArray: Array.from(edgePaths).map((path) => ({
+          d: path.getAttribute("d"),
+          style: path.getAttribute("style"),
+          className: path.className,
+        })),
+      });
+    }, 100);
+  };
+
+  // Function to create a simple test edge without custom handles
+  const createSimpleTestEdge = () => {
+    if (nodes.length < 2) {
+      console.warn("⚠️ Need at least 2 nodes to create a simple edge");
+      return;
+    }
+
+    const firstNode = nodes[0];
+    const secondNode = nodes[1];
+
+    const simpleEdge = {
+      id: `simple-edge-${Date.now()}`,
+      source: firstNode.id,
+      target: secondNode.id,
+      // No custom handles - let React Flow use defaults
+    };
+
+    console.log(
+      "🔗 Creating simple test edge (no custom handles):",
+      simpleEdge
+    );
+    setEdges([...edges, simpleEdge]);
   };
 
   // Function to create a test node with visual configuration using real plugin
@@ -779,6 +848,24 @@ export default function DevTools() {
                     >
                       <TestTube2 className="w-3 h-3" />
                       Create Visual Config Test
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={createTestEdge}
+                      className="gap-1.5 text-xs h-7 px-2"
+                    >
+                      <TestTube2 className="w-3 h-3" />
+                      Create Test Edge
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={createSimpleTestEdge}
+                      className="gap-1.5 text-xs h-7 px-2"
+                    >
+                      <TestTube2 className="w-3 h-3" />
+                      Simple Edge (No Handles)
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">

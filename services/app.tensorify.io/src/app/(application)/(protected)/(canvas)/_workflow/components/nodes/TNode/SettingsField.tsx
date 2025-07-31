@@ -16,7 +16,7 @@ import { Slider } from "@/app/_components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/app/_components/ui/radio-group";
 import { AlertCircleIcon, InfoIcon } from "lucide-react";
 import { cn } from "@/app/_lib/utils";
-import type { SettingsField as SettingsFieldType } from "../../../store/workflowStore";
+import type { SettingsField as SettingsFieldType } from "@packages/sdk/src/types/settings";
 
 interface SettingsFieldProps {
   field: SettingsFieldType;

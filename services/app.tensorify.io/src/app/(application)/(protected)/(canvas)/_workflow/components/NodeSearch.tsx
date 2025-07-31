@@ -428,7 +428,7 @@ const NodeListItem = ({
       onClick={onClick}
       className="group relative flex items-center gap-3.5 p-3 rounded-lg transition-colors duration-200 hover:bg-muted/70"
     >
-      <div className="flex-shrink-0 bg-muted/40 rounded-md p-2.5 transition-colors duration-200 group-hover:bg-primary/10">
+      <div className="flex-shrink-0 bg-primary-readable/10 rounded-md p-2.5 transition-colors duration-200 group-hover:bg-primary/10">
         <div className="relative z-10 text-primary-readable transition-transform duration-200 group-hover:scale-110">
           <item.Icon className="h-5 w-5" />
         </div>
