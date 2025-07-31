@@ -42,7 +42,32 @@
       "id": "output1", "position": "right", "viewType": "default", "label": "Result",
       "edgeType": "accent", "dataType": "object", "description": "Processed result object"
     }
-  ]
+  ],
+  "settingsFields": [
+    {
+      "key": "inputText",
+      "label": "Input Text",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "hello world",
+      "required": true,
+      "description": "Basic text input field",
+      "validation": {
+        "minLength": 1,
+        "maxLength": 100
+      }
+    },
+    {
+      "key": "numberValue",
+      "label": "Number Value",
+      "type": "input-number",
+      "dataType": "number",
+      "defaultValue": 42,
+      "required": false,
+      "description": "Numeric input with validation"
+    }
+  ],
+  "settingsGroups": []
 }
 
 # ============================================================================
@@ -92,7 +117,36 @@
       "label": "Metrics", "edgeType": "muted", "dataType": "object",
       "description": "Training metrics and statistics"
     }
-  ]
+  ],
+  "settingsFields": [
+    {
+      "key": "learningRate",
+      "label": "Learning Rate",
+      "type": "input-number",
+      "dataType": "number",
+      "defaultValue": 0.001,
+      "required": true,
+      "description": "Model learning rate",
+      "validation": {
+        "min": 0.0001,
+        "max": 1.0
+      }
+    },
+    {
+      "key": "epochs",
+      "label": "Training Epochs",
+      "type": "slider",
+      "dataType": "number",
+      "defaultValue": 100,
+      "required": true,
+      "description": "Number of training epochs",
+      "validation": {
+        "min": 1,
+        "max": 1000
+      }
+    }
+  ],
+  "settingsGroups": []
 }
 
 # ============================================================================
@@ -149,7 +203,28 @@
       "label": "Stats", "edgeType": "muted", "dataType": "object",
       "description": "Filtering statistics and metadata"
     }
-  ]
+  ],
+  "settingsFields": [
+    {
+      "key": "enableFiltering",
+      "label": "Enable Filtering",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": true,
+      "required": false,
+      "description": "Toggle data filtering on/off"
+    },
+    {
+      "key": "preserveOriginal",
+      "label": "Preserve Original Data",
+      "type": "checkbox",
+      "dataType": "boolean",
+      "defaultValue": false,
+      "required": false,
+      "description": "Keep a copy of original unfiltered data"
+    }
+  ],
+  "settingsGroups": []
 }
 
 # ============================================================================
@@ -212,7 +287,41 @@
       "label": "Debug", "edgeType": "muted", "dataType": "string",
       "description": "Debug information and logs"
     }
-  ]
+  ],
+  "settingsFields": [
+    {
+      "key": "functionType",
+      "label": "Function Type",
+      "type": "dropdown",
+      "dataType": "string",
+      "defaultValue": "sigmoid",
+      "required": true,
+      "description": "Select the activation function",
+      "options": [
+        { "label": "Sigmoid", "value": "sigmoid", "description": "S-shaped activation function" },
+        { "label": "ReLU", "value": "relu", "description": "Rectified Linear Unit" },
+        { "label": "Tanh", "value": "tanh", "description": "Hyperbolic tangent" },
+        { "label": "LeakyReLU", "value": "leaky_relu", "description": "Leaky Rectified Linear Unit" }
+      ]
+    },
+    {
+      "key": "debugLevel",
+      "label": "Debug Level",
+      "type": "radio",
+      "dataType": "string",
+      "defaultValue": "info",
+      "required": false,
+      "description": "Select debugging verbosity level",
+      "options": [
+        { "label": "None", "value": "none" },
+        { "label": "Error", "value": "error" },
+        { "label": "Warning", "value": "warning" },
+        { "label": "Info", "value": "info" },
+        { "label": "Debug", "value": "debug" }
+      ]
+    }
+  ],
+  "settingsGroups": []
 }
 
 # ============================================================================
@@ -280,7 +389,37 @@
       "label": "Errors", "edgeType": "error", "dataType": "array",
       "description": "Any loading errors encountered"
     }
-  ]
+  ],
+  "settingsFields": [
+    {
+      "key": "dataSourceUrl",
+      "label": "Data Source URL",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "https://api.example.com/data",
+      "required": true,
+      "description": "URL endpoint for data source",
+      "validation": {
+        "pattern": "^https?://.*",
+        "maxLength": 500
+      },
+      "placeholder": "Enter data source URL"
+    },
+    {
+      "key": "customQuery",
+      "label": "Custom Query",
+      "type": "textarea",
+      "dataType": "string",
+      "defaultValue": "SELECT * FROM table WHERE condition = 'value'",
+      "required": false,
+      "description": "Custom SQL or query string for data loading",
+      "validation": {
+        "maxLength": 2000
+      },
+      "placeholder": "Enter custom query..."
+    }
+  ],
+  "settingsGroups": []
 }
 
 # ============================================================================
@@ -370,6 +509,212 @@
       "label": "Metrics", "edgeType": "accent", "dataType": "object",
       "description": "Final evaluation metrics"
     }
+  ],
+  "settingsFields": [
+    {
+      "key": "modelName",
+      "label": "Model Name",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "neural_network_v1",
+      "required": true,
+      "description": "Name for the trained model",
+      "validation": {
+        "minLength": 3,
+        "maxLength": 50,
+        "pattern": "^[a-zA-Z0-9_]+$"
+      },
+      "group": "model_config"
+    },
+    {
+      "key": "description",
+      "label": "Model Description",
+      "type": "textarea",
+      "dataType": "string",
+      "defaultValue": "Advanced machine learning model for classification tasks",
+      "required": false,
+      "description": "Detailed description of the model",
+      "validation": {
+        "maxLength": 1000
+      },
+      "group": "model_config"
+    },
+    {
+      "key": "learningRate",
+      "label": "Learning Rate",
+      "type": "input-number",
+      "dataType": "number",
+      "defaultValue": 0.001,
+      "required": true,
+      "description": "Learning rate for training",
+      "validation": {
+        "min": 0.0001,
+        "max": 1.0
+      },
+      "group": "training_params"
+    },
+    {
+      "key": "batchSize",
+      "label": "Batch Size",
+      "type": "slider",
+      "dataType": "number",
+      "defaultValue": 32,
+      "required": true,
+      "description": "Training batch size",
+      "validation": {
+        "min": 1,
+        "max": 512
+      },
+      "group": "training_params"
+    },
+    {
+      "key": "useGpu",
+      "label": "Use GPU Acceleration",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": true,
+      "required": false,
+      "description": "Enable GPU acceleration for training",
+      "group": "performance"
+    },
+    {
+      "key": "saveCheckpoints",
+      "label": "Save Checkpoints",
+      "type": "checkbox",
+      "dataType": "boolean",
+      "defaultValue": false,
+      "required": false,
+      "description": "Save model checkpoints during training",
+      "group": "performance"
+    },
+    {
+      "key": "optimizer",
+      "label": "Optimizer",
+      "type": "dropdown",
+      "dataType": "string",
+      "defaultValue": "adam",
+      "required": true,
+      "description": "Optimization algorithm",
+      "options": [
+        { "label": "Adam", "value": "adam", "description": "Adaptive Moment Estimation" },
+        { "label": "SGD", "value": "sgd", "description": "Stochastic Gradient Descent" },
+        { "label": "RMSprop", "value": "rmsprop", "description": "Root Mean Square Propagation" },
+        { "label": "AdaGrad", "value": "adagrad", "description": "Adaptive Gradient Algorithm" }
+      ],
+      "group": "training_params"
+    },
+    {
+      "key": "regularization",
+      "label": "Regularization Method",
+      "type": "radio",
+      "dataType": "string",
+      "defaultValue": "l2",
+      "required": false,
+      "description": "Regularization technique",
+      "options": [
+        { "label": "None", "value": "none" },
+        { "label": "L1 Regularization", "value": "l1" },
+        { "label": "L2 Regularization", "value": "l2" },
+        { "label": "Dropout", "value": "dropout" }
+      ],
+      "group": "training_params"
+    },
+    {
+      "key": "metrics",
+      "label": "Evaluation Metrics",
+      "type": "multi-select",
+      "dataType": "array",
+      "defaultValue": ["accuracy", "loss"],
+      "required": true,
+      "description": "Metrics to track during training",
+      "options": [
+        { "label": "Accuracy", "value": "accuracy" },
+        { "label": "Loss", "value": "loss" },
+        { "label": "Precision", "value": "precision" },
+        { "label": "Recall", "value": "recall" },
+        { "label": "F1 Score", "value": "f1" },
+        { "label": "AUC", "value": "auc" }
+      ],
+      "group": "model_config"
+    },
+    {
+      "key": "customCode",
+      "label": "Custom Training Code",
+      "type": "code-editor",
+      "dataType": "string",
+      "defaultValue": "# Custom training logic\nfor epoch in range(epochs):\n    train_step()",
+      "required": false,
+      "description": "Custom Python code for training",
+      "group": "advanced"
+    },
+    {
+      "key": "modelFile",
+      "label": "Pre-trained Model File",
+      "type": "file-upload",
+      "dataType": "file",
+      "defaultValue": null,
+      "required": false,
+      "description": "Upload a pre-trained model file",
+      "group": "advanced"
+    },
+    {
+      "key": "themeColor",
+      "label": "Visualization Theme Color",
+      "type": "color-picker",
+      "dataType": "color",
+      "defaultValue": "#3b82f6",
+      "required": false,
+      "description": "Color for training visualizations",
+      "group": "advanced"
+    },
+    {
+      "key": "trainingStartDate",
+      "label": "Training Start Date",
+      "type": "date-picker",
+      "dataType": "date",
+      "defaultValue": "2024-01-01T00:00:00Z",
+      "required": false,
+      "description": "Scheduled training start date",
+      "group": "advanced"
+    }
+  ],
+  "settingsGroups": [
+    {
+      "id": "model_config",
+      "label": "Model Configuration",
+      "description": "Basic model settings and metadata",
+      "collapsible": true,
+      "defaultExpanded": true,
+      "fields": ["modelName", "description", "metrics"],
+      "order": 1
+    },
+    {
+      "id": "training_params",
+      "label": "Training Parameters",
+      "description": "Hyperparameters for model training",
+      "collapsible": true,
+      "defaultExpanded": true,
+      "fields": ["learningRate", "batchSize", "optimizer", "regularization"],
+      "order": 2
+    },
+    {
+      "id": "performance",
+      "label": "Performance Settings",
+      "description": "GPU and checkpoint configuration",
+      "collapsible": true,
+      "defaultExpanded": false,
+      "fields": ["useGpu", "saveCheckpoints"],
+      "order": 3
+    },
+    {
+      "id": "advanced",
+      "label": "Advanced Options",
+      "description": "Custom code, files, and advanced settings",
+      "collapsible": true,
+      "defaultExpanded": false,
+      "fields": ["customCode", "modelFile", "themeColor", "trainingStartDate"],
+      "order": 4
+    }
   ]
 }
 
@@ -406,7 +751,19 @@
       "id": "output", "position": "right", "viewType": "default",
       "edgeType": "default", "dataType": "any"
     }
-  ]
+  ],
+  "settingsFields": [
+    {
+      "key": "enabled",
+      "label": "Enable Processing",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": true,
+      "required": false,
+      "description": "Enable or disable data processing"
+    }
+  ],
+  "settingsGroups": []
 }
 
 # ============================================================================
@@ -495,7 +852,41 @@
       "label": "Results", "edgeType": "success", "dataType": "object",
       "description": "Pipeline results"
     }
-  ]
+  ],
+  "settingsFields": [
+    {
+      "key": "pipelineName",
+      "label": "Pipeline Name",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "data_pipeline_v1",
+      "required": true,
+      "description": "Name for this data pipeline"
+    },
+    {
+      "key": "maxWorkers",
+      "label": "Max Workers",
+      "type": "input-number",
+      "dataType": "number",
+      "defaultValue": 4,
+      "required": false,
+      "description": "Maximum number of worker threads",
+      "validation": {
+        "min": 1,
+        "max": 16
+      }
+    },
+    {
+      "key": "cacheResults",
+      "label": "Cache Results",
+      "type": "checkbox",
+      "dataType": "boolean",
+      "defaultValue": true,
+      "required": false,
+      "description": "Enable result caching for performance"
+    }
+  ],
+  "settingsGroups": []
 }
 
 # ============================================================================
@@ -553,7 +944,34 @@
       "label": "Charts", "edgeType": "accent", "dataType": "object",
       "description": "Chart data and visualizations"
     }
-  ]
+  ],
+  "settingsFields": [
+    {
+      "key": "reportFormat",
+      "label": "Report Format",
+      "type": "dropdown",
+      "dataType": "string",
+      "defaultValue": "pdf",
+      "required": true,
+      "description": "Output format for the report",
+      "options": [
+        { "label": "PDF Document", "value": "pdf" },
+        { "label": "HTML Page", "value": "html" },
+        { "label": "Excel Spreadsheet", "value": "xlsx" },
+        { "label": "CSV Data", "value": "csv" }
+      ]
+    },
+    {
+      "key": "includeCharts",
+      "label": "Include Charts",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": true,
+      "required": false,
+      "description": "Include data visualizations in the report"
+    }
+  ],
+  "settingsGroups": []
 }
 
 # ============================================================================
@@ -613,7 +1031,41 @@
       "label": "Score", "edgeType": "accent", "dataType": "number",
       "description": "Overall performance score"
     }
-  ]
+  ],
+  "settingsFields": [
+    {
+      "key": "modelName",
+      "label": "Model Name",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "my_model",
+      "required": true,
+      "description": "Name of the model being evaluated"
+    },
+    {
+      "key": "datasetName",
+      "label": "Dataset Name",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "test_dataset",
+      "required": true,
+      "description": "Name of the evaluation dataset"
+    },
+    {
+      "key": "threshold",
+      "label": "Performance Threshold",
+      "type": "slider",
+      "dataType": "number",
+      "defaultValue": 0.8,
+      "required": false,
+      "description": "Minimum acceptable performance score",
+      "validation": {
+        "min": 0.0,
+        "max": 1.0
+      }
+    }
+  ],
+  "settingsGroups": []
 }
 
 # ============================================================================
@@ -660,7 +1112,23 @@
       "label": "Output", "edgeType": "default", "dataType": "array",
       "description": "Layer output tensor"
     }
-  ]
+  ],
+  "settingsFields": [
+    {
+      "key": "layerSize",
+      "label": "Layer Size",
+      "type": "input-number",
+      "dataType": "number",
+      "defaultValue": 128,
+      "required": true,
+      "description": "Number of neurons in this layer",
+      "validation": {
+        "min": 1,
+        "max": 4096
+      }
+    }
+  ],
+  "settingsGroups": []
 }
 
 # ============================================================================
@@ -708,7 +1176,39 @@
       "label": "Augmented", "edgeType": "success", "dataType": "array",
       "description": "Augmented dataset"
     }
-  ]
+  ],
+  "settingsFields": [
+    {
+      "key": "augmentationTypes",
+      "label": "Augmentation Types",
+      "type": "multi-select",
+      "dataType": "array",
+      "defaultValue": ["rotation", "flip"],
+      "required": true,
+      "description": "Types of data augmentation to apply",
+      "options": [
+        { "label": "Rotation", "value": "rotation" },
+        { "label": "Horizontal Flip", "value": "flip" },
+        { "label": "Zoom", "value": "zoom" },
+        { "label": "Brightness", "value": "brightness" },
+        { "label": "Noise", "value": "noise" }
+      ]
+    },
+    {
+      "key": "intensity",
+      "label": "Augmentation Intensity",
+      "type": "slider",
+      "dataType": "number",
+      "defaultValue": 0.5,
+      "required": false,
+      "description": "Intensity of augmentation effects",
+      "validation": {
+        "min": 0.1,
+        "max": 1.0
+      }
+    }
+  ],
+  "settingsGroups": []
 }
 
 # ============================================================================
@@ -749,7 +1249,9 @@
       "label": "Optimized", "edgeType": "default", "dataType": "object",
       "description": "Optimized parameters"
     }
-  ]
+  ],
+  "settingsFields": [],
+  "settingsGroups": []
 }
 
 # ============================================================================
@@ -814,7 +1316,48 @@
       "label": "Loss", "edgeType": "error", "dataType": "number",
       "description": "Computed loss value"
     }
-  ]
+  ],
+  "settingsFields": [
+    {
+      "key": "lossFunction",
+      "label": "Loss Function",
+      "type": "radio",
+      "dataType": "string",
+      "defaultValue": "mse",
+      "required": true,
+      "description": "Type of loss function to compute",
+      "options": [
+        { "label": "Mean Squared Error", "value": "mse" },
+        { "label": "Cross Entropy", "value": "cross_entropy" },
+        { "label": "Huber Loss", "value": "huber" },
+        { "label": "Focal Loss", "value": "focal" }
+      ]
+    },
+    {
+      "key": "reductionMethod",
+      "label": "Reduction Method",
+      "type": "dropdown",
+      "dataType": "string",
+      "defaultValue": "mean",
+      "required": false,
+      "description": "How to reduce loss across samples",
+      "options": [
+        { "label": "Mean", "value": "mean" },
+        { "label": "Sum", "value": "sum" },
+        { "label": "None", "value": "none" }
+      ]
+    },
+    {
+      "key": "customParameters",
+      "label": "Custom Parameters",
+      "type": "code-editor",
+      "dataType": "string",
+      "defaultValue": "# Custom loss parameters\nweight = 1.0\ngamma = 2.0",
+      "required": false,
+      "description": "Custom parameters for loss computation"
+    }
+  ],
+  "settingsGroups": []
 }
 
 # ============================================================================
@@ -859,7 +1402,33 @@
       "label": "Test Output", "edgeType": "invalid_edge", "dataType": "invalid_type",
       "description": "Test output with invalid configurations"
     }
-  ]
+  ],
+  "settingsFields": [
+    {
+      "key": "testMode",
+      "label": "Test Mode",
+      "type": "invalid_type",
+      "dataType": "invalid_type",
+      "defaultValue": "fallback_test",
+      "required": true,
+      "description": "Test mode for fallback behavior validation",
+      "validation": {
+        "minLength": -1,
+        "maxLength": -1,
+        "pattern": "[invalid_regex"
+      }
+    },
+    {
+      "key": "fallbackValue",
+      "label": "Fallback Value",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "default_fallback",
+      "required": false,
+      "description": "Value to use when fallback is triggered"
+    }
+  ],
+  "settingsGroups": []
 }
 
 # ============================================================================
