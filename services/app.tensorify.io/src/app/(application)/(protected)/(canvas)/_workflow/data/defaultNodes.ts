@@ -19,6 +19,7 @@ import {
   TriangleRight,
   Wrench,
   Activity,
+  Play,
   BarChart3,
   Calculator,
   Clock,
@@ -28,10 +29,31 @@ import {
   Settings,
   Workflow,
   HelpCircle,
+  Component,
 } from "lucide-react";
 import { NodeItem } from "../types/NodeItem";
 
 const defaultNodes: NodeItem[] = [
+  // START NODE
+  {
+    id: "@tensorify/core/StartNode",
+    version: "1.0.0",
+    draggable: true,
+    Icon: Play,
+    title: "Start Node",
+    description:
+      "Workflow entry point that initiates your AI training or data processing pipeline. Essential for beginning any workflow execution.",
+  },
+  // NESTED NODE
+  {
+    id: "@tensorify/core/NestedNode",
+    version: "1.0.0",
+    draggable: true,
+    Icon: Component,
+    title: "Nested Node",
+    description:
+      "Design hierarchical nodes with child components for complex operations. Ideal for modular workflows and layered functionalities.",
+  },
   // MODEL_LAYER category
   {
     id: "model_layer",
@@ -337,34 +359,7 @@ const defaultNodes: NodeItem[] = [
       "Create complex workflows and pipelines that orchestrate multiple components together.",
     children: [],
   },
-  // CUSTOM category
-  {
-    id: "custom",
-    draggable: false,
-    Icon: Wrench,
-    title: "Custom",
-    description: "Create custom nodes for standalone or nested operations.",
-    children: [
-      {
-        id: "@tensorify/core/CustomStandaloneNode",
-        version: "1.0.0",
-        draggable: true,
-        Icon: ShipWheel,
-        title: "Custom Standalone Node",
-        description:
-          "Create isolated operations or custom logic nodes. Designed for specific use cases that operate independently of other components.",
-      },
-      {
-        id: "@tensorify/core/CustomNestedNode",
-        version: "1.0.0",
-        draggable: true,
-        Icon: LoaderPinwheel,
-        title: "Custom Nested Node",
-        description:
-          "Design hierarchical nodes with child components for complex operations. Ideal for modular workflows and layered functionalities.",
-      },
-    ],
-  },
+
   // MISCELLANEOUS category
   {
     id: "miscellaneous",

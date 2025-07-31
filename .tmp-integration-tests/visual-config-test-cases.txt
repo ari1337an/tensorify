@@ -28,7 +28,7 @@
     {
       "id": "input1", "position": "left", "viewType": "default", "required": true,
       "label": "Required Input (default)", "edgeType": "default", "dataType": "string",
-      "validation": { "minLength": 1, "maxLength": 100 },
+
       "description": "This input is required and accepts strings"
     },
     {
@@ -96,13 +96,13 @@
     {
       "id": "data_input", "position": "top", "viewType": "circle-lg", "required": true,
       "label": "Dataset (circle-lg)", "edgeType": "success", "dataType": "array",
-      "validation": { "minLength": 10, "customValidator": "validateDataset" },
+
       "description": "Training dataset array with minimum 10 items"
     },
     {
       "id": "config_input", "position": "bottom-left", "viewType": "circle-lg", "required": false,
       "label": "Config (circle-lg)", "edgeType": "warning", "dataType": "object",
-      "validation": { "pattern": "^{.*}$" },
+
       "description": "Optional configuration object"
     }
   ],
@@ -188,7 +188,7 @@
     {
       "id": "filter_params", "position": "top", "viewType": "square", "required": false,
       "label": "Params (square)", "edgeType": "dashed", "dataType": "object",
-      "validation": { "customValidator": "validateFilterParams" },
+
       "description": "Filter parameters configuration"
     }
   ],
@@ -261,13 +261,13 @@
     {
       "id": "func_input1", "position": "left", "viewType": "triangle", "required": true,
       "label": "Input A (triangle)", "edgeType": "error", "dataType": "boolean",
-      "validation": { "customValidator": "validateBoolean" },
+
       "description": "Boolean input with error edge styling"
     },
     {
       "id": "func_input2", "position": "top-left", "viewType": "triangle", "required": true,
       "label": "Input B (triangle)", "edgeType": "accent", "dataType": "number",
-      "validation": { "minLength": 0, "maxLength": 1000000 },
+
       "description": "Numeric input with accent edge"
     },
     {
@@ -364,7 +364,7 @@
     {
       "id": "source_config", "position": "top", "viewType": "verticalBox", "required": true,
       "label": "Source Config (verticalBox)", "edgeType": "solid", "dataType": "object",
-      "validation": { "pattern": "^{\"source\":.+}$", "customValidator": "validateSourceConfig" },
+
       "description": "Data source configuration object"
     },
     {
@@ -460,25 +460,25 @@
     {
       "id": "train_data", "position": "top-left", "viewType": "circle-lg", "required": true,
       "label": "Training Data (circle-lg)", "edgeType": "success", "dataType": "array",
-      "validation": { "minLength": 100, "maxLength": 1000000, "customValidator": "validateTrainingData" },
+
       "description": "Training dataset array (100-1M samples)"
     },
     {
       "id": "model_config", "position": "left", "viewType": "square", "required": true,
       "label": "Model Config (square)", "edgeType": "accent", "dataType": "object",
-      "validation": { "pattern": "^{\"architecture\":.+}$" },
+
       "description": "Model architecture configuration"
     },
     {
       "id": "train_params", "position": "bottom-left", "viewType": "diamond", "required": false,
       "label": "Train Params (diamond)", "edgeType": "default", "dataType": "object",
-      "validation": { "customValidator": "validateTrainingParams" },
+
       "description": "Training hyperparameters"
     },
     {
       "id": "validation_data", "position": "top", "viewType": "verticalBox", "required": false,
       "label": "Val Data (verticalBox)", "edgeType": "warning", "dataType": "array",
-      "validation": { "minLength": 10 },
+
       "description": "Validation dataset"
     },
     {
@@ -489,7 +489,7 @@
     {
       "id": "checkpoint_path", "position": "top-right", "viewType": "default", "required": false,
       "label": "Checkpoint (default)", "edgeType": "muted", "dataType": "string",
-      "validation": { "pattern": "^/.*\\.ckpt$", "maxLength": 255 },
+
       "description": "Checkpoint file path (.ckpt)"
     }
   ],
@@ -1011,7 +1011,7 @@
     {
       "id": "test_data", "position": "top", "viewType": "diamond", "required": true,
       "label": "Test Data (diamond)", "edgeType": "solid", "dataType": "array",
-      "validation": { "minLength": 50 },
+
       "description": "Test dataset for evaluation"
     },
     {
@@ -1284,29 +1284,19 @@
     {
       "id": "predictions", "position": "top", "viewType": "square", "required": true,
       "label": "Predictions (square)", "edgeType": "accent", "dataType": "array",
-      "validation": { 
-        "minLength": 1, "maxLength": 10000,
-        "pattern": "^\\[.*\\]$",
-        "customValidator": "validatePredictions"
-      },
+
       "description": "Model predictions array"
     },
     {
       "id": "targets", "position": "left", "viewType": "diamond", "required": true,
       "label": "Targets (diamond)", "edgeType": "solid", "dataType": "array",
-      "validation": { 
-        "minLength": 1, "maxLength": 10000,
-        "customValidator": "validateTargets"
-      },
+
       "description": "Ground truth targets"
     },
     {
       "id": "weights", "position": "bottom", "viewType": "triangle", "required": false,
       "label": "Weights (triangle)", "edgeType": "default", "dataType": "array",
-      "validation": { 
-        "pattern": "^\\[[0-9.,\\s]+\\]$",
-        "customValidator": "validateWeights"
-      },
+
       "description": "Sample weights (optional)"
     }
   ],
@@ -1392,7 +1382,7 @@
     {
       "id": "test_input", "position": "invalid_position", "viewType": "invalid_type", "required": true,
       "label": "Test Input (invalid_type)", "edgeType": "invalid_edge", "dataType": "invalid_type",
-      "validation": { "minLength": -1, "maxLength": -1 },
+
       "description": "Test input for fallback behavior"
     }
   ],

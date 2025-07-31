@@ -31,11 +31,11 @@ import {
   DragDropProvider,
   useDragDrop,
 } from "@workflow/context/DragDropContext";
-import useStore from "@/app/_store/store";
+import useAppStore from "@/app/_store/store";
 
 // Node Types
-import CustomStandaloneNode from "@workflow/components/nodes/CustomStandaloneNode";
-import CustomNestedNode from "@workflow/components/nodes/CustomNestedNode";
+import StartNode from "@workflow/components/nodes/StartNode";
+import NestedNode from "@workflow/components/nodes/NestedNode";
 import CustomPluginNode from "@workflow/components/nodes/CustomPluginNode";
 
 // ID generator for nodes using crypto.randomUUID for better uniqueness
@@ -72,7 +72,7 @@ function WorkflowCanvas() {
   } = useWorkflowStore(useShallow(selector));
 
   // Get plugin manifests from store
-  const pluginManifests = useStore((state) => state.pluginManifests);
+  const pluginManifests = useAppStore((state) => state.pluginManifests);
 
   const { screenToFlowPosition } = useReactFlow();
   const {
@@ -95,7 +95,7 @@ function WorkflowCanvas() {
       > = {};
 
       // Special case: nested nodes
-      nodeMap["@tensorify/core/CustomNestedNode"] = CustomNestedNode;
+      nodeMap["@tensorify/core/NestedNode"] = NestedNode;
 
       // Check if any plugin slugs should use CustomPluginNode
       pluginManifests.forEach((manifest) => {
@@ -104,15 +104,15 @@ function WorkflowCanvas() {
         }
       });
 
-      // All other nodes use CustomStandaloneNode as default
+      // All other nodes use StartNode as default
       // This is a fallback - ReactFlow will use this for any unregistered types
       return new Proxy(nodeMap, {
         get: (target, prop) => {
           if (typeof prop === "string" && prop in target) {
             return target[prop];
           }
-          // Default to CustomStandaloneNode for any other node type
-          return CustomStandaloneNode;
+          // Default to StartNode for any other node type
+          return StartNode;
         },
       });
     };
@@ -158,18 +158,30 @@ function WorkflowCanvas() {
 
       // Check if this is a plugin node
       const isPluginNode = pluginManifests.some(
-        (m) => m.slug === draggedNodeType
+        (m: any) => m.slug === draggedNodeType
       );
-      const manifest = pluginManifests.find((m) => m.slug === draggedNodeType);
+      const manifest = pluginManifests.find(
+        (m: any) => m.slug === draggedNodeType
+      );
 
       // Extract label from manifest or use default
-      let nodeLabel = `${draggedNodeType.split("/").pop()} Node`;
+      let nodeLabel = `${draggedNodeType.split("/").pop()}`;
       if (manifest?.manifest?.visual) {
         const visual = manifest.manifest.visual as any;
         nodeLabel = visual.labels?.title || manifest.manifest.name || nodeLabel;
       }
 
-      const newNode = {
+      // Generate default settings if it's a plugin node
+      const defaultSettings: Record<string, any> = {};
+      if (isPluginNode && manifest?.manifest?.settingsFields) {
+        (manifest.manifest.settingsFields as any[]).forEach((field) => {
+          if (field.defaultValue !== undefined) {
+            defaultSettings[field.key] = field.defaultValue;
+          }
+        });
+      }
+
+      const newNode: WorkflowNode = {
         id: getId(),
         type: draggedNodeType,
         position,
@@ -177,7 +189,8 @@ function WorkflowCanvas() {
         version: draggedVersion || "1.0.0",
         data: {
           label: nodeLabel,
-          ...(isPluginNode && { pluginId: draggedNodeType }),
+          pluginId: isPluginNode ? draggedNodeType : undefined,
+          pluginSettings: isPluginNode ? defaultSettings : undefined,
         },
         selected: false,
         dragging: false,

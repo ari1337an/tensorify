@@ -94,6 +94,15 @@ interface StoreState {
   triggerPluginRefresh: () => void;
   pluginManifests: PluginManifest[];
   setPluginManifests: (manifests: PluginManifest[]) => void;
+  updatePluginManifest: (
+    pluginId: string,
+    updates: Partial<PluginManifest>
+  ) => void;
+  savePluginManifest: (
+    pluginId: string,
+    manifest: Record<string, unknown>,
+    workflowId?: string
+  ) => Promise<void>;
   fetchPluginManifests: (workflowId: string) => Promise<void>;
 }
 
@@ -143,6 +152,61 @@ const useStore = create<StoreState>()(
       pluginManifests: [],
       setPluginManifests: (manifests: PluginManifest[]) =>
         set({ pluginManifests: manifests }, undefined, "setPluginManifests"),
+      updatePluginManifest: (
+        pluginId: string,
+        updates: Partial<PluginManifest>
+      ) =>
+        set(
+          (state) => ({
+            pluginManifests: state.pluginManifests.map((manifest) =>
+              manifest.id === pluginId || manifest.slug === pluginId
+                ? { ...manifest, ...updates }
+                : manifest
+            ),
+          }),
+          undefined,
+          "updatePluginManifest"
+        ),
+      savePluginManifest: async (
+        pluginId: string,
+        manifest: Record<string, unknown>,
+        workflowId?: string
+      ) => {
+        try {
+          console.log(`💾 Saving plugin manifest for ${pluginId}:`, manifest);
+
+          // If no workflowId provided, try to get it from current workflow
+          let targetWorkflowId = workflowId;
+          if (!targetWorkflowId) {
+            const state = useStore.getState();
+            targetWorkflowId = state.currentWorkflow?.id;
+          }
+
+          if (!targetWorkflowId) {
+            throw new Error(
+              `Cannot save manifest: workflowId not provided and no current workflow found`
+            );
+          }
+
+          // Call the API endpoint to persist the manifest
+          const { putWorkflowPluginManifest } = await import(
+            "@/app/api/v1/_client/client"
+          );
+
+          await putWorkflowPluginManifest({
+            params: {
+              workflowId: targetWorkflowId,
+              pluginId: pluginId,
+            },
+            body: { manifest },
+          });
+
+          console.log(`✅ Successfully saved manifest for ${pluginId}`);
+        } catch (error) {
+          console.error("Error saving plugin manifest:", error);
+          throw error;
+        }
+      },
       fetchPluginManifests: async (workflowId: string) => {
         try {
           const { getWorkflowPlugins } = await import(

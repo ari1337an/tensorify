@@ -28,9 +28,20 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/app/_components/ui/tooltip";
-import { Bug, Eye, Activity, Route, MousePointer, X } from "lucide-react";
+import {
+  Bug,
+  Eye,
+  Activity,
+  Route,
+  MousePointer,
+  X,
+  TestTube2,
+  Copy,
+  CheckCircle,
+} from "lucide-react";
 import useWorkflowStore from "../store/workflowStore";
 import { type WorkflowNode } from "../store/workflowStore";
+import useAppStore, { type PluginManifest } from "@/app/_store/store";
 
 // Change Logger Component
 function ChangeLogger({ limit = 6 }: { limit?: number }) {
@@ -133,6 +144,8 @@ function ChangeLogger({ limit = 6 }: { limit?: number }) {
 function NodeInspector() {
   const { getInternalNode } = useReactFlow();
   const nodes = useNodes<WorkflowNode>();
+  const pluginManifests = useAppStore((state: any) => state.pluginManifests);
+  const [copiedNodeId, setCopiedNodeId] = useState<string | null>(null);
 
   const NodeInfo = ({
     id,
@@ -144,6 +157,7 @@ function NodeInspector() {
     height,
     route,
     version,
+    nodeData,
   }: {
     id: string;
     type: string;
@@ -154,32 +168,84 @@ function NodeInspector() {
     height: number;
     route: string;
     version: string;
+    nodeData: any;
   }) => {
     if (!width || !height) return null;
 
+    // Find plugin manifest for this node
+    const pluginId = nodeData.pluginId || type;
+    const manifest = pluginManifests.find(
+      (p: any) => p.slug === pluginId || p.id === pluginId || p.slug === type
+    );
+
+    const pluginSettings = nodeData.pluginSettings || {};
+    const hasSettings = manifest?.manifest?.settingsFields?.length > 0;
+
+    // Copy settings to clipboard
+    const copySettings = async () => {
+      const settingsData = {
+        nodeId: id,
+        nodeType: type,
+        pluginId: pluginId,
+        settings: pluginSettings,
+        manifest: manifest?.manifest?.settingsFields || [],
+        position: { x: position.x, y: position.y },
+      };
+
+      try {
+        await navigator.clipboard.writeText(
+          JSON.stringify(settingsData, null, 2)
+        );
+        setCopiedNodeId(id);
+        setTimeout(() => setCopiedNodeId(null), 2000);
+      } catch (err) {
+        console.error("Failed to copy settings:", err);
+      }
+    };
+
     return (
       <div
-        className="bg-card/95 backdrop-blur-sm border border-border/50 rounded-md p-2 text-xs space-y-1 shadow-sm max-w-xs"
+        className="bg-card/95 backdrop-blur-sm border border-border/50 rounded-md p-2 text-xs space-y-2 shadow-sm max-w-sm"
         style={{
           position: "absolute",
           transform: `translate(${absPosition.x}px, ${absPosition.y + height + 8}px)`,
           zIndex: 1000,
         }}
       >
-        <div className="font-medium text-foreground">Node: {id}</div>
+        <div className="flex items-center justify-between">
+          <div className="font-medium text-foreground">
+            Node: {id.slice(0, 8)}...
+          </div>
+          {hasSettings && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={copySettings}
+              className="h-6 w-6 p-0 hover:bg-accent"
+            >
+              {copiedNodeId === id ? (
+                <CheckCircle className="w-3 h-3 text-green-500" />
+              ) : (
+                <Copy className="w-3 h-3" />
+              )}
+            </Button>
+          )}
+        </div>
+
         <Separator />
+
         <div className="space-y-1">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Type:</span>
-            <span className="font-mono">{type || "default"}</span>
+            <span className="font-mono text-xs">{type || "default"}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Version:</span>
-            <span className="font-mono">{version}</span>
+            <span className="font-mono text-xs">{version}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Route:</span>
-            <span className="font-mono">{route}</span>
+            <span className="font-mono text-xs">{route}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Selected:</span>
@@ -192,17 +258,78 @@ function NodeInspector() {
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Position:</span>
-            <span className="font-mono">
+            <span className="font-mono text-xs">
               {position.x.toFixed(1)}, {position.y.toFixed(1)}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Size:</span>
-            <span className="font-mono">
-              {width} × {height}
+            <span className="font-mono text-xs">
+              {width.toFixed(0)}×{height.toFixed(0)}
             </span>
           </div>
         </div>
+
+        {/* Plugin Settings Section */}
+        {manifest && hasSettings && (
+          <>
+            <Separator />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-foreground">
+                  Plugin Settings
+                </span>
+                <Badge variant="outline" className="text-xs">
+                  {Object.keys(pluginSettings).length} values
+                </Badge>
+              </div>
+
+              <div className="space-y-1 max-h-32 overflow-y-auto">
+                {manifest.manifest.settingsFields.map((field: any) => {
+                  const value = pluginSettings[field.key];
+                  const hasValue = value !== undefined && value !== null;
+
+                  return (
+                    <div
+                      key={field.key}
+                      className="flex justify-between items-start gap-2"
+                    >
+                      <span className="text-muted-foreground text-xs truncate">
+                        {field.label || field.key}:
+                      </span>
+                      <span className="font-mono text-xs text-right">
+                        {hasValue ? (
+                          typeof value === "boolean" ? (
+                            <Badge
+                              variant={value ? "default" : "secondary"}
+                              className="text-xs"
+                            >
+                              {value ? "True" : "False"}
+                            </Badge>
+                          ) : (
+                            String(value)
+                          )
+                        ) : (
+                          <span className="text-muted-foreground">
+                            {field.defaultValue !== undefined
+                              ? String(field.defaultValue)
+                              : "—"}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {copiedNodeId === id && (
+                <div className="text-xs text-green-600 font-medium">
+                  Settings copied to clipboard!
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
     );
   };
@@ -230,6 +357,7 @@ function NodeInspector() {
               height={node.measured?.height ?? 0}
               route={node.route}
               version={node.version}
+              nodeData={node.data}
             />
           );
         })}
@@ -271,6 +399,138 @@ function RouteInspector() {
   );
 }
 
+// Sample plugin manifest for testing
+const samplePluginManifest = {
+  settingsFields: [
+    {
+      key: "modelName",
+      label: "Model Name",
+      type: "input-text",
+      dataType: "string",
+      defaultValue: "test_model_v1",
+      required: true,
+      description: "Name for the model",
+      validation: {
+        minLength: 3,
+        maxLength: 50,
+        pattern: "^[a-zA-Z0-9_]+$",
+      },
+      group: "model_config",
+    },
+    {
+      key: "learningRate",
+      label: "Learning Rate",
+      type: "input-number",
+      dataType: "number",
+      defaultValue: 0.001,
+      required: true,
+      description: "Learning rate for training",
+      validation: {
+        min: 0.0001,
+        max: 1.0,
+      },
+      group: "training_params",
+    },
+    {
+      key: "batchSize",
+      label: "Batch Size",
+      type: "slider",
+      dataType: "number",
+      defaultValue: 32,
+      required: true,
+      description: "Training batch size",
+      validation: {
+        min: 1,
+        max: 512,
+      },
+      group: "training_params",
+    },
+    {
+      key: "useGpu",
+      label: "Use GPU Acceleration",
+      type: "toggle",
+      dataType: "boolean",
+      defaultValue: true,
+      required: false,
+      description: "Enable GPU acceleration for training",
+      group: "performance",
+    },
+    {
+      key: "optimizer",
+      label: "Optimizer",
+      type: "dropdown",
+      dataType: "string",
+      defaultValue: "adam",
+      required: true,
+      description: "Optimization algorithm",
+      options: [
+        {
+          label: "Adam",
+          value: "adam",
+          description: "Adaptive Moment Estimation",
+        },
+        {
+          label: "SGD",
+          value: "sgd",
+          description: "Stochastic Gradient Descent",
+        },
+        {
+          label: "RMSprop",
+          value: "rmsprop",
+          description: "Root Mean Square Propagation",
+        },
+      ],
+      group: "training_params",
+    },
+    {
+      key: "metrics",
+      label: "Evaluation Metrics",
+      type: "multi-select",
+      dataType: "array",
+      defaultValue: ["accuracy", "loss"],
+      required: true,
+      description: "Metrics to track during training",
+      options: [
+        { label: "Accuracy", value: "accuracy" },
+        { label: "Loss", value: "loss" },
+        { label: "Precision", value: "precision" },
+        { label: "Recall", value: "recall" },
+        { label: "F1 Score", value: "f1" },
+      ],
+      group: "model_config",
+    },
+  ],
+  settingsGroups: [
+    {
+      id: "model_config",
+      label: "Model Configuration",
+      description: "Basic model settings and metadata",
+      collapsible: true,
+      defaultExpanded: true,
+      fields: ["modelName", "metrics"],
+      order: 1,
+    },
+    {
+      id: "training_params",
+      label: "Training Parameters",
+      description: "Hyperparameters for model training",
+      collapsible: true,
+      defaultExpanded: true,
+      fields: ["learningRate", "batchSize", "optimizer"],
+      order: 2,
+    },
+    {
+      id: "performance",
+      label: "Performance Settings",
+      description: "GPU and performance configuration",
+      collapsible: true,
+      defaultExpanded: false,
+      fields: ["useGpu"],
+      order: 3,
+    },
+  ],
+};
+
 // Main DevTools Component
 export default function DevTools() {
   const [isVisible, setIsVisible] = useState(false);
@@ -279,11 +539,88 @@ export default function DevTools() {
   const [viewportLoggerActive, setViewportLoggerActive] = useState(false);
   const [routeInspectorActive, setRouteInspectorActive] = useState(false);
 
-  const { nodes, edges, currentRoute } = useWorkflowStore();
+  const { nodes, edges, currentRoute, addNode } = useWorkflowStore();
 
   if (process.env.NODE_ENV !== "development") {
     return null;
   }
+
+  // Function to create a test node with plugin settings
+  const createTestPluginNode = () => {
+    // Get the first available plugin manifest from the store
+    const pluginManifests: PluginManifest[] =
+      useAppStore.getState().pluginManifests || [];
+    const firstPlugin: PluginManifest | undefined = pluginManifests[0];
+
+    if (!firstPlugin) {
+      console.warn("No plugin manifests available to create test node");
+      return;
+    }
+
+    // Generate default settings from the manifest
+    const defaultSettings: Record<string, any> = {};
+    if (firstPlugin.manifest?.settingsFields) {
+      (firstPlugin.manifest.settingsFields as any[]).forEach((field: any) => {
+        if (field.defaultValue !== undefined) {
+          defaultSettings[field.key] = field.defaultValue;
+        }
+      });
+    }
+
+    const testNode: WorkflowNode = {
+      id: crypto.randomUUID(),
+      type: firstPlugin.slug, // Use the actual plugin slug as type
+      position: { x: 100, y: 100 },
+      route: currentRoute,
+      version: (firstPlugin.manifest?.version as string) || "1.0.0",
+      data: {
+        label: (firstPlugin.manifest?.name as string) || "Test Plugin Node",
+        pluginId: firstPlugin.slug, // Set the pluginId for lookup
+        pluginSettings: defaultSettings,
+      },
+      selected: false,
+      dragging: false,
+    };
+
+    addNode(testNode);
+  };
+
+  // Function to create a test node with visual configuration using real plugin
+  const createVisualConfigTestNode = () => {
+    // Get the first available plugin manifest from the store
+    const pluginManifests: PluginManifest[] =
+      useAppStore.getState().pluginManifests || [];
+    const firstPlugin: PluginManifest | undefined = pluginManifests[0];
+
+    if (!firstPlugin) {
+      console.warn(
+        "No plugin manifests available to create visual config test node"
+      );
+      return;
+    }
+
+    // Create a node that will use the plugin's manifest for visual config testing
+    const testNode: WorkflowNode = {
+      id: crypto.randomUUID(),
+      type: firstPlugin.slug, // Use the actual plugin slug as type
+      position: { x: 300, y: 100 },
+      route: currentRoute,
+      version: (firstPlugin.manifest?.version as string) || "1.0.0",
+      data: {
+        label: `${firstPlugin.manifest?.name || "Visual Test"} (Config Test)`,
+        pluginId: firstPlugin.slug, // Set the pluginId for lookup
+        // Don't set visualConfig - let it use the manifest defaults
+        // Visual changes in the Info tab will update the manifest globally
+      },
+      selected: false,
+      dragging: false,
+    };
+
+    addNode(testNode);
+    console.log(
+      `📦 Created visual config test node using plugin: ${firstPlugin.slug}`
+    );
+  };
 
   const ToolButton = ({
     icon: Icon,
@@ -420,6 +757,34 @@ export default function DevTools() {
                       }
                     />
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm">Test Tools</h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={createTestPluginNode}
+                      className="gap-1.5 text-xs h-7 px-2"
+                    >
+                      <TestTube2 className="w-3 h-3" />
+                      Create Test Plugin Node
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={createVisualConfigTestNode}
+                      className="gap-1.5 text-xs h-7 px-2"
+                    >
+                      <TestTube2 className="w-3 h-3" />
+                      Create Visual Config Test
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Test nodes: Plugin settings UI and global visual
+                    configuration updates
+                  </p>
                 </div>
               </TabsContent>
 

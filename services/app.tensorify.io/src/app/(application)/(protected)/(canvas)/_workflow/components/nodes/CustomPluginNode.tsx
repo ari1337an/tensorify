@@ -6,7 +6,7 @@ import * as LucideIcons from "lucide-react";
 import TNode from "./TNode/TNode";
 import { type WorkflowNode } from "../../store/workflowStore";
 import useWorkflowStore from "../../store/workflowStore";
-import useStore from "@/app/_store/store";
+import useAppStore from "@/app/_store/store";
 import CustomHandle from "./handles/CustomHandle";
 import { useHandleValidation } from "./handles/useHandleValidation";
 import {
@@ -175,7 +175,7 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
   const [hasError, setHasError] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
-  const pluginManifests = useStore((state) => state.pluginManifests);
+  const pluginManifests = useAppStore((state) => state.pluginManifests);
   const { isConnectionValid, validateNodeInputs } = useHandleValidation();
 
   // Find the manifest for this plugin node with error handling
@@ -197,72 +197,144 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
   }, [pluginManifests, data.pluginId, id]);
 
   // Extract visual properties from manifest with comprehensive fallbacks
+  // Priority: data.visualConfig > manifest.visual > defaults
   const visualProps = useMemo(() => {
-    if (!manifest?.manifest) {
-      return {
-        containerType: "default",
-        width: 200,
-        height: 120,
-        primaryIcon: null,
-        secondaryIcons: [],
-        iconSize: "medium",
-        showIconBackground: true,
-        title: data.label || "Plugin",
-        titleDescription: null,
-        showLabels: true,
-        labelPosition: "top",
-        dynamicLabelTemplate: null,
-        innerPadding: 16,
-        outerPadding: 8,
-        extraPadding: false,
-        borderWidth: 2,
-        shadowLevel: 1,
-        borderRadius: 8,
-        borderColor: null,
-        backgroundColor: null,
-        theme: "auto",
-      };
-    }
-
-    const visual = (manifest.manifest.visual as any) || {};
-    const size = visual.size || {};
-    const icons = visual.icons || {};
-    const labels = visual.labels || {};
-    const padding = visual.padding || {};
-    const styling = visual.styling || {};
-
-    // Normalize container type
-    const containerType = (visual.containerType || "default").toLowerCase();
-
-    return {
-      containerType,
-      width: size.width || 200,
-      height: size.height || 120,
-      minWidth: size.minWidth,
-      minHeight: size.minHeight,
-      maxWidth: size.maxWidth,
-      maxHeight: size.maxHeight,
-      aspectRatio: size.aspectRatio,
-      primaryIcon: icons.primary || null,
-      secondaryIcons: icons.secondary || [],
-      iconSize: icons.iconSize || "medium",
-      showIconBackground: icons.showIconBackground !== false,
-      title: labels.title || data.label || "Plugin",
-      titleDescription: labels.titleDescription,
-      showLabels: labels.showLabels !== false,
-      labelPosition: labels.labelPosition || "top",
-      dynamicLabelTemplate: labels.dynamicLabelTemplate || null,
-      innerPadding: padding.inner ?? 16,
-      outerPadding: padding.outer ?? 8,
-      extraPadding: padding.extraPadding || false,
-      borderWidth: styling.borderWidth ?? 2,
-      shadowLevel: styling.shadowLevel ?? 1,
-      borderRadius: styling.borderRadius ?? 8,
-      borderColor: styling.borderColor,
-      backgroundColor: styling.backgroundColor,
-      theme: styling.theme || "auto",
+    // Get base defaults
+    const defaults = {
+      containerType: "default",
+      width: 200,
+      height: 120,
+      primaryIcon: null,
+      secondaryIcons: [],
+      iconSize: "medium",
+      showIconBackground: true,
+      title: data.label || "Plugin",
+      titleDescription: null,
+      showLabels: true,
+      labelPosition: "top",
+      dynamicLabelTemplate: null,
+      innerPadding: 16,
+      outerPadding: 8,
+      extraPadding: false,
+      borderWidth: 2,
+      shadowLevel: 1,
+      borderRadius: 8,
+      borderColor: null,
+      backgroundColor: null,
+      theme: "auto",
     };
-  }, [manifest, data.label]);
+
+    // Get manifest visual config (if available)
+    const manifestVisual = manifest?.manifest?.visual as any;
+    const manifestSize = manifestVisual?.size || {};
+    const manifestIcons = manifestVisual?.icons || {};
+    const manifestLabels = manifestVisual?.labels || {};
+    const manifestPadding = manifestVisual?.padding || {};
+    const manifestStyling = manifestVisual?.styling || {};
+
+    // Get user visual config from node data (this takes precedence)
+    const userVisual = data.visualConfig || {};
+    const userSize = userVisual.size || {};
+    const userIcons = userVisual.icons || {};
+    const userLabels = userVisual.labels || {};
+    const userPadding = userVisual.padding || {};
+    const userStyling = userVisual.styling || {};
+
+    // Merge configurations: user config > manifest config > defaults
+    return {
+      // Container type (direct property)
+      containerType: (
+        userVisual.containerType ||
+        manifestVisual?.containerType ||
+        defaults.containerType
+      ).toLowerCase(),
+
+      // Size properties
+      width: userSize.width ?? manifestSize.width ?? defaults.width,
+      height: userSize.height ?? manifestSize.height ?? defaults.height,
+      minWidth: userSize.minWidth ?? manifestSize.minWidth,
+      minHeight: userSize.minHeight ?? manifestSize.minHeight,
+      maxWidth: userSize.maxWidth ?? manifestSize.maxWidth,
+      maxHeight: userSize.maxHeight ?? manifestSize.maxHeight,
+      aspectRatio: userSize.aspectRatio ?? manifestSize.aspectRatio,
+
+      // Icon properties - merge user config with manifest
+      primaryIcon:
+        userIcons.primaryType && userIcons.primaryValue
+          ? { type: userIcons.primaryType, value: userIcons.primaryValue }
+          : manifestIcons.primary || defaults.primaryIcon,
+      secondaryIcons: manifestIcons.secondary || defaults.secondaryIcons,
+      iconSize:
+        userIcons.iconSize ?? manifestIcons.iconSize ?? defaults.iconSize,
+      showIconBackground:
+        userIcons.showIconBackground ??
+        manifestIcons.showIconBackground ??
+        defaults.showIconBackground,
+
+      // Label properties
+      title:
+        userLabels.title ??
+        manifestLabels.title ??
+        data.label ??
+        defaults.title,
+      titleDescription:
+        userLabels.titleDescription ??
+        manifestLabels.titleDescription ??
+        defaults.titleDescription,
+      showLabels:
+        userLabels.showLabels ??
+        manifestLabels.showLabels ??
+        defaults.showLabels,
+      labelPosition:
+        userLabels.labelPosition ??
+        manifestLabels.labelPosition ??
+        defaults.labelPosition,
+      dynamicLabelTemplate:
+        userLabels.dynamicLabelTemplate ??
+        manifestLabels.dynamicLabelTemplate ??
+        defaults.dynamicLabelTemplate,
+
+      // Padding properties
+      innerPadding:
+        userPadding.inner ?? manifestPadding.inner ?? defaults.innerPadding,
+      outerPadding:
+        userPadding.outer ?? manifestPadding.outer ?? defaults.outerPadding,
+      extraPadding:
+        userPadding.extraPadding ??
+        manifestPadding.extraPadding ??
+        defaults.extraPadding,
+
+      // Styling properties
+      borderWidth:
+        userStyling.borderWidth ??
+        manifestStyling.borderWidth ??
+        defaults.borderWidth,
+      shadowLevel:
+        userStyling.shadowLevel ??
+        manifestStyling.shadowLevel ??
+        defaults.shadowLevel,
+      borderRadius:
+        userStyling.borderRadius ??
+        manifestStyling.borderRadius ??
+        defaults.borderRadius,
+      borderColor:
+        userStyling.borderColor ??
+        manifestStyling.borderColor ??
+        defaults.borderColor,
+      backgroundColor:
+        userStyling.backgroundColor ??
+        manifestStyling.backgroundColor ??
+        defaults.backgroundColor,
+      theme: userStyling.theme ?? manifestStyling.theme ?? defaults.theme,
+    };
+  }, [manifest, data.label, data.visualConfig, pluginManifests]);
+
+  // Debug visual props changes
+  React.useEffect(() => {
+    console.log(
+      `🔄 Node ${id}: ${visualProps.width}x${visualProps.height}, container: ${visualProps.containerType}`
+    );
+  }, [visualProps, id]);
 
   // Extract handle configurations with proper typing and ensure unique IDs
   const { inputHandles, outputHandles } = useMemo((): {
@@ -298,23 +370,85 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
     return validateNodeInputs(id, inputHandles, data);
   }, [validateNodeInputs, id, inputHandles, data]);
 
-  // Process dynamic label
-  const processedLabel = useMemo(() => {
+  // Process dynamic label template with placeholder replacement
+  const processedDynamicLabel = useMemo(() => {
+    // If no dynamic template is available, return null
     if (!visualProps.dynamicLabelTemplate || !data) {
-      return visualProps.title;
+      return null;
     }
 
-    // Replace placeholders in the template with actual values
+    // Start with the dynamic template
     let label = visualProps.dynamicLabelTemplate;
+
+    // Debug logging (can be removed in production)
+    // console.log(`🔄 Processing dynamic label for node ${id}:`);
+    // console.log(`  Template: "${label}"`);
+    // console.log(`  Node data:`, data);
+    // console.log(`  Settings:`, data.settings);
+    // console.log(`  Plugin Settings:`, data.pluginSettings);
+
+    // Helper function to safely convert values to strings
+    const formatValue = (value: any): string => {
+      if (value === null || value === undefined) {
+        return "";
+      }
+      if (typeof value === "object") {
+        try {
+          return JSON.stringify(value);
+        } catch {
+          return String(value);
+        }
+      }
+      return String(value);
+    };
+
+    // First, try to replace from top-level data
     Object.entries(data).forEach(([key, value]) => {
       const placeholder = `{${key}}`;
       if (label.includes(placeholder)) {
-        label = label.replace(placeholder, String(value));
+        // console.log(`  ✅ Replacing {${key}} with "${value}" from top-level data`);
+        label = label.replace(
+          new RegExp(`\\{${key}\\}`, "g"),
+          formatValue(value)
+        );
       }
     });
 
+    // Then, try to replace from settings data (if it exists)
+    if (data.settings && typeof data.settings === "object") {
+      Object.entries(data.settings as Record<string, any>).forEach(
+        ([key, value]) => {
+          const placeholder = `{${key}}`;
+          if (label.includes(placeholder)) {
+            // console.log(`  ✅ Replacing {${key}} with "${value}" from settings`);
+            label = label.replace(
+              new RegExp(`\\{${key}\\}`, "g"),
+              formatValue(value)
+            );
+          }
+        }
+      );
+    }
+
+    // Also try to replace from pluginSettings data (if it exists)
+    if (data.pluginSettings && typeof data.pluginSettings === "object") {
+      Object.entries(data.pluginSettings as Record<string, any>).forEach(
+        ([key, value]) => {
+          const placeholder = `{${key}}`;
+          if (label.includes(placeholder)) {
+            // console.log(`  ✅ Replacing {${key}} with "${value}" from pluginSettings`);
+            label = label.replace(
+              new RegExp(`\\{${key}\\}`, "g"),
+              formatValue(value)
+            );
+          }
+        }
+      );
+    }
+
+    // console.log(`  Final dynamic label: "${label}"`);
     return label;
-  }, [visualProps.dynamicLabelTemplate, visualProps.title, data]);
+  }, [visualProps.dynamicLabelTemplate, visualProps.title, data, id]);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -326,7 +460,7 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
   const handleLabelDoubleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsEditing(true);
-    setEditingLabel(processedLabel);
+    setEditingLabel(visualProps.title);
   };
 
   const handleLabelSave = () => {
@@ -341,7 +475,7 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
       handleLabelSave();
     } else if (e.key === "Escape") {
       setIsEditing(false);
-      setEditingLabel(processedLabel);
+      setEditingLabel(visualProps.title);
     }
   };
 
@@ -408,18 +542,16 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
     };
   }, [visualProps.theme]);
 
-  // Theme-aware background color
+  // Theme-aware background color - only for explicit backgroundColor
   const getBackgroundColor = useMemo(() => {
-    const isDarkTheme = visualProps.theme === "dark";
-
     // If explicit backgroundColor is set, use it
     if (visualProps.backgroundColor) {
       return visualProps.backgroundColor;
     }
 
-    // Otherwise, provide theme-appropriate defaults
-    return isDarkTheme ? "#1f2937" : "#ffffff"; // gray-800 for dark, white for light
-  }, [visualProps.theme, visualProps.backgroundColor]);
+    // Otherwise, use bg-card class instead of inline styles
+    return undefined;
+  }, [visualProps.backgroundColor]);
 
   // Calculate secondary icon position based on IconPosition
   const calculateIconPosition = (position: string = "right"): string => {
@@ -483,6 +615,7 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
         className={`
           relative group
           transition-all duration-200
+          bg-card
           ${containerStyle}
           ${shadowClass}
           ${selected ? "shadow-primary/20" : ""}
@@ -507,7 +640,9 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
           borderRadius:
             visualProps.containerType === "circle"
               ? "50%"
-              : `${visualProps.borderRadius}px`,
+              : visualProps.containerType === "left-round"
+                ? undefined // Let CSS classes handle left-round styling
+                : `${visualProps.borderRadius}px`,
           borderColor: selected
             ? "var(--primary)"
             : visualProps.borderColor || "var(--border)",
@@ -590,17 +725,37 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                   maxLength={50}
                 />
               ) : (
-                <p
-                  className={`text-sm font-medium ${getTextClasses.primary} cursor-pointer ${getTextClasses.primaryHover} transition-colors truncate`}
-                  onDoubleClick={handleLabelDoubleClick}
-                  title={`${processedLabel} - Double-click to edit`}
-                  style={{ maxWidth: `${visualProps.width - 40}px` }}
-                >
-                  {processedLabel}
-                </p>
+                <div className="text-center">
+                  {/* Main Title */}
+                  <p
+                    className={`text-sm font-medium ${getTextClasses.primary} cursor-pointer ${getTextClasses.primaryHover} transition-colors text-center`}
+                    onDoubleClick={handleLabelDoubleClick}
+                    title={`${visualProps.title} - Double-click to edit`}
+                    style={{
+                      maxWidth: `${visualProps.width - 40}px`,
+                      margin: "0 auto",
+                    }}
+                  >
+                    {visualProps.title}
+                  </p>
+                  {/* Dynamic Label below main title */}
+                  {processedDynamicLabel && (
+                    <p
+                      className={`text-xs ${getTextClasses.secondary} mt-1 font-mono text-center`}
+                      style={{
+                        maxWidth: `${visualProps.width - 40}px`,
+                        margin: "0 auto",
+                      }}
+                    >
+                      {processedDynamicLabel}
+                    </p>
+                  )}
+                </div>
               )}
               {visualProps.titleDescription && (
-                <p className={`text-xs ${getTextClasses.secondary} mt-1`}>
+                <p
+                  className={`text-xs ${getTextClasses.secondary} mt-1 text-center`}
+                >
                   {visualProps.titleDescription}
                 </p>
               )}
@@ -611,14 +766,6 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                 >
                   {nodeType.replace(/_/g, " ")}
                 </div>
-                {manifest?.manifest?.version ? (
-                  <span className={`text-xs ${getTextClasses.secondary}`}>
-                    v
-                    {typeof manifest.manifest.version === "string"
-                      ? (manifest.manifest.version as string)
-                      : String(manifest.manifest.version)}
-                  </span>
-                ) : null}
               </div>
             </div>
           )}

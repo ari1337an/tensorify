@@ -13,9 +13,60 @@ import {
   type Connection,
 } from "@xyflow/react";
 
+// Visual configuration interfaces
+export interface VisualSize {
+  width?: number;
+  height?: number;
+  minWidth?: number;
+  maxWidth?: number;
+  minHeight?: number;
+  maxHeight?: number;
+  aspectRatio?: "flexible" | "fixed";
+}
+
+export interface VisualPadding {
+  inner?: number;
+  outer?: number;
+  extraPadding?: boolean;
+}
+
+export interface VisualStyling {
+  borderRadius?: number;
+  borderWidth?: number;
+  shadowLevel?: number;
+  theme?: "auto" | "light" | "dark";
+  borderColor?: string;
+  backgroundColor?: string;
+}
+
+export interface VisualIcons {
+  primaryType?: "lucide" | "fontawesome" | "svg";
+  primaryValue?: string;
+  iconSize?: "small" | "medium" | "large";
+  showIconBackground?: boolean;
+}
+
+export interface VisualLabels {
+  title?: string;
+  titleDescription?: string;
+  dynamicLabelTemplate?: string;
+  showLabels?: boolean;
+  labelPosition?: "top" | "bottom" | "overlay";
+}
+
+export interface VisualConfig {
+  containerType?: "default" | "box" | "circle" | "left-round";
+  size?: VisualSize;
+  padding?: VisualPadding;
+  styling?: VisualStyling;
+  icons?: VisualIcons;
+  labels?: VisualLabels;
+}
+
 // Custom node data interface
 export interface WorkflowNodeData {
   label: string;
+  visualConfig?: VisualConfig;
   [key: string]: unknown;
 }
 
