@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Check, Copy, Terminal } from "lucide-react";
+import { Check, Copy, Terminal, FileCode } from "lucide-react";
 import Prism from "prismjs";
 import "prismjs/themes/prism-tomorrow.css";
 import "prismjs/components/prism-python";
@@ -17,6 +17,16 @@ import styles from "./ExportDialog.module.css";
 interface ExportDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  nodes?: any[];
+  edges?: any[];
+}
+
+interface Artifact {
+  id: string;
+  endNodeId: string;
+  label: string;
+  code: string;
+  path: string[];
 }
 
 const loadingSteps = [
@@ -26,13 +36,22 @@ const loadingSteps = [
   "Fetching final results from Server",
 ];
 
-export function ExportDialog({ isOpen, onClose }: ExportDialogProps) {
-  const [isLoading, setIsLoading] = useState(true);
-  const [code, setCode] = useState("");
+export function ExportDialog({
+  isOpen,
+  onClose,
+  nodes,
+  edges,
+}: ExportDialogProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [artifacts, setArtifacts] = useState<Artifact[]>([]);
+  const [selectedArtifact, setSelectedArtifact] = useState<Artifact | null>(
+    null
+  );
   const [isCopied, setIsCopied] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [typedText, setTypedText] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   // Progress and step animation
   useEffect(() => {
@@ -66,10 +85,6 @@ export function ExportDialog({ isOpen, onClose }: ExportDialogProps) {
 
       if (elapsed >= totalDuration) {
         clearInterval(progressInterval);
-        // Wait for 1 second after "Done" before showing code
-        setTimeout(() => {
-          setIsLoading(false);
-        }, 1000);
       }
     }, 16); // ~60fps
 
@@ -99,175 +114,129 @@ export function ExportDialog({ isOpen, onClose }: ExportDialogProps) {
 
   // Highlight code when it changes
   useEffect(() => {
-    if (code && !isLoading) {
+    if (selectedArtifact && !isLoading) {
       Prism.highlightAll();
     }
-  }, [code, isLoading]);
+  }, [selectedArtifact, isLoading]);
 
-  // Simulated API call - replace with actual API call
+  // API call to export workflow
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !artifacts.length && nodes && edges) {
       setIsLoading(true);
-      setProgress(0);
-      setCurrentStep(0);
-      setCode("");
-      const timer = setTimeout(() => {
-        setCode(`import tensorflow as tf
-import numpy as np
-from tensorflow.keras.layers import Dense, Dropout, BatchNormalization
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
+      setError(null);
+      setSelectedArtifact(null);
 
-class DeepNeuralNetwork:
-    def __init__(self, input_shape, num_classes):
-        self.input_shape = input_shape
-        self.num_classes = num_classes
-        self.model = self._build_model()
-        
-    def _build_model(self):
-        """
-        Builds a deep neural network with advanced architecture
-        - Uses BatchNormalization for better training stability
-        - Implements Dropout for regularization
-        - Uses ReLU and Softmax activations
-        """
-        model = tf.keras.Sequential([
-            # Input layer
-            Dense(256, input_shape=self.input_shape, activation='relu'),
-            BatchNormalization(),
-            Dropout(0.3),
-            
-            # Hidden layers
-            Dense(512, activation='relu'),
-            BatchNormalization(),
-            Dropout(0.4),
-            
-            Dense(256, activation='relu'),
-            BatchNormalization(),
-            Dropout(0.3),
-            
-            Dense(128, activation='relu'),
-            BatchNormalization(),
-            Dropout(0.2),
-            
-            # Output layer
-            Dense(self.num_classes, activation='softmax')
-        ])
-        
-        return model
-    
-    def compile_model(self, learning_rate=0.001):
-        """
-        Compiles the model with optimal parameters
-        """
-        optimizer = Adam(learning_rate=learning_rate)
-        self.model.compile(
-            optimizer=optimizer,
-            loss='categorical_crossentropy',
-            metrics=['accuracy']
-        )
-        
-    def train(self, X_train, y_train, validation_split=0.2, epochs=100, batch_size=32):
-        """
-        Trains the model with early stopping and model checkpointing
-        """
-        # Create callbacks
-        early_stopping = EarlyStopping(
-            monitor='val_loss',
-            patience=10,
-            restore_best_weights=True
-        )
-        
-        checkpoint = ModelCheckpoint(
-            'best_model.h5',
-            monitor='val_accuracy',
-            save_best_only=True,
-            mode='max'
-        )
-        
-        # Train the model
-        history = self.model.fit(
-            X_train, y_train,
-            validation_split=validation_split,
-            epochs=epochs,
-            batch_size=batch_size,
-            callbacks=[early_stopping, checkpoint]
-        )
-        
-        return history
-    
-    def plot_training_history(self, history):
-        """
-        Plots the training and validation metrics
-        """
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
-        
-        # Plot accuracy
-        ax1.plot(history.history['accuracy'], label='Training Accuracy')
-        ax1.plot(history.history['val_accuracy'], label='Validation Accuracy')
-        ax1.set_title('Model Accuracy')
-        ax1.set_xlabel('Epoch')
-        ax1.set_ylabel('Accuracy')
-        ax1.legend()
-        
-        # Plot loss
-        ax2.plot(history.history['loss'], label='Training Loss')
-        ax2.plot(history.history['val_loss'], label='Validation Loss')
-        ax2.set_title('Model Loss')
-        ax2.set_xlabel('Epoch')
-        ax2.set_ylabel('Loss')
-        ax2.legend()
-        
-        plt.tight_layout()
-        plt.show()
+      const exportWorkflow = async () => {
+        try {
+          console.log("Exporting workflow with:", { nodes, edges });
+          // Get the correct API base URL based on environment
+          const apiBaseUrl =
+            process.env.NEXT_PUBLIC_BACKEND_URL + "/api"
 
-# Example usage
-if __name__ == "__main__":
-    # Generate sample data
-    X = np.random.randn(1000, 20)  # 1000 samples, 20 features
-    y = np.random.randint(0, 5, 1000)  # 5 classes
-    y = tf.keras.utils.to_categorical(y)
-    
-    # Split data
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
-    
-    # Create and train model
-    model = DeepNeuralNetwork(input_shape=(20,), num_classes=5)
-    model.compile_model()
-    history = model.train(X_train, y_train)
-    
-    # Evaluate model
-    test_loss, test_accuracy = model.model.evaluate(X_test, y_test)
-    print(f"Test accuracy: {test_accuracy:.4f}")
-    
-    # Plot training history
-    model.plot_training_history(history)`);
-      }, 7500);
-      return () => clearTimeout(timer);
+          const exportUrl = `${apiBaseUrl}/v1/export`;
+          console.log("Making request to:", exportUrl);
+          console.log("Window location:", window.location.href);
+          console.log("Hostname detected:", window.location.hostname);
+
+          const response = await fetch(exportUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ nodes, edges }),
+          });
+
+          console.log("Export response status:", response.status);
+
+          if (!response.ok) {
+            const errorData = await response.text();
+            console.error("Error response:", errorData);
+            throw new Error(
+              `Export failed: ${response.status} ${response.statusText}`
+            );
+          }
+
+          // Check if response is JSON
+          const contentType = response.headers.get("content-type");
+          console.log("Response content-type:", contentType);
+
+          if (!contentType || !contentType.includes("application/json")) {
+            const htmlData = await response.text();
+            console.error(
+              "Received HTML instead of JSON:",
+              htmlData.substring(0, 200)
+            );
+            throw new Error(
+              "Server returned HTML instead of JSON. Check if the API endpoint is correctly configured."
+            );
+          }
+
+          const data = await response.json();
+          console.log("Export response data:", data);
+
+          if (data.artifacts) {
+            const artifactsList = Object.entries(data.artifacts).map(
+              ([endNodeId, code]) => ({
+                id: crypto.randomUUID(),
+                endNodeId,
+                label: `Path to ${endNodeId}`,
+                code: code as string,
+                path: data.paths?.[endNodeId] || [],
+              })
+            );
+
+            setArtifacts(artifactsList);
+            if (artifactsList.length > 0) {
+              setSelectedArtifact(artifactsList[0]);
+            }
+          }
+        } catch (err: any) {
+          console.error("Export failed:", err);
+
+          let errorMessage = "Failed to export workflow";
+          if (err.message) {
+            errorMessage = err.message;
+          }
+
+          setError(errorMessage);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      // Simulate the loading steps
+      setTimeout(() => {
+        exportWorkflow();
+      }, loadingSteps.length * 2000);
     }
-  }, [isOpen]);
+  }, [isOpen, nodes, edges, artifacts.length]);
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(code);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
+    if (selectedArtifact) {
+      await navigator.clipboard.writeText(selectedArtifact.code);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    }
+  };
+
+  const handleClose = () => {
+    setArtifacts([]);
+    setSelectedArtifact(null);
+    setError(null);
+    onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-4xl overflow-hidden">
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-6xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Terminal className="h-5 w-5 text-primary" />
-            Generated Python Code
+            Export Workflow
           </DialogTitle>
           <DialogDescription>
-            Here&apos;s your generated Python code with a complete
-            implementation of a deep neural network.
+            Select an artifact to view the generated code for that execution
+            path.
           </DialogDescription>
         </DialogHeader>
         <div className="flex-1 overflow-hidden">
@@ -314,50 +283,101 @@ if __name__ == "__main__":
                         index === currentStep
                           ? "bg-primary w-4"
                           : index < currentStep
-                          ? "bg-primary/60"
-                          : "bg-muted-foreground/20"
+                            ? "bg-primary/60"
+                            : "bg-muted-foreground/20"
                       )}
                     />
                   ))}
                 </div>
               </div>
             </div>
+          ) : error ? (
+            <div className="flex items-center justify-center min-h-[450px]">
+              <div className="text-center space-y-2">
+                <div className="text-destructive text-lg">Export Failed</div>
+                <div className="text-muted-foreground">{error}</div>
+              </div>
+            </div>
           ) : (
-            <div className="relative group">
-              <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
-                <div
-                  className={cn(
-                    "text-xs text-muted-foreground opacity-0 transition-opacity duration-200",
-                    isCopied && "opacity-100"
-                  )}
-                >
-                  Copied!
-                </div>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={handleCopy}
-                >
-                  {isCopied ? (
-                    <Check className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-              <div className="relative rounded-lg border bg-[#1a1a1a] overflow-hidden">
-                <div
-                  className={cn(
-                    "px-4 py-4 max-h-[60vh] overflow-auto",
-                    styles.codeContainer
-                  )}
-                >
-                  <pre className={cn("!bg-transparent !m-0", styles.code)}>
-                    <code className="language-python">{code}</code>
-                  </pre>
+            <div className="grid grid-cols-[250px_1fr] gap-4 h-[70vh]">
+              {/* Artifacts List */}
+              <div className="border rounded-lg p-4 overflow-y-auto">
+                <h3 className="font-medium mb-3">Execution Paths</h3>
+                <div className="space-y-2">
+                  {artifacts.map((artifact) => (
+                    <button
+                      key={artifact.id}
+                      onClick={() => setSelectedArtifact(artifact)}
+                      className={cn(
+                        "w-full text-left p-3 rounded-md transition-colors",
+                        selectedArtifact?.id === artifact.id
+                          ? "bg-primary/10 border border-primary/20"
+                          : "hover:bg-muted"
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <FileCode className="h-4 w-4 text-muted-foreground" />
+                        <div className="flex-1 overflow-hidden">
+                          <div className="font-medium text-sm truncate">
+                            {artifact.label}
+                          </div>
+                          <div className="text-xs text-muted-foreground truncate">
+                            {artifact.path.length} nodes
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
                 </div>
               </div>
+
+              {/* Code Display */}
+              {selectedArtifact ? (
+                <div className="relative group">
+                  <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
+                    <div
+                      className={cn(
+                        "text-xs text-muted-foreground opacity-0 transition-opacity duration-200",
+                        isCopied && "opacity-100"
+                      )}
+                    >
+                      Copied!
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={handleCopy}
+                    >
+                      {isCopied ? (
+                        <Check className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <div className="relative rounded-lg border bg-[#1a1a1a] overflow-hidden h-full">
+                    <div
+                      className={cn(
+                        "px-4 py-4 h-full overflow-auto",
+                        styles.codeContainer
+                      )}
+                    >
+                      <pre className={cn("!bg-transparent !m-0", styles.code)}>
+                        <code className="language-python">
+                          {selectedArtifact.code}
+                        </code>
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center border rounded-lg">
+                  <div className="text-muted-foreground">
+                    Select an artifact to view its code
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -1,6 +1,10 @@
 import { initContract } from "@ts-rest/core";
 import { generateOpenApi } from '@ts-rest/open-api';
 import {
+  contract as exportExportContract,
+  action as exportExportAction,
+} from "./export/export";
+import {
   contract as pluginGetManifestContract,
   action as pluginGetManifestAction,
 } from "./plugin/getManifest";
@@ -12,6 +16,7 @@ import {
 const c = initContract();
 
 const unprefixedContracts = {
+    exportExport: exportExportContract,
     pluginGetManifest: pluginGetManifestContract,
     pluginGetResult: pluginGetResultContract,
 };
@@ -32,6 +37,7 @@ export const contracts = c.router(
 );
 
 export const actions = {
+  exportExport: exportExportAction,
   pluginGetManifest: pluginGetManifestAction,
   pluginGetResult: pluginGetResultAction,
 };

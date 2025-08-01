@@ -171,7 +171,14 @@ export function NavbarRight() {
         variant="default"
         size="sm"
         className="h-8 px-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white inest-shadow-lg hover:inset-shadow-xl shadow-black/20 transition-all duration-200"
-        onClick={() => setIsExportDialogOpen(true)}
+        onClick={() => {
+          console.log("Current workflow:", currentWorkflow);
+          console.log("Workflow version:", currentWorkflow?.version);
+          console.log("Workflow code:", currentWorkflow?.version?.code);
+          console.log("Nodes:", currentWorkflow?.version?.code?.nodes);
+          console.log("Edges:", currentWorkflow?.version?.code?.edges);
+          setIsExportDialogOpen(true);
+        }}
       >
         <Download className="h-4 w-4 mr-1" />
         Export
@@ -180,6 +187,8 @@ export function NavbarRight() {
       <ExportDialog
         isOpen={isExportDialogOpen}
         onClose={() => setIsExportDialogOpen(false)}
+        nodes={currentWorkflow?.version?.code?.nodes}
+        edges={currentWorkflow?.version?.code?.edges}
       />
 
       <ShareDialog

@@ -39,9 +39,9 @@ The Start Node, End Node, Branch Node, Nested Node, Multiplexer Node, Demultiple
 Here's some information on how the nodes in combination can become tree. For the simple case, lets take the following:
 
 Start -> P -> Q-> R -> S -> T -> End
-C1 C2 C3 C4 C5
+        C1   C2   C3   C4  C5
 
-    C1,C2,C3,C4,C5 are the P,Q,R,S,T plugin's chunks.
+C1,C2,C3,C4,C5 are the P,Q,R,S,T plugin's chunks.
 
 Notice how the tree is created. Now if we do travarsal then the final artifact = format(combine(C1,C2,C3,C4,C5))
 
@@ -50,11 +50,10 @@ Notice how the tree is created. Now if we do travarsal then the final artifact =
 Now, lets take a more complex case with a single branching:
 
          C1   C2  C3   C4   C5
-
 Start -> P -> Q-> R -> S -> T -> End
-|  
- |\_ -> U -> V -> End
-C6, C7
+                        |  
+                        | -> U -> V -> End
+                            C6,   C7
 
 Now, if we do travarsal then the final artifacts = [format(combine(C1,C2,C3,C4,C5)), format(combine(C1,C2,C3,C6,C7))]
 
@@ -77,6 +76,18 @@ Now, even though you can see nested branching is aweful but in the upper level t
 
 Now, even if there is some other control structure, to generate the artifacts we would need 
 
-
 // DFS vs BFS
-// DFS double check backwards [sell point->code reviewer]
+// DFS double check backwards [this can be a selling point->code reviewer]
+
+Now, implement this full flow:
+1. In the app.tensorify.io, I wil click export and the api call would be made and then the artifacts list will be shown in list (artifacts are the code of the AI training pipeline)
+
+2. The api endpoint will relay the work to the transpiler package
+
+3. The transpiler works like the above thing.
+
+Use todo_tool.
+Use graph to plan. 
+
+Ultrathink 
+
