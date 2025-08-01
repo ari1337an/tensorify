@@ -204,17 +204,6 @@ export abstract class TensorifyPlugin {
     const errors: PluginValidationError[] = [];
     const warnings: PluginValidationWarning[] = [];
 
-    // Validate core settings
-    if (!settings.variableName) {
-      errors.push({
-        type: "missing_property",
-        message: "variableName is required in plugin settings",
-        path: "variableName",
-        expected: "string",
-        actual: settings.variableName,
-      });
-    }
-
     if (!settings.labelName) {
       errors.push({
         type: "missing_property",

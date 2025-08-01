@@ -85,6 +85,10 @@ interface WorkflowCanvasState {
   // Navigation state
   currentRoute: string;
 
+  // Persistence state
+  isSaving: boolean;
+  lastSavedAt: Date | null;
+
   // ReactFlow event handlers
   onNodesChange: OnNodesChange<WorkflowNode>;
   onEdgesChange: OnEdgesChange;
@@ -97,6 +101,8 @@ interface WorkflowCanvasState {
   setEdges: (edges: Edge[]) => void;
   addNode: (node: WorkflowNode) => void;
   updateNodeData: (nodeId: string, data: Partial<WorkflowNodeData>) => void;
+  setSaving: (saving: boolean) => void;
+  setLastSavedAt: (date: Date | null) => void;
 
   // Utility functions
   getVisibleNodes: () => WorkflowNode[];
@@ -137,6 +143,8 @@ const useWorkflowStore = create<WorkflowCanvasState>()(
       nodes: [],
       edges: [],
       currentRoute: "/",
+      isSaving: false,
+      lastSavedAt: null,
 
       // ReactFlow event handlers
       onNodesChange: (changes) => {
@@ -229,6 +237,14 @@ const useWorkflowStore = create<WorkflowCanvasState>()(
               : node
           ),
         }));
+      },
+
+      setSaving: (saving: boolean) => {
+        set({ isSaving: saving });
+      },
+
+      setLastSavedAt: (date: Date | null) => {
+        set({ lastSavedAt: date });
       },
 
       // Utility functions

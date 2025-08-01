@@ -32,6 +32,8 @@ export function SettingsField({
   allSettings,
 }: SettingsFieldProps) {
   const [validationError, setValidationError] = React.useState<string>("");
+  const [localValue, setLocalValue] = React.useState<any>(value);
+  const debounceTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Get the current value, falling back to default
   const currentValue = value !== undefined ? value : field.defaultValue;
@@ -130,15 +132,85 @@ export function SettingsField({
     [field]
   );
 
-  // Handle value change with validation
+  // Sync local value with prop value
+  React.useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  // Handle value change with debounced validation and save
   const handleChange = React.useCallback(
     (newValue: any) => {
+      // Update local value immediately for responsive UI
+      setLocalValue(newValue);
+
+      // Clear any existing debounce timer
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+
+      // For number inputs, don't validate or save empty strings immediately
+      const isNumberField =
+        field.type === "input-number" || field.dataType === "number";
+      const isEmpty =
+        newValue === "" || newValue === null || newValue === undefined;
+
+      if (isNumberField && isEmpty) {
+        // Just show a soft validation warning, don't trigger onChange yet
+        if (field.required) {
+          setValidationError(`${field.label} is required`);
+        } else {
+          setValidationError("");
+        }
+
+        // Debounce the actual save for empty values
+        debounceTimerRef.current = setTimeout(() => {
+          const defaultVal =
+            field.defaultValue !== undefined ? field.defaultValue : 0;
+          // Ensure default value is a number for number fields
+          const finalDefaultVal =
+            isNumberField && typeof defaultVal === "string"
+              ? Number(defaultVal) || 0
+              : defaultVal;
+          onChange(finalDefaultVal);
+        }, 1500); // Give user 1.5 seconds to type
+        return;
+      }
+
+      // Validate immediately for UI feedback
       const error = validateValue(newValue);
       setValidationError(error);
-      onChange(newValue);
+
+      // Debounce the actual save
+      debounceTimerRef.current = setTimeout(() => {
+        // Convert string values to proper types before saving
+        let valueToSave = newValue;
+        if (isNumberField && typeof newValue === "string" && newValue !== "") {
+          const numValue = Number(newValue);
+          if (!isNaN(numValue)) {
+            valueToSave = numValue;
+          }
+        }
+
+        // Only save if validation passes
+        if (!error) {
+          onChange(valueToSave);
+        } else if (field.validation?.min !== undefined && isNumberField) {
+          // For number fields with min validation, use min value instead of blocking
+          onChange(field.validation.min);
+        }
+      }, 500); // 500ms debounce for normal typing
     },
-    [onChange, validateValue]
+    [onChange, validateValue, field]
   );
+
+  // Cleanup debounce timer on unmount
+  React.useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   // Validate on mount and when value changes
   React.useEffect(() => {
@@ -155,7 +227,7 @@ export function SettingsField({
         return (
           <Input
             type="text"
-            value={currentValue || ""}
+            value={localValue || ""}
             onChange={(e) => handleChange(e.target.value)}
             placeholder={field.placeholder}
             className={cn(validationError && "border-destructive")}
@@ -165,7 +237,7 @@ export function SettingsField({
       case "textarea":
         return (
           <Textarea
-            value={currentValue || ""}
+            value={localValue || ""}
             onChange={(e) => handleChange(e.target.value)}
             placeholder={field.placeholder}
             className={cn(
@@ -179,11 +251,24 @@ export function SettingsField({
         return (
           <Input
             type="number"
-            value={currentValue || ""}
+            value={
+              localValue !== undefined && localValue !== null ? localValue : ""
+            }
             onChange={(e) => {
-              const val =
-                e.target.value === "" ? undefined : Number(e.target.value);
+              const val = e.target.value === "" ? "" : e.target.value;
               handleChange(val);
+            }}
+            onBlur={(e) => {
+              // On blur, convert to number if valid
+              const stringVal = e.target.value;
+              if (stringVal === "") {
+                handleChange(undefined);
+              } else {
+                const numVal = Number(stringVal);
+                if (!isNaN(numVal)) {
+                  handleChange(numVal);
+                }
+              }
             }}
             placeholder={field.placeholder}
             min={field.validation?.min}

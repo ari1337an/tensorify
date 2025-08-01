@@ -42,6 +42,7 @@ import {
 import useWorkflowStore from "../store/workflowStore";
 import { type WorkflowNode } from "../store/workflowStore";
 import useAppStore, { type PluginManifest } from "@/app/_store/store";
+import { useShallow } from "zustand/react/shallow";
 
 // Change Logger Component
 function ChangeLogger({ limit = 6 }: { limit?: number }) {
@@ -539,7 +540,14 @@ export default function DevTools() {
   const [viewportLoggerActive, setViewportLoggerActive] = useState(false);
   const [routeInspectorActive, setRouteInspectorActive] = useState(false);
 
-  const { nodes, edges, currentRoute, addNode, setEdges } = useWorkflowStore();
+  const { nodes, edges, currentRoute, addNode } = useWorkflowStore(
+    useShallow((state) => ({
+      nodes: state.nodes,
+      edges: state.edges,
+      currentRoute: state.currentRoute,
+      addNode: state.addNode,
+    }))
+  );
 
   if (process.env.NODE_ENV !== "development") {
     return null;
@@ -611,7 +619,9 @@ export default function DevTools() {
     };
 
     console.log("🔗 Creating test edge:", testEdge);
-    setEdges([...edges, testEdge]);
+    // Use the store's setEdges method to ensure proper state management
+    const currentEdges = useWorkflowStore.getState().edges;
+    useWorkflowStore.getState().setEdges([...currentEdges, testEdge]);
 
     // Debug DOM after edge creation
     setTimeout(() => {
@@ -651,7 +661,9 @@ export default function DevTools() {
       "🔗 Creating simple test edge (no custom handles):",
       simpleEdge
     );
-    setEdges([...edges, simpleEdge]);
+    // Use the store's setEdges method to ensure proper state management
+    const currentEdges = useWorkflowStore.getState().edges;
+    useWorkflowStore.getState().setEdges([...currentEdges, simpleEdge]);
   };
 
   // Function to create a test node with visual configuration using real plugin

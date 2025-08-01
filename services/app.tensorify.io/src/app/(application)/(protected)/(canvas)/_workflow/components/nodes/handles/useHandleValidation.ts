@@ -46,38 +46,10 @@ export function useHandleValidation(): UseHandleValidationReturn {
    */
   const validateHandleConnection = useCallback(
     (params: ConnectionValidationParams): boolean => {
-      const nodes = getNodes();
-      const sourceNode = nodes.find((n) => n.id === params.source);
-      const targetNode = nodes.find((n) => n.id === params.target);
-
-      if (!sourceNode || !targetNode) return false;
-
-      // Get handle definitions from node data with proper type checking
-      const sourceHandles = Array.isArray(sourceNode.data?.outputHandles)
-        ? (sourceNode.data.outputHandles as OutputHandle[])
-        : [];
-      const targetHandles = Array.isArray(targetNode.data?.inputHandles)
-        ? (targetNode.data.inputHandles as InputHandle[])
-        : [];
-
-      const sourceHandle = sourceHandles.find(
-        (h: OutputHandle) => h.id === params.sourceHandle
-      );
-      const targetHandle = targetHandles.find(
-        (h: InputHandle) => h.id === params.targetHandle
-      );
-
-      if (!sourceHandle || !targetHandle) return false;
-
-      // Validate the connection
-      const validationResult = validateConnection(
-        sourceHandle,
-        targetHandle,
-        params
-      );
-      return validationResult.isValid;
+      // Allow any connection between any nodes - user explicitly wants flexibility
+      return true;
     },
-    [getNodes]
+    []
   );
 
   /**

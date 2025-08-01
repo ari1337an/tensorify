@@ -16,6 +16,7 @@ import useWorkflowStore, {
   getRouteLevels,
   WorkflowNode,
 } from "../../../(canvas)/_workflow/store/workflowStore";
+import { useShallow } from "zustand/react/shallow";
 
 // Define the segment type with optional ellipsis
 type BreadcrumbSegment = {
@@ -120,7 +121,13 @@ const getSmartSegments = (
 
 export function Breadcrumb() {
   const { currentWorkflow } = useStore();
-  const { currentRoute, setRoute, nodes } = useWorkflowStore();
+  const { currentRoute, setRoute, nodes } = useWorkflowStore(
+    useShallow((state) => ({
+      currentRoute: state.currentRoute,
+      setRoute: state.setRoute,
+      nodes: state.nodes,
+    }))
+  );
   const [isExpanded, setIsExpanded] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const breadcrumbRef = useRef<HTMLDivElement>(null);

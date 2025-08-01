@@ -24,8 +24,8 @@ importers:
         specifier: ^0.38.0
         version: 0.38.15(react@19.1.1)
       '@tensorify.io/sdk':
-        specifier: 0.0.24
-        version: 0.0.24
+        specifier: 0.0.25
+        version: 0.0.25
       axios:
         specifier: ^1.10.0
         version: 1.11.0
@@ -4123,8 +4123,8 @@ packages:
     resolution: {integrity: sha512-ldZXEhOBb8Is7xLs01fR3YEc3DERiz5silj8tnGkFZytt1abEvl/GhUmCE0PMLaMPTa3Jk4HbKmRlHmu+gCftg==}
     engines: {node: '>=12'}
 
-  '@tensorify.io/sdk@0.0.24':
-    resolution: {integrity: sha512-2NJeACv1t3CceTqmQVSfNQ+WETtuIWeYg/FMKzL52yyyHATP1TeYhqbBXR6RnMTHdY2lHmaps/Kb3n4jaWhx3w==}
+  '@tensorify.io/sdk@0.0.25':
+    resolution: {integrity: sha512-3vVCJKWlSmahBhOT2IcUGRYhCp9Hlb2Vkk0YQda6JUBgUazx0ilGAPjm1Da0U9v7PUmDZZAOQVWEShpmhXx0oQ==}
     engines: {node: '>=16.0.0'}
 
   '@testing-library/dom@10.4.1':
@@ -13770,7 +13770,7 @@ snapshots:
 
   '@tanstack/table-core@8.21.3': {}
 
-  '@tensorify.io/sdk@0.0.24': {}
+  '@tensorify.io/sdk@0.0.25': {}
 
   '@testing-library/dom@10.4.1':
     dependencies:

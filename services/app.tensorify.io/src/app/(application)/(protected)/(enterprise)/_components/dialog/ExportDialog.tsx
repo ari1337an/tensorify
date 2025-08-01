@@ -130,8 +130,7 @@ export function ExportDialog({
         try {
           console.log("Exporting workflow with:", { nodes, edges });
           // Get the correct API base URL based on environment
-          const apiBaseUrl =
-            process.env.NEXT_PUBLIC_BACKEND_URL + "/api"
+          const apiBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL + "/api";
 
           const exportUrl = `${apiBaseUrl}/v1/export`;
           console.log("Making request to:", exportUrl);
@@ -179,7 +178,7 @@ export function ExportDialog({
               ([endNodeId, code]) => ({
                 id: crypto.randomUUID(),
                 endNodeId,
-                label: `Path to ${endNodeId}`,
+                label: `Artifact: ${endNodeId}`,
                 code: code as string,
                 path: data.paths?.[endNodeId] || [],
               })
@@ -204,10 +203,8 @@ export function ExportDialog({
         }
       };
 
-      // Simulate the loading steps
-      setTimeout(() => {
-        exportWorkflow();
-      }, loadingSteps.length * 2000);
+      // Start export immediately
+      exportWorkflow();
     }
   }, [isOpen, nodes, edges, artifacts.length]);
 
@@ -302,7 +299,7 @@ export function ExportDialog({
             <div className="grid grid-cols-[250px_1fr] gap-4 h-[70vh]">
               {/* Artifacts List */}
               <div className="border rounded-lg p-4 overflow-y-auto">
-                <h3 className="font-medium mb-3">Execution Paths</h3>
+                <h3 className="font-medium mb-3">Artifacts (Branch Paths)</h3>
                 <div className="space-y-2">
                   {artifacts.map((artifact) => (
                     <button

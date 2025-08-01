@@ -221,14 +221,12 @@ async function getPluginResults(
       // Get plugin settings from node data (pluginSettings field)
       const baseSettings = (node.data as any)?.pluginSettings || {};
 
+      console.log({ baseSettings });
+
       // Include the label in the plugin settings
       const payload = {
         ...baseSettings,
-        label: (node.data as any)?.label,
         labelName: (node.data as any)?.label, // Some plugins might expect labelName
-        variableName:
-          (node.data as any)?.label?.toLowerCase().replace(/\s+/g, "_") ||
-          `node_${nodeId.slice(0, 8)}`, // Generate a variable name
       };
 
       console.log(`Executing plugin for node ${nodeId}:`, { slug, payload });

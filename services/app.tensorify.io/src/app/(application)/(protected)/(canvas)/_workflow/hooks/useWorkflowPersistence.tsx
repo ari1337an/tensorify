@@ -1,8 +1,10 @@
-import { useEffect, useCallback, useRef } from "react";
+import { useEffect, useCallback, useRef, useState } from "react";
 import { useReactFlow } from "@xyflow/react";
 import { useDebounce } from "./useDebounce";
 import { Workflow } from "@/app/_store/store";
 import useWorkflowStore from "../store/workflowStore";
+import useAppStore from "@/app/_store/store";
+import { useShallow } from "zustand/react/shallow";
 
 interface UseWorkflowPersistenceProps {
   workflow: Workflow;
@@ -13,16 +15,42 @@ export function useWorkflowPersistence({
   workflow,
   debounceDelay = 1000,
 }: UseWorkflowPersistenceProps) {
-  const { getNodes, getEdges, setNodes, setEdges, setViewport } =
-    useReactFlow();
-  const isMounted = useRef(false);
+  const { getNodes, getEdges, setViewport } = useReactFlow();
   const isLoadingState = useRef(false);
+  const lastWorkflowId = useRef<string | null>(null);
+
+  // Get workflow store methods and state
+  const {
+    setNodes: setStoreNodes,
+    setEdges: setStoreEdges,
+    nodes: storeNodes,
+    edges: storeEdges,
+    isSaving,
+    lastSavedAt,
+    setSaving,
+    setLastSavedAt,
+  } = useWorkflowStore(
+    useShallow((state) => ({
+      setNodes: state.setNodes,
+      setEdges: state.setEdges,
+      nodes: state.nodes,
+      edges: state.edges,
+      isSaving: state.isSaving,
+      lastSavedAt: state.lastSavedAt,
+      setSaving: state.setSaving,
+      setLastSavedAt: state.setLastSavedAt,
+    }))
+  );
+
+  // Removed setCurrentWorkflow to prevent re-render loops
 
   // Create a debounced save function
   const saveWorkflowState = useCallback(async () => {
     if (!workflow.version?.id || isLoadingState.current) {
       return;
     }
+
+    setSaving(true);
 
     const currentNodes = getNodes();
     const currentEdges = getEdges();
@@ -55,57 +83,83 @@ export function useWorkflowPersistence({
         console.error("Failed to save workflow state:", await response.text());
       } else {
         console.log("Workflow state saved successfully");
+        setLastSavedAt(new Date());
       }
     } catch (error) {
       console.error("Error saving workflow state:", error);
+    } finally {
+      setSaving(false);
     }
-  }, [workflow.id, workflow.version?.id, getNodes, getEdges]);
+  }, [
+    workflow.id,
+    workflow.version?.id,
+    getNodes,
+    getEdges,
+    setSaving,
+    setLastSavedAt,
+  ]);
 
   // Debounce the save function
   const debouncedSave = useDebounce(saveWorkflowState, debounceDelay);
 
-  // Get nodes and edges from the store to track changes
-  const { nodes, edges } = useWorkflowStore();
-
-  // Load workflow state on mount
+  // Load workflow state when workflow changes
   useEffect(() => {
-    if (!isMounted.current && workflow.version?.code) {
+    // Check if this is a new workflow
+    if (workflow.id !== lastWorkflowId.current) {
+      console.log(`Loading workflow ${workflow.id} - clearing existing state`);
       isLoadingState.current = true;
+      lastWorkflowId.current = workflow.id;
 
-      const code = workflow.version.code as {
-        nodes?: any[];
-        edges?: any[];
-        viewport?: { x: number; y: number; zoom: number };
-      };
+      // Clear the current state first
+      setStoreNodes([]);
+      setStoreEdges([]);
 
-      if (code.nodes && Array.isArray(code.nodes)) {
-        setNodes(code.nodes);
-      }
+      // Load new workflow state if available
+      if (workflow.version?.code) {
+        const code = workflow.version.code as {
+          nodes?: any[];
+          edges?: any[];
+          viewport?: { x: number; y: number; zoom: number };
+        };
 
-      if (code.edges && Array.isArray(code.edges)) {
-        setEdges(code.edges);
-      }
+        console.log(
+          `Loading ${code.nodes?.length || 0} nodes and ${code.edges?.length || 0} edges for workflow ${workflow.id}`
+        );
 
-      if (code.viewport) {
-        setViewport(code.viewport);
+        if (code.nodes && Array.isArray(code.nodes)) {
+          setStoreNodes(code.nodes);
+        }
+
+        if (code.edges && Array.isArray(code.edges)) {
+          setStoreEdges(code.edges);
+        }
+
+        if (code.viewport) {
+          setViewport(code.viewport);
+        }
       }
 
       // Mark as loaded after a short delay to prevent immediate save
       setTimeout(() => {
         isLoadingState.current = false;
-        isMounted.current = true;
       }, 100);
     }
-  }, [workflow.version?.code, setNodes, setEdges, setViewport]);
+  }, [
+    workflow.id,
+    workflow.version?.code,
+    setViewport,
+    setStoreNodes,
+    setStoreEdges,
+  ]);
 
   // Save on changes (after initial load)
   useEffect(() => {
-    if (isMounted.current && !isLoadingState.current) {
+    if (lastWorkflowId.current === workflow.id && !isLoadingState.current) {
       debouncedSave();
     }
-  }, [nodes, edges, debouncedSave]);
+  }, [storeNodes, storeEdges, debouncedSave, workflow.id]);
 
   return {
-    isSaving: false, // Could be enhanced with loading state
+    // Hook no longer returns state - it's managed in the store
   };
 }

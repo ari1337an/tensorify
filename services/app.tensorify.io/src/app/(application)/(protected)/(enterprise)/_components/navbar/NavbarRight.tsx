@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/app/_components/ui/button";
 import { CollaboratorAvatars } from "@/app/(application)/(protected)/(enterprise)/_components/navbar/CollaboratorAvatars";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/app/_lib/utils";
 import { ExportDialog } from "@/app/(application)/(protected)/(enterprise)/_components/dialog/ExportDialog";
 import { ShareDialog } from "@/app/(application)/(protected)/(enterprise)/_components/dialog/ShareDialog";
@@ -19,8 +19,11 @@ import { PluginManagementDialog } from "@/app/(application)/(protected)/(enterpr
 import { ThemeToggle } from "@/app/_components/ui/theme-toggle";
 import { VersionSelector } from "./VersionSelector";
 import useStore from "@/app/_store/store";
+import useWorkflowStore from "@/app/(application)/(protected)/(canvas)/_workflow/store/workflowStore";
 import { postWorkflowVersion } from "@/app/api/v1/_client/client";
 import { toast } from "sonner";
+import { useShallow } from "zustand/react/shallow";
+import { format } from "timeago.js";
 
 // Example collaborators data - in a real app, this would come from your collaboration system
 const collaborators = [
@@ -56,6 +59,14 @@ const collaborators = [
 
 export function NavbarRight() {
   const { currentWorkflow, fetchWorkflows } = useStore();
+  const { nodes, edges, isSaving, lastSavedAt } = useWorkflowStore(
+    useShallow((state) => ({
+      nodes: state.nodes,
+      edges: state.edges,
+      isSaving: state.isSaving,
+      lastSavedAt: state.lastSavedAt,
+    }))
+  );
   const [isLocked, setIsLocked] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
@@ -64,6 +75,18 @@ export function NavbarRight() {
   const [isCreatingVersion, setIsCreatingVersion] = useState(false);
   const [isPluginManagementModalOpen, setIsPluginManagementModalOpen] =
     useState(false);
+  const [, forceUpdate] = useState({});
+
+  // Update save status every minute to keep timeago fresh
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (lastSavedAt) {
+        forceUpdate({});
+      }
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, [lastSavedAt]);
 
   const toggleLock = () => {
     setIsLocked((prev) => !prev);
@@ -113,8 +136,29 @@ export function NavbarRight() {
     }
   };
 
+  // Format last saved time using timeago.js
+  const getSaveStatus = () => {
+    if (isSaving) {
+      return "Saving...";
+    }
+    if (lastSavedAt) {
+      return `Saved ${format(lastSavedAt)}`;
+    }
+    return null;
+  };
+
   return (
     <div className="flex items-center gap-2 px-3 shrink-0">
+      {/* Save Status Indicator */}
+      {getSaveStatus() && (
+        <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-md mr-2">
+          {isSaving && (
+            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></div>
+          )}
+          <span>{getSaveStatus()}</span>
+        </div>
+      )}
+
       <VersionSelector onCreateNewVersion={handleCreateNewVersion} />
 
       <Button
@@ -129,7 +173,6 @@ export function NavbarRight() {
         <Package className="h-3 w-3 text-primary-readable" />
         Plugin
       </Button>
-
       <div className="mr-2">
         <CollaboratorAvatars collaborators={collaborators} maxVisible={2} />
       </div>
@@ -187,8 +230,8 @@ export function NavbarRight() {
       <ExportDialog
         isOpen={isExportDialogOpen}
         onClose={() => setIsExportDialogOpen(false)}
-        nodes={currentWorkflow?.version?.code?.nodes}
-        edges={currentWorkflow?.version?.code?.edges}
+        nodes={nodes}
+        edges={edges}
       />
 
       <ShareDialog

@@ -29,27 +29,9 @@ export function validateDataTypeCompatibility(
   sourceType: HandleDataType,
   targetType: HandleDataType
 ): boolean {
-  // 'any' type is compatible with everything
-  if (sourceType === "any" || targetType === "any") {
-    return true;
-  }
-
-  // Exact type match
-  if (sourceType === targetType) {
-    return true;
-  }
-
-  // Special compatibility rules
-  const compatibilityRules: Record<HandleDataType, HandleDataType[]> = {
-    string: ["any"],
-    number: ["any"],
-    boolean: ["any"],
-    object: ["any"],
-    array: ["any", "object"], // Arrays can sometimes be treated as objects
-    any: ["string", "number", "boolean", "object", "array"],
-  };
-
-  return compatibilityRules[sourceType]?.includes(targetType) || false;
+  // Allow any connection between any handle types
+  // User explicitly wants to connect any input handle with output handle and vice versa
+  return true;
 }
 
 /**
@@ -182,14 +164,8 @@ export function validateConnection(
 ): ValidationResult {
   const errors: string[] = [];
 
-  // Check data type compatibility
-  if (
-    !validateDataTypeCompatibility(sourceHandle.dataType, targetHandle.dataType)
-  ) {
-    errors.push(
-      `Data type mismatch: ${sourceHandle.dataType} cannot connect to ${targetHandle.dataType}`
-    );
-  }
+  // Allow all connections - user wants to connect any input/output handles
+  // Data type compatibility check is removed to allow flexibility
 
   // Check if target handle is required and has no existing connections
   // This would need to be checked against the actual flow state
