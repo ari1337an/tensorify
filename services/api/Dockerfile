@@ -16,7 +16,7 @@ COPY services/ ./services/
 
 # Install dependencies and build (the ... means the backend-api AND its workspace dependencies)
 RUN pnpm install --frozen-lockfile --filter=@tensorify.io/backend-api... 
-RUN pnpm build --filter=@tensorify.io/backend-api
+RUN pnpm build --filter=@tensorify.io/backend-api...
 
 # Deploy stage - Create portable package with pnpm deploy
 FROM ari1337an/node-20-python3-make-cpp:0.0.2 AS deployed
