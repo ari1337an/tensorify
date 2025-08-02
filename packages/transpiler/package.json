@@ -5,6 +5,9 @@
   "description": "The transpiler of the Tensorify Studio.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
   "scripts": {
     "build": "tsc",
     "start": "ts-node --require tsconfig-paths/register src/usage.ts"
