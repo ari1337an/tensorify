@@ -286,7 +286,9 @@ function NodeInspector() {
               </div>
 
               <div className="space-y-1 max-h-32 overflow-y-auto">
-                {manifest.manifest.settingsFields.map((field: any) => {
+                {(
+                  manifest.manifest as any
+                )?.frontendConfigs?.settingsFields?.map((field: any) => {
                   const value = pluginSettings[field.key];
                   const hasValue = value !== undefined && value !== null;
 
@@ -567,8 +569,11 @@ export default function DevTools() {
 
     // Generate default settings from the manifest
     const defaultSettings: Record<string, any> = {};
-    if (firstPlugin.manifest?.settingsFields) {
-      (firstPlugin.manifest.settingsFields as any[]).forEach((field: any) => {
+    const fc = (firstPlugin.manifest as any)?.frontendConfigs;
+    const fields = (fc?.settingsFields ||
+      (firstPlugin.manifest as any)?.settingsFields) as any[] | undefined;
+    if (fields) {
+      fields.forEach((field: any) => {
         if (field.defaultValue !== undefined) {
           defaultSettings[field.key] = field.defaultValue;
         }

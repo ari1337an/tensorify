@@ -1,4 +1,8 @@
-import { createPluginEngine } from "@tensorify.io/plugin-engine";
+import { createPluginEngine, PluginEngine } from "@tensorify.io/plugin-engine";
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { LocalFileStorageService } = require("@tensorify.io/plugin-engine");
+import fs from "fs";
+import path from "path";
 import {
   WorkflowNode,
   WorkflowEdge,
@@ -43,8 +47,18 @@ export async function generateCode(
     debug,
   });
 
-  // Create plugin engine
-  const engine = createPluginEngine(s3Config, bucketName, { debug });
+  // Create plugin engine with offline-first in development when bucketName points to a local folder
+  let engine: any;
+  const isDev = process.env.NODE_ENV === "development";
+  if (isDev && bucketName && fs.existsSync(bucketName)) {
+    engine = new PluginEngine({
+      storageService: new LocalFileStorageService(),
+      bucketName,
+      debug: true,
+    });
+  } else {
+    engine = createPluginEngine(s3Config, bucketName, { debug });
+  }
 
   try {
     // Find all paths from start nodes to end nodes in root route
@@ -106,7 +120,8 @@ function findAllPaths(nodes: WorkflowNode[], edges: WorkflowEdge[]): Path[] {
 
   // Find all start nodes in root route
   const startNodes = nodes.filter(
-    (node) => isStartNode(node.type) && node.route === "/"
+    (node) =>
+      isStartNode(node.type) && (node.route === "/" || node.route === "root")
   );
 
   console.log(
@@ -135,7 +150,10 @@ function findAllPaths(nodes: WorkflowNode[], edges: WorkflowEdge[]): Path[] {
       }
 
       // If this is an end node in root route, we found a complete path
-      if (isEndNode(node.type) && node.route === "/") {
+      if (
+        isEndNode(node.type) &&
+        (node.route === "/" || node.route === "root")
+      ) {
         paths.push({
           endNodeId: nodeId,
           nodes: path,

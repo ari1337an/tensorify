@@ -112,8 +112,8 @@ export const action = {
         }
 
         // Fetch plugin metadata from plugins.tensorify.io
-        let pluginMetadata = null;
-        let manifestData = {};
+        let pluginMetadata: any = null;
+        let manifestData: any = null;
         try {
           // Parse slug to extract plugin name and author for search
           const slugMatch = slug.match(/^@([^/]+)\/([^:]+):(.+)$/);
@@ -159,13 +159,14 @@ export const action = {
             );
 
             if (manifestResponse.ok) {
-              manifestData = (await manifestResponse.json()).data;
+              const body = await manifestResponse.json();
+              manifestData = body?.data || null;
               if (!manifestData) {
                 throw new TsRestResponseError(contract, {
                   status: 500,
                   body: {
                     status: "failed",
-                    message: "Plugin service is temporarily unavailable. Please try again later.",
+                    message: "Plugin service returned empty manifest.",
                   },
                 });
               }
@@ -195,18 +196,35 @@ export const action = {
             });
           }
         } catch (error) {
-          console.warn("Failed to fetch plugin metadata:", error);
-          // Continue with installation but use defaults
+          console.warn("Failed to fetch plugin metadata or manifest:", error);
+          throw new TsRestResponseError(contract, {
+            status: 500,
+            body: {
+              status: "failed",
+              message:
+                "Failed to retrieve plugin metadata/manifest for installation.",
+            },
+          });
         }
 
         // Install the plugin atomically with metadata
+        if (!manifestData || typeof manifestData !== "object") {
+          throw new TsRestResponseError(contract, {
+            status: 500,
+            body: {
+              status: "failed",
+              message: "Manifest is missing or invalid.",
+            },
+          });
+        }
+
         await db.$transaction(async (tx) => {
           await tx.workflowInstalledPlugins.create({
             data: {
               slug,
               description: description || pluginMetadata?.description || null,
               pluginType: pluginMetadata?.pluginType || "CUSTOM",
-              manifest: manifestData, // Use fetched manifest data
+              manifest: manifestData,
               workflowId: workflowId,
             },
           });

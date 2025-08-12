@@ -65,15 +65,9 @@ type Workflow = {
   allVersions: WorkflowVersionSummary[];
 };
 
-type PluginManifest = {
-  id: string;
-  slug: string;
-  description: string | null;
-  pluginType: string;
-  manifest: Record<string, unknown> | null;
-  createdAt: string;
-  updatedAt: string;
-};
+import type { InstalledPluginRecord } from "@tensorify.io/contracts";
+
+type PluginManifest = InstalledPluginRecord;
 
 interface StoreState {
   currentUser: SessionClaims | null;
@@ -217,8 +211,12 @@ const useStore = create<StoreState>()(
           });
 
           if (response.status === 200) {
+            // Accept backend shape (InstalledPluginRecord) and pass-through
             set(
-              { pluginManifests: response.body.data },
+              {
+                pluginManifests: response.body
+                  .data as unknown as PluginManifest[],
+              },
               undefined,
               "fetchPluginManifests"
             );

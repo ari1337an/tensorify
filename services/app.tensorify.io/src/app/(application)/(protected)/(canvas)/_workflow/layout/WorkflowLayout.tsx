@@ -181,15 +181,23 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
 
       // Extract label from manifest or use default
       let nodeLabel = `${draggedNodeType.split("/").pop()}`;
-      if (manifest?.manifest?.visual) {
-        const visual = manifest.manifest.visual as any;
-        nodeLabel = visual.labels?.title || manifest.manifest.name || nodeLabel;
+      // Support new contracts shape (frontendConfigs) and legacy
+      const fc = (manifest?.manifest as any)?.frontendConfigs;
+      if (fc?.visual || (manifest?.manifest as any)?.visual) {
+        const visual = (fc?.visual ||
+          (manifest?.manifest as any)?.visual) as any;
+        nodeLabel =
+          visual?.labels?.title ||
+          (manifest?.manifest as any)?.name ||
+          nodeLabel;
       }
 
       // Generate default settings if it's a plugin node
       const defaultSettings: Record<string, any> = {};
-      if (isPluginNode && manifest?.manifest?.settingsFields) {
-        (manifest.manifest.settingsFields as any[]).forEach((field) => {
+      const settingsFields = (fc?.settingsFields ||
+        (manifest?.manifest as any)?.settingsFields) as any[] | undefined;
+      if (isPluginNode && settingsFields) {
+        settingsFields.forEach((field) => {
           if (field.defaultValue !== undefined) {
             defaultSettings[field.key] = field.defaultValue;
           }

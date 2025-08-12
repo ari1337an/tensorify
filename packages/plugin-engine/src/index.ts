@@ -11,6 +11,7 @@ export { createPluginEngine } from "./factory/engine.factory";
 
 // Service implementations
 export { S3StorageService } from "./services/storage.service";
+export { LocalFileStorageService } from "./services/local-file-storage.service";
 export { IsolatedVMExecutorService } from "./services/executor.service";
 
 // Interfaces for dependency injection

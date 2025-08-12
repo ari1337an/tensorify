@@ -7,7 +7,13 @@ import {
 import { z } from "zod";
 import { PluginSlugSchema } from "../schema";
 
-import { createPluginEngine } from "@tensorify.io/plugin-engine";
+import {
+  createPluginEngine,
+  PluginEngine,
+  PluginNotFoundError,
+} from "@tensorify.io/plugin-engine";
+import path from "path";
+import fs from "fs";
 import { initServer } from "@ts-rest/express";
 
 const s = initServer();
@@ -46,7 +52,58 @@ export const mainFunction = async (
   const slug = request.query.slug;
   const payload = request.body;
   try {
-    // Get bucket name from environment
+    // Helper to resolve offline base dir in development
+    const resolveOfflineDir = (): string | null => {
+      const fromEnv = process.env.OFFLINE_PLUGINS_DIR;
+      if (fromEnv && fs.existsSync(fromEnv)) return fromEnv;
+      if (process.env.NODE_ENV !== "development") return null;
+      let current = path.resolve(__dirname, "../../../../");
+      for (let i = 0; i < 5; i++) {
+        const probe = path.join(current, "offline-plugins");
+        if (fs.existsSync(probe) && fs.statSync(probe).isDirectory()) {
+          return probe;
+        }
+        const parent = path.dirname(current);
+        if (parent === current) break;
+        current = parent;
+      }
+      return null;
+    };
+
+    const offlineDir = resolveOfflineDir();
+
+    // Try offline first in development
+    if (offlineDir) {
+      const offlineEngine = new PluginEngine({
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        storageService:
+          new (require("@tensorify.io/plugin-engine").LocalFileStorageService)(),
+        bucketName: offlineDir,
+        debug: process.env.NODE_ENV === "development",
+      });
+      try {
+        const resultOffline = await offlineEngine.getExecutionResult(
+          slug,
+          payload,
+          "TensorifyPlugin"
+        );
+        await offlineEngine.dispose();
+        return {
+          status: 200,
+          body: {
+            id: "1",
+            result: resultOffline.code,
+          },
+        };
+      } catch (e) {
+        await offlineEngine.dispose();
+        if (!(e instanceof PluginNotFoundError)) {
+          throw e;
+        }
+      }
+    }
+
+    // S3 fallback
     const bucketName = process.env.S3_BUCKET_NAME;
     if (!bucketName) {
       throw new TsRestResponseError(contract.contract, {
@@ -59,7 +116,6 @@ export const mainFunction = async (
       });
     }
 
-    // Handle S3 configuration from environment variables
     const s3Config = {
       region: process.env.S3_REGION || process.env.AWS_REGION || "us-east-1",
       endpoint: process.env.S3_ENDPOINT,
@@ -78,19 +134,15 @@ export const mainFunction = async (
       forcePathStyle: !!process.env.S3_ENDPOINT,
     };
 
-    // Create plugin engine using the new clean API
     const engine = createPluginEngine(s3Config, bucketName, {
       debug: process.env.NODE_ENV === "development",
     });
 
-    // Get plugin result - test with PyTorch linear layer
     const result = await engine.getExecutionResult(
       slug,
       payload,
       "TensorifyPlugin"
     );
-
-    // Clean up engine resources
     await engine.dispose();
 
     return {

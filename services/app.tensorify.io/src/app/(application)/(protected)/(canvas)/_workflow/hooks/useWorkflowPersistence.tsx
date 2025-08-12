@@ -106,7 +106,6 @@ export function useWorkflowPersistence({
   useEffect(() => {
     // Check if this is a new workflow
     if (workflow.id !== lastWorkflowId.current) {
-      console.log(`Loading workflow ${workflow.id} - clearing existing state`);
       isLoadingState.current = true;
       lastWorkflowId.current = workflow.id;
 
@@ -121,10 +120,6 @@ export function useWorkflowPersistence({
           edges?: any[];
           viewport?: { x: number; y: number; zoom: number };
         };
-
-        console.log(
-          `Loading ${code.nodes?.length || 0} nodes and ${code.edges?.length || 0} edges for workflow ${workflow.id}`
-        );
 
         if (code.nodes && Array.isArray(code.nodes)) {
           setStoreNodes(code.nodes);

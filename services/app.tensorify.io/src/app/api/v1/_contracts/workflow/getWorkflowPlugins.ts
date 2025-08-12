@@ -9,6 +9,7 @@ import { ErrorResponse, JwtPayloadSchema, UUID } from "../schema";
 import { tsr } from "@ts-rest/serverless/next";
 import { secureByAuthentication } from "../auth-utils";
 import db from "@/server/database/db";
+import { InstalledPluginRecordSchema } from "@tensorify.io/contracts";
 
 extendZodWithOpenApi(z);
 
@@ -111,15 +112,17 @@ export const action = {
         });
 
         // Format the response
-        const responseData = installedPlugins.map((plugin) => ({
-          id: plugin.id,
-          slug: plugin.slug,
-          description: plugin.description,
-          pluginType: plugin.pluginType,
-          manifest: plugin.manifest as Record<string, unknown> | null, // Type assertion to handle JsonValue
-          createdAt: plugin.createdAt.toISOString(),
-          updatedAt: plugin.updatedAt.toISOString(),
-        }));
+        const responseData = installedPlugins.map((plugin) =>
+          InstalledPluginRecordSchema.parse({
+            id: plugin.id,
+            slug: plugin.slug,
+            description: plugin.description,
+            pluginType: plugin.pluginType,
+            manifest: plugin.manifest as Record<string, unknown> | null,
+            createdAt: plugin.createdAt.toISOString(),
+            updatedAt: plugin.updatedAt.toISOString(),
+          })
+        );
 
         return {
           status: 200,

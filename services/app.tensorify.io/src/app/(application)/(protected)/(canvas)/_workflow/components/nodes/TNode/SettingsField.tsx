@@ -16,7 +16,8 @@ import { Slider } from "@/app/_components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/app/_components/ui/radio-group";
 import { AlertCircleIcon, InfoIcon } from "lucide-react";
 import { cn } from "@/app/_lib/utils";
-import type { SettingsField as SettingsFieldType } from "@packages/sdk/src/types/settings";
+import type { SettingsFieldSchema as _SF } from "@tensorify.io/contracts";
+export type SettingsFieldType = import("zod").infer<typeof _SF>;
 
 interface SettingsFieldProps {
   field: SettingsFieldType;

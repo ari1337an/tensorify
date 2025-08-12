@@ -1,23 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { PluginPublishedWebhookSchema } from "@tensorify.io/contracts";
 import db from "@/server/database/db";
 
-// Zod schema for webhook body validation
-const pluginWebhookSchema = z.object({
-  slug: z.string().min(1, "Slug is required"),
-  name: z.string().min(1, "Name is required"),
-  description: z.string().optional(),
-  githubUrl: z.string().url("Invalid GitHub URL").optional(),
-  status: z.string().optional(),
-  tags: z.string().optional(),
-  sdkVersion: z.string().optional(),
-  version: z.string().optional(),
-  author: z.string(),
-  authorId: z.string().min(1, "Author ID is required"),
-  isPublic: z.boolean().optional(),
-  readme: z.string().optional(),
-  pluginType: z.string().optional(), // Added plugin type from SDK NodeType enum
-});
+// Reuse shared schema
+const pluginWebhookSchema = PluginPublishedWebhookSchema;
 
 export async function POST(request: NextRequest) {
   try {

@@ -414,6 +414,16 @@ const defaultNodes: NodeItem[] = [
     children: [],
   },
 
+  // CUSTOM category (for user-installed custom plugins/nodes)
+  {
+    id: "custom",
+    draggable: false,
+    Icon: ShipWheel,
+    title: "Custom",
+    description: "Your custom nodes and plugins installed into this workspace.",
+    children: [],
+  },
+
   // MISCELLANEOUS category
   {
     id: "miscellaneous",

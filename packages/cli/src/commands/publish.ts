@@ -24,6 +24,8 @@ interface PublishOptions {
   backend?: string;
   frontend?: string;
   dev?: boolean;
+  offline?: boolean;
+  generateOffline?: boolean;
 }
 
 interface PackageJson {
@@ -78,6 +80,14 @@ export const publishCommand = new Command()
     "https://plugins.tensorify.io"
   )
   .option("-d, --dev", "Use development environment")
+  .option(
+    "--offline",
+    "Use offline development mode (no S3 upload, implies --dev)"
+  )
+  .option(
+    "--generate-offline",
+    "Generate/regenerate offline artifacts only (no upload or webhook; implies --offline)"
+  )
   .action(async (options: PublishOptions) => {
     try {
       console.log(chalk.blue("🚀 Starting plugin publish process...\n"));
@@ -106,6 +116,7 @@ class PluginPublisher {
   private username: string; // Added to store the username
   private keywords: string[]; // Added to store keywords
   private readme: string;
+  private offlineBaseDir: string | null;
 
   constructor(options: PublishOptions) {
     this.options = this.resolveOptions(options);
@@ -117,6 +128,7 @@ class PluginPublisher {
     this.username = ""; // Initialize username
     this.keywords = []; // Initialize keywords
     this.readme = ""; // Initialize readme
+    this.offlineBaseDir = null;
   }
 
   /**
@@ -126,6 +138,14 @@ class PluginPublisher {
     // Determine if we should use dev environment
     // Priority: explicit --dev flag > saved config > NODE_ENV
     let isDev = options.dev;
+    // --offline implies dev
+    if (options.offline) {
+      isDev = true;
+    }
+    if (options.generateOffline) {
+      options.offline = true;
+      isDev = true;
+    }
     if (!isDev) {
       // We'll resolve this async in the publish method
       isDev = process.env.NODE_ENV === "development";
@@ -201,6 +221,15 @@ class PluginPublisher {
    * Clean up temporary files created during publish process
    */
   private async cleanupTempFiles(): Promise<void> {
+    // In offline mode, keep generated files for fast iteration
+    if (this.options.offline) {
+      console.log(
+        chalk.gray(
+          "🧩 Offline mode: skipping cleanup of dist and manifest.json"
+        )
+      );
+      return;
+    }
     const filesToCleanup = [
       path.join(this.directory, "manifest.json"),
       path.join(this.directory, "dist"),
@@ -232,8 +261,33 @@ class PluginPublisher {
       // Resolve development environment from saved config if not explicitly set
       await this.resolveDevelopmentEnvironment();
 
+      // Resolve offline directory if needed
+      if (this.options.offline) {
+        this.offlineBaseDir = await this.getOfflinePluginsBaseDir();
+        console.log(
+          chalk.cyan(`📁 Using offline plugins dir: ${this.offlineBaseDir}`)
+        );
+      }
+
+      // Fast path: generate offline artifacts only
+      if (this.options.generateOffline) {
+        console.log(chalk.blue("🛠️  Generating offline artifacts only...\n"));
+        await this.validatePrerequisites();
+        await this.validatePluginStructure();
+        await this.buildAndBundle();
+        await this.saveFilesOffline(true);
+        console.log(chalk.green("✅ Offline artifacts generated"));
+        return;
+      }
+
       // Step 1: Check backend service health
-      await this.checkBackendHealth();
+      if (!this.options.offline) {
+        await this.checkBackendHealth();
+      } else {
+        console.log(
+          chalk.gray("⏭️  Offline mode: skipping backend health check")
+        );
+      }
 
       // Step 2: Pre-flight validation
       await this.validatePrerequisites();
@@ -251,13 +305,23 @@ class PluginPublisher {
       await this.validateAccessLevel();
 
       // Step 7: Check version conflicts
-      await this.checkVersionConflicts();
+      if (!this.options.offline) {
+        await this.checkVersionConflicts();
+      } else {
+        console.log(
+          chalk.gray("⏭️  Offline mode: skipping version conflict check")
+        );
+      }
 
       // Step 8: Build and bundle
       await this.buildAndBundle();
 
-      // Step 9: Upload files
-      await this.uploadFiles();
+      // Step 9: Upload or save files depending on mode
+      if (this.options.offline) {
+        await this.saveFilesOffline();
+      } else {
+        await this.uploadFiles();
+      }
 
       console.log(chalk.green("✅ Plugin published successfully!"));
     } finally {
@@ -272,17 +336,17 @@ class PluginPublisher {
   private async resolveDevelopmentEnvironment(): Promise<void> {
     // Production is the default environment
     // Only use development if --dev flag is explicitly provided
-    if (!this.options.dev) {
+    if (!this.options.dev && !this.options.offline) {
       this.options.dev = false; // Default to production
       console.log(chalk.cyan("🔧 Using production environment (default)"));
-    } else if (this.options.dev) {
+    } else if (this.options.dev || this.options.offline) {
       console.log(chalk.cyan("🔧 Using development environment (--dev flag)"));
     } else {
       console.log(chalk.cyan("🔧 Using production environment"));
     }
 
     // Now, apply the URLs based on the resolved this.options.dev
-    if (this.options.dev) {
+    if (this.options.dev || this.options.offline) {
       // Override URLs for development environment if not explicitly set
       if (
         !this.options.backend ||
@@ -1595,6 +1659,119 @@ class PluginPublisher {
         }`
       );
     }
+  }
+
+  /**
+   * Save built artifacts to the local offline plugins directory and trigger webhook
+   */
+  private async saveFilesOffline(skipNotify: boolean = false): Promise<void> {
+    if (!this.offlineBaseDir) {
+      this.offlineBaseDir = await this.getOfflinePluginsBaseDir();
+    }
+
+    console.log(chalk.yellow("💾 Saving plugin files to offline directory..."));
+
+    // Ensure manifest is on disk (already written earlier in validatePluginStructure)
+    const manifestPath = path.join(this.directory, "manifest.json");
+    if (!fs.existsSync(manifestPath)) {
+      fs.writeFileSync(
+        manifestPath,
+        JSON.stringify(this.manifestJson, null, 2)
+      );
+    }
+
+    const filesToSave = [
+      { path: "dist/bundle.js", fieldName: "bundle" },
+      { path: "manifest.json", fieldName: "manifest" },
+    ];
+
+    // Include icon.svg if exists
+    const iconPath = path.join(this.directory, "icon.svg");
+    if (fs.existsSync(iconPath)) {
+      filesToSave.push({ path: "icon.svg", fieldName: "icon" });
+    }
+
+    // Include README.md if exists
+    const readmePath = path.join(this.directory, "README.md");
+    if (fs.existsSync(readmePath)) {
+      this.readme = fs.readFileSync(readmePath, "utf-8");
+      filesToSave.push({ path: "README.md", fieldName: "readme" });
+    }
+
+    // Compute slug folder with namespace when available
+    const [maybeNamespace, maybeName] = this.packageJson.name.startsWith("@")
+      ? this.packageJson.name.split("/")
+      : ["", this.packageJson.name];
+    const namespace = this.username
+      ? this.username
+      : process.env.NODE_ENV === "development" &&
+          process.env.TENSORIFY_TEST_TOKEN
+        ? "testing-bot-tensorify-dev"
+        : maybeNamespace
+          ? maybeNamespace.slice(1)
+          : "local";
+    const nonNamespacedPluginName = maybeName;
+    const slugFolder = `@${namespace}/${nonNamespacedPluginName}:${this.packageJson.version}`;
+    const targetDir = path.join(this.offlineBaseDir, slugFolder);
+    fs.mkdirSync(targetDir, { recursive: true });
+
+    const savedKeys: string[] = [];
+
+    for (const file of filesToSave) {
+      const src = path.join(this.directory, file.path);
+      const dest = path.join(targetDir, path.basename(file.path));
+      fs.copyFileSync(src, dest);
+      const key = `${slugFolder}/${path.basename(file.path)}`.replace(
+        /\\/g,
+        "/"
+      );
+      savedKeys.push(key);
+      console.log(chalk.blue(`  💾 Saved ${file.fieldName}: ${dest}`));
+    }
+
+    // Notify backend as usual to update registry/database
+    if (!skipNotify) {
+      try {
+        await this.notifyUploadComplete(savedKeys);
+      } catch (e) {
+        console.log(
+          chalk.yellow(
+            "⚠️  Offline mode: backend notification failed or not available. Continuing."
+          )
+        );
+      }
+    }
+
+    console.log(chalk.green("✅ Offline save completed\n"));
+  }
+
+  /**
+   * Resolve offline plugins base directory
+   */
+  private async getOfflinePluginsBaseDir(): Promise<string> {
+    // 1) Env override
+    const fromEnv = process.env.OFFLINE_PLUGINS_DIR;
+    if (fromEnv && fs.existsSync(fromEnv)) {
+      return path.resolve(fromEnv);
+    }
+
+    // 2) Search upwards for an existing 'offline-plugins' directory
+    const searchFrom = this.directory;
+    let current = searchFrom;
+    while (true) {
+      const probe = path.join(current, "offline-plugins");
+      if (fs.existsSync(probe) && fs.statSync(probe).isDirectory()) {
+        return probe;
+      }
+      const parent = path.dirname(current);
+      if (parent === current) break;
+      current = parent;
+    }
+
+    // 3) Fallback: create in current working directory
+    const fallback = path.resolve(process.cwd(), "offline-plugins");
+    fs.mkdirSync(fallback, { recursive: true });
+    return fallback;
   }
 
   /**

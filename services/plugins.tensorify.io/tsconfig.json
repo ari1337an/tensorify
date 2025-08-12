@@ -3,20 +3,25 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"]
     },
-    "isolatedModules": true
+    "isolatedModules": true,
+    "skipLibCheck": true
   },
   "include": [
     "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
     ".next/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
-    "src/server/database/prisma/generated/**/*"
+    ".next",
+    ".vercel",
+    "coverage",
+    "out",
+    "**/__generated__/**",
+    "**/generated/**",
+    "**/prisma/generated/**"
   ]
 }

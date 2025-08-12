@@ -8,6 +8,7 @@
     "@aws-sdk/client-s3": "^3.592.0",
     "@clerk/backend": "^2.4.1",
     "@tensorify.io/plugin-engine": "workspace:*",
+    "@tensorify.io/contracts": "workspace:*",
     "@tensorify.io/transpiler": "workspace:*",
     "@ts-rest/core": "^3.52.1",
     "@ts-rest/express": "^3.52.1",
@@ -43,7 +44,7 @@
   "scripts": {
     "generate-indexes": "node ./scripts/generate_indexes.cjs",
     "build": "pnpm run generate-indexes && tsc",
-    "dev": "pnpm run generate-indexes && NODE_OPTIONS=\"--no-node-snapshot\" ts-node-dev --respawn --transpile-only --no-notify --exit-child --ignore-watch node_modules src/index.ts",
+    "dev": "pnpm run generate-indexes && OFFLINE_PLUGINS_DIR=${OFFLINE_PLUGINS_DIR:-} NODE_ENV=development NODE_OPTIONS=\"--no-node-snapshot\" ts-node-dev --respawn --transpile-only --no-notify --exit-child --ignore-watch node_modules src/index.ts",
     "start": "node --no-node-snapshot dist/index.js",
     "test": "pnpm run generate-indexes && jest --passWithNoTests",
     "prepublishOnly": "echo 'Error: This package cannot be published' && exit 1"

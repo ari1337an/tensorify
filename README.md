@@ -1,3 +1,22 @@
+## Offline Plugins (Development)
+
+For faster local development iterations, this repo supports an offline plugins directory at the monorepo root:
+
+```
+offline-plugins/
+  @username/plugin-name:1.0.0/
+    bundle.js
+    manifest.json
+    icon.svg (optional)
+    README.md (optional)
+```
+
+Set `OFFLINE_PLUGINS_DIR` to override the path; otherwise `offline-plugins` at the repo root is used when present.
+
+The CLI supports `--offline` in `tensorify publish` to build artifacts locally and save them in the offline folder instead of uploading to S3. This implies `--dev` and also sends the usual publish-complete webhook to the backend so the registry stays in sync.
+
+The backend will read from this folder when `OFFLINE_PLUGINS_DIR` is set, bypassing S3 for manifest and execution requests.
+
 # Backend.Tensorify.io
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)

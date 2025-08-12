@@ -8,6 +8,7 @@ import axios from "axios";
 import multer from "multer";
 import { getDecodedJwt } from "./auth-utils";
 import { z } from "zod";
+import { PluginPublishedWebhookSchema } from "@tensorify.io/contracts";
 
 /**
  * Upload metadata interface
@@ -20,25 +21,7 @@ interface UploadMetadata {
   userId?: string;
 }
 
-const pluginWebhookSchema = z.object({
-  slug: z.string().min(1, "Slug is required"),
-  name: z.string().min(1, "Name is required"),
-  version: z.string().min(1, "Version is required"),
-  description: z.string().optional(),
-  author: z.string().optional(), // Maps to PluginData.author
-  authorFullName: z.string().min(1, "Author full name is required"),
-  status: z.string().optional(), // Matches 'published'
-  isPublic: z.boolean(), // Maps to PluginData.access
-  githubUrl: z.string().url("Invalid GitHub URL").optional(), // Maps to PluginData.repository
-  entrypointClassName: z.string().min(1, "Entrypoint class name is required"),
-  files: z.array(z.string()).min(1, "Files array cannot be empty"),
-  authorId: z.string().min(1, "Author ID is required"),
-  publishedAt: z.string().optional(), // Generated on sending, optional in schema
-  readme: z.string().optional(),
-  sdkVersion: z.string().optional(), // Added sdkVersion
-  tags: z.string().optional(), // Added tags
-  pluginType: z.string().optional(), // Added pluginType (nodeType from SDK)
-});
+const pluginWebhookSchema = PluginPublishedWebhookSchema;
 
 /**
  * Plugin data interface for webhook
@@ -464,6 +447,11 @@ export class UploadService {
    */
   async healthCheck(): Promise<{ status: string; message: string }> {
     try {
+      // In offline mode, skip S3 probe
+      if (process.env.OFFLINE_PLUGINS_DIR) {
+        return { status: "ok", message: "Offline mode: S3 check skipped" };
+      }
+
       // Test S3 connection by attempting to access bucket
       const command = new GetObjectCommand({
         Bucket: process.env.S3_BUCKET_NAME || "tensorify-plugins",

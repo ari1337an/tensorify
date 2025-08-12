@@ -17,9 +17,11 @@ import { SettingsField } from "./SettingsField";
 import useWorkflowStore from "../../../store/workflowStore";
 import useAppStore from "@/app/_store/store";
 import type {
-  SettingsField as SettingsFieldType,
-  SettingsGroup,
-} from "@packages/sdk/src/types/settings";
+  SettingsFieldSchema as _SF,
+  SettingsGroupSchema as _SG,
+} from "@tensorify.io/contracts";
+type SettingsFieldType = import("zod").infer<typeof _SF>;
+type SettingsGroup = import("zod").infer<typeof _SG>;
 import type { WorkflowNode } from "../../../store/workflowStore";
 import type { PluginManifest } from "@/app/_store/store";
 
@@ -63,16 +65,18 @@ export function PluginSettingsSection({
   // Early return if no plugin manifest
   if (
     !manifest?.manifest ||
-    !Array.isArray((manifest.manifest as any)?.settingsFields) ||
-    (manifest.manifest as any).settingsFields.length === 0
+    !Array.isArray(
+      (manifest.manifest as any)?.frontendConfigs?.settingsFields
+    ) ||
+    (manifest.manifest as any).frontendConfigs.settingsFields.length === 0
   ) {
     return null;
   }
 
-  const settingsFields = (manifest.manifest as any)
+  const settingsFields = (manifest.manifest as any).frontendConfigs
     .settingsFields as SettingsFieldType[];
-  const settingsGroups = ((manifest.manifest as any).settingsGroups ||
-    []) as SettingsGroup[];
+  const settingsGroups = ((manifest.manifest as any).frontendConfigs
+    .settingsGroups || []) as unknown as SettingsGroup[];
 
   // Initialize expanded groups based on defaultExpanded
   React.useEffect(() => {

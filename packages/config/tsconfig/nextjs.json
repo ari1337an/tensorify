@@ -9,11 +9,23 @@
     "declarationMap": false,
     "incremental": true,
     "jsx": "preserve",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": ["dom", "dom.iterable", "es2022"],
     "module": "esnext",
     "noEmit": true,
     "resolveJsonModule": true,
-    "target": "es2015",
+    "target": "es2022",
     "downlevelIteration": true
-  }
+  },
+  "exclude": [
+    "node_modules",
+    ".next",
+    ".vercel",
+    "coverage",
+    ".cache",
+    "out",
+    "storybook-static",
+    "**/__generated__/**",
+    "**/generated/**",
+    "**/prisma/generated/**"
+  ]
 } 

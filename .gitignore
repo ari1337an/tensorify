@@ -52,3 +52,7 @@ generated/client/
 
 # Generated sitemaps
 services/tensorify.io/public/sitemap*.xml
+
+# Offline plugins artifacts (keep folder, ignore generated contents)
+offline-plugins/*
+!offline-plugins/.gitkeep

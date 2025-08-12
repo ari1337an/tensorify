@@ -12,7 +12,9 @@
     "version:minor": "sh scripts/version-management.sh minor",
     "version:major": "sh scripts/version-management.sh major",
     "publish:all": "sh scripts/version-management.sh publish",
-    "seed:test-plugins": "node seed-test-plugins-simple.js"
+    "seed:test-plugins": "node seed-test-plugins-simple.js",
+    "offline:reset": "bash scripts/offline-dev-reset.sh",
+    "offline:build": "bash scripts/offline-dev-build.sh"
   },
   "devDependencies": {
     "prettier": "^3.3.3",
@@ -23,6 +25,7 @@
   "workspaces": [
     "apps/*",
     "packages/*",
-    "packages/config/*"
+    "packages/config/*",
+    "services/*"
   ]
 }

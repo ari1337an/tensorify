@@ -225,7 +225,9 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
     };
 
     // Get manifest visual config (if available)
-    const manifestVisual = manifest?.manifest?.visual as any;
+    const fc = (manifest?.manifest as any)?.frontendConfigs;
+    const manifestVisual = (fc?.visual ||
+      (manifest?.manifest as any)?.visual) as any;
     const manifestSize = manifestVisual?.size || {};
     const manifestIcons = manifestVisual?.icons || {};
     const manifestLabels = manifestVisual?.labels || {};
@@ -345,22 +347,26 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
       return { inputHandles: [], outputHandles: [] };
     }
 
-    // Ensure unique IDs for handles to prevent React key conflicts
+    // Support contracts shape (frontendConfigs) and legacy
+    const fc = (manifest.manifest as any).frontendConfigs;
+
     const inputHandles: ExtendedInputHandle[] =
-      (manifest.manifest.inputHandles as InputHandle[])?.map(
-        (handle, index) => ({
-          ...handle,
-          uniqueKey: `${handle.id}-${index}-${crypto.randomUUID().slice(0, 8)}`,
-        })
-      ) || [];
+      (
+        (fc?.inputHandles ||
+          (manifest.manifest as any).inputHandles) as InputHandle[]
+      )?.map((handle, index) => ({
+        ...handle,
+        uniqueKey: `${handle.id}-${index}-${crypto.randomUUID().slice(0, 8)}`,
+      })) || [];
 
     const outputHandles: ExtendedOutputHandle[] =
-      (manifest.manifest.outputHandles as OutputHandle[])?.map(
-        (handle, index) => ({
-          ...handle,
-          uniqueKey: `${handle.id}-${index}-${crypto.randomUUID().slice(0, 8)}`,
-        })
-      ) || [];
+      (
+        (fc?.outputHandles ||
+          (manifest.manifest as any).outputHandles) as OutputHandle[]
+      )?.map((handle, index) => ({
+        ...handle,
+        uniqueKey: `${handle.id}-${index}-${crypto.randomUUID().slice(0, 8)}`,
+      })) || [];
 
     return { inputHandles, outputHandles };
   }, [manifest]);
@@ -497,9 +503,10 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
   // Get node type for badge with safe fallback
   const nodeType = useMemo(() => {
     try {
+      const fc = (manifest?.manifest as any)?.frontendConfigs;
       const type =
-        manifest?.manifest?.pluginType ||
-        manifest?.manifest?.nodeType ||
+        (manifest?.manifest as any)?.pluginType ||
+        (fc?.nodeType as any) ||
         manifest?.pluginType ||
         "custom";
       return typeof type === "string" ? type.toLowerCase() : "custom";

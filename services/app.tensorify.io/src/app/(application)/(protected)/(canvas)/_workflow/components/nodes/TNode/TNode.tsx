@@ -245,17 +245,13 @@ export default function TNode({
     );
 
     if (!pluginManifest) {
-      console.warn(`🚨 No plugin manifest found for: ${pluginId}`);
-      console.log(
-        `Available manifests:`,
-        pluginManifests.map((m) => ({ slug: m.slug, id: m.id }))
-      );
-      console.log(`Node data:`, { pluginId: data.pluginId, type, id });
       return defaultValue;
     }
 
-    // Get the visual config from the manifest
-    const manifestVisual = pluginManifest?.manifest?.visual as any;
+    // Get the visual config from the manifest (support contracts frontendConfigs)
+    const fc = (pluginManifest?.manifest as any)?.frontendConfigs;
+    const manifestVisual = (fc?.visual ||
+      (pluginManifest?.manifest as any)?.visual) as any;
 
     let result;
     if (section === "") {

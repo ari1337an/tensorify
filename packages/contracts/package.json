@@ -1,0 +1,47 @@
+{
+  "name": "@tensorify.io/contracts",
+  "version": "0.0.1",
+  "private": false,
+  "description": "Public DTOs, schemas, and normalizers for Tensorify manifests, webhooks, and installed plugins.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "pnpm run clean && pnpm run build"
+  },
+  "dependencies": {
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "@types/node": "^20.10.0",
+    "@repo/eslint-config": "workspace:*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tensorify/backend.tensorify.io.git",
+    "directory": "packages/contracts"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "tensorify",
+    "contracts",
+    "schemas",
+    "zod",
+    "dto"
+  ],
+  "author": "Tensorify.io",
+  "license": "MIT"
+}
+
+

@@ -217,6 +217,7 @@ tensorify publish [options]
 - `--dry-run` - Validate and build without publishing
 - `--skip-build` - Skip build step (use existing dist/)
 - `--force` - Force publish (skip confirmations)
+- `--offline` - Offline development mode (implies `--dev`): save artifacts to local `offline-plugins/` dir and notify backend without S3 upload
 
 **Publishing Process:**
 
@@ -245,9 +246,9 @@ tensorify publish [options]
    - Generates production-ready artifacts
 
 6. **📤 File Upload**
-   - Uploads `bundle.js`, `manifest.json`, `icon.svg`
-   - Uses secure multipart upload
-   - Provides upload progress
+   - Uploads `bundle.js`, `manifest.json`, `icon.svg` (online)
+   - OR saves them to local `offline-plugins/@<username>/<plugin>:<version>/` (offline)
+   - Provides upload/save progress
 
 7. **🔔 Registry Notification**
    - Sends webhook to registry
@@ -274,6 +275,9 @@ tensorify publish --force
 
 # Custom backend/frontend URLs
 tensorify publish --backend https://api.custom.com --frontend https://registry.custom.com
+
+# Offline development (no S3 upload, implies --dev)
+tensorify publish --offline
 ```
 
 ## 🔧 Configuration

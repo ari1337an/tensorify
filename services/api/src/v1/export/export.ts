@@ -7,6 +7,9 @@ import {
 import { z } from "zod";
 import { initServer } from "@ts-rest/express";
 import { generateCode } from "@tensorify.io/transpiler";
+import { PluginEngine, PluginNotFoundError } from "@tensorify.io/plugin-engine";
+import path from "path";
+import fs from "fs";
 
 const s = initServer();
 const c = initContract();
@@ -90,20 +93,36 @@ export const mainFunction = async (
       });
     }
 
-    // Get bucket name from environment
-    const bucketName = process.env.S3_BUCKET_NAME;
-    if (!bucketName) {
-      throw new TsRestResponseError(contract.contract, {
-        status: 400,
-        body: {
-          status: "error",
-          message:
-            "S3_BUCKET_NAME not configured. Set S3_BUCKET_NAME environment variable.",
-        },
-      });
-    }
+    // Helper to resolve offline base dir in development
+    const resolveOfflineDir = (): string | null => {
+      const fromEnv = process.env.OFFLINE_PLUGINS_DIR;
+      if (fromEnv && fs.existsSync(fromEnv)) return fromEnv;
+      if (process.env.NODE_ENV !== "development") return null;
+      let current = path.resolve(__dirname, "../../../../");
+      for (let i = 0; i < 5; i++) {
+        const probe = path.join(current, "offline-plugins");
+        if (fs.existsSync(probe) && fs.statSync(probe).isDirectory()) {
+          return probe;
+        }
+        const parent = path.dirname(current);
+        if (parent === current) break;
+        current = parent;
+      }
+      return null;
+    };
 
-    // Handle S3 configuration from environment variables
+    const offlineDir = resolveOfflineDir();
+
+    // For export, we need the transpiler to use a plugin engine. The generateCode helper
+    // constructs its own engine from s3Config/bucketName. We'll pass S3 config as usual,
+    // but in development we want plugins to resolve from offline first. The plugin engine
+    // used by the transpiler will try S3. To enforce offline-first, we duplicate the
+    // path execution here using a local engine when available and only fall back to S3
+    // if not found. The simplest approach: if offlineDir exists, we mimic S3 by setting
+    // bucketName to offlineDir and using a local engine for execution paths.
+
+    // Compute S3 config (fallback or prod-only)
+    const bucketNameEnv = process.env.S3_BUCKET_NAME;
     const s3Config = {
       region: process.env.S3_REGION || process.env.AWS_REGION || "us-east-1",
       endpoint: process.env.S3_ENDPOINT,
@@ -122,14 +141,36 @@ export const mainFunction = async (
       forcePathStyle: !!process.env.S3_ENDPOINT,
     };
 
-    // Call the transpiler to generate code
-    const result = await generateCode({
-      nodes,
-      edges,
-      s3Config,
-      bucketName,
-      debug: process.env.NODE_ENV === "development",
-    });
+    let result;
+    if (offlineDir && process.env.NODE_ENV === "development") {
+      // Use offline directory for plugin execution via transpiler by pointing bucketName to offlineDir
+      result = await generateCode({
+        nodes,
+        edges,
+        s3Config, // still required, but bucketName is the offlineDir
+        bucketName: offlineDir,
+        debug: true,
+      });
+    } else {
+      // Production or no offline dir: require S3 configuration
+      if (!bucketNameEnv) {
+        throw new TsRestResponseError(contract.contract, {
+          status: 400,
+          body: {
+            status: "error",
+            message:
+              "S3_BUCKET_NAME not configured. Set S3_BUCKET_NAME environment variable.",
+          },
+        });
+      }
+      result = await generateCode({
+        nodes,
+        edges,
+        s3Config,
+        bucketName: bucketNameEnv,
+        debug: process.env.NODE_ENV === "development",
+      });
+    }
 
     // Return the artifacts
     return {
