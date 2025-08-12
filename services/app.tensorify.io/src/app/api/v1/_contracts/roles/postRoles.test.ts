@@ -108,6 +108,63 @@ describe("POST /roles", () => {
     await revokeSession(sessionId);
   });
 
+  it("should return 400 if role name is empty or whitespace", async () => {
+    await flushDatabase(expect);
+    const { jwt, sessionId, orgId } = await setupUserAndOrg(1);
+    const testPermissions = await getTestPermissions();
+
+    const payloads = [
+      { name: "", desc: "valid desc" },
+      { name: "   ", desc: "valid desc" },
+    ];
+
+    for (const p of payloads) {
+      const res = await request(server)
+        .post("/roles")
+        .set("Authorization", `Bearer ${jwt}`)
+        .send({
+          name: p.name,
+          description: p.desc,
+          resourceType: ResourceType.enum.ORGANIZATION,
+          resourceId: orgId,
+          permissions: [
+            { permissionId: testPermissions[0].id, type: "ALLOW" as const },
+          ],
+        });
+
+      expect(res.status).toBe(400);
+    }
+
+    await revokeSession(sessionId);
+  });
+
+  it("should return 400 if description is provided but empty/whitespace", async () => {
+    await flushDatabase(expect);
+    const { jwt, sessionId, orgId } = await setupUserAndOrg(1);
+    const testPermissions = await getTestPermissions();
+
+    const payloads = ["", "   "];
+
+    for (const badDesc of payloads) {
+      const res = await request(server)
+        .post("/roles")
+        .set("Authorization", `Bearer ${jwt}`)
+        .send({
+          name: "Valid Name",
+          description: badDesc,
+          resourceType: ResourceType.enum.ORGANIZATION,
+          resourceId: orgId,
+          permissions: [
+            { permissionId: testPermissions[0].id, type: "ALLOW" as const },
+          ],
+        });
+
+      expect(res.status).toBe(400);
+    }
+
+    await revokeSession(sessionId);
+  });
+
   it("should successfully create a new role with valid data and return 201", async () => {
     await flushDatabase(expect);
     const { jwt, sessionId, orgId } = await setupUserAndOrg(1);

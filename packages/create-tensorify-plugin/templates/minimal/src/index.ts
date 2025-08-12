@@ -12,6 +12,8 @@ import {
   IconType,
   SettingsUIType,
   SettingsDataType,
+  PrevNodeAsInput,
+  NextNodeAsOutput,
 } from "@tensorify.io/sdk";
 
 /**
@@ -62,30 +64,9 @@ export default class MinimalPlugin extends TensorifyPlugin {
       },
 
       // Handle Configuration
-      inputHandles: [
-        {
-          id: "input",
-          position: HandlePosition.LEFT,
-          viewType: HandleViewType.DEFAULT,
-          required: false,
-          label: "Input",
-          edgeType: EdgeType.DEFAULT,
-          dataType: "any",
-          description: "Optional input data",
-        },
-      ],
+      inputHandles: [PrevNodeAsInput],
 
-      outputHandles: [
-        {
-          id: "output",
-          position: HandlePosition.RIGHT,
-          viewType: HandleViewType.DEFAULT,
-          label: "Output",
-          edgeType: EdgeType.DEFAULT,
-          dataType: "any",
-          description: "Processed output",
-        },
-      ],
+      outputHandles: [NextNodeAsOutput],
 
       // Settings Configuration (UI components automatically generated)
       settingsFields: [

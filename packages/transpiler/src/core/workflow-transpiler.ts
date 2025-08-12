@@ -101,14 +101,36 @@ function findAllPaths(nodes: WorkflowNode[], edges: WorkflowEdge[]): Path[] {
     nodes.map((n) => ({ id: n.id, type: n.type, route: n.route }))
   );
 
-  // Build adjacency list
+  // Build adjacency based on required prev/next flow
   const adjacency: Record<string, string[]> = {};
-  edges.forEach((edge) => {
-    if (!adjacency[edge.source]) {
-      adjacency[edge.source] = [];
-    }
-    adjacency[edge.source].push(edge.target);
+  const incomingCount: Record<string, number> = {};
+  nodes.forEach((n) => {
+    adjacency[n.id] = [];
+    incomingCount[n.id] = 0;
   });
+  // Only traverse edges that connect from a node's 'next' to a target's 'prev'
+  edges.forEach((edge) => {
+    const sourceHandle = (edge as any).sourceHandle || null;
+    const targetHandle = (edge as any).targetHandle || null;
+    if (sourceHandle !== "next" || targetHandle !== "prev") {
+      return;
+    }
+    if (!adjacency[edge.source]) adjacency[edge.source] = [];
+    adjacency[edge.source].push(edge.target);
+    incomingCount[edge.target] = (incomingCount[edge.target] || 0) + 1;
+  });
+
+  // If there are no explicitly typed handles, fall back to all edges to avoid empty exports
+  const hasAnyAdjacency = Object.values(adjacency).some(
+    (arr) => arr.length > 0
+  );
+  if (!hasAnyAdjacency) {
+    edges.forEach((edge) => {
+      if (!adjacency[edge.source]) adjacency[edge.source] = [];
+      adjacency[edge.source].push(edge.target);
+      incomingCount[edge.target] = (incomingCount[edge.target] || 0) + 1;
+    });
+  }
 
   console.log("Adjacency list:", adjacency);
 

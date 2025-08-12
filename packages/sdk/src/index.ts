@@ -51,6 +51,9 @@ export {
   NodeVisualConfig,
 } from "./types/visual";
 
+// Convenience handle presets for mandatory flow
+export { PrevNodeAsInput, NextNodeAsOutput } from "./constants/handles";
+
 // Settings field types
 export {
   SettingsUIType,

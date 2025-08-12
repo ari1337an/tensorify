@@ -315,6 +315,8 @@ export abstract class TensorifyPlugin {
   private validateHandles(errors: string[]): void {
     const inputIds = new Set<string>();
     const outputIds = new Set<string>();
+    let hasPrev = false;
+    let hasNext = false;
 
     // Validate input handles
     for (const handle of this.definition.inputHandles) {
@@ -334,6 +336,18 @@ export abstract class TensorifyPlugin {
 
       if (!handle.viewType) {
         errors.push(`Input handle ${handle.id} viewType is required`);
+      }
+
+      if (handle.id === "prev") {
+        hasPrev = true;
+        if (handle.position !== HandlePosition.LEFT) {
+          errors.push("Input handle 'prev' must be on the LEFT side");
+        }
+        // prev is required for flow, but Start nodes may omit. Since SDK doesn't know node type here,
+        // enforce required flag present and true to make UI render a required badge.
+        if (handle.required !== true) {
+          errors.push("Input handle 'prev' must be required: true");
+        }
       }
     }
 
@@ -356,6 +370,21 @@ export abstract class TensorifyPlugin {
       if (!handle.viewType) {
         errors.push(`Output handle ${handle.id} viewType is required`);
       }
+
+      if (handle.id === "next") {
+        hasNext = true;
+        if (handle.position !== HandlePosition.RIGHT) {
+          errors.push("Output handle 'next' must be on the RIGHT side");
+        }
+      }
+    }
+
+    // Enforce presence of prev/next handles
+    if (!hasPrev) {
+      errors.push("Plugin must define an input handle with id 'prev'");
+    }
+    if (!hasNext) {
+      errors.push("Plugin must define an output handle with id 'next'");
     }
   }
 

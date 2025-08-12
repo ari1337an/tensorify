@@ -278,8 +278,25 @@ export const UIManifestSchema = z.object({
     category: NodeTypeEnum,
     nodeType: NodeTypeEnum,
     visual: NodeVisualConfigSchema,
-    inputHandles: z.array(InputHandleSchema),
-    outputHandles: z.array(OutputHandleSchema),
+    inputHandles: z
+      .array(InputHandleSchema)
+      .refine(
+        (arr) =>
+          arr.some(
+            (h) =>
+              h.id === "prev" && h.position === "left" && h.required === true
+          ),
+        {
+          message:
+            "An input handle 'prev' on the LEFT marked required: true is required",
+        }
+      ),
+    outputHandles: z
+      .array(OutputHandleSchema)
+      .refine(
+        (arr) => arr.some((h) => h.id === "next" && h.position === "right"),
+        { message: "An output handle 'next' on the RIGHT is required" }
+      ),
     settingsFields: z.array(SettingsFieldSchema),
     settingsGroups: z.array(SettingsGroupSchema).optional(),
   }),

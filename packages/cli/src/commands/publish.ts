@@ -997,10 +997,46 @@ class PluginPublisher {
     fs.writeFileSync(manifestPath, JSON.stringify(this.manifestJson, null, 2));
     console.log(chalk.green("📄 Generated manifest.json from package.json"));
 
-    // Now validate the plugin structure
-    // TODO: Plugin validation needs to be implemented for CLI
-    // For now, we'll assume the plugin is valid if it builds successfully
-    const validationResult = { isValid: true, errors: [], warnings: [] };
+    // Enforce prev/next handles using manifest + SDK contracts
+    const errors: any[] = [];
+    try {
+      const { normalizeUiManifest } = await import("@tensorify.io/contracts");
+      const uiManifest = normalizeUiManifest({
+        name: this.manifestJson.name,
+        version: this.manifestJson.version,
+        description: this.manifestJson.description,
+        author: this.manifestJson.author,
+        main: this.manifestJson.main,
+        entrypointClassName: this.manifestJson.entrypointClassName,
+        keywords: this.manifestJson.keywords,
+        pluginType: this.manifestJson.pluginType,
+        frontendConfigs: {
+          id: this.manifestJson.name,
+          name: this.manifestJson.name,
+          category: this.manifestJson.pluginType,
+          nodeType: this.manifestJson.pluginType,
+          visual: this.manifestJson.visual,
+          inputHandles: this.manifestJson.inputHandles || [],
+          outputHandles: this.manifestJson.outputHandles || [],
+          settingsFields: this.manifestJson.settingsFields || [],
+          settingsGroups: this.manifestJson.settingsGroups || [],
+        },
+        capabilities: this.manifestJson.capabilities || [],
+        requirements: this.manifestJson.requirements || {},
+      } as any);
+      // Use result to avoid TS unused var
+      if (!uiManifest) throw new Error("Manifest normalization failed");
+    } catch (e: any) {
+      const message =
+        e?.issues?.map((i: any) => i.message).join(", ") || e?.message;
+      errors.push({ type: "schema_error", message });
+    }
+
+    const validationResult = {
+      isValid: errors.length === 0,
+      errors,
+      warnings: [],
+    };
 
     if (!validationResult.isValid) {
       this.displayValidationErrors(validationResult);

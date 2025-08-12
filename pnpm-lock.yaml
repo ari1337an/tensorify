@@ -23,9 +23,12 @@ importers:
       '@clerk/backend':
         specifier: ^0.38.0
         version: 0.38.15(react@19.1.1)
+      '@tensorify.io/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@tensorify.io/sdk':
-        specifier: 0.0.25
-        version: 0.0.25
+        specifier: 0.0.28
+        version: 0.0.28
       axios:
         specifier: ^1.10.0
         version: 1.11.0
@@ -4148,8 +4151,8 @@ packages:
     resolution: {integrity: sha512-ldZXEhOBb8Is7xLs01fR3YEc3DERiz5silj8tnGkFZytt1abEvl/GhUmCE0PMLaMPTa3Jk4HbKmRlHmu+gCftg==}
     engines: {node: '>=12'}
 
-  '@tensorify.io/sdk@0.0.25':
-    resolution: {integrity: sha512-3vVCJKWlSmahBhOT2IcUGRYhCp9Hlb2Vkk0YQda6JUBgUazx0ilGAPjm1Da0U9v7PUmDZZAOQVWEShpmhXx0oQ==}
+  '@tensorify.io/sdk@0.0.28':
+    resolution: {integrity: sha512-1p0oDeogtULnvDUEFYAfQryCCjQWks3O3aG8yGyVYsukKYczzEBsHrvLl1vkfrseUlPjSlv6oQILJb4SvqPP7w==}
     engines: {node: '>=16.0.0'}
 
   '@testing-library/dom@10.4.1':
@@ -13795,7 +13798,7 @@ snapshots:
 
   '@tanstack/table-core@8.21.3': {}
 
-  '@tensorify.io/sdk@0.0.25': {}
+  '@tensorify.io/sdk@0.0.28': {}
 
   '@testing-library/dom@10.4.1':
     dependencies:

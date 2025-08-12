@@ -20,9 +20,24 @@ import {
 import useStore from "@/app/_store/store";
 
 // --- Zod Schemas ---
+// Allow optional description, but if user types only whitespace, treat as undefined
 const roleFormSchema = CreateRoleRequest.omit({
   resourceId: true,
   resourceType: true,
+}).extend({
+  description: z.preprocess(
+    (val) =>
+      typeof val === "string"
+        ? val.trim() === ""
+          ? undefined
+          : val.trim()
+        : val,
+    z
+      .string()
+      .min(1, "Description is required")
+      .max(100, "Description must be less than 100 characters")
+      .optional()
+  ),
 });
 export type RoleFormValues = z.infer<typeof roleFormSchema>;
 export type RoleType = z.infer<typeof Role>;

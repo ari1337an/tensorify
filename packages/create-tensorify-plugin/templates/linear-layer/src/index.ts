@@ -12,6 +12,8 @@ import {
   IconType,
   SettingsUIType,
   SettingsDataType,
+  PrevNodeAsInput,
+  NextNodeAsOutput,
 } from "@tensorify.io/sdk";
 
 /**
@@ -62,30 +64,9 @@ export default class LinearLayerPlugin extends TensorifyPlugin {
       },
 
       // Handle Configuration
-      inputHandles: [
-        {
-          id: "input",
-          position: HandlePosition.LEFT,
-          viewType: HandleViewType.DEFAULT,
-          required: true,
-          label: "Input",
-          edgeType: EdgeType.DEFAULT,
-          dataType: "any",
-          description: "Input tensor",
-        },
-      ],
+      inputHandles: [PrevNodeAsInput],
 
-      outputHandles: [
-        {
-          id: "output",
-          position: HandlePosition.RIGHT,
-          viewType: HandleViewType.DEFAULT,
-          label: "Output",
-          edgeType: EdgeType.DEFAULT,
-          dataType: "any",
-          description: "Output tensor",
-        },
-      ],
+      outputHandles: [NextNodeAsOutput],
 
       // Settings Configuration (UI components automatically generated)
       settingsFields: [
