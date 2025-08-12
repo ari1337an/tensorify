@@ -266,6 +266,12 @@ export async function putWorkflowPluginManifest(args: Parameters<typeof client.p
 }
 
 
+export async function resetWorkflowPluginManifest(args: Parameters<typeof client.resetWorkflowPluginManifest.contract>[0]): Promise<ReturnType<typeof client.resetWorkflowPluginManifest.contract>> {
+  const dynamicClient = await getClientWithBaseUrl();
+  return await dynamicClient.resetWorkflowPluginManifest.contract(args);
+}
+
+
 export async function uploadPortrait(args: Parameters<typeof client.uploadPortrait.contract>[0]): Promise<ReturnType<typeof client.uploadPortrait.contract>> {
   const dynamicClient = await getClientWithBaseUrl();
   return await dynamicClient.uploadPortrait.contract(args);

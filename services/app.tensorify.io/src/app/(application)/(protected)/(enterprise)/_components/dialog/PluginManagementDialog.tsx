@@ -389,6 +389,38 @@ export function PluginManagementDialog({
                             <Button
                               variant="ghost"
                               size="sm"
+                              className="text-blue-500 hover:text-blue-600 mr-1"
+                              title="Reset Manifest"
+                              onClick={async () => {
+                                try {
+                                  if (!currentWorkflow?.id) return;
+                                  const res = await fetch(
+                                    `/api/v1/workflow/${currentWorkflow.id}/plugin/${plugin.id}/reset-manifest`,
+                                    { method: "POST" }
+                                  );
+                                  if (!res.ok) {
+                                    const txt = await res.text();
+                                    console.error(
+                                      "Reset manifest failed:",
+                                      txt
+                                    );
+                                  } else {
+                                    toast.success(
+                                      "Manifest reset successfully"
+                                    );
+                                    await fetchInstalledPlugins();
+                                  }
+                                } catch (e) {
+                                  console.error(e);
+                                  toast.error("Failed to reset manifest");
+                                }
+                              }}
+                            >
+                              Reset
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               className="text-red-400 hover:text-red-500"
                               title="Uninstall Plugin"
                               onClick={() =>

@@ -173,7 +173,10 @@ export default function TNode({
 
     // Update the plugin manifest's visual configuration
     const currentManifest = (pluginManifest.manifest as any) || {};
-    const currentVisual = currentManifest.visual || {};
+    const frontendConfigs = currentManifest.frontendConfigs || {};
+    const currentVisual = (frontendConfigs.visual ||
+      currentManifest.visual ||
+      {}) as Record<string, any>;
 
     let updatedVisual: any;
     if (section === "") {
@@ -196,6 +199,11 @@ export default function TNode({
     // Update the plugin manifest in the app store
     const updatedManifest = {
       ...currentManifest,
+      frontendConfigs: {
+        ...frontendConfigs,
+        visual: updatedVisual,
+      },
+      // keep top-level visual in sync for backward compatibility
       visual: updatedVisual,
     };
 
