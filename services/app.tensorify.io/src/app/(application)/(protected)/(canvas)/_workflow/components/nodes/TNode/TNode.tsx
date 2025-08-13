@@ -289,14 +289,14 @@ export default function TNode({
     }
   }, [isEditingLabel]);
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleSettingsDoubleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log("🔥 TNode handleClick fired!", { id, selected, type });
-    if (isOpen) {
-      setIsOpen(false);
-    } else {
-      setIsOpen(true);
-    }
+    console.log("🔥 TNode handleSettingsDoubleClick fired!", {
+      id,
+      selected,
+      type,
+    });
+    setIsOpen(true);
   };
 
   const handleNestedClick = () => {
@@ -337,7 +337,7 @@ export default function TNode({
               {children}
             </div>
           ) : (
-            <div ref={nodeRef} onClick={handleClick}>
+            <div ref={nodeRef} onDoubleClick={handleSettingsDoubleClick}>
               {children}
             </div>
           )
@@ -411,20 +411,20 @@ export default function TNode({
             </DialogHeader>
 
             <Tabs
-              defaultValue="info"
+              defaultValue="settings"
               className="flex flex-col flex-1 overflow-hidden"
             >
               <TabsList className="grid w-full grid-cols-3 mb-6">
-                <TabsTrigger value="info" className="flex items-center gap-2">
-                  <InfoIcon className="h-4 w-4" />
-                  Info
-                </TabsTrigger>
                 <TabsTrigger
                   value="settings"
                   className="flex items-center gap-2"
                 >
                   <SettingsIcon className="h-4 w-4" />
                   Settings
+                </TabsTrigger>
+                <TabsTrigger value="info" className="flex items-center gap-2">
+                  <InfoIcon className="h-4 w-4" />
+                  Info
                 </TabsTrigger>
                 <TabsTrigger value="scope" className="flex items-center gap-2">
                   <TypeIcon className="h-4 w-4" />
