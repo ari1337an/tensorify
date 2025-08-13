@@ -4,6 +4,14 @@ import React from "react";
 import { type NodeProps } from "@xyflow/react";
 import { Play } from "lucide-react";
 import TNode from "./TNode/TNode";
+import { AlertCircle } from "lucide-react";
+import { useUIEngine } from "@workflow/engine";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/app/_components/ui/tooltip";
 import CustomHandle from "./handles/CustomHandle";
 import { type WorkflowNode } from "../../store/workflowStore";
 import {
@@ -15,11 +23,13 @@ import {
 
 export default function StartNode(props: NodeProps<WorkflowNode>) {
   const { selected, id } = props;
+  const engine = useUIEngine();
+  const needsNext = engine.nodes[id]?.missingNext || false;
 
   // Define the output handle for the start node
   const outputHandle: OutputHandle = {
-    id: "start-output",
-    label: "Connect me",
+    id: "next",
+    label: "Next",
     position: HandlePosition.RIGHT,
     viewType: HandleViewType.VERTICAL_BOX,
     edgeType: EdgeType.DEFAULT,
@@ -38,6 +48,26 @@ export default function StartNode(props: NodeProps<WorkflowNode>) {
           ${selected ? "shadow-lg shadow-primary/20" : ""}
         `}
       >
+        {needsNext && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className="absolute -top-2 -right-2 z-10 bg-destructive text-destructive-foreground rounded-full p-1 shadow-md"
+                  aria-label="Node connection issue"
+                >
+                  <AlertCircle className="w-4 h-4" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="left" align="center" className="max-w-xs">
+                <div className="text-xs space-y-1">
+                  <p className="font-medium">Missing "next" connection</p>
+                  <p>Connect an outgoing edge from the "next" handle.</p>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
         <div className="flex flex-col items-center justify-center p-4 space-y-2">
           <div
             className={`

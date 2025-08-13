@@ -13,6 +13,14 @@ import {
   type InputHandle,
   type OutputHandle,
 } from "@packages/sdk/src/types/visual";
+import { useUIEngine } from "@workflow/engine";
+import { AlertCircle } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/app/_components/ui/tooltip";
 
 // Extended handle types with unique keys for React rendering
 type ExtendedInputHandle = InputHandle & { uniqueKey: string };
@@ -177,6 +185,7 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const pluginManifests = useAppStore((state) => state.pluginManifests);
   const { isConnectionValid, validateNodeInputs } = useHandleValidation();
+  const engine = useUIEngine();
 
   // Find the manifest for this plugin node with error handling
   const manifest = useMemo(() => {
@@ -519,6 +528,13 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
     NODE_TYPE_COLORS[nodeType as keyof typeof NODE_TYPE_COLORS] ||
     NODE_TYPE_COLORS.custom;
 
+  // UIEngine-driven validation state for prev/next
+  const invalidPrevNext = useMemo(() => {
+    const state = engine?.nodes[id];
+    if (!state) return { missingPrev: false, missingNext: false };
+    return { missingPrev: state.missingPrev, missingNext: state.missingNext };
+  }, [engine, id]);
+
   // Theme-aware text styling
   const getTextClasses = useMemo(() => {
     const isDarkTheme = visualProps.theme === "dark";
@@ -650,13 +666,68 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
               : visualProps.containerType === "left-round"
                 ? undefined // Let CSS classes handle left-round styling
                 : `${visualProps.borderRadius}px`,
-          borderColor: selected
-            ? "var(--primary)"
-            : visualProps.borderColor || "var(--border)",
+          borderColor:
+            invalidPrevNext.missingPrev || invalidPrevNext.missingNext
+              ? "var(--destructive)"
+              : selected
+                ? "var(--primary)"
+                : visualProps.borderColor || "var(--border)",
           backgroundColor: getBackgroundColor,
           padding: `${visualProps.outerPadding}px`,
         }}
       >
+        {(invalidPrevNext.missingPrev || invalidPrevNext.missingNext) && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="absolute -top-2 -right-2 z-10 bg-destructive text-destructive-foreground rounded-full p-1 shadow-md cursor-help"
+                  title={
+                    invalidPrevNext.missingPrev && invalidPrevNext.missingNext
+                      ? "Connect prev and next"
+                      : invalidPrevNext.missingPrev
+                        ? "Connect prev"
+                        : "Connect next"
+                  }
+                  aria-label="Node connection issue"
+                >
+                  <AlertCircle className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="left" align="center" className="max-w-xs">
+                <div className="text-xs space-y-1">
+                  {invalidPrevNext.missingPrev &&
+                    invalidPrevNext.missingNext && (
+                      <>
+                        <p className="font-medium">Missing connections</p>
+                        <ul className="list-disc pl-4">
+                          <li>Connect an incoming edge to the "prev" handle</li>
+                          <li>
+                            Connect an outgoing edge from the "next" handle
+                          </li>
+                        </ul>
+                      </>
+                    )}
+                  {invalidPrevNext.missingPrev &&
+                    !invalidPrevNext.missingNext && (
+                      <>
+                        <p className="font-medium">Missing "prev" connection</p>
+                        <p>Connect an incoming edge to the "prev" handle.</p>
+                      </>
+                    )}
+                  {!invalidPrevNext.missingPrev &&
+                    invalidPrevNext.missingNext && (
+                      <>
+                        <p className="font-medium">Missing "next" connection</p>
+                        <p>Connect an outgoing edge from the "next" handle.</p>
+                      </>
+                    )}
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
         {/* Input Handles */}
         {inputHandles.map((handle, index) => (
           <CustomHandle

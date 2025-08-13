@@ -6,6 +6,14 @@ import { Square } from "lucide-react";
 import TNode from "./TNode/TNode";
 import CustomHandle from "./handles/CustomHandle";
 import { type WorkflowNode } from "../../store/workflowStore";
+import { AlertCircle } from "lucide-react";
+import { useUIEngine } from "@workflow/engine";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/app/_components/ui/tooltip";
 import {
   HandleViewType,
   HandlePosition,
@@ -15,11 +23,13 @@ import {
 
 export default function EndNode(props: NodeProps<WorkflowNode>) {
   const { selected, id } = props;
+  const engine = useUIEngine();
+  const needsPrev = engine.nodes[id]?.missingPrev || false;
 
   // Define the input handle for the end node
   const inputHandle: InputHandle = {
-    id: "end-input",
-    label: "Final Input",
+    id: "prev",
+    label: "Prev",
     position: HandlePosition.LEFT,
     viewType: HandleViewType.VERTICAL_BOX,
     edgeType: EdgeType.DEFAULT,
@@ -39,6 +49,26 @@ export default function EndNode(props: NodeProps<WorkflowNode>) {
           ${selected ? "shadow-lg shadow-destructive/20" : ""}
         `}
       >
+        {needsPrev && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className="absolute -top-2 -right-2 z-10 bg-destructive text-destructive-foreground rounded-full p-1 shadow-md"
+                  aria-label="Node connection issue"
+                >
+                  <AlertCircle className="w-4 h-4" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="left" align="center" className="max-w-xs">
+                <div className="text-xs space-y-1">
+                  <p className="font-medium">Missing "prev" connection</p>
+                  <p>Connect an incoming edge to the "prev" handle.</p>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
         <div className="flex flex-col items-center justify-center p-4 space-y-2">
           <div
             className={`

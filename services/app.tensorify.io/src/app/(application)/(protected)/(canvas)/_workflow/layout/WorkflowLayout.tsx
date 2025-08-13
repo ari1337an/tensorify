@@ -25,6 +25,13 @@ import NodeSearch from "@workflow/components/NodeSearch";
 import DevTools from "@workflow/components/DevTools";
 import ValidationAlert from "@workflow/components/ValidationAlert";
 import { useWorkflowPersistence } from "@workflow/hooks/useWorkflowPersistence";
+import { UIEngineProvider, useUIEngine, getEdgeStyle } from "@workflow/engine";
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/app/_components/ui/tooltip";
 import { useNodeValidation } from "@workflow/hooks/useNodeValidation";
 
 // Store and Context
@@ -83,6 +90,7 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
   const pluginManifests = useAppStore((state) => state.pluginManifests);
 
   const { screenToFlowPosition } = useReactFlow();
+  const engine = useUIEngine();
   const {
     draggedNodeType,
     draggedVersion,
@@ -138,7 +146,7 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
     return createNodeTypeMap();
   }, [pluginManifests]);
 
-  // Default edge options
+  // Default edge options (base); actual color may be overridden by UIEngine
   const defaultEdgeOptions = useMemo(
     () => ({
       type: "smoothstep",
@@ -272,7 +280,16 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
           nodesFocusable={true}
           edgesFocusable={true}
           nodes={nodes}
-          edges={edges}
+          edges={edges.map((e) => {
+            const override = engine ? getEdgeStyle(e.id, engine) : undefined;
+            return override
+              ? {
+                  ...e,
+                  style: { ...(e.style || {}), ...override },
+                  data: { ...(e.data || {}), __uiIssue: true },
+                }
+              : e;
+          })}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
@@ -355,7 +372,9 @@ export function WorkflowLayout({ workflow }: { workflow: Workflow }) {
   return (
     <ReactFlowProvider>
       <DragDropProvider>
-        <WorkflowCanvas workflow={workflow} />
+        <UIEngineProvider>
+          <WorkflowCanvas workflow={workflow} />
+        </UIEngineProvider>
       </DragDropProvider>
     </ReactFlowProvider>
   );
