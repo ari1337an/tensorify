@@ -42,11 +42,11 @@ export default function EndNode(props: NodeProps<WorkflowNode>) {
       <div
         className={`
           relative group
-          bg-destructive rounded-r-full rounded-l-lg shadow-sm
-          ring-5 ring-destructive
+          bg-accent rounded-r-full rounded-l-lg shadow-sm
+          ring-5 ring-primary
           min-w-[160px] min-h-[100px]
           transition-all duration-200
-          ${selected ? "shadow-lg shadow-destructive/20" : ""}
+          ${selected ? "shadow-lg shadow-primary/20" : ""}
         `}
       >
         {needsPrev && (
@@ -75,8 +75,8 @@ export default function EndNode(props: NodeProps<WorkflowNode>) {
               p-2 rounded-md transition-colors duration-200
               ${
                 selected
-                  ? "bg-destructive-foreground/20 text-destructive-foreground"
-                  : "bg-destructive-foreground/10 text-destructive-foreground group-hover:bg-destructive-foreground/20"
+                  ? "bg-accent-foreground/20 text-accent-foreground"
+                  : "bg-accent-foreground/10 text-accent-foreground group-hover:bg-accent-foreground/20"
               }
             `}
           >
@@ -84,10 +84,8 @@ export default function EndNode(props: NodeProps<WorkflowNode>) {
           </div>
 
           <div className="text-center w-full">
-            <p className="text-sm font-medium text-destructive-foreground">
-              End
-            </p>
-            <p className="text-xs text-destructive-foreground/70">Exit Point</p>
+            <p className="text-sm font-medium text-accent-foreground">End</p>
+            <p className="text-xs text-accent-foreground/70">Exit Point</p>
           </div>
         </div>
 

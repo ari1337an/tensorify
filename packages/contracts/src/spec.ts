@@ -266,7 +266,7 @@ export const UIManifestSchema = z.object({
   entrypointClassName: z.string(),
   keywords: z.array(z.string()).default([]),
   repository: z.object({ type: z.string(), url: z.string().url() }).optional(),
-  pluginType: NodeTypeEnum.optional(),
+  pluginType: NodeTypeEnum, // required
   tensorify: z
     .object({ pluginType: z.string().optional() })
     .partial()
@@ -368,9 +368,15 @@ export function normalizeUiManifest(manifest: unknown): UIManifest {
   if (m.frontendConfigs?.nodeType && !m.frontendConfigs?.category) {
     m.frontendConfigs.category = m.frontendConfigs.nodeType;
   }
-  if (!m.pluginType && m.tensorify?.pluginType) {
-    m.pluginType = coerceLegacyPluginType(m.tensorify.pluginType);
-  }
+  // Resolve pluginType precedence:
+  // 1) package.json tensorify-settings.pluginType if provided via caller as m.tensorifySettings?.pluginType
+  // 2) legacy m.tensorify.pluginType
+  // 3) existing m.pluginType
+  const fromTensorifySettings = coerceLegacyPluginType(
+    m.tensorifySettings?.pluginType
+  );
+  const fromLegacyTensorify = coerceLegacyPluginType(m.tensorify?.pluginType);
+  m.pluginType = fromTensorifySettings || fromLegacyTensorify || m.pluginType;
   return UIManifestSchema.parse(m);
 }
 

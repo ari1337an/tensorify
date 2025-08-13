@@ -811,19 +811,25 @@ class PluginPublisher {
 
     // Extract plugin type from multiple sources
     const tensorifyConfig: any = packageJson["tensorify"] || {};
-    const pluginType =
+    const pluginTypeRaw =
       dynamicConfig.nodeType ||
-      tensorifyConfig.pluginType ||
       tensorifySettings.pluginType ||
-      NodeType.CUSTOM;
+      tensorifyConfig.pluginType;
+
+    if (!pluginTypeRaw) {
+      throw new Error(
+        "Missing pluginType. Please set 'tensorify-settings.pluginType' in package.json (or return nodeType via getDefinition)."
+      );
+    }
+
+    // Normalize to contracts expected format (lowercase with underscores)
+    const pluginType = pluginTypeRaw.toString().toLowerCase();
 
     // Validate that the plugin type is a valid NodeType
     const validNodeTypes = Object.values(NodeType);
     if (!validNodeTypes.includes(pluginType as NodeType)) {
-      console.warn(
-        chalk.yellow(
-          `⚠️  Invalid plugin type "${pluginType}". Using "${NodeType.CUSTOM}" as default.`
-        )
+      throw new Error(
+        `Invalid pluginType "${pluginType}". Expected one of: ${validNodeTypes.join(", ")}`
       );
     }
 
@@ -880,9 +886,7 @@ class PluginPublisher {
       main: packageJson.main || "dist/index.js",
       entrypointClassName: entrypointClassName,
       keywords: packageJson.keywords || [],
-      pluginType: validNodeTypes.includes(pluginType as NodeType)
-        ? pluginType
-        : NodeType.CUSTOM,
+      pluginType: pluginType as NodeType,
       tensorify: tensorifyConfig.pluginType
         ? { pluginType: tensorifyConfig.pluginType }
         : undefined,
@@ -1853,9 +1857,13 @@ class PluginPublisher {
             sdkVersion: this.sdkVersion, // Pass sdkVersion
             tags: this.keywords.join(","), // Pass keywords as comma-separated string
             readme: this.readme,
-            pluginType:
-              this.manifestJson.tensorify.pluginType.toLowerCase() ||
-              NodeType.CUSTOM, // Pass plugin type
+            pluginType: (
+              this.packageJson["tensorify-settings"]?.pluginType ||
+              this.manifestJson.pluginType ||
+              NodeType.CUSTOM
+            )
+              .toString()
+              .toLowerCase(),
           },
         },
         {

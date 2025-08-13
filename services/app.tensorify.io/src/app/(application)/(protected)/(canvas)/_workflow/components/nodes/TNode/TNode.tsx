@@ -1,8 +1,9 @@
 import { type NodeProps } from "@xyflow/react";
 import { ReactNode, useRef, useState, useEffect, useCallback } from "react";
 import React from "react";
-import { Sheet, SheetContent } from "@/app/_components/ui/sheet";
 import {
+  Dialog,
+  DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
@@ -370,22 +371,15 @@ export default function TNode({
         </div>
       </div>
 
-      <Sheet
+      <Dialog
         open={isOpen}
         onOpenChange={(open) => {
-          console.log("🔥 Sheet onOpenChange:", { open, isOpen, nodeId: id });
-          if (!open && nodeRef.current?.contains(document.activeElement)) {
-            return; // Don't close if the node itself has focus
-          }
-          setIsOpen(open); // Update the state to match the sheet's desired state
+          console.log("🔥 Dialog onOpenChange:", { open, isOpen, nodeId: id });
+          setIsOpen(open);
         }}
       >
-        <SheetContent
-          side="right"
-          className="w-full sm:max-w-md border-l border-border/50 backdrop-blur-xl p-4"
-          showOverlay={false}
-        >
-          <div className="flex flex-col h-full">
+        <DialogContent className="sm:max-w-6xl w-[92vw] p-6 gap-0 overflow-hidden">
+          <div className="flex flex-col h-[80vh]">
             <DialogHeader className="space-y-3 pb-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-primary/10 rounded-lg">
@@ -1084,8 +1078,8 @@ export default function TNode({
               </TabsContent>
             </Tabs>
           </div>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

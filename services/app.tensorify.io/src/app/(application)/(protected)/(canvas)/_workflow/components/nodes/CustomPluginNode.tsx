@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { type NodeProps } from "@xyflow/react";
 import * as LucideIcons from "lucide-react";
 import TNode from "./TNode/TNode";
@@ -178,10 +178,7 @@ function getIconComponent(
 
 export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
   const { data, selected, id } = props;
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingLabel, setEditingLabel] = useState(data.label || "Plugin Node");
   const [hasError, setHasError] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const pluginManifests = useAppStore((state) => state.pluginManifests);
   const { isConnectionValid, validateNodeInputs } = useHandleValidation();
@@ -465,34 +462,7 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
     return label;
   }, [visualProps.dynamicLabelTemplate, visualProps.title, data, id]);
 
-  useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [isEditing]);
-
-  const handleLabelDoubleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsEditing(true);
-    setEditingLabel(visualProps.title);
-  };
-
-  const handleLabelSave = () => {
-    const newLabel = editingLabel.trim() || visualProps.title;
-    updateNodeData(id, { label: newLabel });
-    setIsEditing(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleLabelSave();
-    } else if (e.key === "Escape") {
-      setIsEditing(false);
-      setEditingLabel(visualProps.title);
-    }
-  };
+  // Inline label editing is disabled; use the Info tab to edit the label
 
   // Get the appropriate styling based on container type
   const containerStyle =
@@ -791,45 +761,31 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
           {/* Label */}
           {visualProps.showLabels && (
             <div className="text-center w-full">
-              {isEditing ? (
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={editingLabel}
-                  onChange={(e) => setEditingLabel(e.target.value)}
-                  onBlur={handleLabelSave}
-                  onKeyDown={handleKeyDown}
-                  className={`text-sm font-medium ${getTextClasses.primary} bg-transparent border-none outline-none text-center w-full px-1 py-0.5 rounded border-b-2 border-primary focus:border-primary`}
-                  maxLength={50}
-                />
-              ) : (
-                <div className="text-center">
-                  {/* Main Title */}
+              <div className="text-center">
+                {/* Main Title (non-editable – edit in Info tab) */}
+                <p
+                  className={`text-sm font-medium ${getTextClasses.primary} ${getTextClasses.primaryHover} transition-colors text-center`}
+                  title={`${visualProps.title}`}
+                  style={{
+                    maxWidth: `${visualProps.width - 40}px`,
+                    margin: "0 auto",
+                  }}
+                >
+                  {visualProps.title}
+                </p>
+                {/* Dynamic Label below main title */}
+                {processedDynamicLabel && (
                   <p
-                    className={`text-sm font-medium ${getTextClasses.primary} cursor-pointer ${getTextClasses.primaryHover} transition-colors text-center`}
-                    onDoubleClick={handleLabelDoubleClick}
-                    title={`${visualProps.title} - Double-click to edit`}
+                    className={`text-xs ${getTextClasses.secondary} mt-1 font-mono text-center`}
                     style={{
                       maxWidth: `${visualProps.width - 40}px`,
                       margin: "0 auto",
                     }}
                   >
-                    {visualProps.title}
+                    {processedDynamicLabel}
                   </p>
-                  {/* Dynamic Label below main title */}
-                  {processedDynamicLabel && (
-                    <p
-                      className={`text-xs ${getTextClasses.secondary} mt-1 font-mono text-center`}
-                      style={{
-                        maxWidth: `${visualProps.width - 40}px`,
-                        margin: "0 auto",
-                      }}
-                    >
-                      {processedDynamicLabel}
-                    </p>
-                  )}
-                </div>
-              )}
+                )}
+              </div>
               {visualProps.titleDescription && (
                 <p
                   className={`text-xs ${getTextClasses.secondary} mt-1 text-center`}
