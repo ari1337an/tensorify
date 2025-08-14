@@ -17,6 +17,42 @@ import { SettingsField, SettingsGroup } from "./settings";
 // PLUGIN DEFINITION
 // ========================================
 
+// ========================================
+// EMITS / IMPORTS TYPES
+// ========================================
+
+/**
+ * Config for variables/imports a plugin intends to emit into generated code
+ */
+export interface EmittedVariableConfig {
+  /** The variable name to emit in generated code */
+  value: string;
+  /**
+   * Settings toggle key that controls whether this variable is emitted.
+   * May be provided as a plain key (e.g. "variable1Switch") or a dotted path
+   * such as "settingsFields.variable1Switch"; the last segment is used.
+   */
+  switchKey: string;
+  /** Whether the variable is enabled by default */
+  isOnByDefault?: boolean;
+}
+
+export interface ImportConfig {
+  /** Module path to import */
+  path: string;
+  /** Specific items to import via `from x import a, b` (optional) */
+  items?: string[];
+  /** Alias for module/items, e.g. `import numpy as np` */
+  alias?: string;
+  /** Aliases per imported item for `from` style imports */
+  as?: Record<string, string>;
+}
+
+export interface EmitsConfig {
+  variables?: EmittedVariableConfig[];
+  imports?: ImportConfig[];
+}
+
 /**
  * Complete plugin definition interface
  * This is what developers use to define their plugins
@@ -55,6 +91,15 @@ export interface IPluginDefinition {
   capabilities: PluginCapability[];
   /** Plugin requirements */
   requirements: PluginRequirements;
+
+  /**
+   * What this plugin intends to emit into generated code.
+   * SDK enforcement: if a variable is declared here, a corresponding
+   * boolean toggle SettingsField with the derived key MUST exist,
+   * be of type TOGGLE, dataType BOOLEAN, required: true, and its
+   * defaultValue should match `isOnByDefault`.
+   */
+  emits?: EmitsConfig;
 
   // Optional Metadata
   /** Plugin author information */
@@ -157,6 +202,12 @@ export interface FrontendPluginManifest {
   capabilities: PluginCapability[];
   /** Plugin requirements */
   requirements: PluginRequirements;
+
+  /** Variables/imports this plugin may emit in generated code */
+  emits?: {
+    variables: EmittedVariableConfig[];
+    imports: ImportConfig[];
+  };
 
   // Generation Metadata
   /** SDK version used to generate this manifest */

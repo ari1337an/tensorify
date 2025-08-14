@@ -427,6 +427,59 @@ export abstract class TensorifyPlugin {
         }
       }
     }
+
+    // Enforce emits.variables switch constraints if emits is provided
+    if (
+      this.definition.emits &&
+      Array.isArray(this.definition.emits.variables)
+    ) {
+      const byKey: Record<string, SettingsField> = {};
+      for (const f of this.definition.settingsFields) {
+        byKey[f.key] = f;
+      }
+      for (const variable of this.definition.emits.variables) {
+        if (!variable || !variable.switchKey) continue;
+        const rawKey = variable.switchKey.includes(".")
+          ? variable.switchKey.split(".").pop()!
+          : variable.switchKey;
+        const toggleField = byKey[rawKey];
+        if (!toggleField) {
+          errors.push(
+            `Emitted variable '${variable.value}' requires a boolean toggle settings field '${rawKey}' (from switchKey '${variable.switchKey}')`
+          );
+          continue;
+        }
+        // Must be toggle boolean and required
+        if (toggleField.type !== SettingsUIType.TOGGLE) {
+          errors.push(
+            `Settings field '${rawKey}' must be of UI type TOGGLE because it controls emitted variable '${variable.value}'`
+          );
+        }
+        if (toggleField.dataType !== SettingsDataType.BOOLEAN) {
+          errors.push(
+            `Settings field '${rawKey}' must have dataType BOOLEAN because it controls emitted variable '${variable.value}'`
+          );
+        }
+        if (toggleField.required !== true) {
+          errors.push(
+            `Settings field '${rawKey}' must be required: true because it controls emitted variable '${variable.value}'`
+          );
+        }
+        // Default matches isOnByDefault when provided
+        if (
+          typeof variable.isOnByDefault === "boolean" &&
+          toggleField.defaultValue !== variable.isOnByDefault
+        ) {
+          errors.push(
+            `Settings field '${rawKey}'.defaultValue (${String(
+              toggleField.defaultValue
+            )}) must match isOnByDefault (${String(
+              variable.isOnByDefault
+            )}) for emitted variable '${variable.value}'`
+          );
+        }
+      }
+    }
   }
 
   /**
@@ -640,6 +693,12 @@ export abstract class TensorifyPlugin {
       // Plugin Metadata
       capabilities: this.definition.capabilities,
       requirements: this.definition.requirements,
+
+      // Emits (variables/imports) are included in manifest; ensure arrays exist
+      emits: {
+        variables: this.definition.emits?.variables || [],
+        imports: this.definition.emits?.imports || [],
+      },
 
       // Generation Metadata
       sdkVersion: TensorifyPlugin.SDK_VERSION,

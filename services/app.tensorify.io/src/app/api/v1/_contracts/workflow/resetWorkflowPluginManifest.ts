@@ -1,5 +1,6 @@
 import {
   initContract,
+  ServerInferRequest,
   ServerInferResponses,
   TsRestResponseError,
 } from "@ts-rest/core";
@@ -23,6 +24,7 @@ export const contract = c.router(
         workflowId: UUID,
         pluginId: UUID,
       }),
+      body: z.object({}),
       responses: {
         200: Message,
         400: ErrorResponse,
@@ -43,6 +45,7 @@ export const contract = c.router(
   { strictStatusCodes: true }
 );
 
+type ContractRequest = ServerInferRequest<typeof contract.contract>;
 type ContractResponse = ServerInferResponses<typeof contract.contract>;
 
 export const action = {
@@ -51,7 +54,10 @@ export const action = {
     Record<string, never>
   >({
     middleware: [secureByAuthentication],
-    handler: async ({ params }, { request }): Promise<ContractResponse> => {
+    handler: async (
+      { params }: ContractRequest,
+      { request }
+    ): Promise<ContractResponse> => {
       try {
         const userId = request.decodedJwt?.id;
         if (!userId) {

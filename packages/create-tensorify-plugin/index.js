@@ -60,6 +60,11 @@ const TEMPLATES = {
     description: "A Tensorify plugin",
     displayName: "Minimal - A basic Tensorify plugin",
   },
+  sequence: {
+    name: "Sequence",
+    description: "A Tensorify Sequence (container) plugin",
+    displayName: "Sequence - A Tensorify Sequence plugin",
+  },
 };
 
 // NodeType options from SDK

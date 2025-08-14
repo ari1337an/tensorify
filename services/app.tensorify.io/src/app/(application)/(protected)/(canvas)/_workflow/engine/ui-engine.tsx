@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
 import useWorkflowStore from "@workflow/store/workflowStore";
+import useAppStore from "@/app/_store/store";
 
 type EdgeValidationState = {
   id: string;
@@ -23,9 +24,14 @@ type NodeValidationState = {
 type UIEngineState = {
   edges: Record<string, EdgeValidationState>;
   nodes: Record<string, NodeValidationState>;
+  availableVariablesByNodeId: Record<string, string[]>;
 };
 
-const UIEngineContext = createContext<UIEngineState>({ edges: {}, nodes: {} });
+const UIEngineContext = createContext<UIEngineState>({
+  edges: {},
+  nodes: {},
+  availableVariablesByNodeId: {},
+});
 
 const selector = (state: ReturnType<typeof useWorkflowStore.getState>) => ({
   nodes: state.nodes,
@@ -34,6 +40,7 @@ const selector = (state: ReturnType<typeof useWorkflowStore.getState>) => ({
 
 export function UIEngineProvider({ children }: { children: React.ReactNode }) {
   const { nodes, edges } = useWorkflowStore(useShallow(selector));
+  const pluginManifests = useAppStore((state) => state.pluginManifests);
 
   const state = useMemo<UIEngineState>(() => {
     // Build quick lookup maps for node handles
@@ -167,8 +174,93 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
       };
     });
 
-    return { nodes: nodesState, edges: edgesState };
-  }, [nodes, edges]);
+    // Compute available variables per node based on manifests and toggles
+    const manifestByKey = new Map<string, any>();
+    for (const pm of pluginManifests) {
+      const slug = (pm as any)?.slug || (pm as any)?.id;
+      if (slug) manifestByKey.set(slug, (pm as any)?.manifest);
+    }
+
+    // Helper to resolve manifest for a workflow node
+    function resolveManifestForNode(nodeId: string): any | null {
+      const node = nodes.find((n) => n.id === nodeId);
+      if (!node) return null;
+      const pluginId = (node.data as any)?.pluginId || node.type || nodeId;
+      const primary = manifestByKey.get(pluginId);
+      const secondary = node.type ? manifestByKey.get(node.type) : undefined;
+      return primary || secondary || null;
+    }
+
+    // Build typed adjacency following next->prev
+    const parentsByNode = new Map<string, string[]>();
+    nodes.forEach((n) => parentsByNode.set(n.id, []));
+    rfEdges.forEach((e) => {
+      const sh = (e.sourceHandle ?? "").toString();
+      const th = (e.targetHandle ?? "").toString();
+      if (NEXT_ALIASES.has(sh) && PREV_ALIASES.has(th)) {
+        if (!parentsByNode.has(e.target)) parentsByNode.set(e.target, []);
+        parentsByNode.get(e.target)!.push(e.source);
+      }
+    });
+
+    // Local variables per node (based on manifest.emits.variables and toggle in node settings)
+    const localVarsByNode = new Map<string, string[]>();
+    nodes.forEach((n) => {
+      const mf = resolveManifestForNode(n.id);
+      const variables = ((mf as any)?.emits?.variables || []) as Array<{
+        value: string;
+        switchKey?: string;
+        isOnByDefault?: boolean;
+      }>;
+      const settings = ((n.data as any)?.pluginSettings || {}) as Record<
+        string,
+        any
+      >;
+      const vars: string[] = [];
+      for (const v of variables) {
+        const rawKey = (v.switchKey || "").split(".").pop() || "";
+        const isOn =
+          rawKey && settings.hasOwnProperty(rawKey)
+            ? Boolean(settings[rawKey])
+            : Boolean(v.isOnByDefault);
+        if (isOn && v.value) vars.push(v.value);
+      }
+      localVarsByNode.set(n.id, vars);
+    });
+
+    // Fixed-point iteration to compute upstream union variables
+    const availableByNode: Record<string, string[]> = {};
+    nodes.forEach((n) => (availableByNode[n.id] = []));
+
+    const maxIterations = Math.max(1, nodes.length);
+    for (let iter = 0; iter < maxIterations; iter++) {
+      let changed = false;
+      for (const n of nodes) {
+        const parents = parentsByNode.get(n.id) || [];
+        const parentUnion = new Set<string>();
+        for (const p of parents) {
+          for (const v of availableByNode[p] || []) parentUnion.add(v);
+        }
+        for (const v of localVarsByNode.get(n.id) || []) parentUnion.add(v);
+        const nextArr = Array.from(parentUnion);
+        const prevArr = availableByNode[n.id] || [];
+        if (
+          nextArr.length !== prevArr.length ||
+          nextArr.some((v, i) => v !== prevArr[i])
+        ) {
+          availableByNode[n.id] = nextArr;
+          changed = true;
+        }
+      }
+      if (!changed) break;
+    }
+
+    return {
+      nodes: nodesState,
+      edges: edgesState,
+      availableVariablesByNodeId: availableByNode,
+    };
+  }, [nodes, edges, pluginManifests]);
 
   return (
     <UIEngineContext.Provider value={state}>

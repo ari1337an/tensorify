@@ -63,6 +63,7 @@ interface ManifestJson {
   settingsGroups?: any[]; // Settings groups from plugin
   capabilities?: any[]; // Plugin capabilities
   requirements?: any; // Plugin requirements
+  emits?: { variables: any[]; imports: any[] };
   [key: string]: any;
 }
 
@@ -723,6 +724,7 @@ class PluginPublisher {
       capabilities?: any[];
       requirements?: any;
       nodeType?: any;
+      emits?: { variables?: any[]; imports?: any[] };
     } = {};
 
     if (pluginInstance) {
@@ -778,6 +780,7 @@ class PluginPublisher {
           capabilities: pluginDefinition.capabilities,
           requirements: pluginDefinition.requirements,
           nodeType: pluginDefinition.nodeType,
+          emits: pluginDefinition.emits || { variables: [], imports: [] },
         };
 
         console.log(
@@ -932,6 +935,10 @@ class PluginPublisher {
       requirements: dynamicConfig.requirements || {
         minSdkVersion: "1.0.0",
         dependencies: [],
+      },
+      emits: {
+        variables: (dynamicConfig.emits?.variables as any[]) || [],
+        imports: (dynamicConfig.emits?.imports as any[]) || [],
       },
     };
   }

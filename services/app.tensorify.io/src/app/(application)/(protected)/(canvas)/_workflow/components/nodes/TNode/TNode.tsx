@@ -44,6 +44,7 @@ import useWorkflowStore, {
 } from "../../../store/workflowStore";
 import { PluginSettingsSection } from "./PluginSettingsSection";
 import useAppStore from "@/app/_store/store";
+import { useUIEngine } from "../../../engine/ui-engine";
 
 type TNodeProps = NodeProps<WorkflowNode> & {
   children: ReactNode;
@@ -85,6 +86,7 @@ export default function TNode({
   const unregisterRenderedNode = useWorkflowStore(
     (state) => state.unregisterRenderedNode
   );
+  const engine = useUIEngine();
 
   // Force re-render when plugin manifests change (for reactive form fields)
   const [, forceUpdate] = useState({});
@@ -1095,17 +1097,32 @@ export default function TNode({
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex items-center justify-center h-32 text-center">
-                      <div className="space-y-2">
-                        <TypeIcon className="h-8 w-8 text-muted-foreground mx-auto" />
-                        <p className="text-sm text-muted-foreground">
-                          No variables available in current scope
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Variables will appear here during execution
-                        </p>
+                    {engine?.availableVariablesByNodeId?.[id]?.length ? (
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {engine.availableVariablesByNodeId[id].map((v) => (
+                          <Badge
+                            key={v}
+                            variant="secondary"
+                            className="justify-start"
+                          >
+                            {v}
+                          </Badge>
+                        ))}
                       </div>
-                    </div>
+                    ) : (
+                      <div className="flex items-center justify-center h-32 text-center">
+                        <div className="space-y-2">
+                          <TypeIcon className="h-8 w-8 text-muted-foreground mx-auto" />
+                          <p className="text-sm text-muted-foreground">
+                            No variables available in current scope
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Variables appear when a node or its upstream emits
+                            them
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>

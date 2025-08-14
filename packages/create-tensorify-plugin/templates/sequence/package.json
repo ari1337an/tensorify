@@ -1,0 +1,42 @@
+{
+  "name": "{{packageName}}",
+  "version": "1.0.0",
+  "description": "{{description}}",
+  "main": "src/index.ts",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npx tsc",
+    "dev": "npx tsc --watch",
+    "test": "node test.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "tensorify",
+    "plugin",
+    "ml",
+    "machine-learning",
+    "neural-network"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@tensorify.io/sdk": "{{sdkVersion}}"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^18.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tensorify/{{projectName}}"
+  },
+  "tensorify-settings": {
+    "sdk-version": "{{sdkVersion}}",
+    "entrypointClassName": "{{classicProjectName}}Plugin",
+    "pluginType": "{{pluginType}}"
+  }
+}
+

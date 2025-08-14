@@ -318,6 +318,31 @@ export const UIManifestSchema = z.object({
       environmentVariables: z.array(z.string()).optional(),
     })
     .default({ dependencies: [] }),
+
+  // Enforce emits presence and shape
+  emits: z
+    .object({
+      variables: z
+        .array(
+          z.object({
+            value: z.string().min(1),
+            switchKey: z.string().min(1),
+            isOnByDefault: z.boolean().optional(),
+          })
+        )
+        .default([]),
+      imports: z
+        .array(
+          z.object({
+            path: z.string().min(1),
+            items: z.array(z.string()).optional(),
+            alias: z.string().optional(),
+            as: z.record(z.string(), z.string()).optional(),
+          })
+        )
+        .default([]),
+    })
+    .default({ variables: [], imports: [] }),
 });
 export type UIManifest = z.infer<typeof UIManifestSchema>;
 
@@ -384,7 +409,48 @@ export function normalizeUiManifest(manifest: unknown): UIManifest {
   );
   const fromLegacyTensorify = coerceLegacyPluginType(m.tensorify?.pluginType);
   m.pluginType = fromTensorifySettings || fromLegacyTensorify || m.pluginType;
-  return UIManifestSchema.parse(m);
+  const parsed = UIManifestSchema.parse(m);
+
+  // Validate that for each emitted variable switchKey, a corresponding settings field exists
+  const settingsFields = parsed.frontendConfigs.settingsFields || [];
+  const settingsMap = new Map<string, any>();
+  for (const f of settingsFields) settingsMap.set((f as any).key, f);
+  for (const v of parsed.emits.variables) {
+    const rawKey = v.switchKey.includes(".")
+      ? v.switchKey.split(".").pop()!
+      : v.switchKey;
+    const field = settingsMap.get(rawKey);
+    if (!field) {
+      throw new Error(
+        `Emitted variable '${v.value}' requires a settings toggle '${rawKey}' as referenced by switchKey '${v.switchKey}'`
+      );
+    }
+    if (
+      (field as any).type !== "toggle" ||
+      (field as any).dataType !== "boolean"
+    ) {
+      throw new Error(
+        `Settings field '${rawKey}' must be TOGGLE/BOOLEAN because it controls emitted variable '${v.value}'`
+      );
+    }
+    if ((field as any).required !== true) {
+      throw new Error(
+        `Settings field '${rawKey}' must be required: true because it controls emitted variable '${v.value}'`
+      );
+    }
+    if (typeof v.isOnByDefault === "boolean") {
+      const defVal = (field as any).defaultValue;
+      if (defVal !== v.isOnByDefault) {
+        throw new Error(
+          `Settings field '${rawKey}'.defaultValue must match isOnByDefault (${String(
+            v.isOnByDefault
+          )}) for emitted variable '${v.value}'`
+        );
+      }
+    }
+  }
+
+  return parsed;
 }
 
 export function toPluginPublishedWebhook(
