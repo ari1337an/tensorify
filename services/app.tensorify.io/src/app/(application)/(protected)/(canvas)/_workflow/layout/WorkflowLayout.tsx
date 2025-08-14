@@ -52,6 +52,7 @@ import BranchNode from "@workflow/components/nodes/BranchNode";
 import MultiplexerNode from "@workflow/components/nodes/MultiplexerNode";
 import DemultiplexerNode from "@workflow/components/nodes/DemultiplexerNode";
 import CustomPluginNode from "@workflow/components/nodes/CustomPluginNode";
+import GlobalNodeSettingsDialog from "@workflow/components/GlobalNodeSettingsDialog";
 
 // ID generator for nodes using crypto.randomUUID for better uniqueness
 const getId = () => crypto.randomUUID();
@@ -356,6 +357,8 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
           </div>
         </ReactFlow>
       </div>
+      {/* Global dialog to open settings for nodes not currently rendered/visible */}
+      <GlobalNodeSettingsDialog />
     </div>
   );
 }

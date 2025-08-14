@@ -263,11 +263,75 @@ async function getPluginResults(
 
       console.log({ baseSettings });
 
-      // Include the label in the plugin settings
-      const payload = {
+      // Include the label in the plugin settings and pass children code if defined (for sequence-like plugins)
+      const payload: any = {
         ...baseSettings,
         labelName: (node.data as any)?.label, // Some plugins might expect labelName
       };
+
+      // If node carries sequence items in data.sequenceItems, execute them first and pass their code + settings
+      if (Array.isArray((node.data as any)?.sequenceItems)) {
+        const sequenceItems: any[] = (node.data as any).sequenceItems;
+        const childrenResults: {
+          slug: string;
+          code: string;
+          settings?: any;
+          nodeId?: string;
+          labelName?: string;
+        }[] = [];
+        for (const child of sequenceItems) {
+          try {
+            // Prefer the actual canvas node for settings (referenced by nodeId)
+            const childNodeId: string | undefined = child.nodeId;
+            const childNode = childNodeId ? nodeMap[childNodeId] : undefined;
+            const childSlug =
+              (childNode?.data as any)?.pluginId ||
+              childNode?.type ||
+              child.slug ||
+              child.pluginId ||
+              child.type;
+            const childSettings =
+              (childNode?.data as any)?.pluginSettings ||
+              child.pluginSettings ||
+              child.settings ||
+              {};
+
+            const childPayload = {
+              ...childSettings,
+              labelName:
+                (childNode?.data as any)?.label || child.name || undefined,
+            };
+
+            const childResult = await engine.getExecutionResult(
+              childSlug,
+              childPayload,
+              "TensorifyPlugin"
+            );
+            childrenResults.push({
+              slug: childSlug,
+              code: childResult.code || "",
+              settings: childSettings,
+              nodeId: childNodeId,
+              labelName:
+                (childNode?.data as any)?.label || child.name || undefined,
+            });
+          } catch (childError) {
+            console.error("Failed to execute sequence child:", childError);
+            childrenResults.push({
+              slug: String(child.slug || child.pluginId || "unknown"),
+              code: `# Error executing child ${child.slug || child.pluginId}: ${childError}`,
+              nodeId: child.nodeId,
+            });
+          }
+        }
+        payload.children = childrenResults;
+        // Keep itemsCount accurate for sequence plugins
+        if ((node.data as any)?.pluginSettings?.itemsCount !== undefined) {
+          payload.itemsCount = (node.data as any).pluginSettings.itemsCount;
+        } else {
+          payload.itemsCount = childrenResults.length;
+        }
+      }
 
       console.log(`Executing plugin for node ${nodeId}:`, { slug, payload });
 

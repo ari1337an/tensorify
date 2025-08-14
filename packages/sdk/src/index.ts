@@ -124,6 +124,7 @@ export const PLUGIN_CATEGORIES = [
   "evaluator",
   "model",
   "model_layer",
+  "sequence",
   "dataloader",
   "preprocessor",
   "postprocessor",

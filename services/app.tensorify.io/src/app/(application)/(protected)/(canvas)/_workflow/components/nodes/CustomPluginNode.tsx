@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useCallback } from "react";
 import { type NodeProps } from "@xyflow/react";
 import * as LucideIcons from "lucide-react";
 import TNode from "./TNode/TNode";
 import { type WorkflowNode } from "../../store/workflowStore";
-import useWorkflowStore from "../../store/workflowStore";
+import useWorkflowStore, { addRouteLevel } from "../../store/workflowStore";
 import useAppStore from "@/app/_store/store";
 import CustomHandle from "./handles/CustomHandle";
 import { useHandleValidation } from "./handles/useHandleValidation";
@@ -14,13 +14,22 @@ import {
   type OutputHandle,
 } from "@packages/sdk/src/types/visual";
 import { useUIEngine } from "@workflow/engine";
-import { AlertCircle } from "lucide-react";
+import {
+  AlertCircle,
+  Plus,
+  X,
+  Settings as SettingsIcon,
+  Grip,
+} from "lucide-react";
+import { useDragDrop } from "../../context/DragDropContext";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/app/_components/ui/tooltip";
+import { Button } from "@/app/_components/ui/button";
+import { Input } from "@/app/_components/ui/input";
 
 // Extended handle types with unique keys for React rendering
 type ExtendedInputHandle = InputHandle & { uniqueKey: string };
@@ -180,9 +189,16 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
   const { data, selected, id } = props;
   const [hasError, setHasError] = useState(false);
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
+  const addNode = useWorkflowStore((state) => state.addNode);
+  const nodesInStore = useWorkflowStore((state) => state.nodes);
+  const setRoute = useWorkflowStore((state) => state.setRoute);
+  const openNodeSettingsDialog = useWorkflowStore(
+    (state) => state.openNodeSettingsDialog
+  );
   const pluginManifests = useAppStore((state) => state.pluginManifests);
   const { isConnectionValid, validateNodeInputs } = useHandleValidation();
   const engine = useUIEngine();
+  const { draggedNodeType, onDropSuccess } = useDragDrop();
 
   // Find the manifest for this plugin node with error handling
   const manifest = useMemo(() => {
@@ -498,6 +514,198 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
     NODE_TYPE_COLORS[nodeType as keyof typeof NODE_TYPE_COLORS] ||
     NODE_TYPE_COLORS.custom;
 
+  // Sequence-specific helpers
+  const isSequence = nodeType === "sequence";
+  const fcSeq = useMemo(() => {
+    try {
+      return (manifest?.manifest as any)?.frontendConfigs?.sequence || null;
+    } catch {
+      return null;
+    }
+  }, [manifest]);
+  const allowedItemType: string | null = fcSeq?.allowedItemType || null;
+  const sequenceItems: any[] = (data as any)?.sequenceItems || [];
+  const sequenceConfig: any = (data as any)?.sequenceConfig || {};
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const droppedInContainerRef = useRef(false);
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+
+  const addSequenceItem = (slug: string) => {
+    if (!slug) return;
+    // Optional: enforce allowed item type using loaded manifests if available
+    try {
+      if (allowedItemType) {
+        const store = useAppStore.getState();
+        const pm = store.pluginManifests?.find(
+          (p: any) => p.slug === slug || p.id === slug
+        );
+        const pt =
+          (pm?.manifest as any)?.pluginType ||
+          (pm?.manifest as any)?.frontendConfigs?.nodeType;
+        if (pt && String(pt).toLowerCase() !== String(allowedItemType)) {
+          return; // reject silently for now
+        }
+      }
+    } catch {}
+    const next = [...sequenceItems, { slug }];
+    updateNodeData(id, {
+      sequenceItems: next,
+      pluginSettings: {
+        ...(data as any)?.pluginSettings,
+        itemsCount: next.length,
+      },
+    });
+    onDropSuccess();
+  };
+
+  const handleDropIntoSequence = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    droppedInContainerRef.current = true;
+    const draggedRow = e.dataTransfer.getData("application/sequence-index");
+    if (draggedRow !== "") {
+      // Move dragged row to end
+      const from = parseInt(draggedRow, 10);
+      if (!isNaN(from) && from >= 0 && from < sequenceItems.length) {
+        const to = sequenceItems.length - 1;
+        const next = moveItem(sequenceItems, from, to);
+        updateNodeData(id, { sequenceItems: next });
+      }
+      setDraggingIndex(null);
+      setOverIndex(null);
+      return;
+    }
+    // Otherwise treat as external plugin slug drop
+    const dt = e.dataTransfer.getData("application/reactflow");
+    const slug = draggedNodeType || dt;
+    if (!slug) return;
+    // Create a real canvas node for this slug
+    try {
+      const parentNode = nodesInStore.find((n) => n.id === id);
+      const parentRoute = parentNode?.route || "/";
+      const childRoute = addRouteLevel(parentRoute, `sequence-${id}`);
+      const childId = crypto.randomUUID();
+      // Resolve label from manifest
+      const manifest = pluginManifests.find((m) => m.slug === slug);
+      let childLabel = slug.split("/").pop() || "item";
+      const fc = (manifest?.manifest as any)?.frontendConfigs;
+      const visual = (fc?.visual || (manifest?.manifest as any)?.visual) as any;
+      childLabel =
+        visual?.labels?.title ||
+        (manifest?.manifest as any)?.name ||
+        childLabel;
+
+      addNode({
+        id: childId,
+        type: slug,
+        position: {
+          x: (parentNode?.position?.x || 0) + 40,
+          y: (parentNode?.position?.y || 0) + 80 * (sequenceItems.length + 1),
+        },
+        route: childRoute,
+        version: "1.0.0",
+        data: { label: childLabel, pluginId: slug },
+        selected: false,
+        dragging: false,
+      } as any);
+
+      // Add to sequence items with reference & name
+      const next = [
+        ...sequenceItems,
+        { slug, nodeId: childId, name: childLabel },
+      ];
+      updateNodeData(id, {
+        sequenceItems: next,
+        pluginSettings: {
+          ...(data as any)?.pluginSettings,
+          itemsCount: next.length,
+        },
+      });
+    } finally {
+      onDropSuccess();
+    }
+  };
+
+  const removeSequenceItem = (index: number) => {
+    const next = sequenceItems.filter((_, i) => i !== index);
+    updateNodeData(id, {
+      sequenceItems: next,
+      pluginSettings: {
+        ...(data as any)?.pluginSettings,
+        itemsCount: next.length,
+      },
+    });
+  };
+
+  const moveItem = (arr: any[], from: number, to: number) => {
+    const copy = arr.slice();
+    const [item] = copy.splice(from, 1);
+    copy.splice(to, 0, item);
+    return copy;
+  };
+
+  const onRowDragStart = (
+    e: React.DragEvent<HTMLDivElement>,
+    index: number
+  ) => {
+    e.stopPropagation();
+    setDraggingIndex(index);
+    droppedInContainerRef.current = false;
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("application/sequence-index", String(index));
+    // add a plain text as well for compatibility
+    e.dataTransfer.setData("text/plain", String(index));
+  };
+
+  const onRowDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (draggingIndex !== null && index !== overIndex) {
+      setOverIndex(index);
+    }
+  };
+
+  const onRowDrop = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    droppedInContainerRef.current = true;
+    const fromStr = e.dataTransfer.getData("application/sequence-index");
+    const from = parseInt(fromStr, 10);
+    if (!isNaN(from) && from >= 0 && from < sequenceItems.length) {
+      const next = moveItem(sequenceItems, from, index);
+      updateNodeData(id, { sequenceItems: next });
+    }
+    setDraggingIndex(null);
+    setOverIndex(null);
+  };
+
+  const onRowDragEnd = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    e.stopPropagation();
+    // If not dropped inside the container, treat as removal
+    if (!droppedInContainerRef.current && draggingIndex !== null) {
+      removeSequenceItem(draggingIndex);
+    }
+    setDraggingIndex(null);
+    setOverIndex(null);
+    droppedInContainerRef.current = false;
+  };
+
+  const clearSequenceItems = () => {
+    updateNodeData(id, {
+      sequenceItems: [],
+      pluginSettings: {
+        ...(data as any)?.pluginSettings,
+        itemsCount: 0,
+      },
+    });
+  };
+
+  const updateSequenceConfig = (key: string, value: any) => {
+    const next = { ...(sequenceConfig || {}), [key]: value };
+    updateNodeData(id, { sequenceConfig: next });
+  };
+
   // UIEngine-driven validation state for prev/next
   const invalidPrevNext = useMemo(() => {
     const state = engine?.nodes[id];
@@ -616,19 +824,23 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
         `}
         style={{
           width: `${visualProps.width}px`,
-          height: `${visualProps.height}px`,
+          height: isSequence ? undefined : `${visualProps.height}px`,
           minWidth: visualProps.minWidth
             ? `${visualProps.minWidth}px`
             : undefined,
-          minHeight: visualProps.minHeight
-            ? `${visualProps.minHeight}px`
-            : undefined,
+          minHeight: isSequence
+            ? undefined
+            : visualProps.minHeight
+              ? `${visualProps.minHeight}px`
+              : undefined,
           maxWidth: visualProps.maxWidth
             ? `${visualProps.maxWidth}px`
             : undefined,
-          maxHeight: visualProps.maxHeight
-            ? `${visualProps.maxHeight}px`
-            : undefined,
+          maxHeight: isSequence
+            ? undefined
+            : visualProps.maxHeight
+              ? `${visualProps.maxHeight}px`
+              : undefined,
           borderWidth: `${visualProps.borderWidth}px`,
           borderRadius:
             visualProps.containerType === "circle"
@@ -715,9 +927,17 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
         <div
           className="flex flex-col items-center justify-center h-full space-y-2"
           style={{ padding: `${visualProps.innerPadding}px` }}
+          onDragOver={(e) => {
+            if (isSequence) {
+              e.preventDefault();
+            }
+          }}
+          onDrop={(e) => {
+            if (isSequence) handleDropIntoSequence(e);
+          }}
         >
-          {/* Primary Icon */}
-          {visualProps.primaryIcon && (
+          {/* Primary Icon (hide for sequence to declutter) */}
+          {!isSequence && visualProps.primaryIcon && (
             <div
               className={`
                 rounded-md transition-colors duration-200
@@ -758,8 +978,97 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
               </div>
             ))}
 
-          {/* Label */}
-          {visualProps.showLabels && (
+          {/* Sequence container UI (minimal: title → rows → drag target) */}
+          {isSequence && (
+            <div className="w-full flex flex-col gap-2">
+              <p className="text-sm font-medium text-center">
+                {visualProps.title}
+              </p>
+              <div
+                className="w-full min-h-[64px] rounded-lg border border-dashed border-border/70 bg-background/60 backdrop-blur-sm p-2 flex flex-col gap-2 overflow-y-auto relative nodrag nowheel"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handleDropIntoSequence}
+                onMouseDown={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                onDoubleClick={(e) => e.stopPropagation()}
+              >
+                {sequenceItems.length === 0 ? (
+                  <div className="text-xs text-muted-foreground italic">
+                    Empty
+                  </div>
+                ) : (
+                  sequenceItems.map((it, idx) => (
+                    <div
+                      key={`seq-${idx}`}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-md bg-muted/70 text-xs border border-border/50 transition-colors ${overIndex === idx ? "border-primary/50" : "hover:border-primary/40"}`}
+                      draggable
+                      onDragStart={(e) => onRowDragStart(e, idx)}
+                      onDragOver={(e) => onRowDragOver(e, idx)}
+                      onDrop={(e) => onRowDrop(e, idx)}
+                      onDragEnd={(e) => onRowDragEnd(e, idx)}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onDoubleClick={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        className="bg-transparent outline-none border-none text-foreground truncate nodrag nowheel"
+                        style={{ maxWidth: "80%" }}
+                        value={String(it.name || "item")}
+                        onChange={(e) => {
+                          const next = sequenceItems.slice();
+                          next[idx] = { ...next[idx], name: e.target.value };
+                          updateNodeData(id, { sequenceItems: next });
+                        }}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onDoubleClick={(e) => e.stopPropagation()}
+                      />
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          className="p-1 rounded border text-muted-foreground hover:bg-muted"
+                          title="Settings"
+                          aria-label="Settings"
+                          onClick={() => {
+                            const row = sequenceItems[idx];
+                            if (row?.nodeId) {
+                              openNodeSettingsDialog(row.nodeId);
+                            }
+                          }}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onPointerDown={(e) => e.stopPropagation()}
+                        >
+                          <SettingsIcon className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          className="p-1 rounded border text-muted-foreground hover:text-destructive hover:bg-muted"
+                          title="Remove"
+                          aria-label="Remove"
+                          onClick={() => removeSequenceItem(idx)}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onPointerDown={(e) => e.stopPropagation()}
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+                <div
+                  className="w-full h-9 rounded-md border border-dashed border-border/70 flex items-center justify-center text-[11px] text-muted-foreground/90 mt-1 select-none nodrag nowheel"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onDoubleClick={(e) => e.stopPropagation()}
+                >
+                  <Grip className="w-3 h-3 mr-1" /> Drag Here
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Label (hide for sequence – title already shown above) */}
+          {!isSequence && visualProps.showLabels && (
             <div className="text-center w-full">
               <div className="text-center">
                 {/* Main Title (non-editable – edit in Info tab) */}

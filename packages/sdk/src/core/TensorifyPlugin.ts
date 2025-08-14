@@ -560,6 +560,7 @@ export abstract class TensorifyPlugin {
       evaluator: NodeType.EVALUATOR,
       model: NodeType.MODEL,
       model_layer: NodeType.MODEL_LAYER,
+      sequence: NodeType.SEQUENCE,
       dataloader: NodeType.DATALOADER,
       preprocessor: NodeType.PREPROCESSOR,
       postprocessor: NodeType.POSTPROCESSOR,

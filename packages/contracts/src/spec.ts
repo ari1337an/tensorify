@@ -10,6 +10,7 @@ export const NodeTypeEnum = z.enum([
   "evaluator",
   "model",
   "model_layer",
+  "sequence",
   "dataloader",
   "preprocessor",
   "postprocessor",
@@ -167,6 +168,12 @@ export const NodeVisualConfigSchema = z.object({
     iconSize: "medium",
   }),
   labels: NodeLabelsSchema.default({ showLabels: true, labelPosition: "top" }),
+  sequence: z
+    .object({
+      allowedItemType: z.string().optional(),
+      showItems: z.boolean().default(true).optional(),
+    })
+    .optional(),
 });
 
 // Settings

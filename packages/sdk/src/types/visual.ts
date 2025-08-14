@@ -227,4 +227,11 @@ export interface NodeVisualConfig {
   styling: NodeStyling;
   icons: NodeIcons;
   labels: NodeLabels;
+  /** Optional sequence-specific UI config (for NodeType.SEQUENCE) */
+  sequence?: {
+    /** Restrict sequence items to this pluginType (lowercase snake_case) */
+    allowedItemType?: string;
+    /** Whether to show inline items UI */
+    showItems?: boolean;
+  };
 }

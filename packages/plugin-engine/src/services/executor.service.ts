@@ -319,7 +319,7 @@ export class IsolatedVMExecutorService implements IExecutorService {
       
       (function() {
         try {
-          var payload = JSON.parse('${payloadJson.replace(/'/g, "\\'")}');
+          var payload = JSON.parse('${payloadJson.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}');
           var className = '${className}';
           
           // The IIFE bundle creates a global PluginBundle variable
@@ -361,7 +361,8 @@ export class IsolatedVMExecutorService implements IExecutorService {
             return 'Error: getTranslationCode method not found on ' + className + '. Available methods: ' + Object.getOwnPropertyNames(pluginInstance).filter(p => typeof pluginInstance[p] === 'function').join(', ');
           }
           
-          var result = pluginInstance.getTranslationCode(payload);
+          var childrenArg = (payload && payload.children) ? payload.children : undefined;
+          var result = pluginInstance.getTranslationCode(payload, childrenArg);
           return String(result);
           
         } catch (error) {

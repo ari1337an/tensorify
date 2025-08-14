@@ -37,7 +37,8 @@ import {
   X,
   TestTube2,
   Copy,
-  CheckCircle,
+    CheckCircle,
+    Trash2,
 } from "lucide-react";
 import useWorkflowStore from "../store/workflowStore";
 import { type WorkflowNode } from "../store/workflowStore";
@@ -671,6 +672,25 @@ export default function DevTools() {
     useWorkflowStore.getState().setEdges([...currentEdges, simpleEdge]);
   };
 
+  // Danger zone: delete all nodes and edges in the current workspace
+  const deleteAllNodes = () => {
+    const ok = window.confirm(
+      "Delete all nodes and edges in this workspace? This cannot be undone."
+    );
+    if (!ok) return;
+    const store = useWorkflowStore.getState();
+    try {
+      store.setEdges([]);
+      store.setNodes([]);
+      if ((store as any).closeGlobalNodeSettingsDialog) {
+        (store as any).closeGlobalNodeSettingsDialog();
+      }
+      console.log("🧹 Cleared all nodes and edges in workspace");
+    } catch (err) {
+      console.error("Failed to clear workspace:", err);
+    }
+  };
+
   // Function to create a test node with visual configuration using real plugin
   const createVisualConfigTestNode = () => {
     // Get the first available plugin manifest from the store
@@ -842,6 +862,21 @@ export default function DevTools() {
                         setRouteInspectorActive(!routeInspectorActive)
                       }
                     />
+                  </div>
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm text-destructive">Danger Zone</h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={deleteAllNodes}
+                      className="gap-1.5 text-xs h-7 px-2"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      Delete All Nodes
+                    </Button>
                   </div>
                 </div>
 

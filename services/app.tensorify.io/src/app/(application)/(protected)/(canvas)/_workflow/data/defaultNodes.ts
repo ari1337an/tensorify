@@ -116,6 +116,16 @@ const defaultNodes: NodeItem[] = [
       },
     ],
   },
+  // SEQUENCE category
+  {
+    id: "sequence",
+    draggable: false,
+    Icon: Workflow,
+    title: "Sequences",
+    description:
+      "Compose ordered chains of items (e.g., model layers or transforms).",
+    children: [],
+  },
   // MODEL_LAYER category
   {
     id: "model_layer",

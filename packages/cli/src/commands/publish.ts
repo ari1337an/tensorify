@@ -38,6 +38,7 @@ interface PackageJson {
   };
   "tensorify-settings": {
     "sdk-version": string;
+    pluginType?: string;
   };
   scripts: {
     build: string;
@@ -823,14 +824,32 @@ class PluginPublisher {
     }
 
     // Normalize to contracts expected format (lowercase with underscores)
-    const pluginType = pluginTypeRaw.toString().toLowerCase();
+    // Support common aliases by converting camelCase to snake_case and lowercasing
+    const lower = pluginTypeRaw.toString().trim();
+    const snake = lower
+      // insert underscore between lowercase-to-uppercase boundaries
+      .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+      .replace(/\s+/g, "_")
+      .toLowerCase();
+    const pluginType = snake as string;
 
-    // Validate that the plugin type is a valid NodeType
-    const validNodeTypes = Object.values(NodeType);
-    if (!validNodeTypes.includes(pluginType as NodeType)) {
-      throw new Error(
-        `Invalid pluginType "${pluginType}". Expected one of: ${validNodeTypes.join(", ")}`
-      );
+    // Validate that the plugin type is a valid NodeType (use contracts source of truth)
+    try {
+      const { NodeTypeEnum } = await import("@tensorify.io/contracts");
+      const validNodeTypes = (NodeTypeEnum as any).options as string[];
+      if (!validNodeTypes.includes(pluginType)) {
+        throw new Error(
+          `Invalid pluginType "${pluginType}". Expected one of: ${validNodeTypes.join(", ")}`
+        );
+      }
+    } catch (e) {
+      // Fallback to SDK enum if contracts import fails
+      const validNodeTypes = Object.values(NodeType);
+      if (!(validNodeTypes as any).includes(pluginType as any)) {
+        throw new Error(
+          `Invalid pluginType "${pluginType}". Expected one of: ${validNodeTypes.join(", ")}`
+        );
+      }
     }
 
     // Create fallback configurations if dynamic loading failed

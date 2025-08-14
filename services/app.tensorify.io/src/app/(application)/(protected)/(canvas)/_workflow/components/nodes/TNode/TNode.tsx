@@ -66,12 +66,25 @@ export default function TNode({
   const setRoute = useWorkflowStore((state) => state.setRoute);
   const currentRoute = useWorkflowStore((state) => state.currentRoute);
   const nodes = useWorkflowStore((state) => state.nodes);
+  const nodeSettingsOpenById = useWorkflowStore(
+    (state) => state.nodeSettingsOpenById
+  );
+  const openDialog = useWorkflowStore((state) => state.openNodeSettingsDialog);
+  const closeDialog = useWorkflowStore(
+    (state) => state.closeNodeSettingsDialog
+  );
   const updatePluginManifest = useAppStore(
     (state) => state.updatePluginManifest
   );
   const savePluginManifest = useAppStore((state) => state.savePluginManifest);
   const pluginManifests = useAppStore((state) => state.pluginManifests);
   const currentWorkflow = useAppStore((state) => state.currentWorkflow);
+  const registerRenderedNode = useWorkflowStore(
+    (state) => state.registerRenderedNode
+  );
+  const unregisterRenderedNode = useWorkflowStore(
+    (state) => state.unregisterRenderedNode
+  );
 
   // Force re-render when plugin manifests change (for reactive form fields)
   const [, forceUpdate] = useState({});
@@ -123,6 +136,14 @@ export default function TNode({
       }
     };
   }, []);
+
+  // Register this node as rendered so global dialog logic can detect visibility
+  useEffect(() => {
+    registerRenderedNode(id);
+    return () => {
+      unregisterRenderedNode(id);
+    };
+  }, [id, registerRenderedNode, unregisterRenderedNode]);
 
   // Handle plugin settings change
   const handlePluginSettingsChange = (key: string, value: any) => {
@@ -297,7 +318,7 @@ export default function TNode({
       selected,
       type,
     });
-    setIsOpen(true);
+    openDialog(id);
   };
 
   const handleNestedClick = () => {
@@ -327,7 +348,14 @@ export default function TNode({
     }
   };
 
-  // console.log("🔥 TNode render:", { id, selected, isOpen, type });
+  // Listen for open-node-settings events to open dialog programmatically
+  // Sync with store-driven dialog open state
+  useEffect(() => {
+    const shouldOpen = Boolean(nodeSettingsOpenById?.[id]);
+    if (shouldOpen !== isOpen) {
+      setIsOpen(shouldOpen);
+    }
+  }, [nodeSettingsOpenById, id, isOpen]);
 
   return (
     <>
@@ -376,6 +404,11 @@ export default function TNode({
         onOpenChange={(open) => {
           console.log("🔥 Dialog onOpenChange:", { open, isOpen, nodeId: id });
           setIsOpen(open);
+          if (open) {
+            openDialog(id);
+          } else {
+            closeDialog(id);
+          }
         }}
       >
         <DialogContent className="sm:max-w-6xl w-[92vw] p-6 gap-0 overflow-hidden">

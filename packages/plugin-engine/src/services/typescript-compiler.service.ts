@@ -463,6 +463,7 @@ const NodeType = {
   EVALUATOR: 'evaluator',
   MODEL: 'model',
   MODEL_LAYER: 'model_layer',
+    SEQUENCE: 'sequence',
   DATALOADER: 'dataloader',
   OPTIMIZER: 'optimizer',
   REPORT: 'report',

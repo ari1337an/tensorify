@@ -66,6 +66,7 @@ export enum NodeType {
   EVALUATOR = "evaluator",
   MODEL = "model",
   MODEL_LAYER = "model_layer",
+  SEQUENCE = "sequence",
 
   // Data Processing
   DATALOADER = "dataloader",

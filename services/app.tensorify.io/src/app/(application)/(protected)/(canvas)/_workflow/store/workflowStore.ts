@@ -89,6 +89,13 @@ interface WorkflowCanvasState {
   isSaving: boolean;
   lastSavedAt: Date | null;
 
+  // Node settings dialog state (per-node open flags)
+  nodeSettingsOpenById: Record<string, boolean>;
+  // Track which nodes are actually rendered on the canvas (by id)
+  renderedNodeIds: Record<string, boolean>;
+  // Global dialog for nodes that are not currently rendered/visible
+  globalNodeSettingsNodeId: string | null;
+
   // ReactFlow event handlers
   onNodesChange: OnNodesChange<WorkflowNode>;
   onEdgesChange: OnEdgesChange;
@@ -101,6 +108,16 @@ interface WorkflowCanvasState {
   setEdges: (edges: Edge[]) => void;
   addNode: (node: WorkflowNode) => void;
   updateNodeData: (nodeId: string, data: Partial<WorkflowNodeData>) => void;
+  // Dialog control actions
+  openNodeSettingsDialog: (nodeId: string) => void;
+  closeNodeSettingsDialog: (nodeId: string) => void;
+  toggleNodeSettingsDialog: (nodeId: string) => void;
+  // Backward-compat alias (kept for existing callers)
+  openNodeSettings: (nodeId: string) => void;
+  closeGlobalNodeSettingsDialog: () => void;
+  // Rendering registry
+  registerRenderedNode: (nodeId: string) => void;
+  unregisterRenderedNode: (nodeId: string) => void;
   setSaving: (saving: boolean) => void;
   setLastSavedAt: (date: Date | null) => void;
 
@@ -145,6 +162,9 @@ const useWorkflowStore = create<WorkflowCanvasState>()(
       currentRoute: "/",
       isSaving: false,
       lastSavedAt: null,
+      nodeSettingsOpenById: {},
+      renderedNodeIds: {},
+      globalNodeSettingsNodeId: null,
 
       // ReactFlow event handlers
       onNodesChange: (changes) => {
@@ -177,17 +197,30 @@ const useWorkflowStore = create<WorkflowCanvasState>()(
       onNodesDelete: (nodesToDelete) => {
         const nodeIds = nodesToDelete.map((node) => node.id);
 
-        // Get child nodes that should be deleted (nested nodes)
+        // Patterns for nested routes: sequence-<parentId>
+        const sequenceSegments = new Set(nodeIds.map((id) => `sequence-${id}`));
+
+        // Get child nodes that should be deleted (nested nodes) by route levels
         const childNodesToDelete = get().nodes.filter((node) => {
           const nodeRouteLevels = getRouteLevels(node.route);
-          return nodeRouteLevels.some((level) => nodeIds.includes(level));
+          // Delete if any route level is exactly a parent id (legacy) OR sequence-<parentId>
+          return (
+            nodeRouteLevels.some((level) => nodeIds.includes(level)) ||
+            nodeRouteLevels.some((level) => sequenceSegments.has(level))
+          );
         });
 
+        const allIdsToDelete = new Set<string>([
+          ...nodeIds,
+          ...childNodesToDelete.map((n) => n.id),
+        ]);
+
         set((state) => ({
-          nodes: state.nodes.filter(
-            (node) =>
-              !nodeIds.includes(node.id) &&
-              !childNodesToDelete.some((child) => child.id === node.id)
+          nodes: state.nodes.filter((node) => !allIdsToDelete.has(node.id)),
+          edges: state.edges.filter(
+            (edge) =>
+              !allIdsToDelete.has(edge.source as string) &&
+              !allIdsToDelete.has(edge.target as string)
           ),
         }));
       },
@@ -237,6 +270,72 @@ const useWorkflowStore = create<WorkflowCanvasState>()(
               : node
           ),
         }));
+      },
+
+      // Dialog control via store (preferred, maintainable)
+      openNodeSettingsDialog: (nodeId: string) => {
+        set((state) => {
+          const isRendered = Boolean(state.renderedNodeIds[nodeId]);
+          if (isRendered) {
+            return {
+              nodeSettingsOpenById: {
+                ...state.nodeSettingsOpenById,
+                [nodeId]: true,
+              },
+              globalNodeSettingsNodeId:
+                state.globalNodeSettingsNodeId === nodeId
+                  ? null
+                  : state.globalNodeSettingsNodeId,
+            } as Partial<WorkflowCanvasState> as any;
+          }
+          // Fallback to global dialog when node is not rendered/visible
+          return {
+            globalNodeSettingsNodeId: nodeId,
+          } as Partial<WorkflowCanvasState> as any;
+        });
+      },
+
+      closeNodeSettingsDialog: (nodeId: string) => {
+        set((state) => ({
+          nodeSettingsOpenById: {
+            ...state.nodeSettingsOpenById,
+            [nodeId]: false,
+          },
+        }));
+      },
+
+      toggleNodeSettingsDialog: (nodeId: string) => {
+        set((state) => ({
+          nodeSettingsOpenById: {
+            ...state.nodeSettingsOpenById,
+            [nodeId]: !state.nodeSettingsOpenById[nodeId],
+          },
+        }));
+      },
+
+      // Backward-compat alias used elsewhere; now delegates to store dialog
+      openNodeSettings: (nodeId: string) => {
+        get().openNodeSettingsDialog(nodeId);
+      },
+
+      closeGlobalNodeSettingsDialog: () => {
+        set({ globalNodeSettingsNodeId: null });
+      },
+
+      // Rendering registry
+      registerRenderedNode: (nodeId: string) => {
+        set((state) => ({
+          renderedNodeIds: { ...state.renderedNodeIds, [nodeId]: true },
+        }));
+      },
+      unregisterRenderedNode: (nodeId: string) => {
+        set((state) => {
+          const next = { ...state.renderedNodeIds };
+          delete next[nodeId];
+          return {
+            renderedNodeIds: next,
+          } as Partial<WorkflowCanvasState> as any;
+        });
       },
 
       setSaving: (saving: boolean) => {
