@@ -19,7 +19,7 @@ import useAppStore from "@/app/_store/store";
 import type {
   SettingsFieldSchema as _SF,
   SettingsGroupSchema as _SG,
-} from "@tensorify.io/contracts";
+} from "@tensorify.io/sdk/contracts";
 type SettingsFieldType = import("zod").infer<typeof _SF>;
 type SettingsGroup = import("zod").infer<typeof _SG>;
 import type { WorkflowNode } from "../../../store/workflowStore";

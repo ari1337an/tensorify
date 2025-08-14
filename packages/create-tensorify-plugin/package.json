@@ -1,6 +1,6 @@
 {
   "name": "create-tensorify-plugin",
-  "version": "0.0.30",
+  "version": "0.0.38",
   "description": "Create Tensorify plugins with the latest SDK - Linear layer template",
   "main": "index.js",
   "bin": {

@@ -8,7 +8,7 @@ import axios from "axios";
 import multer from "multer";
 import { getDecodedJwt } from "./auth-utils";
 import { z } from "zod";
-import { PluginPublishedWebhookSchema } from "@tensorify.io/contracts";
+import { PluginPublishedWebhookSchema } from "@tensorify.io/sdk/contracts";
 
 /**
  * Upload metadata interface

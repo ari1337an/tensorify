@@ -32,6 +32,7 @@ import {
   getWorkflowPlugins,
   postWorkflowPlugin,
   deleteWorkflowPlugin,
+  resetWorkflowPluginManifest,
 } from "@/app/api/v1/_client/client";
 import useStore from "@/app/_store/store";
 import { format } from "timeago.js";
@@ -394,15 +395,22 @@ export function PluginManagementDialog({
                               onClick={async () => {
                                 try {
                                   if (!currentWorkflow?.id) return;
-                                  const res = await fetch(
-                                    `/api/v1/workflow/${currentWorkflow.id}/plugin/${plugin.id}/reset-manifest`,
-                                    { method: "POST" }
-                                  );
-                                  if (!res.ok) {
-                                    const txt = await res.text();
+                                  const response =
+                                    await resetWorkflowPluginManifest({
+                                      params: {
+                                        workflowId: currentWorkflow.id,
+                                        pluginId: plugin.id,
+                                      },
+                                      body: {},
+                                    });
+                                  if (response.status !== 200) {
                                     console.error(
                                       "Reset manifest failed:",
-                                      txt
+                                      JSON.stringify(response.body)
+                                    );
+                                    toast.error(
+                                      response.body.message ||
+                                        "Failed to reset manifest"
                                     );
                                   } else {
                                     toast.success(

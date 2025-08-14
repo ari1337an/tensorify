@@ -65,7 +65,7 @@ type Workflow = {
   allVersions: WorkflowVersionSummary[];
 };
 
-import type { InstalledPluginRecord } from "@tensorify.io/contracts";
+import type { InstalledPluginRecord } from "@tensorify.io/sdk/contracts";
 
 type PluginManifest = InstalledPluginRecord;
 

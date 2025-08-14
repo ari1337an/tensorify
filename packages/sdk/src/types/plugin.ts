@@ -99,7 +99,7 @@ export interface IPluginDefinition {
    * be of type TOGGLE, dataType BOOLEAN, required: true, and its
    * defaultValue should match `isOnByDefault`.
    */
-  emits?: EmitsConfig;
+  emits: EmitsConfig;
 
   // Optional Metadata
   /** Plugin author information */

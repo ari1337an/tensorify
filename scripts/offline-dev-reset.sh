@@ -41,7 +41,7 @@ for dir in "$OFFLINE_PLUGINS_DIR"/*; do
   [[ -d "$dir" ]] || continue
   if [[ -f "$dir/package.json" ]]; then
     echo "  • $dir"
-    (cd "$dir" && pnpm install --silent | cat)
+    (cd "$dir" && npm install --silent | cat)
   fi
 done
 
@@ -50,7 +50,7 @@ for dir in "$OFFLINE_PLUGINS_DIR"/*; do
   [[ -d "$dir" ]] || continue
   if [[ -f "$dir/package.json" ]]; then
     echo "  • $dir"
-    (cd "$dir" && node "$ROOT_DIR/packages/cli/lib/src/bin/tensorify.js" publish --offline --directory . --access public | cat) || true
+    (cd "$dir" && node "$ROOT_DIR/packages/cli/lib/cli/src/bin/tensorify.js" publish --offline --directory . --access public | cat) || true
   fi
 done
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { PluginPublishedWebhookSchema } from "@tensorify.io/contracts";
+import { PluginPublishedWebhookSchema } from "@tensorify.io/sdk/contracts";
 import db from "@/server/database/db";
 
 // Reuse shared schema

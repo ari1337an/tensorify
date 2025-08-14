@@ -21,6 +21,7 @@ PACKAGES=(
 # Dependency relationships
 CLI_PACKAGE="packages/cli"
 SDK_PACKAGE="packages/sdk"
+OFFLINE_PLUGINS_DIR="offline-plugins"
 
 # Function to get current version from package.json
 get_version() {
@@ -47,6 +48,47 @@ update_cli_sdk_dependency() {
   "
 }
 
+# Function to update SDK dependency for all offline plugins
+update_offline_plugins_sdk_dependency() {
+  local sdk_version=$1
+
+  if [[ ! -d "$OFFLINE_PLUGINS_DIR" ]]; then
+    echo -e "${YELLOW}No offline plugins directory found at $OFFLINE_PLUGINS_DIR. Skipping.${NC}"
+    return
+  fi
+
+  echo -e "${YELLOW}Updating offline plugins SDK dependency to version $sdk_version...${NC}"
+
+  for plugin_dir in "$OFFLINE_PLUGINS_DIR"/*; do
+    if [[ -d "$plugin_dir" ]]; then
+      local path="$plugin_dir/package.json"
+      if [[ -f "$path" ]]; then
+        SDK_VERSION="$sdk_version" FILE="$path" node -e '
+          const fs = require("fs");
+          const file = process.env.FILE;
+          const sdk = process.env.SDK_VERSION;
+          const pkg = JSON.parse(fs.readFileSync(file, "utf8"));
+          if (!pkg.dependencies) pkg.dependencies = {};
+          let changed = false;
+          if (pkg.dependencies["@tensorify.io/sdk"]) {
+            pkg.dependencies["@tensorify.io/sdk"] = sdk;
+            changed = true;
+            console.log(`✓ Updated ${file} SDK dependency to ${sdk}`);
+          }
+          if (pkg["tensorify-settings"] && typeof pkg["tensorify-settings"] === "object") {
+            pkg["tensorify-settings"]["sdk-version"] = sdk;
+            changed = true;
+            console.log(`✓ Updated ${file} tensorify-settings.sdk-version to ${sdk}`);
+          }
+          if (changed) {
+            fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + "\n");
+          }
+        '
+      fi
+    fi
+  done
+}
+
 # Function to update version in package.json
 update_version() {
   local package_dir=$1
@@ -62,6 +104,7 @@ update_version() {
   # If we just updated the SDK, update CLI's dependency on SDK
   if [[ "$package_dir" == "$SDK_PACKAGE" ]]; then
     update_cli_sdk_dependency "$new_version"
+    update_offline_plugins_sdk_dependency "$new_version"
   fi
 }
 
@@ -189,6 +232,8 @@ sync_versions() {
   
   # Ensure CLI's SDK dependency is also synced
   update_cli_sdk_dependency "$highest_version"
+  # Ensure offline plugins' SDK dependency is also synced
+  update_offline_plugins_sdk_dependency "$highest_version"
   
   echo -e "${GREEN}All packages synced to version $highest_version${NC}"
 }

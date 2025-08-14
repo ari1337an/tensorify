@@ -596,6 +596,18 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
         (manifest?.manifest as any)?.name ||
         childLabel;
 
+      // Build default settings for the child from its manifest
+      const defaultSettings: Record<string, any> = {};
+      const settingsFields = (fc?.settingsFields ||
+        (manifest?.manifest as any)?.settingsFields) as any[] | undefined;
+      if (settingsFields) {
+        settingsFields.forEach((field: any) => {
+          if (field.defaultValue !== undefined) {
+            defaultSettings[field.key] = field.defaultValue;
+          }
+        });
+      }
+
       addNode({
         id: childId,
         type: slug,
@@ -605,7 +617,11 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
         },
         route: childRoute,
         version: "1.0.0",
-        data: { label: childLabel, pluginId: slug },
+        data: {
+          label: childLabel,
+          pluginId: slug,
+          pluginSettings: defaultSettings,
+        },
         selected: false,
         dragging: false,
       } as any);
@@ -985,7 +1001,7 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                 {visualProps.title}
               </p>
               <div
-                className="w-full min-h-[64px] rounded-lg border border-dashed border-border/70 bg-background/60 backdrop-blur-sm p-2 flex flex-col gap-2 overflow-y-auto relative nodrag nowheel"
+                className="w-full min-h-[64px] rounded-lg border border-dashed border-input bg-accent p-3 flex flex-col gap-2 overflow-y-auto relative nodrag nowheel"
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={handleDropIntoSequence}
                 onMouseDown={(e) => e.stopPropagation()}
@@ -1000,7 +1016,11 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                   sequenceItems.map((it, idx) => (
                     <div
                       key={`seq-${idx}`}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-md bg-muted/70 text-xs border border-border/50 transition-colors ${overIndex === idx ? "border-primary/50" : "hover:border-primary/40"}`}
+                      className={`w-full flex items-center justify-between gap-2 pl-3 pr-4 py-2 rounded-md bg-background text-xs border border-input/80 shadow-sm overflow-hidden transition-colors ${
+                        overIndex === idx
+                          ? "border-primary/60"
+                          : "hover:border-primary/50"
+                      }`}
                       draggable
                       onDragStart={(e) => onRowDragStart(e, idx)}
                       onDragOver={(e) => onRowDragOver(e, idx)}
@@ -1011,8 +1031,7 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                       onDoubleClick={(e) => e.stopPropagation()}
                     >
                       <input
-                        className="bg-transparent outline-none border-none text-foreground truncate nodrag nowheel"
-                        style={{ maxWidth: "80%" }}
+                        className="flex-1 min-w-0 bg-transparent outline-none border-none text-foreground truncate nodrag nowheel"
                         value={String(it.name || "item")}
                         onChange={(e) => {
                           const next = sequenceItems.slice();
@@ -1026,7 +1045,7 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
-                          className="p-1 rounded border text-muted-foreground hover:bg-muted"
+                          className="p-1.5 rounded-sm text-muted-foreground hover:bg-accent"
                           title="Settings"
                           aria-label="Settings"
                           onClick={() => {
@@ -1042,7 +1061,7 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                         </button>
                         <button
                           type="button"
-                          className="p-1 rounded border text-muted-foreground hover:text-destructive hover:bg-muted"
+                          className="p-1.5 rounded-sm text-muted-foreground hover:bg-accent hover:text-destructive"
                           title="Remove"
                           aria-label="Remove"
                           onClick={() => removeSequenceItem(idx)}
@@ -1056,7 +1075,7 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                   ))
                 )}
                 <div
-                  className="w-full h-9 rounded-md border border-dashed border-border/70 flex items-center justify-center text-[11px] text-muted-foreground/90 mt-1 select-none nodrag nowheel"
+                  className="w-full h-9 rounded-md border border-dashed border-input bg-accent flex items-center justify-center text-[11px] text-muted-foreground mt-1 select-none nodrag nowheel"
                   onMouseDown={(e) => e.stopPropagation()}
                   onPointerDown={(e) => e.stopPropagation()}
                   onDoubleClick={(e) => e.stopPropagation()}

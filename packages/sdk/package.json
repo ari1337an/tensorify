@@ -1,6 +1,6 @@
 {
   "name": "@tensorify.io/sdk",
-  "version": "0.0.30",
+  "version": "0.0.38",
   "private": false,
   "description": "TypeScript SDK for developing Tensorify plugins with comprehensive validation, frontend enforcement, and publishing tools",
   "main": "dist/index.js",
@@ -24,7 +24,9 @@
     "type-check": "tsc --noEmit",
     "prepublishOnly": "pnpm run clean && pnpm run build"
   },
-  "dependencies": {},
+  "dependencies": {
+    "zod": "^3.25.0"
+  },
   "devDependencies": {
     "@types/jest": "^29.5.8",
     "@types/node": "^20.10.0",
@@ -40,6 +42,18 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.js"
+    },
+    "./contracts": {
+      "types": "./dist/contracts/index.d.ts",
+      "import": "./dist/contracts/index.js",
+      "require": "./dist/contracts/index.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "contracts": [
+        "dist/contracts/index.d.ts"
+      ]
     }
   },
   "keywords": [

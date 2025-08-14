@@ -838,7 +838,7 @@ class PluginPublisher {
 
     // Validate that the plugin type is a valid NodeType (use contracts source of truth)
     try {
-      const { NodeTypeEnum } = await import("@tensorify.io/contracts");
+      const { NodeTypeEnum } = await import("@tensorify.io/sdk/contracts");
       const validNodeTypes = (NodeTypeEnum as any).options as string[];
       if (!validNodeTypes.includes(pluginType)) {
         throw new Error(
@@ -1030,7 +1030,9 @@ class PluginPublisher {
     // Enforce prev/next handles using manifest + SDK contracts
     const errors: any[] = [];
     try {
-      const { normalizeUiManifest } = await import("@tensorify.io/contracts");
+      const { normalizeUiManifest } = await import(
+        "@tensorify.io/sdk/contracts"
+      );
       const uiManifest = normalizeUiManifest({
         name: this.manifestJson.name,
         version: this.manifestJson.version,

@@ -14,7 +14,10 @@ import {
 } from "@tensorify.io/plugin-engine";
 import path from "path";
 import fs from "fs";
-import { normalizeUiManifest, UIManifestSchema } from "@tensorify.io/contracts";
+import {
+  normalizeUiManifest,
+  UIManifestSchema,
+} from "@tensorify.io/sdk/contracts";
 import { initServer } from "@ts-rest/express";
 
 import { v4 as uuidv4 } from "uuid";

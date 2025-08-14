@@ -667,16 +667,9 @@ export default function NodeSearch() {
     setManualExternalSearchTriggered(false);
   }, [debouncedSearchTerm, searchExternalPlugins]);
 
-  // Auto-close both sheets when drop is successful
+  // Keep sheets open on drop success
   useEffect(() => {
-    const handleDropSuccess = () => {
-      setIsSheetOpen(false);
-      setIsNestedSheetOpen(false);
-    };
-
-    setOnDropSuccessCallback(handleDropSuccess);
-
-    // Cleanup: remove callback when component unmounts
+    setOnDropSuccessCallback(() => {});
     return () => {
       setOnDropSuccessCallback(() => {});
     };
@@ -885,8 +878,7 @@ export default function NodeSearch() {
         // Trigger plugin refresh in all components
         triggerPluginRefresh();
 
-        // Auto-close the sheet and clear search
-        setIsSheetOpen(false);
+        // Clear search state
         setSearchTerm("");
         setDebouncedSearchTerm("");
         setSearchState({
@@ -1127,7 +1119,7 @@ export default function NodeSearch() {
         </SheetTrigger>
         <SheetContent
           side="right"
-          className="w-full sm:max-w-md border-l border-border/50 backdrop-blur-xl bg-card/90 p-0 flex flex-col"
+          className="w-full sm:max-w-md border-l border-border/50 backdrop-blur-xl bg-card/90 p-0 flex flex-col top-11 h-[calc(100vh-2.75rem)]"
           showOverlay={false}
           onInteractOutside={(e) => {
             if (isNestedSheetOpen) {
@@ -1484,7 +1476,7 @@ export default function NodeSearch() {
       <Sheet open={isNestedSheetOpen} onOpenChange={setIsNestedSheetOpen}>
         <SheetContent
           side="right"
-          className="w-full sm:max-w-md border-l border-border/50 backdrop-blur-xl bg-card/90 p-0 flex flex-col"
+          className="w-full sm:max-w-md border-l border-border/50 backdrop-blur-xl bg-card/90 p-0 flex flex-col top-11 h-[calc(100vh-2.75rem)]"
           showOverlay={false}
         >
           <SheetHeader className="p-4 border-b border-border/50">

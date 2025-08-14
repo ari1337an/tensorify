@@ -279,6 +279,12 @@ async function getPluginResults(
           nodeId?: string;
           labelName?: string;
         }[] = [];
+        const collectedChildImports: Array<{
+          path: string;
+          items?: string[];
+          alias?: string;
+          as?: Record<string, string>;
+        }> = [];
         for (const child of sequenceItems) {
           try {
             // Prefer the actual canvas node for settings (referenced by nodeId)
@@ -315,6 +321,18 @@ async function getPluginResults(
               labelName:
                 (childNode?.data as any)?.label || child.name || undefined,
             });
+
+            // Collect child's imports from its manifest
+            try {
+              const childManifest = await engine.getPluginManifest(childSlug);
+              const childImports =
+                (childManifest?.emits?.imports as any[]) ||
+                (childManifest?.frontendConfigs?.emits?.imports as any[]) ||
+                [];
+              if (Array.isArray(childImports)) {
+                collectedChildImports.push(...childImports);
+              }
+            } catch {}
           } catch (childError) {
             console.error("Failed to execute sequence child:", childError);
             childrenResults.push({
@@ -325,6 +343,7 @@ async function getPluginResults(
           }
         }
         payload.children = childrenResults;
+        (payload as any).childrenImports = collectedChildImports;
         // Keep itemsCount accurate for sequence plugins
         if ((node.data as any)?.pluginSettings?.itemsCount !== undefined) {
           payload.itemsCount = (node.data as any).pluginSettings.itemsCount;
@@ -342,9 +361,33 @@ async function getPluginResults(
         "TensorifyPlugin"
       );
 
+      // Fetch manifest to pull imports configuration (emits.imports)
+      let manifestImports: Array<{
+        path: string;
+        items?: string[];
+        alias?: string;
+        as?: Record<string, string>;
+      }> = [];
+      try {
+        const manifest = await engine.getPluginManifest(slug);
+        manifestImports =
+          (manifest?.emits?.imports as any[]) ||
+          (manifest?.frontendConfigs?.emits?.imports as any[]) ||
+          [];
+      } catch {}
+
+      // If this node is a sequence, include collected child imports as well
+      const combinedImports = Array.isArray((payload as any).children)
+        ? [
+            ...(((payload as any).childrenImports as any[]) || []),
+            ...manifestImports,
+          ]
+        : manifestImports;
+
       results[nodeId] = {
         nodeId,
         code: result.code || "",
+        imports: combinedImports,
       };
     } catch (error) {
       console.error(`Failed to execute plugin for node ${nodeId}:`, error);
@@ -370,17 +413,35 @@ function generateArtifacts(
 
   paths.forEach((path) => {
     const codeChunks: string[] = [];
+    const importConfigs: Array<{
+      path: string;
+      items?: string[];
+      alias?: string;
+      as?: Record<string, string>;
+    }> = [];
 
     // Collect code chunks from plugin nodes in the path
     path.nodes.forEach((nodeId) => {
       const result = pluginResults[nodeId];
-      if (result && result.code) {
-        codeChunks.push(result.code);
+      if (result) {
+        if (result.code) codeChunks.push(result.code);
+        if (Array.isArray(result.imports))
+          importConfigs.push(...result.imports);
       }
     });
 
-    // Combine all code chunks
-    const combinedCode = codeChunks.join("\n");
+    // Build import header intelligently
+    const header = buildPythonImports(importConfigs);
+
+    // Combine header + code chunks with an empty line after imports when present
+    let combinedCode = "";
+    if (header && codeChunks.length > 0) {
+      combinedCode = [header, "", ...codeChunks].join("\n");
+    } else if (header) {
+      combinedCode = header;
+    } else {
+      combinedCode = codeChunks.join("\n");
+    }
 
     // Format the code (you could use a formatter here)
     const formattedCode = formatCode(combinedCode);
@@ -389,6 +450,65 @@ function generateArtifacts(
   });
 
   return artifacts;
+}
+
+function buildPythonImports(
+  configs: Array<{
+    path: string;
+    items?: string[];
+    alias?: string;
+    as?: Record<string, string>;
+  }>
+): string {
+  if (!configs || configs.length === 0) return "";
+
+  // Track order and group by path
+  const pathOrder: string[] = [];
+  const basicImports: string[] = [];
+  const fromImports: Map<
+    string,
+    { items: string[]; aliases: Record<string, string>; order: number }
+  > = new Map();
+
+  for (let i = 0; i < configs.length; i++) {
+    const config = configs[i] || ({} as any);
+    const { path, items, alias, as = {} } = config;
+    if (!path) continue;
+
+    if (!items && !alias) {
+      basicImports.push(path);
+      if (!pathOrder.includes("__basic__")) pathOrder.push("__basic__");
+    } else if (!items && alias) {
+      basicImports.push(`${path} as ${alias}`);
+      if (!pathOrder.includes("__basic__")) pathOrder.push("__basic__");
+    } else if (items) {
+      if (!fromImports.has(path)) {
+        fromImports.set(path, { items: [], aliases: {}, order: i });
+        pathOrder.push(path);
+      }
+      const existing = fromImports.get(path)!;
+      existing.items.push(...items);
+      Object.assign(existing.aliases, as);
+    }
+  }
+
+  const result: string[] = [];
+  for (const pathKey of pathOrder) {
+    if (pathKey === "__basic__") {
+      if (basicImports.length > 0) {
+        result.push(`import ${basicImports.join(", ")}`);
+      }
+    } else {
+      const group = fromImports.get(pathKey)!;
+      const importItems = group.items.map((item) => {
+        const alias = group.aliases[item];
+        return alias ? `${item} as ${alias}` : item;
+      });
+      result.push(`from ${pathKey} import ${importItems.join(", ")}`);
+    }
+  }
+
+  return result.join("\n");
 }
 
 /**

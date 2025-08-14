@@ -283,6 +283,21 @@ export abstract class TensorifyPlugin {
     // Validate settings fields
     this.validateSettingsFields(errors);
 
+    // Enforce emits presence (empty structure allowed)
+    const emits = (this.definition as any).emits;
+    if (!emits || typeof emits !== "object") {
+      errors.push(
+        "Plugin definition must include 'emits' object with variables/imports arrays"
+      );
+    } else {
+      if (!Array.isArray(emits.variables)) {
+        errors.push("Plugin 'emits.variables' must be an array (can be empty)");
+      }
+      if (!Array.isArray(emits.imports)) {
+        errors.push("Plugin 'emits.imports' must be an array (can be empty)");
+      }
+    }
+
     if (errors.length > 0) {
       throw new Error(
         `Plugin definition validation failed:\n${errors.join("\n")}`

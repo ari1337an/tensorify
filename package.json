@@ -17,9 +17,10 @@
     "offline:build": "bash scripts/offline-dev-build.sh"
   },
   "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
     "prettier": "^3.3.3",
     "turbo": "^2.0.9",
-    "@repo/eslint-config": "workspace:*"
+    "zod": "^3.25.0"
   },
   "packageManager": "pnpm@9.6.0",
   "workspaces": [

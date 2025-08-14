@@ -8,7 +8,7 @@
     "@aws-sdk/client-s3": "^3.592.0",
     "@clerk/backend": "^2.4.1",
     "@tensorify.io/plugin-engine": "workspace:*",
-    "@tensorify.io/contracts": "workspace:*",
+    "@tensorify.io/sdk": "workspace:*",
     "@tensorify.io/transpiler": "workspace:*",
     "@ts-rest/core": "^3.52.1",
     "@ts-rest/express": "^3.52.1",

@@ -23,4 +23,10 @@ export interface PluginResult {
   nodeId: string;
   code: string;
   error?: string;
+  imports?: Array<{
+    path: string;
+    items?: string[];
+    alias?: string;
+    as?: Record<string, string>;
+  }>;
 }

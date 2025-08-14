@@ -9,7 +9,7 @@ import { ErrorResponse, JwtPayloadSchema, UUID } from "../schema";
 import { tsr } from "@ts-rest/serverless/next";
 import { secureByAuthentication } from "../auth-utils";
 import db from "@/server/database/db";
-import { InstalledPluginRecordSchema } from "@tensorify.io/contracts";
+import { InstalledPluginRecordSchema } from "@tensorify.io/sdk/contracts";
 
 extendZodWithOpenApi(z);
 
