@@ -66,6 +66,7 @@ const selector = (state: ReturnType<typeof useWorkflowStore.getState>) => ({
   onNodesDelete: state.onNodesDelete,
   addNode: state.addNode,
   currentRoute: state.currentRoute,
+  setReactFlowInstance: state.setReactFlowInstance,
 });
 
 function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
@@ -85,6 +86,7 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
     onNodesDelete,
     addNode,
     currentRoute,
+    setReactFlowInstance,
   } = useWorkflowStore(useShallow(selector));
 
   // Get plugin manifests from store
@@ -291,7 +293,7 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
                 }
               : e;
           })}
-          onNodesChange={onNodesChange}
+          onNodesChange={onNodesChange as any}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodesDelete={onNodesDelete}
@@ -301,6 +303,7 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
           onDragOver={onDragOver}
           onMoveStart={onMoveStart}
           onMoveEnd={onMoveEnd}
+          onInit={setReactFlowInstance}
           fitView={false}
           panOnScroll={true}
           zoomOnDoubleClick={false}

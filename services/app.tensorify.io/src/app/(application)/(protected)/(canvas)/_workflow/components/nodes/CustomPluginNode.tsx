@@ -729,6 +729,16 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
     return { missingPrev: state.missingPrev, missingNext: state.missingNext };
   }, [engine, id]);
 
+  // UIEngine-driven export error state
+  const nodeErrorState = useMemo(() => {
+    const state = engine?.nodes[id];
+    if (!state) return { hasExportError: false, isFlashingError: false };
+    return {
+      hasExportError: state.hasExportError || false,
+      isFlashingError: state.isTransientError || false,
+    };
+  }, [engine, id]);
+
   // Theme-aware text styling
   const getTextClasses = useMemo(() => {
     const isDarkTheme = visualProps.theme === "dark";
@@ -837,6 +847,13 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
           ${shadowClass}
           ${selected ? "shadow-primary/20" : ""}
           ${visualProps.extraPadding ? "p-4" : ""}
+          ${
+            nodeErrorState.hasExportError
+              ? nodeErrorState.isFlashingError
+                ? "border-4 border-destructive animate-pulse shadow-lg shadow-destructive/50"
+                : "border-4 border-destructive shadow-lg shadow-destructive/30"
+              : "border border-border"
+          }
         `}
         style={{
           width: `${visualProps.width}px`,
@@ -857,15 +874,18 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
             : visualProps.maxHeight
               ? `${visualProps.maxHeight}px`
               : undefined,
-          borderWidth: `${visualProps.borderWidth}px`,
+          borderWidth: nodeErrorState.hasExportError
+            ? "4px"
+            : `${visualProps.borderWidth}px`,
           borderRadius:
             visualProps.containerType === "circle"
               ? "50%"
               : visualProps.containerType === "left-round"
                 ? undefined // Let CSS classes handle left-round styling
                 : `${visualProps.borderRadius}px`,
-          borderColor:
-            invalidPrevNext.missingPrev || invalidPrevNext.missingNext
+          borderColor: nodeErrorState.hasExportError
+            ? "var(--destructive)"
+            : invalidPrevNext.missingPrev || invalidPrevNext.missingNext
               ? "var(--destructive)"
               : selected
                 ? "var(--primary)"
@@ -1013,66 +1033,122 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                     Empty
                   </div>
                 ) : (
-                  sequenceItems.map((it, idx) => (
-                    <div
-                      key={`seq-${idx}`}
-                      className={`w-full flex items-center justify-between gap-2 pl-3 pr-4 py-2 rounded-md bg-background text-xs border border-input/80 shadow-sm overflow-hidden transition-colors ${
-                        overIndex === idx
-                          ? "border-primary/60"
-                          : "hover:border-primary/50"
-                      }`}
-                      draggable
-                      onDragStart={(e) => onRowDragStart(e, idx)}
-                      onDragOver={(e) => onRowDragOver(e, idx)}
-                      onDrop={(e) => onRowDrop(e, idx)}
-                      onDragEnd={(e) => onRowDragEnd(e, idx)}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onDoubleClick={(e) => e.stopPropagation()}
-                    >
-                      <input
-                        className="flex-1 min-w-0 bg-transparent outline-none border-none text-foreground truncate nodrag nowheel"
-                        value={String(it.name || "item")}
-                        onChange={(e) => {
-                          const next = sequenceItems.slice();
-                          next[idx] = { ...next[idx], name: e.target.value };
-                          updateNodeData(id, { sequenceItems: next });
-                        }}
+                  sequenceItems.map((it, idx) => {
+                    // Check if this sequence child has export errors
+                    const childNodeId = it.nodeId;
+                    const childHasError =
+                      childNodeId &&
+                      engine?.nodes?.[childNodeId]?.hasExportError;
+
+                    const sequenceRowContent = (
+                      <div
+                        key={`seq-${idx}`}
+                        className={`w-full flex items-center justify-between gap-2 pl-3 pr-4 py-2 rounded-md bg-background text-xs border border-input/80 shadow-sm overflow-hidden transition-colors ${
+                          childHasError
+                            ? "ring-4 ring-destructive bg-destructive/10 "
+                            : overIndex === idx
+                              ? "ring-primary/60"
+                              : "hover:ring-primary/50"
+                        }`}
+                        draggable
+                        onDragStart={(e) => onRowDragStart(e, idx)}
+                        onDragOver={(e) => onRowDragOver(e, idx)}
+                        onDrop={(e) => onRowDrop(e, idx)}
+                        onDragEnd={(e) => onRowDragEnd(e, idx)}
                         onMouseDown={(e) => e.stopPropagation()}
                         onPointerDown={(e) => e.stopPropagation()}
                         onDoubleClick={(e) => e.stopPropagation()}
-                      />
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          className="p-1.5 rounded-sm text-muted-foreground hover:bg-accent"
-                          title="Settings"
-                          aria-label="Settings"
-                          onClick={() => {
-                            const row = sequenceItems[idx];
-                            if (row?.nodeId) {
-                              openNodeSettingsDialog(row.nodeId);
-                            }
+                      >
+                        <input
+                          className="flex-1 min-w-0 bg-transparent outline-none border-none text-foreground truncate nodrag nowheel"
+                          value={String(it.name || "item")}
+                          onChange={(e) => {
+                            const next = sequenceItems.slice();
+                            next[idx] = { ...next[idx], name: e.target.value };
+                            updateNodeData(id, { sequenceItems: next });
                           }}
                           onMouseDown={(e) => e.stopPropagation()}
                           onPointerDown={(e) => e.stopPropagation()}
-                        >
-                          <SettingsIcon className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          className="p-1.5 rounded-sm text-muted-foreground hover:bg-accent hover:text-destructive"
-                          title="Remove"
-                          aria-label="Remove"
-                          onClick={() => removeSequenceItem(idx)}
-                          onMouseDown={(e) => e.stopPropagation()}
-                          onPointerDown={(e) => e.stopPropagation()}
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
+                          onDoubleClick={(e) => e.stopPropagation()}
+                        />
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            className="p-1.5 rounded-sm text-muted-foreground hover:bg-accent"
+                            title="Settings"
+                            aria-label="Settings"
+                            onClick={() => {
+                              const row = sequenceItems[idx];
+                              if (row?.nodeId) {
+                                openNodeSettingsDialog(row.nodeId);
+                              }
+                            }}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onPointerDown={(e) => e.stopPropagation()}
+                          >
+                            <SettingsIcon className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            className="p-1.5 rounded-sm text-muted-foreground hover:bg-accent hover:text-destructive"
+                            title="Remove"
+                            aria-label="Remove"
+                            onClick={() => removeSequenceItem(idx)}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onPointerDown={(e) => e.stopPropagation()}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+
+                    // Wrap with tooltip if there's an error
+                    if (childHasError) {
+                      return (
+                        <TooltipProvider key={`seq-${idx}`} delayDuration={0}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              {sequenceRowContent}
+                            </TooltipTrigger>
+                            <TooltipContent
+                              side="top"
+                              className="max-w-sm p-4 bg-background border border-destructive/20 shadow-2xl ring-4 ring-destructive/20"
+                              sideOffset={8}
+                            >
+                              <div className="space-y-3">
+                                <div className="flex items-center gap-2">
+                                  <div className="p-1.5 bg-destructive/10 rounded-md">
+                                    <AlertCircle className="w-3 h-3 text-destructive" />
+                                  </div>
+                                  <div className="font-semibold text-sm text-foreground">
+                                    Sequence Item Error
+                                  </div>
+                                </div>
+                                <div className="bg-destructive/10 rounded-lg p-3 border border-destructive/20">
+                                  <div className="text-xs font-mono text-destructive leading-relaxed">
+                                    {engine?.nodes?.[childNodeId]
+                                      ?.exportErrorMessage ||
+                                      "This item has an error"}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 pt-1 border-t border-border">
+                                  <div className="p-1 bg-muted rounded">
+                                    <span className="text-xs">⚙️</span>
+                                  </div>
+                                  <span className="text-xs text-muted-foreground">
+                                    Click settings button to fix
+                                  </span>
+                                </div>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      );
+                    }
+
+                    return sequenceRowContent;
+                  })
                 )}
                 <div
                   className="w-full h-9 rounded-md border border-dashed border-input bg-accent flex items-center justify-center text-[11px] text-muted-foreground mt-1 select-none nodrag nowheel"

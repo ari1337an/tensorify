@@ -66,7 +66,13 @@ export async function generateCode(
     console.log("Found paths:", paths);
 
     // Get plugin results for all plugin nodes in the paths
-    const pluginResults = await getPluginResults(nodes, paths, engine);
+    const collectedChildErrors: Record<string, string> = {};
+    const pluginResults = await getPluginResults(
+      nodes,
+      paths,
+      engine,
+      collectedChildErrors
+    );
     console.log("Plugin results:", pluginResults);
 
     // Generate artifacts for each path
@@ -79,9 +85,56 @@ export async function generateCode(
       pathsSimple[path.endNodeId] = path.nodes;
     });
 
+    // Collect node execution errors (if any)
+    const errorsByNodeId: Record<string, string> = { ...collectedChildErrors };
+    for (const [nid, result] of Object.entries(pluginResults)) {
+      if ((result as any)?.error) {
+        errorsByNodeId[nid] = String((result as any).error);
+      }
+    }
+
+    // Build errorsByArtifactId mapping: artifactId -> { nodeId -> error message }
+    const errorsByArtifactId: Record<string, Record<string, string>> = {};
+    paths.forEach((path) => {
+      const artifactId = path.endNodeId;
+      const artifactErrors: Record<string, string> = {};
+
+      // Check each node in this path for errors
+      path.nodes.forEach((nodeId) => {
+        if (errorsByNodeId[nodeId]) {
+          artifactErrors[nodeId] = errorsByNodeId[nodeId];
+        }
+      });
+
+      // Also check for child node errors from sequence nodes in this path
+      path.nodes.forEach((nodeId) => {
+        const node = nodes.find((n) => n.id === nodeId);
+        if (node && Array.isArray((node.data as any)?.sequenceItems)) {
+          const sequenceItems: any[] = (node.data as any).sequenceItems;
+          sequenceItems.forEach((child) => {
+            const childNodeId = child.nodeId;
+            if (childNodeId && errorsByNodeId[childNodeId]) {
+              artifactErrors[childNodeId] = errorsByNodeId[childNodeId];
+            }
+          });
+        }
+      });
+
+      // Only include artifacts that have errors
+      if (Object.keys(artifactErrors).length > 0) {
+        errorsByArtifactId[artifactId] = artifactErrors;
+      }
+    });
+
     return {
       artifacts,
       paths: pathsSimple,
+      errorsByNodeId: Object.keys(errorsByNodeId).length
+        ? errorsByNodeId
+        : undefined,
+      errorsByArtifactId: Object.keys(errorsByArtifactId).length
+        ? errorsByArtifactId
+        : undefined,
     };
   } finally {
     // Clean up engine resources
@@ -220,7 +273,8 @@ function findAllPaths(nodes: WorkflowNode[], edges: WorkflowEdge[]): Path[] {
 async function getPluginResults(
   nodes: WorkflowNode[],
   paths: Path[],
-  engine: any
+  engine: any,
+  childErrors?: Record<string, string>
 ): Promise<Record<string, PluginResult>> {
   const results: Record<string, PluginResult> = {};
   const processedNodes = new Set<string>();
@@ -313,14 +367,27 @@ async function getPluginResults(
               childPayload,
               "TensorifyPlugin"
             );
+            const childCode = childResult.code || "";
             childrenResults.push({
               slug: childSlug,
-              code: childResult.code || "",
+              code: childCode,
               settings: childSettings,
               nodeId: childNodeId,
               labelName:
                 (childNode?.data as any)?.label || child.name || undefined,
             });
+
+            // Heuristic: if plugin returned an error-like string instead of throwing,
+            // capture it as an error for UI consumption
+            if (childErrors && childNodeId) {
+              const trimmed = (childCode || "").trim();
+              if (
+                trimmed.startsWith("Error:") ||
+                trimmed.startsWith("# Error")
+              ) {
+                childErrors[childNodeId] = trimmed;
+              }
+            }
 
             // Collect child's imports from its manifest
             try {
@@ -340,6 +407,11 @@ async function getPluginResults(
               code: `# Error executing child ${child.slug || child.pluginId}: ${childError}`,
               nodeId: child.nodeId,
             });
+            if (childErrors && child.nodeId) {
+              childErrors[child.nodeId] = String(
+                childError instanceof Error ? childError.message : childError
+              );
+            }
           }
         }
         payload.children = childrenResults;
@@ -384,11 +456,17 @@ async function getPluginResults(
           ]
         : manifestImports;
 
-      results[nodeId] = {
+      const topLevelCode = result.code || "";
+      const base: PluginResult = {
         nodeId,
-        code: result.code || "",
+        code: topLevelCode,
         imports: combinedImports,
       };
+      const trimmedTop = topLevelCode.trim();
+      if (trimmedTop.startsWith("Error:") || trimmedTop.startsWith("# Error")) {
+        (base as any).error = trimmedTop;
+      }
+      results[nodeId] = base;
     } catch (error) {
       console.error(`Failed to execute plugin for node ${nodeId}:`, error);
       results[nodeId] = {

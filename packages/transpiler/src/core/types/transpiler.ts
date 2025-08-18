@@ -10,6 +10,8 @@ export interface TranspilerConfig {
 export interface TranspilerResult {
   artifacts: Record<string, string>; // endNodeId -> generated code
   paths: Record<string, string[]>; // endNodeId -> array of nodeIds in path
+  errorsByNodeId?: Record<string, string>; // nodeId -> error message
+  errorsByArtifactId?: Record<string, Record<string, string>>; // artifactId -> { nodeId -> error message }
 }
 
 // Path finding result

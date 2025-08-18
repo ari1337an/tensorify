@@ -1558,7 +1558,7 @@ print(\${variableName})\`;
     }
     getTranslationCode(settings, children, context) {
       const validation = this.validateSettings(settings);
-      if (!validation.isValid) {
+      if (validation.isValid) {
         throw new Error(
           `Settings validation failed: ${validation.errors.map((e) => e.message).join(", ")}`
         );

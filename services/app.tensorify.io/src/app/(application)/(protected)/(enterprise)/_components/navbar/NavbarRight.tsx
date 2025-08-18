@@ -59,16 +59,26 @@ const collaborators = [
 
 export function NavbarRight() {
   const { currentWorkflow, fetchWorkflows } = useStore();
-  const { nodes, edges, isSaving, lastSavedAt } = useWorkflowStore(
+  const {
+    nodes,
+    edges,
+    isSaving,
+    lastSavedAt,
+    isExportDialogOpen,
+    openExportDialog,
+    closeExportDialog,
+  } = useWorkflowStore(
     useShallow((state) => ({
       nodes: state.nodes,
       edges: state.edges,
       isSaving: state.isSaving,
       lastSavedAt: state.lastSavedAt,
+      isExportDialogOpen: state.isExportDialogOpen,
+      openExportDialog: state.openExportDialog,
+      closeExportDialog: state.closeExportDialog,
     }))
   );
   const [isLocked, setIsLocked] = useState(false);
-  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isCreateVersionModalOpen, setIsCreateVersionModalOpen] =
     useState(false);
@@ -220,7 +230,7 @@ export function NavbarRight() {
           console.log("Workflow code:", currentWorkflow?.version?.code);
           console.log("Nodes:", currentWorkflow?.version?.code?.nodes);
           console.log("Edges:", currentWorkflow?.version?.code?.edges);
-          setIsExportDialogOpen(true);
+          openExportDialog();
         }}
       >
         <Download className="h-4 w-4 mr-1" />
@@ -229,7 +239,7 @@ export function NavbarRight() {
 
       <ExportDialog
         isOpen={isExportDialogOpen}
-        onClose={() => setIsExportDialogOpen(false)}
+        onClose={closeExportDialog}
         nodes={nodes}
         edges={edges}
       />

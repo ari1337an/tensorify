@@ -19,6 +19,11 @@ type NodeValidationState = {
   hasMultipleNext: boolean;
   prevConnections: number;
   nextConnections: number;
+  isTransientError: boolean;
+  hasExportError: boolean;
+  exportErrorMessage?: string;
+  isSequenceChild: boolean;
+  parentSequenceId?: string;
 };
 
 type UIEngineState = {
@@ -36,10 +41,19 @@ const UIEngineContext = createContext<UIEngineState>({
 const selector = (state: ReturnType<typeof useWorkflowStore.getState>) => ({
   nodes: state.nodes,
   edges: state.edges,
+  transientErrorUntilByNodeId: state.transientErrorUntilByNodeId,
+  lastExportErrorsByNodeId: state.lastExportErrorsByNodeId,
+  lastExportArtifactErrors: state.lastExportArtifactErrors,
 });
 
 export function UIEngineProvider({ children }: { children: React.ReactNode }) {
-  const { nodes, edges } = useWorkflowStore(useShallow(selector));
+  const {
+    nodes,
+    edges,
+    transientErrorUntilByNodeId,
+    lastExportErrorsByNodeId,
+    lastExportArtifactErrors,
+  } = useWorkflowStore(useShallow(selector));
   const pluginManifests = useAppStore((state) => state.pluginManifests);
 
   const state = useMemo<UIEngineState>(() => {
@@ -119,6 +133,20 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
       const hasPrev = prevCount > 0;
       const hasNext = nextCount > 0;
 
+      const now = Date.now();
+      const flashUntil = (transientErrorUntilByNodeId || {})[n.id] || 0;
+      const isFlashing = flashUntil > now;
+
+      // Check for export errors
+      const hasExportError = Boolean(lastExportErrorsByNodeId[n.id]);
+      const exportErrorMessage = lastExportErrorsByNodeId[n.id];
+
+      // Check if this is a sequence child node
+      const isSequenceChild = n.route.includes("/sequence-");
+      const parentSequenceId = isSequenceChild
+        ? n.route.split("/sequence-")[1]?.split("/")[0]
+        : undefined;
+
       nodesState[n.id] = {
         id: n.id,
         missingPrev: handles.input.has("prev") ? !hasPrev : false,
@@ -127,7 +155,17 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
         hasMultipleNext: nextCount > 1,
         prevConnections: prevCount,
         nextConnections: nextCount,
+        isTransientError: isFlashing,
+        hasExportError,
+        exportErrorMessage,
+        isSequenceChild,
+        parentSequenceId,
       };
+
+      if (isFlashing) {
+        // Force mark as missing to drive red styling in consumers
+        nodesState[n.id].missingPrev = true;
+      }
     });
 
     // Compute edge compatibility and over-subscription flags
@@ -260,7 +298,14 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
       edges: edgesState,
       availableVariablesByNodeId: availableByNode,
     };
-  }, [nodes, edges, pluginManifests]);
+  }, [
+    nodes,
+    edges,
+    pluginManifests,
+    transientErrorUntilByNodeId,
+    lastExportErrorsByNodeId,
+    lastExportArtifactErrors,
+  ]);
 
   return (
     <UIEngineContext.Provider value={state}>

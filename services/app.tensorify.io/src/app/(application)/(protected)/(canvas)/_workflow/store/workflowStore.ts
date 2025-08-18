@@ -11,6 +11,7 @@ import {
   type OnConnect,
   type OnNodesDelete,
   type Connection,
+  type ReactFlowInstance,
 } from "@xyflow/react";
 
 // Visual configuration interfaces
@@ -96,6 +97,21 @@ interface WorkflowCanvasState {
   // Global dialog for nodes that are not currently rendered/visible
   globalNodeSettingsNodeId: string | null;
 
+  // Transient error highlight state: nodeId -> expiresAt (ms since epoch)
+  transientErrorUntilByNodeId: Record<string, number>;
+
+  // Last export errors by node id (message to show on hover)
+  lastExportErrorsByNodeId: Record<string, string>;
+
+  // Artifact errors from last export: artifactId -> { nodeId -> error message }
+  lastExportArtifactErrors: Record<string, Record<string, string>>;
+
+  // ReactFlow instance for programmatic actions (focus, center, etc.)
+  reactFlowInstance: ReactFlowInstance | null;
+
+  // Export dialog state
+  isExportDialogOpen: boolean;
+
   // ReactFlow event handlers
   onNodesChange: OnNodesChange<WorkflowNode>;
   onEdgesChange: OnEdgesChange;
@@ -120,6 +136,18 @@ interface WorkflowCanvasState {
   unregisterRenderedNode: (nodeId: string) => void;
   setSaving: (saving: boolean) => void;
   setLastSavedAt: (date: Date | null) => void;
+
+  // Visual feedback actions
+  flashNodeErrors: (nodeIds: string[], durationMs?: number) => void;
+  setLastExportErrors: (errors: Record<string, string>) => void;
+  setLastExportArtifactErrors: (
+    artifactErrors: Record<string, Record<string, string>>
+  ) => void;
+  setReactFlowInstance: (instance: ReactFlowInstance | null) => void;
+  focusOnNode: (nodeId: string) => void;
+  // Export dialog actions
+  openExportDialog: () => void;
+  closeExportDialog: () => void;
 
   // Utility functions
   getVisibleNodes: () => WorkflowNode[];
@@ -165,6 +193,11 @@ const useWorkflowStore = create<WorkflowCanvasState>()(
       nodeSettingsOpenById: {},
       renderedNodeIds: {},
       globalNodeSettingsNodeId: null,
+      transientErrorUntilByNodeId: {},
+      lastExportErrorsByNodeId: {},
+      lastExportArtifactErrors: {},
+      reactFlowInstance: null,
+      isExportDialogOpen: false,
 
       // ReactFlow event handlers
       onNodesChange: (changes) => {
@@ -344,6 +377,111 @@ const useWorkflowStore = create<WorkflowCanvasState>()(
 
       setLastSavedAt: (date: Date | null) => {
         set({ lastSavedAt: date });
+      },
+
+      flashNodeErrors: (nodeIds: string[], durationMs: number = 5000) => {
+        const now = Date.now();
+        const until = now + Math.max(0, durationMs);
+        set((state) => {
+          const next = {
+            ...(state.transientErrorUntilByNodeId || {}),
+          } as Record<string, number>;
+          for (const nid of nodeIds) next[nid] = until;
+          return {
+            transientErrorUntilByNodeId: next,
+          } as Partial<WorkflowCanvasState> as any;
+        });
+        // Schedule cleanup after duration to prune expired entries
+        setTimeout(() => {
+          set((state) => {
+            const next = {
+              ...(state.transientErrorUntilByNodeId || {}),
+            } as Record<string, number>;
+            const t = Date.now();
+            let changed = false;
+            for (const [nid, exp] of Object.entries(next)) {
+              if (exp <= t) {
+                delete next[nid];
+                changed = true;
+              }
+            }
+            return changed
+              ? ({
+                  transientErrorUntilByNodeId: next,
+                } as Partial<WorkflowCanvasState> as any)
+              : ({} as any);
+          });
+        }, durationMs + 25);
+      },
+
+      setLastExportErrors: (errors: Record<string, string>) => {
+        set({ lastExportErrorsByNodeId: errors || {} });
+      },
+
+      setLastExportArtifactErrors: (
+        artifactErrors: Record<string, Record<string, string>>
+      ) => {
+        set({ lastExportArtifactErrors: artifactErrors || {} });
+      },
+
+      setReactFlowInstance: (instance: ReactFlowInstance | null) => {
+        set({ reactFlowInstance: instance });
+      },
+
+      focusOnNode: (nodeId: string) => {
+        const { reactFlowInstance, nodes, openNodeSettingsDialog } = get();
+        if (!reactFlowInstance || !nodeId) return;
+
+        const node = nodes.find((n) => n.id === nodeId);
+        if (!node) return;
+
+        // Check if this is a sequence child node
+        const isSequenceChild = node.route.includes("/sequence-");
+        let targetNodeId = nodeId;
+
+        if (isSequenceChild) {
+          // Extract parent sequence ID from route
+          const parentSequenceId = node.route
+            .split("/sequence-")[1]
+            ?.split("/")[0];
+          if (parentSequenceId) {
+            const parentNode = nodes.find((n) => n.id === parentSequenceId);
+            if (parentNode) {
+              targetNodeId = parentSequenceId;
+            }
+          }
+        }
+
+        // Focus and center on the target node (parent for sequence children)
+        reactFlowInstance.fitView({
+          nodes: [{ id: targetNodeId }],
+          duration: 800,
+          maxZoom: 1.2,
+          minZoom: 0.3,
+          padding: 0.3,
+        });
+
+        // Select the target node for visual emphasis
+        reactFlowInstance.setNodes((nodes) =>
+          nodes.map((n) => ({
+            ...n,
+            selected: n.id === targetNodeId,
+          }))
+        );
+
+        // Open the node settings dialog for the original error node (not the parent)
+        // This ensures the user sees the error details for the actual problematic node
+        setTimeout(() => {
+          openNodeSettingsDialog(nodeId);
+        }, 900); // Slight delay to let the focus animation complete
+      },
+
+      openExportDialog: () => {
+        set({ isExportDialogOpen: true });
+      },
+
+      closeExportDialog: () => {
+        set({ isExportDialogOpen: false });
       },
 
       // Utility functions

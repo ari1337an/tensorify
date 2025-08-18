@@ -25,6 +25,7 @@ import { Label } from "@/app/_components/ui/label";
 import { Input } from "@/app/_components/ui/input";
 import { Textarea } from "@/app/_components/ui/textarea";
 import { Badge } from "@/app/_components/ui/badge";
+import { Button } from "@/app/_components/ui/button";
 import {
   Select,
   SelectContent,
@@ -35,7 +36,20 @@ import {
 import { Switch } from "@/app/_components/ui/switch";
 import { Slider } from "@/app/_components/ui/slider";
 import { Separator } from "@/app/_components/ui/separator";
-import { SettingsIcon, CodeIcon, TypeIcon, InfoIcon } from "lucide-react";
+import {
+  SettingsIcon,
+  CodeIcon,
+  TypeIcon,
+  InfoIcon,
+  AlertCircle,
+  RefreshCw,
+} from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/app/_components/ui/tooltip";
 import { toast } from "sonner";
 import useWorkflowStore, {
   addRouteLevel,
@@ -67,6 +81,7 @@ export default function TNode({
   const setRoute = useWorkflowStore((state) => state.setRoute);
   const currentRoute = useWorkflowStore((state) => state.currentRoute);
   const nodes = useWorkflowStore((state) => state.nodes);
+  const edges = useWorkflowStore((state) => state.edges);
   const nodeSettingsOpenById = useWorkflowStore(
     (state) => state.nodeSettingsOpenById
   );
@@ -86,7 +101,18 @@ export default function TNode({
   const unregisterRenderedNode = useWorkflowStore(
     (state) => state.unregisterRenderedNode
   );
+  const setLastExportErrors = useWorkflowStore(
+    (state) => state.setLastExportErrors
+  );
+  const setLastExportArtifactErrors = useWorkflowStore(
+    (state) => state.setLastExportArtifactErrors
+  );
+  const openExportDialog = useWorkflowStore((state) => state.openExportDialog);
   const engine = useUIEngine();
+  const nodeValidation = engine.nodes[id];
+  const isFlashingError = Boolean(nodeValidation?.isTransientError);
+  const hasExportError = Boolean(nodeValidation?.hasExportError);
+  const exportErrorMessage = nodeValidation?.exportErrorMessage;
 
   // Force re-render when plugin manifests change (for reactive form fields)
   const [, forceUpdate] = useState({});
@@ -350,6 +376,57 @@ export default function TNode({
     }
   };
 
+  const handleExportAgain = async () => {
+    try {
+      // Clear existing error states
+      setLastExportErrors({});
+      setLastExportArtifactErrors({});
+
+      // Get the correct API base URL based on environment
+      const apiBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL + "/api";
+      const exportUrl = `${apiBaseUrl}/v1/export`;
+
+      const response = await fetch(exportUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ nodes, edges }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error("Error response:", errorData);
+        toast.error(`Export failed: ${response.status} ${response.statusText}`);
+        return;
+      }
+
+      const data = await response.json();
+
+      // Handle errors if present
+      if (data.errorsByNodeId) {
+        setLastExportErrors(data.errorsByNodeId);
+      }
+      if (data.errorsByArtifactId) {
+        setLastExportArtifactErrors(data.errorsByArtifactId);
+      }
+
+      if (Object.keys(data.errorsByNodeId || {}).length === 0) {
+        toast.success("Export completed successfully!");
+        // Close node settings dialog and open export dialog to show results
+        closeDialog(id);
+        openExportDialog();
+      } else {
+        toast.error(
+          "Export completed with errors. Check the error details above."
+        );
+      }
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast.error("Failed to export workflow");
+    }
+  };
+
   // Listen for open-node-settings events to open dialog programmatically
   // Sync with store-driven dialog open state
   useEffect(() => {
@@ -361,7 +438,16 @@ export default function TNode({
 
   return (
     <>
-      <div className="relative">
+      <div
+        className="relative"
+        title={
+          exportErrorMessage
+            ? `Export Error: ${exportErrorMessage}`
+            : nodeValidation?.missingPrev || nodeValidation?.missingNext
+              ? "Missing required connections"
+              : undefined
+        }
+      >
         {selected ? (
           type === "@tensorify/core/NestedNode" ? (
             <div ref={nodeRef} onClick={handleNestedClick}>
@@ -374,6 +460,54 @@ export default function TNode({
           )
         ) : (
           children
+        )}
+
+        {/* Export Error Badge - Positioned on top-right corner */}
+        {hasExportError && exportErrorMessage && (
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="absolute -top-2 -right-2 z-10">
+                  <div className="relative">
+                    <div className="w-6 h-6 bg-destructive rounded-full border-2 border-background shadow-lg flex items-center justify-center animate-pulse cursor-help">
+                      <AlertCircle className="w-3 h-3 text-destructive-foreground" />
+                    </div>
+                    {/* Pulsing ring effect */}
+                    <div className="absolute inset-0 w-6 h-6 bg-destructive rounded-full animate-ping opacity-20"></div>
+                  </div>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent
+                side="top"
+                className="max-w-sm p-4 bg-background border border-destructive/20 shadow-2xl ring-4 ring-destructive/20"
+                sideOffset={12}
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-destructive/10 rounded-md">
+                      <AlertCircle className="w-4 h-4 text-destructive" />
+                    </div>
+                    <div className="font-semibold text-sm text-foreground">
+                      Export Error
+                    </div>
+                  </div>
+                  <div className="bg-destructive/10 rounded-lg p-3 border border-destructive/20">
+                    <div className="text-xs font-mono text-destructive leading-relaxed">
+                      {exportErrorMessage}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 pt-1 border-t border-border">
+                    <div className="p-1 bg-muted rounded">
+                      <span className="text-xs">💡</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      Double-click node to open settings and fix
+                    </span>
+                  </div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
 
         {/* Label below the node */}
@@ -390,13 +524,18 @@ export default function TNode({
               maxLength={25}
             />
           ) : (
-            <p
-              className="text-xs text-center text-muted-foreground cursor-pointer hover:text-foreground transition-colors truncate px-1"
-              onDoubleClick={handleLabelDoubleClick}
-              title={`${data.label || id} - Double-click to edit`}
-            >
-              {data.label || id}
-            </p>
+            <div className="flex items-center justify-center gap-1">
+              <p
+                className="text-xs text-center text-muted-foreground cursor-pointer hover:text-foreground transition-colors truncate px-1"
+                onDoubleClick={handleLabelDoubleClick}
+                title={`${data.label || id} - Double-click to edit`}
+              >
+                {data.label || id}
+              </p>
+              {hasExportError && (
+                <AlertCircle className="w-3 h-3 text-destructive flex-shrink-0" />
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -1081,6 +1220,44 @@ export default function TNode({
               </TabsContent>
 
               <TabsContent value="settings" className="flex-1 overflow-auto">
+                {/* Export Error Alert */}
+                {hasExportError && exportErrorMessage && (
+                  <Card className="mb-6 border-destructive/50 bg-destructive/5">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-destructive/10 rounded-lg">
+                          <AlertCircle className="h-4 w-4 text-destructive" />
+                        </div>
+                        <div className="flex-1">
+                          <CardTitle className="text-sm text-destructive">
+                            Export Error
+                          </CardTitle>
+                          <CardDescription className="text-destructive/80">
+                            This node caused the following problem in code
+                            export
+                          </CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0 space-y-3">
+                      <div className="bg-muted/50 rounded-lg p-3 border border-destructive/20">
+                        <code className="text-xs text-destructive font-mono break-all">
+                          {exportErrorMessage}
+                        </code>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExportAgain}
+                        className="flex items-center gap-2"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                        Export Again
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* Plugin Settings Section */}
                 <PluginSettingsSection
                   nodeId={id}

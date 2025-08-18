@@ -58,6 +58,17 @@ export const contract = c.router({
       200: z.object({
         artifacts: z.record(z.string()), // endNodeId -> code
         paths: z.record(z.array(z.string())).optional(), // endNodeId -> path of nodeIds
+        errorsByNodeId: z.record(z.string()).optional(), // nodeId -> error message
+        errorsByArtifactId: z.record(z.record(z.string())).optional(), // artifactId -> { nodeId -> error message }
+        errors: z
+          .array(
+            z.object({
+              fromNodeId: z.string(),
+              errorMessage: z.string(),
+              artifactId: z.string().optional(),
+            })
+          )
+          .optional(),
       }),
       400: z.object({
         status: z.literal("error"),
@@ -172,12 +183,51 @@ export const mainFunction = async (
       });
     }
 
+    // Build errors array for convenience on the client, including artifactId when available
+    const errorsArray: Array<{
+      fromNodeId: string;
+      errorMessage: string;
+      artifactId?: string;
+    }> = [];
+
+    // Add errors from errorsByNodeId (legacy format)
+    if (result.errorsByNodeId) {
+      Object.entries(result.errorsByNodeId).forEach(
+        ([fromNodeId, errorMessage]) => {
+          errorsArray.push({
+            fromNodeId,
+            errorMessage,
+          });
+        }
+      );
+    }
+
+    // Add errors from errorsByArtifactId (new format with artifact context)
+    if ((result as any).errorsByArtifactId) {
+      Object.entries((result as any).errorsByArtifactId).forEach(
+        ([artifactId, nodeErrors]) => {
+          Object.entries(nodeErrors as Record<string, string>).forEach(
+            ([fromNodeId, errorMessage]) => {
+              errorsArray.push({
+                fromNodeId,
+                errorMessage,
+                artifactId,
+              });
+            }
+          );
+        }
+      );
+    }
+
     // Return the artifacts
     return {
       status: 200,
       body: {
         artifacts: result.artifacts,
         paths: result.paths,
+        errorsByNodeId: (result as any).errorsByNodeId,
+        errorsByArtifactId: (result as any).errorsByArtifactId,
+        errors: errorsArray.length > 0 ? errorsArray : undefined,
       },
     };
   } catch (error) {

@@ -155,7 +155,8 @@ export default class LinearLayerPlugin extends TensorifyPlugin {
   ): string {
     // Validate settings (returns PluginValidationResult with isValid boolean)
     const validation = this.validateSettings(settings);
-    if (!validation.isValid) {
+
+    if (validation.isValid) {
       throw new Error(
         `Settings validation failed: ${validation.errors.map((e) => e.message).join(", ")}`
       );
