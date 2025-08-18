@@ -1,0 +1,144 @@
+{
+  "name": "@tensorify/relu",
+  "version": "1.0.0",
+  "description": "PyTorch nn.ReLU layer",
+  "author": "",
+  "main": "src/index.ts",
+  "entrypointClassName": "ReluPlugin",
+  "keywords": [
+    "tensorify",
+    "plugin",
+    "ml",
+    "machine-learning",
+    "neural-network"
+  ],
+  "pluginType": "model_layer",
+  "scripts": {
+    "build": "npx tsc"
+  },
+  "tensorifySettings": {
+    "sdkVersion": "0.0.38"
+  },
+  "metadata": {
+    "repository": "https://github.com/tensorify/relu",
+    "license": "ISC"
+  },
+  "visual": {
+    "containerType": "default",
+    "size": {
+      "width": 200,
+      "height": 120
+    },
+    "padding": {
+      "inner": 16,
+      "outer": 8,
+      "extraPadding": false
+    },
+    "styling": {
+      "borderRadius": 8,
+      "borderWidth": 2,
+      "shadowLevel": 1,
+      "theme": "auto"
+    },
+    "icons": {
+      "primary": {
+        "type": "lucide",
+        "value": "activity"
+      },
+      "secondary": [],
+      "showIconBackground": true,
+      "iconSize": "medium"
+    },
+    "labels": {
+      "title": "ReLU",
+      "titleDescription": "Activation",
+      "showLabels": true,
+      "labelPosition": "top"
+    }
+  },
+  "inputHandles": [
+    {
+      "id": "prev",
+      "position": "left",
+      "viewType": "default",
+      "required": true,
+      "label": "Prev",
+      "edgeType": "default",
+      "dataType": "any",
+      "description": "Previous node output"
+    }
+  ],
+  "outputHandles": [
+    {
+      "id": "next",
+      "position": "right",
+      "viewType": "default",
+      "label": "Next",
+      "edgeType": "default",
+      "dataType": "any",
+      "description": "Flow to next node"
+    }
+  ],
+  "settingsFields": [
+    {
+      "key": "reluVarName",
+      "label": "Variable name",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "relu",
+      "required": true,
+      "description": "Name of the variable to assign when emit is enabled"
+    },
+    {
+      "key": "emitReluVar",
+      "label": "Emit variable name",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": true,
+      "required": true,
+      "description": "Controls emission of the ReLU variable"
+    },
+    {
+      "key": "inplace",
+      "label": "In-place",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": false,
+      "required": false,
+      "description": "Perform the operation in-place"
+    }
+  ],
+  "settingsGroups": [],
+  "capabilities": [
+    "code-generation"
+  ],
+  "requirements": {
+    "minSdkVersion": "1.0.0",
+    "dependencies": [
+      "torch"
+    ],
+    "pythonPackages": [
+      "torch"
+    ]
+  },
+  "emits": {
+    "variables": [
+      {
+        "value": "relu",
+        "switchKey": "settingsFields.emitReluVar",
+        "isOnByDefault": true
+      }
+    ],
+    "imports": [
+      {
+        "path": "torch.nn",
+        "items": [
+          "ReLU"
+        ],
+        "as": {
+          "ReLU": "myrelu"
+        }
+      }
+    ]
+  }
+}

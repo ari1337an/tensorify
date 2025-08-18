@@ -1,0 +1,167 @@
+{
+  "name": "@tensorify/linear",
+  "version": "1.0.0",
+  "description": "PyTorch nn.Linear layer",
+  "author": "",
+  "main": "src/index.ts",
+  "entrypointClassName": "LinearPlugin",
+  "keywords": [
+    "tensorify",
+    "plugin",
+    "ml",
+    "machine-learning",
+    "neural-network"
+  ],
+  "pluginType": "model_layer",
+  "scripts": {
+    "build": "npx tsc"
+  },
+  "tensorifySettings": {
+    "sdkVersion": "0.0.38"
+  },
+  "metadata": {
+    "repository": "https://github.com/tensorify/linear",
+    "license": "ISC"
+  },
+  "visual": {
+    "containerType": "default",
+    "size": {
+      "width": 240,
+      "height": 140
+    },
+    "padding": {
+      "inner": 16,
+      "outer": 8,
+      "extraPadding": false
+    },
+    "styling": {
+      "borderRadius": 8,
+      "borderWidth": 2,
+      "shadowLevel": 1,
+      "theme": "auto"
+    },
+    "icons": {
+      "primary": {
+        "type": "lucide",
+        "value": "layers"
+      },
+      "secondary": [],
+      "showIconBackground": true,
+      "iconSize": "medium"
+    },
+    "labels": {
+      "title": "Linear Layer",
+      "dynamicLabelTemplate": "{inFeatures} → {outFeatures}",
+      "showLabels": true,
+      "labelPosition": "top"
+    }
+  },
+  "inputHandles": [
+    {
+      "id": "prev",
+      "position": "left",
+      "viewType": "default",
+      "required": true,
+      "label": "Prev",
+      "edgeType": "default",
+      "dataType": "any",
+      "description": "Previous node output"
+    }
+  ],
+  "outputHandles": [
+    {
+      "id": "next",
+      "position": "right",
+      "viewType": "default",
+      "label": "Next",
+      "edgeType": "default",
+      "dataType": "any",
+      "description": "Flow to next node"
+    }
+  ],
+  "settingsFields": [
+    {
+      "key": "linearVarName",
+      "label": "Variable name",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "linear_layer",
+      "required": true,
+      "description": "Name of the variable to assign when emit is enabled"
+    },
+    {
+      "key": "emitLinearVar",
+      "label": "Emit variable name",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": true,
+      "required": true,
+      "description": "Controls emission of the linear layer variable"
+    },
+    {
+      "key": "inFeatures",
+      "label": "Input Features",
+      "type": "input-number",
+      "dataType": "number",
+      "defaultValue": 784,
+      "required": true,
+      "description": "Number of input features",
+      "validation": {
+        "min": 1,
+        "max": 100000
+      }
+    },
+    {
+      "key": "outFeatures",
+      "label": "Output Features",
+      "type": "input-number",
+      "dataType": "number",
+      "defaultValue": 10,
+      "required": true,
+      "description": "Number of output features",
+      "validation": {
+        "min": 1,
+        "max": 100000
+      }
+    },
+    {
+      "key": "bias",
+      "label": "Use Bias",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": true,
+      "required": false,
+      "description": "Whether to include bias parameters in the linear transformation"
+    }
+  ],
+  "settingsGroups": [],
+  "capabilities": [
+    "code-generation"
+  ],
+  "requirements": {
+    "minSdkVersion": "1.0.0",
+    "dependencies": [
+      "torch"
+    ],
+    "pythonPackages": [
+      "torch"
+    ]
+  },
+  "emits": {
+    "variables": [
+      {
+        "value": "linear_layer",
+        "switchKey": "settingsFields.emitLinearVar",
+        "isOnByDefault": true
+      }
+    ],
+    "imports": [
+      {
+        "path": "torch",
+        "items": [
+          "nn"
+        ]
+      }
+    ]
+  }
+}

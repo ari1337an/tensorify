@@ -1,0 +1,146 @@
+{
+  "name": "@tensorify/sequence",
+  "version": "1.0.0",
+  "description": "PyTorch nn.Sequential container (layers only)",
+  "author": "",
+  "main": "src/index.ts",
+  "entrypointClassName": "SequencePlugin",
+  "keywords": [
+    "tensorify",
+    "plugin",
+    "ml",
+    "machine-learning",
+    "neural-network"
+  ],
+  "pluginType": "sequence",
+  "scripts": {
+    "build": "npx tsc"
+  },
+  "tensorifySettings": {
+    "sdkVersion": "0.0.38"
+  },
+  "metadata": {
+    "repository": "https://github.com/tensorify/sequence",
+    "license": "ISC"
+  },
+  "visual": {
+    "containerType": "default",
+    "size": {
+      "width": 280,
+      "height": 160
+    },
+    "padding": {
+      "inner": 12,
+      "outer": 8,
+      "extraPadding": false
+    },
+    "styling": {
+      "borderRadius": 10,
+      "borderWidth": 2,
+      "shadowLevel": 1,
+      "theme": "auto"
+    },
+    "icons": {
+      "primary": {
+        "type": "lucide",
+        "value": "list"
+      },
+      "secondary": [],
+      "showIconBackground": true,
+      "iconSize": "medium"
+    },
+    "labels": {
+      "title": "Sequence",
+      "titleDescription": "Compose children in order",
+      "dynamicLabelTemplate": "{itemsCount} items",
+      "showLabels": true,
+      "labelPosition": "top"
+    },
+    "sequence": {
+      "allowedItemType": "model_layer",
+      "showItems": true
+    }
+  },
+  "inputHandles": [
+    {
+      "id": "prev",
+      "position": "left",
+      "viewType": "default",
+      "required": true,
+      "label": "Prev",
+      "edgeType": "default",
+      "dataType": "any",
+      "description": "Previous node output"
+    }
+  ],
+  "outputHandles": [
+    {
+      "id": "next",
+      "position": "right",
+      "viewType": "default",
+      "label": "Next",
+      "edgeType": "default",
+      "dataType": "any",
+      "description": "Flow to next node"
+    }
+  ],
+  "settingsFields": [
+    {
+      "key": "sequenceVarName",
+      "label": "Variable name",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "seq",
+      "required": true,
+      "description": "Name of the variable to assign when emit is enabled"
+    },
+    {
+      "key": "emitSequenceVar",
+      "label": "Emit variable name",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": true,
+      "required": true,
+      "description": "Controls emission of the Sequential container variable"
+    },
+    {
+      "key": "itemsCount",
+      "label": "Items Count (display only)",
+      "type": "input-number",
+      "dataType": "number",
+      "defaultValue": 0,
+      "required": false,
+      "description": "Shown in dynamic label; updated by UI."
+    }
+  ],
+  "settingsGroups": [],
+  "capabilities": [
+    "code-generation"
+  ],
+  "requirements": {
+    "minSdkVersion": "1.0.0",
+    "dependencies": [
+      "torch"
+    ],
+    "pythonPackages": [
+      "torch"
+    ]
+  },
+  "emits": {
+    "variables": [
+      {
+        "value": "seq",
+        "switchKey": "settingsFields.emitSequenceVar",
+        "isOnByDefault": true
+      }
+    ],
+    "imports": [
+      {
+        "path": "torch.nn",
+        "items": [
+          "Sequential"
+        ]
+      }
+    ]
+  }
+}
