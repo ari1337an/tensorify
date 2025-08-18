@@ -2,10 +2,17 @@
 
 import React from "react";
 import { type NodeProps } from "@xyflow/react";
-import { FolderOpen } from "lucide-react";
+import { FolderOpen, AlertCircle } from "lucide-react";
 import TNode from "./TNode/TNode";
 import CustomHandle from "./handles/CustomHandle";
 import { type WorkflowNode } from "../../store/workflowStore";
+import { useUIEngine } from "@workflow/engine";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/app/_components/ui/tooltip";
 import {
   HandleViewType,
   HandlePosition,
@@ -16,6 +23,11 @@ import {
 
 export default function NestedNode(props: NodeProps<WorkflowNode>) {
   const { selected, id } = props;
+  const engine = useUIEngine();
+  // For NestedNode, we check for missing connections differently since it uses different handle IDs
+  const nodeValidation = engine.nodes[id];
+  const needsPrev = nodeValidation?.missingPrev || false;
+  const needsNext = nodeValidation?.missingNext || false;
 
   // Define the input handle for the nested node
   const inputHandle: InputHandle = {
@@ -53,6 +65,46 @@ export default function NestedNode(props: NodeProps<WorkflowNode>) {
           }
         `}
       >
+        {needsPrev && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className="absolute -top-2 -left-2 z-10 bg-destructive text-destructive-foreground rounded-full p-1 shadow-md"
+                  aria-label="Node connection issue"
+                >
+                  <AlertCircle className="w-4 h-4" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" align="center" className="max-w-xs">
+                <div className="text-xs space-y-1">
+                  <p className="font-medium">Missing "prev" connection</p>
+                  <p>Connect an incoming edge to the "prev" handle.</p>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+        {needsNext && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className="absolute -top-2 -right-2 z-10 bg-destructive text-destructive-foreground rounded-full p-1 shadow-md"
+                  aria-label="Node connection issue"
+                >
+                  <AlertCircle className="w-4 h-4" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="left" align="center" className="max-w-xs">
+                <div className="text-xs space-y-1">
+                  <p className="font-medium">Missing "next" connection</p>
+                  <p>Connect an outgoing edge from the "next" handle.</p>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
         <div className="flex flex-col items-center justify-center p-4 space-y-2">
           <div
             className={`

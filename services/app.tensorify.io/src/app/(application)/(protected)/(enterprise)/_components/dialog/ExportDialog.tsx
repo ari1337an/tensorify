@@ -41,6 +41,74 @@ interface Artifact {
   hasErrors: boolean;
 }
 
+// Helper function to format code for better display
+function formatCodeForDisplay(code: string): string {
+  if (!code) return "";
+
+  // Check if the content appears to be JSON (for debugging/error cases)
+  if (code.trim().startsWith("{") && code.trim().endsWith("}")) {
+    try {
+      const parsed = JSON.parse(code);
+      return JSON.stringify(parsed, null, 2);
+    } catch {
+      // If it's not valid JSON, fall through to regular formatting
+    }
+  }
+
+  // For Python code with embedded errors, format more cleanly
+  if (code.includes("Error:") || code.includes("Stack:")) {
+    // Split by lines and reformat error sections
+    const lines = code.split("\n");
+    const formattedLines = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      // If this line starts with "Error:" and contains inline error text
+      if (line.includes("Error:") && line.length > 100) {
+        // Split the error message for better readability
+        const parts = line.split("Error:");
+        if (parts.length > 1) {
+          formattedLines.push(parts[0]); // Code part
+          formattedLines.push(""); // Empty line
+          formattedLines.push("# ERROR:");
+          formattedLines.push(`# ${parts[1].trim()}`);
+          formattedLines.push(""); // Empty line
+        } else {
+          formattedLines.push(line);
+        }
+      }
+      // If this line contains a stack trace on the same line
+      else if (line.includes("Stack:") && line.length > 100) {
+        const parts = line.split("Stack:");
+        if (parts.length > 1) {
+          formattedLines.push(parts[0]); // Code part
+          formattedLines.push(""); // Empty line
+          formattedLines.push("# STACK TRACE:");
+          const stackTrace = parts[1].trim();
+          // Split long stack trace into multiple lines
+          const stackLines = stackTrace.split("    at ");
+          for (let j = 0; j < stackLines.length; j++) {
+            if (stackLines[j].trim()) {
+              formattedLines.push(`#   ${stackLines[j].trim()}`);
+            }
+          }
+          formattedLines.push(""); // Empty line
+        } else {
+          formattedLines.push(line);
+        }
+      } else {
+        formattedLines.push(line);
+      }
+    }
+
+    return formattedLines.join("\n");
+  }
+
+  // Return as-is for clean code
+  return code;
+}
+
 const loadingSteps = [
   "Calculating Node Branches of Workflow",
   "Checking for variable scope mismatches",
@@ -289,7 +357,9 @@ export function ExportDialog({
 
   const handleCopy = async () => {
     if (selectedArtifact) {
-      await navigator.clipboard.writeText(selectedArtifact.code);
+      await navigator.clipboard.writeText(
+        formatCodeForDisplay(selectedArtifact.code)
+      );
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
     }
@@ -323,7 +393,7 @@ export function ExportDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-6xl max-h-[90vh] overflow-hidden">
+      <DialogContent className="sm:max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div className="flex-1">
@@ -349,7 +419,7 @@ export function ExportDialog({
             )}
           </div>
         </DialogHeader>
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden min-h-0">
           {isLoading ? (
             <div className="grid grid-rows-[1fr_auto] gap-8 min-h-[450px] rounded-lg p-8">
               {/* Top section with spinner */}
@@ -409,7 +479,7 @@ export function ExportDialog({
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-[250px_1fr] gap-4 h-[70vh]">
+            <div className="grid grid-cols-[250px_1fr] gap-4 h-[70vh] min-h-0">
               {/* Artifacts List */}
               <div className="border rounded-lg p-4 overflow-y-auto">
                 <h3 className="font-medium mb-3">Artifacts (Branch Paths)</h3>
@@ -461,7 +531,7 @@ export function ExportDialog({
               {selectedArtifact ? (
                 selectedArtifact.hasErrors ? (
                   /* Error Display */
-                  <div className="relative">
+                  <div className="relative h-full min-h-0">
                     <div className="rounded-lg border border-destructive/20 bg-destructive/5 h-full overflow-hidden">
                       <div className="px-6 py-4 border-b border-destructive/20 bg-destructive/10">
                         <div className="flex items-center gap-2">
@@ -515,7 +585,7 @@ export function ExportDialog({
                   </div>
                 ) : (
                   /* Code Display */
-                  <div className="relative group">
+                  <div className="relative group h-full min-h-0">
                     <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
                       <div
                         className={cn(
@@ -538,18 +608,21 @@ export function ExportDialog({
                         )}
                       </Button>
                     </div>
-                    <div className="relative rounded-lg border bg-[#1a1a1a] overflow-hidden h-full">
+                    <div className="relative rounded-lg border bg-[#1a1a1a] h-full flex flex-col">
                       <div
                         className={cn(
-                          "px-4 py-4 h-full overflow-auto",
+                          "px-4 py-4 flex-1 overflow-auto",
                           styles.codeContainer
                         )}
                       >
                         <pre
-                          className={cn("!bg-transparent !m-0", styles.code)}
+                          className={cn(
+                            "!bg-transparent !m-0 whitespace-pre-wrap",
+                            styles.code
+                          )}
                         >
                           <code className="language-python">
-                            {selectedArtifact.code}
+                            {formatCodeForDisplay(selectedArtifact.code)}
                           </code>
                         </pre>
                       </div>

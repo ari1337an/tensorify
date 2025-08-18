@@ -53,6 +53,7 @@ import MultiplexerNode from "@workflow/components/nodes/MultiplexerNode";
 import DemultiplexerNode from "@workflow/components/nodes/DemultiplexerNode";
 import CustomPluginNode from "@workflow/components/nodes/CustomPluginNode";
 import GlobalNodeSettingsDialog from "@workflow/components/GlobalNodeSettingsDialog";
+import CustomEdge from "@workflow/components/CustomEdge";
 
 // ID generator for nodes using crypto.randomUUID for better uniqueness
 const getId = () => crypto.randomUUID();
@@ -148,6 +149,14 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
 
     return createNodeTypeMap();
   }, [pluginManifests]);
+
+  // Edge types for custom edge components with hover tooltips
+  const edgeTypes = useMemo(
+    () => ({
+      smoothstep: CustomEdge,
+    }),
+    []
+  );
 
   // Default edge options (base); actual color may be overridden by UIEngine
   const defaultEdgeOptions = useMemo(
@@ -298,6 +307,7 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
           onConnect={onConnect}
           onNodesDelete={onNodesDelete}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           defaultEdgeOptions={defaultEdgeOptions}
           onDrop={onDrop}
           onDragOver={onDragOver}

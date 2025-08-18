@@ -37,8 +37,9 @@ import {
   X,
   TestTube2,
   Copy,
-    CheckCircle,
-    Trash2,
+  CheckCircle,
+  Trash2,
+  Unlink,
 } from "lucide-react";
 import useWorkflowStore from "../store/workflowStore";
 import { type WorkflowNode } from "../store/workflowStore";
@@ -691,6 +692,21 @@ export default function DevTools() {
     }
   };
 
+  // Remove all edges but keep nodes
+  const removeAllEdges = () => {
+    const ok = window.confirm(
+      "Remove all edges in this workspace? Nodes will remain. This cannot be undone."
+    );
+    if (!ok) return;
+    const store = useWorkflowStore.getState();
+    try {
+      store.setEdges([]);
+      console.log("🔗 Removed all edges from workspace");
+    } catch (err) {
+      console.error("Failed to remove edges:", err);
+    }
+  };
+
   // Function to create a test node with visual configuration using real plugin
   const createVisualConfigTestNode = () => {
     // Get the first available plugin manifest from the store
@@ -866,7 +882,9 @@ export default function DevTools() {
                 </div>
                 <Separator />
                 <div className="space-y-2">
-                  <h4 className="font-medium text-sm text-destructive">Danger Zone</h4>
+                  <h4 className="font-medium text-sm text-destructive">
+                    Danger Zone
+                  </h4>
                   <div className="flex flex-wrap gap-1.5">
                     <Button
                       variant="destructive"
@@ -876,6 +894,15 @@ export default function DevTools() {
                     >
                       <Trash2 className="w-3 h-3" />
                       Delete All Nodes
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={removeAllEdges}
+                      className="gap-1.5 text-xs h-7 px-2"
+                    >
+                      <Unlink className="w-3 h-3" />
+                      Remove All Edges
                     </Button>
                   </div>
                 </div>

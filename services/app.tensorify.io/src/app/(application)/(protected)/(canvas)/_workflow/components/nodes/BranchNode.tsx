@@ -2,10 +2,17 @@
 
 import React, { useState, useEffect } from "react";
 import { type NodeProps } from "@xyflow/react";
-import { GitBranch } from "lucide-react";
+import { GitBranch, AlertCircle } from "lucide-react";
 import TNode from "./TNode/TNode";
 import CustomHandle from "./handles/CustomHandle";
 import useWorkflowStore, { type WorkflowNode } from "../../store/workflowStore";
+import { useUIEngine } from "@workflow/engine";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/app/_components/ui/tooltip";
 import {
   HandleViewType,
   HandlePosition,
@@ -29,6 +36,9 @@ export default function BranchNode(props: NodeProps<WorkflowNode>) {
   const { selected, id, data } = props;
   const [showDialog, setShowDialog] = useState(false);
   const [branchCount, setBranchCount] = useState(2);
+  const engine = useUIEngine();
+  const needsPrev = engine.nodes[id]?.missingPrev || false;
+  const needsNext = engine.nodes[id]?.missingNext || false;
 
   // Check if this is a newly created node
   useEffect(() => {
@@ -41,10 +51,10 @@ export default function BranchNode(props: NodeProps<WorkflowNode>) {
   const actualBranchCount: number =
     typeof data.branchCount === "number" ? data.branchCount : 2;
 
-  // Define the input handle
+  // Define the input handle (using "prev" to match UI engine validation)
   const inputHandle: InputHandle = {
-    id: "branch-input",
-    label: "Input",
+    id: "prev",
+    label: "Prev",
     position: HandlePosition.LEFT,
     viewType: HandleViewType.CIRCLE_LG,
     edgeType: EdgeType.DEFAULT,
@@ -52,11 +62,11 @@ export default function BranchNode(props: NodeProps<WorkflowNode>) {
     required: true,
   };
 
-  // Generate output handles based on branch count
+  // Generate output handles based on branch count (numbered for unique identification)
   const outputHandles: OutputHandle[] = Array.from(
     { length: actualBranchCount },
     (_, index) => ({
-      id: `branch-output-${index + 1}`,
+      id: `next-${index + 1}`,
       label: `Branch ${index + 1}`,
       position: HandlePosition.RIGHT,
       viewType: HandleViewType.CIRCLE_LG,
@@ -89,6 +99,50 @@ export default function BranchNode(props: NodeProps<WorkflowNode>) {
             }
           `}
         >
+          {needsPrev && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    className="absolute -top-2 -left-2 z-10 bg-destructive text-destructive-foreground rounded-full p-1 shadow-md"
+                    aria-label="Node connection issue"
+                  >
+                    <AlertCircle className="w-4 h-4" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="right"
+                  align="center"
+                  className="max-w-xs"
+                >
+                  <div className="text-xs space-y-1">
+                    <p className="font-medium">Missing "prev" connection</p>
+                    <p>Connect an incoming edge to the "prev" handle.</p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          {needsNext && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    className="absolute -top-2 -right-2 z-10 bg-destructive text-destructive-foreground rounded-full p-1 shadow-md"
+                    aria-label="Node connection issue"
+                  >
+                    <AlertCircle className="w-4 h-4" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="left" align="center" className="max-w-xs">
+                  <div className="text-xs space-y-1">
+                    <p className="font-medium">Missing "next" connection</p>
+                    <p>Connect outgoing edges from the "next" handles.</p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           <div className="flex flex-col items-center justify-center p-4 space-y-2">
             <div
               className={`

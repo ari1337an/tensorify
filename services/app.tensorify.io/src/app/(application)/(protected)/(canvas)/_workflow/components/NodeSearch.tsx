@@ -3,14 +3,6 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react";
 import { Panel } from "@xyflow/react";
 import semver from "semver";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/app/_components/ui/sheet";
 import { Button } from "@/app/_components/ui/button";
 import { Input } from "@/app/_components/ui/input";
 import {
@@ -504,8 +496,8 @@ const SearchBar = ({
 );
 
 export default function NodeSearch() {
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [isNestedSheetOpen, setIsNestedSheetOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isNestedPanelOpen, setIsNestedPanelOpen] = useState(false);
   const [nestedContent, setNestedContent] = useState<{
     title: string;
     items: NodeItem[];
@@ -819,7 +811,7 @@ export default function NodeSearch() {
   const handleParentClick = (item: NodeItem) => {
     if (item.children && item.children.length > 0) {
       setNestedContent({ title: item.title, items: item.children });
-      setIsNestedSheetOpen(true);
+      setIsNestedPanelOpen(true);
       setNestedSearchTerm("");
     }
   };
@@ -1089,62 +1081,448 @@ export default function NodeSearch() {
     !searchState.hasSearched;
 
   return (
-    <Panel position="top-right">
-      <Sheet
-        open={isSheetOpen}
-        onOpenChange={(open) => {
-          setIsSheetOpen(open);
-          if (!open) {
-            // Reset search state when closing
-            setManualExternalSearchTriggered(false);
-            setSearchState({
-              isSearching: false,
-              isSearchingExternal: false,
-              hasSearched: false,
-              query: "",
-              results: [],
-              error: null,
-            });
-          }
-        }}
-      >
-        <SheetTrigger asChild>
-          <Button
-            variant="default"
-            size="icon"
-            className="h-12 w-12 rounded-full backdrop-blur-sm bg-primary border-border/50 hover:bg-primary/90 shadow-sm transition-all duration-200 hover:scale-105"
-          >
-            <Plus className="size-6 text-primary-foreground" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent
-          side="right"
-          className="w-full sm:max-w-md border-l border-border/50 backdrop-blur-xl bg-card/90 p-0 flex flex-col top-11 h-[calc(100vh-2.75rem)]"
-          showOverlay={false}
-          onInteractOutside={(e) => {
-            if (isNestedSheetOpen) {
-              e.preventDefault();
+    <>
+      {/* Floating Toggle Button */}
+      <Panel position="top-right">
+        <Button
+          variant="default"
+          size="icon"
+          className="h-12 w-12 rounded-full backdrop-blur-sm bg-primary border-border/50 hover:bg-primary/90 shadow-sm transition-all duration-200 hover:scale-105"
+          onClick={() => {
+            setIsSidebarOpen(!isSidebarOpen);
+            if (isSidebarOpen) {
+              // Reset search state when closing
+              setManualExternalSearchTriggered(false);
+              setSearchState({
+                isSearching: false,
+                isSearchingExternal: false,
+                hasSearched: false,
+                query: "",
+                results: [],
+                error: null,
+              });
             }
           }}
         >
-          <SheetHeader>
-            <SheetTitle className="text-xl font-semibold">Add Node</SheetTitle>
-            <SheetDescription className="text-muted-foreground text-sm">
-              Browse nodes and drag them to the canvas.
-            </SheetDescription>
-          </SheetHeader>
-          <SearchBar
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            isSearching={searchState.isSearching && !hasLocalResults}
-          />
-          <ScrollArea className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 dark:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50">
-            <div className="flex flex-col gap-1 pb-3 px-3">
-              {/* 1. Children matches with scoring (topmost - no divider) */}
-              {localResults.childrenMatches.map((category) =>
-                category.children?.map((item) => (
+          <Plus className="size-6 text-primary-foreground" />
+        </Button>
+      </Panel>
+
+      {/* Collapsible Node Search Sidebar */}
+      <div
+        className={`fixed top-11 right-0 z-[150] h-[calc(100vh-2.75rem)] bg-sidebar border-l border-border/50 backdrop-blur-lg transition-all duration-300 ${
+          isSidebarOpen ? "w-[400px]" : "w-0"
+        } overflow-hidden`}
+      >
+        {isSidebarOpen && (
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="p-4 border-b border-border/30">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-xl font-semibold">Add Node</h2>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setIsSidebarOpen(false);
+                    // Reset search state when closing
+                    setManualExternalSearchTriggered(false);
+                    setSearchState({
+                      isSearching: false,
+                      isSearchingExternal: false,
+                      hasSearched: false,
+                      query: "",
+                      results: [],
+                      error: null,
+                    });
+                  }}
+                  className="h-8 w-8"
+                >
+                  <Plus className="h-4 w-4 rotate-45" />
+                </Button>
+              </div>
+              <p className="text-muted-foreground text-sm">
+                Browse nodes and drag them to the canvas.
+              </p>
+            </div>
+
+            {/* Search Bar */}
+            <SearchBar
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              isSearching={searchState.isSearching && !hasLocalResults}
+            />
+            <ScrollArea className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 dark:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50">
+              <div className="flex flex-col gap-1 pt-3 pb-3 px-3">
+                {/* 1. Children matches with scoring (topmost - no divider) */}
+                {localResults.childrenMatches.map((category) =>
+                  category.children?.map((item) => (
+                    <div
+                      key={`child-${item.id}`}
+                      draggable={item.draggable}
+                      onDragStart={(e) => onDragStart(e, item.id, item.version)}
+                      onDragEnd={onDragEnd}
+                      className={
+                        item.draggable
+                          ? "cursor-grab active:cursor-grabbing"
+                          : "cursor-default"
+                      }
+                    >
+                      <NodeListItem
+                        item={item}
+                        onClick={() => {}}
+                        matchDetails={(item as ScoredNodeItem).matchDetails}
+                      />
+                    </div>
+                  ))
+                )}
+
+                {/* Divider before category matches */}
+                {localResults.childrenMatches.length > 0 &&
+                  localResults.parentMatches.length > 0 && (
+                    <div className="flex items-center gap-3 py-2 my-2">
+                      <div className="flex-1 h-px bg-border"></div>
+                      <span className="text-xs text-muted-foreground font-medium">
+                        CATEGORY MATCHES
+                      </span>
+                      <div className="flex-1 h-px bg-border"></div>
+                    </div>
+                  )}
+
+                {/* 2. Category matches with scoring */}
+                {localResults.parentMatches.map((item) => (
                   <div
-                    key={`child-${item.id}`}
+                    key={`parent-${item.id}`}
+                    draggable={item.draggable}
+                    onDragStart={(e) =>
+                      item.draggable && onDragStart(e, item.id, item.version)
+                    }
+                    onDragEnd={onDragEnd}
+                    className={
+                      item.draggable
+                        ? "cursor-grab active:cursor-grabbing"
+                        : item.children && item.children.length > 0
+                          ? "cursor-pointer"
+                          : "cursor-default"
+                    }
+                  >
+                    <NodeListItem
+                      item={item}
+                      onClick={() => handleParentClick(item)}
+                      matchDetails={(item as ScoredNodeItem).matchDetails}
+                    />
+                  </div>
+                ))}
+
+                {/* Manual external search button */}
+                {shouldShowManualSearchButton && (
+                  <div className="flex items-center gap-3 py-3 my-2">
+                    <div className="flex-1 h-px bg-border"></div>
+                    <Button
+                      onClick={handleManualExternalSearch}
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 text-xs font-medium"
+                    >
+                      <Search className="h-3.5 w-3.5" />
+                      Search External Plugins
+                    </Button>
+                    <div className="flex-1 h-px bg-border"></div>
+                  </div>
+                )}
+
+                {/* External plugin results */}
+                {shouldShowExternalLoading && (
+                  <>
+                    {/* Divider before external loading (only if there are local results) */}
+                    {hasLocalResults && (
+                      <div className="flex items-center gap-3 py-2 my-2">
+                        <div className="flex-1 h-px bg-border"></div>
+                        <span className="text-xs text-muted-foreground font-medium">
+                          SEARCHING EXTERNAL PLUGINS
+                        </span>
+                        <div className="flex-1 h-px bg-border"></div>
+                      </div>
+                    )}
+                    <div className="text-center py-8 text-muted-foreground">
+                      <LoadingSpinner className="mx-auto mb-3 text-primary-readable" />
+                      <p className="text-sm">Searching plugins...</p>
+                      <p className="text-xs mt-1 opacity-75">
+                        Using advanced search for &ldquo;{debouncedSearchTerm}
+                        &rdquo;
+                      </p>
+                    </div>
+                  </>
+                )}
+
+                {shouldShowExternalResults &&
+                  searchState.results.length > 0 && (
+                    <>
+                      {/* Divider before external results (only if there are local results) */}
+                      {hasLocalResults && (
+                        <div className="flex items-center gap-3 py-2 my-2">
+                          <div className="flex-1 h-px bg-border"></div>
+                          <span className="text-xs text-muted-foreground font-medium">
+                            EXTERNAL PLUGINS ({searchState.results.length})
+                          </span>
+                          <div className="flex-1 h-px bg-border"></div>
+                        </div>
+                      )}
+
+                      {/* Show section header if no local results */}
+                      {!hasLocalResults && (
+                        <div className="flex items-center gap-3 py-2 my-2">
+                          <div className="flex-1 h-px bg-border"></div>
+                          <span className="text-xs text-muted-foreground font-medium">
+                            EXTERNAL PLUGINS ({searchState.results.length})
+                          </span>
+                          <div className="flex-1 h-px bg-border"></div>
+                        </div>
+                      )}
+
+                      {searchState.results.map((plugin) => {
+                        const isInstalling = installingPlugins.has(plugin.id);
+                        const installedPlugin = installedPlugins.find(
+                          (p) => p.name === plugin.name
+                        );
+                        const isUpdating =
+                          installedPlugin &&
+                          updatingPlugins.has(installedPlugin.id);
+
+                        const canUpdate =
+                          installedPlugin &&
+                          semver.valid(plugin.version) &&
+                          semver.valid(installedPlugin.version) &&
+                          semver.gt(plugin.version, installedPlugin.version);
+
+                        return (
+                          <div
+                            key={`external-${plugin.id}`}
+                            className="group relative flex items-center gap-3.5 p-3 rounded-lg transition-colors duration-200 hover:bg-muted/70"
+                          >
+                            <div className="flex-shrink-0 bg-muted/40 rounded-md p-2.5 transition-colors duration-200 group-hover:bg-primary/10">
+                              <ExternalLink className="h-5 w-5 text-primary-readable" />
+                            </div>
+                            <div className="flex-grow">
+                              <p className="font-medium text-foreground transition-colors duration-200 group-hover:text-primary-readable">
+                                {plugin.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {plugin.description}
+                              </p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <p className="text-xs text-muted-foreground">
+                                  by {plugin.authorName}
+                                </p>
+                                {plugin.pluginType && (
+                                  <>
+                                    <span className="text-xs text-muted-foreground">
+                                      •
+                                    </span>
+                                    <span className="text-xs bg-muted/60 text-muted-foreground px-1.5 py-0.5 rounded-sm font-medium">
+                                      {plugin.pluginType.replace("_", " ")}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              {installedPlugin ? (
+                                canUpdate ? (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleUpdatePlugin(
+                                        installedPlugin,
+                                        plugin.version
+                                      )
+                                    }
+                                    disabled={isUpdating}
+                                    className="gap-1.5"
+                                  >
+                                    {isUpdating ? (
+                                      <>
+                                        <LoadingSpinner size="sm" />
+                                        Updating...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <RefreshCw className="h-3.5 w-3.5" />
+                                        Update to v{plugin.version}
+                                      </>
+                                    )}
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled
+                                    className="gap-1.5 bg-green-500/10 border-green-500/20 text-green-500"
+                                  >
+                                    <CheckCircle className="h-3.5 w-3.5" />
+                                    Installed
+                                  </Button>
+                                )
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleInstallPlugin(plugin)}
+                                  disabled={isInstalling}
+                                  className="gap-1.5"
+                                >
+                                  {isInstalling ? (
+                                    <>
+                                      <LoadingSpinner size="sm" />
+                                      Installing...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Download className="h-3.5 w-3.5" />
+                                      Install
+                                    </>
+                                  )}
+                                </Button>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  const isDevelopment =
+                                    process.env.NODE_ENV === "development";
+                                  const baseUrl = isDevelopment
+                                    ? "http://localhost:3004"
+                                    : "https://plugins.tensorify.io";
+                                  window.open(
+                                    `${baseUrl}/plugins/${plugin.slug}`,
+                                    "_blank"
+                                  );
+                                }}
+                              >
+                                <ExternalLink className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {searchState.results.length === MAX_EXTERNAL_RESULTS && (
+                        <Button
+                          onClick={handleMorePluginsClick}
+                          variant="outline"
+                          className="w-full mt-2 gap-2"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          More Plugins
+                        </Button>
+                      )}
+                    </>
+                  )}
+
+                {shouldShowExternalResults &&
+                  searchState.results.length === 0 &&
+                  !searchState.error && (
+                    <>
+                      {/* Divider before no results message (only if there are local results) */}
+                      {hasLocalResults && (
+                        <div className="flex items-center gap-3 py-2 my-2">
+                          <div className="flex-1 h-px bg-border"></div>
+                          <span className="text-xs text-muted-foreground font-medium">
+                            EXTERNAL PLUGINS
+                          </span>
+                          <div className="flex-1 h-px bg-border"></div>
+                        </div>
+                      )}
+                      <div className="text-center py-8 text-muted-foreground">
+                        <p className="mb-2">
+                          {hasLocalResults
+                            ? `No external plugins found for "${debouncedSearchTerm}"`
+                            : `No plugins found for "${debouncedSearchTerm}"`}
+                        </p>
+                        <Button
+                          onClick={handleMorePluginsClick}
+                          variant="outline"
+                          size="sm"
+                          className="gap-2"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Search in Plugin Store
+                        </Button>
+                      </div>
+                    </>
+                  )}
+
+                {searchState.error && (
+                  <>
+                    {/* Divider before error message (only if there are local results) */}
+                    {hasLocalResults && (
+                      <div className="flex items-center gap-3 py-2 my-2">
+                        <div className="flex-1 h-px bg-border"></div>
+                        <span className="text-xs text-muted-foreground font-medium">
+                          EXTERNAL PLUGINS
+                        </span>
+                        <div className="flex-1 h-px bg-border"></div>
+                      </div>
+                    )}
+                    <div className="text-center py-8 text-muted-foreground">
+                      <p className="mb-2 text-red-500">
+                        {hasLocalResults
+                          ? "External search failed"
+                          : "Search failed"}
+                      </p>
+                      <p className="text-xs mb-3">{searchState.error}</p>
+                      <Button
+                        onClick={() =>
+                          searchExternalPlugins(debouncedSearchTerm)
+                        }
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                      >
+                        Try Again
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+        )}
+      </div>
+
+      {/* Nested Category Panel */}
+      <div
+        className={`fixed top-11 right-0 z-[160] h-[calc(100vh-2.75rem)] bg-sidebar border-l border-border/50 backdrop-blur-lg transition-all duration-300 ${
+          isNestedPanelOpen ? "w-[400px]" : "w-0"
+        } overflow-hidden`}
+      >
+        {isNestedPanelOpen && (
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="p-4 border-b border-border/30">
+              <button
+                onClick={() => setIsNestedPanelOpen(false)}
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3 -ml-1"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                All Categories
+              </button>
+              <h2 className="text-xl font-semibold">{nestedContent.title}</h2>
+            </div>
+
+            {/* Search Bar */}
+            <SearchBar
+              value={nestedSearchTerm}
+              onChange={(e) => setNestedSearchTerm(e.target.value)}
+            />
+
+            {/* Content */}
+            <ScrollArea className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 dark:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50">
+              <div className="flex flex-col gap-1 pt-3 pb-3 px-3">
+                {filteredNestedNodes.map((item) => (
+                  <div
+                    key={item.id}
                     draggable={item.draggable}
                     onDragStart={(e) => onDragStart(e, item.id, item.version)}
                     onDragEnd={onDragEnd}
@@ -1160,366 +1538,12 @@ export default function NodeSearch() {
                       matchDetails={(item as ScoredNodeItem).matchDetails}
                     />
                   </div>
-                ))
-              )}
-
-              {/* Divider before category matches */}
-              {localResults.childrenMatches.length > 0 &&
-                localResults.parentMatches.length > 0 && (
-                  <div className="flex items-center gap-3 py-2 my-2">
-                    <div className="flex-1 h-px bg-border"></div>
-                    <span className="text-xs text-muted-foreground font-medium">
-                      CATEGORY MATCHES
-                    </span>
-                    <div className="flex-1 h-px bg-border"></div>
-                  </div>
-                )}
-
-              {/* 2. Category matches with scoring */}
-              {localResults.parentMatches.map((item) => (
-                <div
-                  key={`parent-${item.id}`}
-                  draggable={item.draggable}
-                  onDragStart={(e) =>
-                    item.draggable && onDragStart(e, item.id, item.version)
-                  }
-                  onDragEnd={onDragEnd}
-                  className={
-                    item.draggable
-                      ? "cursor-grab active:cursor-grabbing"
-                      : item.children && item.children.length > 0
-                        ? "cursor-pointer"
-                        : "cursor-default"
-                  }
-                >
-                  <NodeListItem
-                    item={item}
-                    onClick={() => handleParentClick(item)}
-                    matchDetails={(item as ScoredNodeItem).matchDetails}
-                  />
-                </div>
-              ))}
-
-              {/* Manual external search button */}
-              {shouldShowManualSearchButton && (
-                <div className="flex items-center gap-3 py-3 my-2">
-                  <div className="flex-1 h-px bg-border"></div>
-                  <Button
-                    onClick={handleManualExternalSearch}
-                    variant="outline"
-                    size="sm"
-                    className="gap-2 text-xs font-medium"
-                  >
-                    <Search className="h-3.5 w-3.5" />
-                    Search External Plugins
-                  </Button>
-                  <div className="flex-1 h-px bg-border"></div>
-                </div>
-              )}
-
-              {/* External plugin results */}
-              {shouldShowExternalLoading && (
-                <>
-                  {/* Divider before external loading (only if there are local results) */}
-                  {hasLocalResults && (
-                    <div className="flex items-center gap-3 py-2 my-2">
-                      <div className="flex-1 h-px bg-border"></div>
-                      <span className="text-xs text-muted-foreground font-medium">
-                        SEARCHING EXTERNAL PLUGINS
-                      </span>
-                      <div className="flex-1 h-px bg-border"></div>
-                    </div>
-                  )}
-                  <div className="text-center py-8 text-muted-foreground">
-                    <LoadingSpinner className="mx-auto mb-3 text-primary-readable" />
-                    <p className="text-sm">Searching plugins...</p>
-                    <p className="text-xs mt-1 opacity-75">
-                      Using advanced search for &ldquo;{debouncedSearchTerm}
-                      &rdquo;
-                    </p>
-                  </div>
-                </>
-              )}
-
-              {shouldShowExternalResults && searchState.results.length > 0 && (
-                <>
-                  {/* Divider before external results (only if there are local results) */}
-                  {hasLocalResults && (
-                    <div className="flex items-center gap-3 py-2 my-2">
-                      <div className="flex-1 h-px bg-border"></div>
-                      <span className="text-xs text-muted-foreground font-medium">
-                        EXTERNAL PLUGINS ({searchState.results.length})
-                      </span>
-                      <div className="flex-1 h-px bg-border"></div>
-                    </div>
-                  )}
-
-                  {/* Show section header if no local results */}
-                  {!hasLocalResults && (
-                    <div className="flex items-center gap-3 py-2 my-2">
-                      <div className="flex-1 h-px bg-border"></div>
-                      <span className="text-xs text-muted-foreground font-medium">
-                        EXTERNAL PLUGINS ({searchState.results.length})
-                      </span>
-                      <div className="flex-1 h-px bg-border"></div>
-                    </div>
-                  )}
-
-                  {searchState.results.map((plugin) => {
-                    const isInstalling = installingPlugins.has(plugin.id);
-                    const installedPlugin = installedPlugins.find(
-                      (p) => p.name === plugin.name
-                    );
-                    const isUpdating =
-                      installedPlugin &&
-                      updatingPlugins.has(installedPlugin.id);
-
-                    const canUpdate =
-                      installedPlugin &&
-                      semver.valid(plugin.version) &&
-                      semver.valid(installedPlugin.version) &&
-                      semver.gt(plugin.version, installedPlugin.version);
-
-                    return (
-                      <div
-                        key={`external-${plugin.id}`}
-                        className="group relative flex items-center gap-3.5 p-3 rounded-lg transition-colors duration-200 hover:bg-muted/70"
-                      >
-                        <div className="flex-shrink-0 bg-muted/40 rounded-md p-2.5 transition-colors duration-200 group-hover:bg-primary/10">
-                          <ExternalLink className="h-5 w-5 text-primary-readable" />
-                        </div>
-                        <div className="flex-grow">
-                          <p className="font-medium text-foreground transition-colors duration-200 group-hover:text-primary-readable">
-                            {plugin.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {plugin.description}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <p className="text-xs text-muted-foreground">
-                              by {plugin.authorName}
-                            </p>
-                            {plugin.pluginType && (
-                              <>
-                                <span className="text-xs text-muted-foreground">
-                                  •
-                                </span>
-                                <span className="text-xs bg-muted/60 text-muted-foreground px-1.5 py-0.5 rounded-sm font-medium">
-                                  {plugin.pluginType.replace("_", " ")}
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          {installedPlugin ? (
-                            canUpdate ? (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  handleUpdatePlugin(
-                                    installedPlugin,
-                                    plugin.version
-                                  )
-                                }
-                                disabled={isUpdating}
-                                className="gap-1.5"
-                              >
-                                {isUpdating ? (
-                                  <>
-                                    <LoadingSpinner size="sm" />
-                                    Updating...
-                                  </>
-                                ) : (
-                                  <>
-                                    <RefreshCw className="h-3.5 w-3.5" />
-                                    Update to v{plugin.version}
-                                  </>
-                                )}
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                disabled
-                                className="gap-1.5 bg-green-500/10 border-green-500/20 text-green-500"
-                              >
-                                <CheckCircle className="h-3.5 w-3.5" />
-                                Installed
-                              </Button>
-                            )
-                          ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleInstallPlugin(plugin)}
-                              disabled={isInstalling}
-                              className="gap-1.5"
-                            >
-                              {isInstalling ? (
-                                <>
-                                  <LoadingSpinner size="sm" />
-                                  Installing...
-                                </>
-                              ) : (
-                                <>
-                                  <Download className="h-3.5 w-3.5" />
-                                  Install
-                                </>
-                              )}
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              const isDevelopment =
-                                process.env.NODE_ENV === "development";
-                              const baseUrl = isDevelopment
-                                ? "http://localhost:3004"
-                                : "https://plugins.tensorify.io";
-                              window.open(
-                                `${baseUrl}/plugins/${plugin.slug}`,
-                                "_blank"
-                              );
-                            }}
-                          >
-                            <ExternalLink className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {searchState.results.length === MAX_EXTERNAL_RESULTS && (
-                    <Button
-                      onClick={handleMorePluginsClick}
-                      variant="outline"
-                      className="w-full mt-2 gap-2"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                      More Plugins
-                    </Button>
-                  )}
-                </>
-              )}
-
-              {shouldShowExternalResults &&
-                searchState.results.length === 0 &&
-                !searchState.error && (
-                  <>
-                    {/* Divider before no results message (only if there are local results) */}
-                    {hasLocalResults && (
-                      <div className="flex items-center gap-3 py-2 my-2">
-                        <div className="flex-1 h-px bg-border"></div>
-                        <span className="text-xs text-muted-foreground font-medium">
-                          EXTERNAL PLUGINS
-                        </span>
-                        <div className="flex-1 h-px bg-border"></div>
-                      </div>
-                    )}
-                    <div className="text-center py-8 text-muted-foreground">
-                      <p className="mb-2">
-                        {hasLocalResults
-                          ? `No external plugins found for "${debouncedSearchTerm}"`
-                          : `No plugins found for "${debouncedSearchTerm}"`}
-                      </p>
-                      <Button
-                        onClick={handleMorePluginsClick}
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        Search in Plugin Store
-                      </Button>
-                    </div>
-                  </>
-                )}
-
-              {searchState.error && (
-                <>
-                  {/* Divider before error message (only if there are local results) */}
-                  {hasLocalResults && (
-                    <div className="flex items-center gap-3 py-2 my-2">
-                      <div className="flex-1 h-px bg-border"></div>
-                      <span className="text-xs text-muted-foreground font-medium">
-                        EXTERNAL PLUGINS
-                      </span>
-                      <div className="flex-1 h-px bg-border"></div>
-                    </div>
-                  )}
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p className="mb-2 text-red-500">
-                      {hasLocalResults
-                        ? "External search failed"
-                        : "Search failed"}
-                    </p>
-                    <p className="text-xs mb-3">{searchState.error}</p>
-                    <Button
-                      onClick={() => searchExternalPlugins(debouncedSearchTerm)}
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                    >
-                      Try Again
-                    </Button>
-                  </div>
-                </>
-              )}
-            </div>
-          </ScrollArea>
-        </SheetContent>
-      </Sheet>
-
-      <Sheet open={isNestedSheetOpen} onOpenChange={setIsNestedSheetOpen}>
-        <SheetContent
-          side="right"
-          className="w-full sm:max-w-md border-l border-border/50 backdrop-blur-xl bg-card/90 p-0 flex flex-col top-11 h-[calc(100vh-2.75rem)]"
-          showOverlay={false}
-        >
-          <SheetHeader className="p-4 border-b border-border/50">
-            <button
-              onClick={() => setIsNestedSheetOpen(false)}
-              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3 -ml-1"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              All Categories
-            </button>
-            <SheetTitle className="text-xl font-semibold">
-              {nestedContent.title}
-            </SheetTitle>
-          </SheetHeader>
-          <SearchBar
-            value={nestedSearchTerm}
-            onChange={(e) => setNestedSearchTerm(e.target.value)}
-          />
-          <ScrollArea className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 dark:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50">
-            <div className="flex flex-col gap-1 p-3">
-              {filteredNestedNodes.map((item) => (
-                <div
-                  key={item.id}
-                  draggable={item.draggable}
-                  onDragStart={(e) => onDragStart(e, item.id, item.version)}
-                  onDragEnd={onDragEnd}
-                  className={
-                    item.draggable
-                      ? "cursor-grab active:cursor-grabbing"
-                      : "cursor-default"
-                  }
-                >
-                  <NodeListItem
-                    item={item}
-                    onClick={() => {}}
-                    matchDetails={(item as ScoredNodeItem).matchDetails}
-                  />
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
-        </SheetContent>
-      </Sheet>
-    </Panel>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+        )}
+      </div>
+    </>
   );
 }

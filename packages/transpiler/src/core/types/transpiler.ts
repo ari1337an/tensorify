@@ -18,6 +18,18 @@ export interface TranspilerResult {
 export interface Path {
   endNodeId: string;
   nodes: string[]; // Array of node IDs in order from start to end
+  route: string; // The route this path belongs to
+  isExpanded?: boolean; // Whether this path has been expanded from nested nodes
+}
+
+// Route information for nested workflow handling
+export interface RouteInfo {
+  route: string;
+  parentRoute?: string;
+  nestedNodeId?: string; // The nested node that contains this route
+  startNodes: string[];
+  endNodes: string[];
+  nodes: string[];
 }
 
 // Plugin execution result

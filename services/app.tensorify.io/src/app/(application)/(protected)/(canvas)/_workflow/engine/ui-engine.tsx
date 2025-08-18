@@ -57,6 +57,14 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
   const pluginManifests = useAppStore((state) => state.pluginManifests);
 
   const state = useMemo<UIEngineState>(() => {
+    // Define handle aliases at the top to avoid reference errors
+    const NEXT_ALIASES = new Set(["next", "start-output", "nested-output"]);
+    const PREV_ALIASES = new Set(["prev", "end-input", "nested-input"]);
+
+    // Helper function to check if a handle is a Branch node numbered output
+    const isBranchNextHandle = (handleId: string) =>
+      /^next-\d+$/.test(handleId);
+
     // Build quick lookup maps for node handles
     const nodeIdToHandles = new Map<
       string,
@@ -73,6 +81,17 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
       } else if (node.type === "@tensorify/core/EndNode") {
         // End requires only PREV
         inputHandles.add("prev");
+      } else if (node.type === "@tensorify/core/NestedNode") {
+        // Nested nodes use their own handle IDs
+        inputHandles.add("nested-input");
+        outputHandles.add("nested-output");
+      } else if (node.type === "@tensorify/core/BranchNode") {
+        // Branch nodes have prev input and numbered next outputs
+        inputHandles.add("prev");
+        const branchCount = (node.data as any)?.branchCount || 2;
+        for (let i = 1; i <= branchCount; i++) {
+          outputHandles.add(`next-${i}`);
+        }
       } else {
         // Custom/plugin and other functional nodes require both
         inputHandles.add("prev");
@@ -124,11 +143,13 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
       const incoming = incomingByNode.get(n.id) || [];
       const outgoing = outgoingByNode.get(n.id) || [];
 
-      const prevCount = incoming.filter(
-        (ie) => (ie.targetHandle ?? "") === "prev"
+      const prevCount = incoming.filter((ie) =>
+        PREV_ALIASES.has(ie.targetHandle ?? "")
       ).length;
       const nextCount = outgoing.filter(
-        (oe) => (oe.sourceHandle ?? "") === "next"
+        (oe) =>
+          NEXT_ALIASES.has(oe.sourceHandle ?? "") ||
+          isBranchNextHandle(oe.sourceHandle ?? "")
       ).length;
       const hasPrev = prevCount > 0;
       const hasNext = nextCount > 0;
@@ -170,8 +191,6 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
 
     // Compute edge compatibility and over-subscription flags
     const edgesState: Record<string, EdgeValidationState> = {};
-    const NEXT_ALIASES = new Set(["next", "start-output"]);
-    const PREV_ALIASES = new Set(["prev", "end-input"]);
 
     // Count per node handle
     const prevCountsByNode = new Map<string, number>();
@@ -179,13 +198,13 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
     rfEdges.forEach((e) => {
       const th = (e.targetHandle ?? "").toString();
       const sh = (e.sourceHandle ?? "").toString();
-      if (th === "prev") {
+      if (PREV_ALIASES.has(th)) {
         prevCountsByNode.set(
           e.target,
           (prevCountsByNode.get(e.target) || 0) + 1
         );
       }
-      if (sh === "next") {
+      if (NEXT_ALIASES.has(sh) || isBranchNextHandle(sh)) {
         nextCountsByNode.set(
           e.source,
           (nextCountsByNode.get(e.source) || 0) + 1
@@ -196,13 +215,26 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
     rfEdges.forEach((e) => {
       const sh = (e.sourceHandle ?? "").toString();
       const th = (e.targetHandle ?? "").toString();
-      const compatible = NEXT_ALIASES.has(sh) && PREV_ALIASES.has(th);
+      const compatible =
+        (NEXT_ALIASES.has(sh) || isBranchNextHandle(sh)) &&
+        PREV_ALIASES.has(th);
       let reason: EdgeValidationState["reason"] = null;
       if (!compatible) {
         reason = "incompatible";
-      } else if (sh === "next" && (nextCountsByNode.get(e.source) || 0) > 1) {
-        reason = "multi-next";
-      } else if (th === "prev" && (prevCountsByNode.get(e.target) || 0) > 1) {
+      } else if (
+        (NEXT_ALIASES.has(sh) || isBranchNextHandle(sh)) &&
+        (nextCountsByNode.get(e.source) || 0) > 1
+      ) {
+        // Check if source node is a Branch node - if so, multiple connections are expected
+        const sourceNode = nodes.find((n) => n.id === e.source);
+        const isBranchNode = sourceNode?.type === "@tensorify/core/BranchNode";
+        if (!isBranchNode) {
+          reason = "multi-next";
+        }
+      } else if (
+        PREV_ALIASES.has(th) &&
+        (prevCountsByNode.get(e.target) || 0) > 1
+      ) {
         reason = "multi-prev";
       }
       edgesState[e.id] = {
@@ -235,7 +267,10 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
     rfEdges.forEach((e) => {
       const sh = (e.sourceHandle ?? "").toString();
       const th = (e.targetHandle ?? "").toString();
-      if (NEXT_ALIASES.has(sh) && PREV_ALIASES.has(th)) {
+      if (
+        (NEXT_ALIASES.has(sh) || isBranchNextHandle(sh)) &&
+        PREV_ALIASES.has(th)
+      ) {
         if (!parentsByNode.has(e.target)) parentsByNode.set(e.target, []);
         parentsByNode.get(e.target)!.push(e.source);
       }
