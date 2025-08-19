@@ -23,7 +23,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 // Create Express endpoints
-createExpressEndpoints(contracts, actions, app, {
+createExpressEndpoints(contracts, actions, app as any, {
   logInitialization: true,
   jsonQuery: true,
   responseValidation: true,

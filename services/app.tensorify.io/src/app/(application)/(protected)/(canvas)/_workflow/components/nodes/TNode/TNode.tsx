@@ -57,6 +57,7 @@ import useWorkflowStore, {
   type VisualConfig,
 } from "../../../store/workflowStore";
 import { PluginSettingsSection } from "./PluginSettingsSection";
+import { CustomCodeSettings } from "./CustomCodeSettings";
 import useAppStore from "@/app/_store/store";
 import { useUIEngine } from "../../../engine/ui-engine";
 import { VariablesTab } from "./VariablesTab";
@@ -1259,11 +1260,21 @@ export default function TNode({
                   </Card>
                 )}
 
-                {/* Plugin Settings Section */}
-                <PluginSettingsSection
-                  nodeId={id}
-                  onSettingsChange={handlePluginSettingsChange}
-                />
+                {/* Custom Code Settings for CustomCodeNode */}
+                {type === "@tensorify/core/CustomCodeNode" ? (
+                  <CustomCodeSettings
+                    nodeId={id}
+                    onSettingsChange={(newData) => {
+                      updateNodeData(id, newData);
+                    }}
+                  />
+                ) : (
+                  /* Plugin Settings Section for other nodes */
+                  <PluginSettingsSection
+                    nodeId={id}
+                    onSettingsChange={handlePluginSettingsChange}
+                  />
+                )}
               </TabsContent>
 
               <TabsContent value="scope" className="flex-1 overflow-auto">

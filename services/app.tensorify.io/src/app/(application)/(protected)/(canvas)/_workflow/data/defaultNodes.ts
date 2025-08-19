@@ -33,6 +33,7 @@ import {
   Component,
   Merge,
   Split,
+  Code,
 } from "lucide-react";
 import { NodeItem } from "../types/NodeItem";
 
@@ -382,7 +383,17 @@ const defaultNodes: NodeItem[] = [
     title: "Functions",
     description:
       "Utility functions and custom operations for specialized tasks in your workflow.",
-    children: [],
+    children: [
+      {
+        id: "@tensorify/core/CustomCodeNode",
+        version: "1.0.0",
+        draggable: true,
+        Icon: Code,
+        title: "Custom Code",
+        description:
+          "Write custom Python code with intelligent variable injection and type inference. Perfect for custom transformations, calculations, and advanced logic.",
+      },
+    ],
   },
   // PIPELINE category
   {

@@ -7,6 +7,7 @@ import {
   WorkflowNode,
   WorkflowEdge,
   SpecialNodeType,
+  CodeGeneratingNodeType,
   isPluginNode,
   isSpecialNode,
 } from "./types/workflow";
@@ -562,6 +563,42 @@ async function getPluginResults(
     }
 
     try {
+      // Handle CustomCodeNode differently from regular plugin nodes
+      if (node.type === CodeGeneratingNodeType.CustomCode) {
+        const customCodeData = node.data as any;
+        const code = customCodeData?.code || "";
+        const customImports = customCodeData?.customImports || [];
+        const emitsImports = customCodeData?.emitsConfig?.imports || [];
+
+        // Process the code to replace $variable_name with actual variable references
+        let processedCode = code;
+
+        // Find all variables in format $variable_name and replace them
+        // This is a simple implementation - could be enhanced with proper parsing
+        const variablePattern = /\$(\w+)/g;
+        processedCode = processedCode.replace(
+          variablePattern,
+          (match: string, varName: string) => {
+            // Replace $variable_name with just variable_name
+            // The actual variable should be available in the execution context
+            return varName;
+          }
+        );
+
+        // Combine all imports
+        const allImports = [...emitsImports, ...customImports];
+
+        // Store the result for this custom code node
+        results[nodeId] = {
+          nodeId: nodeId,
+          code: processedCode,
+          imports: allImports,
+          error: undefined,
+        };
+
+        continue; // Skip the plugin execution for CustomCodeNode
+      }
+
       // Get the plugin slug from node data (pluginId field)
       const slug = (node.data as any)?.pluginId || node.type;
 
@@ -773,21 +810,25 @@ function generateArtifacts(
       });
 
       // Build import header intelligently with conflict resolution
-      const { importHeader, aliasReplacements } = buildIntelligentPythonImports(importConfigs);
+      const { importHeader, aliasReplacements } =
+        buildIntelligentPythonImports(importConfigs);
 
       // Apply alias replacements to code chunks
-      const processedCodeChunks = codeChunks.map(code => 
+      const processedCodeChunks = codeChunks.map((code) =>
         applyAliasReplacements(code, aliasReplacements)
       );
 
       // Combine header + processed code chunks with an empty line after imports when present
       let combinedCode = "";
       if (importHeader && processedCodeChunks.length > 0) {
-        combinedCode = [importHeader, "", ...processedCodeChunks].join("\n");
+        // Join code chunks with empty lines between them, then combine with imports
+        const codeWithSpacing = processedCodeChunks.join("\n\n");
+        combinedCode = [importHeader, "", codeWithSpacing].join("\n");
       } else if (importHeader) {
         combinedCode = importHeader;
       } else {
-        combinedCode = processedCodeChunks.join("\n");
+        // Join code chunks with empty lines between them for consistent spacing
+        combinedCode = processedCodeChunks.join("\n\n");
       }
 
       // Format the code (you could use a formatter here)
@@ -806,18 +847,19 @@ function generateArtifacts(
   return artifacts;
 }
 
-
-
 /**
  * Generate a unique alias by appending a number to avoid conflicts
  */
-function generateUniqueAlias(originalAlias: string, conflictCount: number): string {
+function generateUniqueAlias(
+  originalAlias: string,
+  conflictCount: number
+): string {
   // Convert camelCase/PascalCase to snake_case for Python conventions
   const pythonAlias = originalAlias
-    .replace(/([A-Z])/g, '_$1')
+    .replace(/([A-Z])/g, "_$1")
     .toLowerCase()
-    .replace(/^_/, ''); // remove leading underscore
-  
+    .replace(/^_/, ""); // remove leading underscore
+
   return `${pythonAlias}${conflictCount}`;
 }
 
@@ -841,13 +883,13 @@ function buildIntelligentPythonImports(
   const basicImports = new Set<string>();
   const fromImports: Map<
     string,
-    { 
-      items: Set<string>; 
-      aliases: Map<string, string>; 
+    {
+      items: Set<string>;
+      aliases: Map<string, string>;
       order: number;
     }
   > = new Map();
-  
+
   // Track all used aliases globally to detect conflicts
   const globalAliases = new Map<string, { path: string; item: string }>();
   const aliasConflicts = new Map<string, number>(); // alias -> conflict count
@@ -869,39 +911,39 @@ function buildIntelligentPythonImports(
 
     // Handle from imports (from path import items [as aliases])
     if (!fromImports.has(path)) {
-      fromImports.set(path, { 
-        items: new Set(), 
-        aliases: new Map(), 
-        order: i
+      fromImports.set(path, {
+        items: new Set(),
+        aliases: new Map(),
+        order: i,
       });
       pathOrder.push(path);
     }
 
     const group = fromImports.get(path)!;
-    
+
     // Add items and detect alias conflicts
-    items.forEach(item => {
+    items.forEach((item) => {
       group.items.add(item);
-      
+
       const itemAlias = as[item];
       if (itemAlias) {
         const aliasKey = itemAlias.toLowerCase();
         const existingAlias = globalAliases.get(aliasKey);
-        
+
         if (existingAlias) {
           // Check if this is a real conflict (different path/item with same alias)
           if (existingAlias.path !== path || existingAlias.item !== item) {
             // This is a conflict - increment counter
             const currentCount = aliasConflicts.get(aliasKey) || 1;
             aliasConflicts.set(aliasKey, currentCount + 1);
-            
+
             // Generate new alias for this conflicting import
             const newAlias = generateUniqueAlias(itemAlias, currentCount);
             group.aliases.set(item, newAlias);
-            
+
             // Track replacement mapping (original -> new)
             aliasReplacements.set(itemAlias, newAlias);
-            
+
             // Register the new alias to prevent future conflicts
             globalAliases.set(newAlias.toLowerCase(), { path, item });
           } else {
@@ -919,7 +961,7 @@ function buildIntelligentPythonImports(
 
   // Second pass: build the import statements
   const result: string[] = [];
-  
+
   for (const pathKey of pathOrder) {
     if (pathKey === "__basic__") {
       if (basicImports.size > 0) {
@@ -929,13 +971,13 @@ function buildIntelligentPythonImports(
       }
     } else {
       const group = fromImports.get(pathKey)!;
-      
+
       if (group.items.size > 0) {
         // Build import items with resolved aliases
         const importItems: string[] = [];
         const sortedItems = Array.from(group.items).sort();
-        
-        sortedItems.forEach(item => {
+
+        sortedItems.forEach((item) => {
           const alias = group.aliases.get(item);
           if (alias) {
             importItems.push(`${item} as ${alias}`);
@@ -943,7 +985,7 @@ function buildIntelligentPythonImports(
             importItems.push(item);
           }
         });
-        
+
         // Remove duplicates (e.g., "nn, nn" becomes just "nn")
         const uniqueImportItems = Array.from(new Set(importItems)).sort();
         result.push(`from ${pathKey} import ${uniqueImportItems.join(", ")}`);
@@ -951,39 +993,42 @@ function buildIntelligentPythonImports(
     }
   }
 
-  return { 
-    importHeader: result.join("\n"), 
-    aliasReplacements 
+  return {
+    importHeader: result.join("\n"),
+    aliasReplacements,
   };
 }
 
 /**
  * Apply alias replacements to code, replacing old aliases with new ones
  */
-function applyAliasReplacements(code: string, replacements: Map<string, string>): string {
+function applyAliasReplacements(
+  code: string,
+  replacements: Map<string, string>
+): string {
   let modifiedCode = code;
-  
+
   // Apply each replacement with intelligent pattern matching
   for (const [originalAlias, newAlias] of replacements.entries()) {
     // Create regex patterns to match the alias in different contexts
     const patterns = [
       // Match standalone usage: alias(
-      new RegExp(`\\b${escapeRegex(originalAlias)}\\(`, 'g'),
+      new RegExp(`\\b${escapeRegex(originalAlias)}\\(`, "g"),
       // Match attribute access: alias.something
-      new RegExp(`\\b${escapeRegex(originalAlias)}\\.`, 'g'),
+      new RegExp(`\\b${escapeRegex(originalAlias)}\\.`, "g"),
       // Match in assignments: = alias
-      new RegExp(`=\\s*${escapeRegex(originalAlias)}\\b`, 'g'),
+      new RegExp(`=\\s*${escapeRegex(originalAlias)}\\b`, "g"),
       // Match as standalone word: alias (but not in strings)
-      new RegExp(`\\b${escapeRegex(originalAlias)}\\b(?=\\s*[^"']|$)`, 'g')
+      new RegExp(`\\b${escapeRegex(originalAlias)}\\b(?=\\s*[^"']|$)`, "g"),
     ];
 
-    patterns.forEach(pattern => {
+    patterns.forEach((pattern) => {
       modifiedCode = modifiedCode.replace(pattern, (match) => {
         return match.replace(originalAlias, newAlias);
       });
     });
   }
-  
+
   return modifiedCode;
 }
 
@@ -991,7 +1036,7 @@ function applyAliasReplacements(code: string, replacements: Map<string, string>)
  * Escape special regex characters
  */
 function escapeRegex(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 /**

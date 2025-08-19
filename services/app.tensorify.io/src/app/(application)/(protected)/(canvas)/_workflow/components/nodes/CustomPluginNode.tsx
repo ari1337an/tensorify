@@ -536,14 +536,26 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
     // Optional: enforce allowed item type using loaded manifests if available
     try {
       if (allowedItemType) {
-        const store = useAppStore.getState();
-        const pm = store.pluginManifests?.find(
-          (p: any) => p.slug === slug || p.id === slug
-        );
-        const pt =
-          (pm?.manifest as any)?.pluginType ||
-          (pm?.manifest as any)?.frontendConfigs?.nodeType;
-        if (pt && String(pt).toLowerCase() !== String(allowedItemType)) {
+        let nodeType: string | undefined;
+
+        // Handle native CustomCodeNode
+        if (slug === "@tensorify/core/CustomCodeNode") {
+          nodeType = "function";
+        } else {
+          // Handle plugin nodes
+          const store = useAppStore.getState();
+          const pm = store.pluginManifests?.find(
+            (p: any) => p.slug === slug || p.id === slug
+          );
+          nodeType =
+            (pm?.manifest as any)?.pluginType ||
+            (pm?.manifest as any)?.frontendConfigs?.nodeType;
+        }
+
+        if (
+          nodeType &&
+          String(nodeType).toLowerCase() !== String(allowedItemType)
+        ) {
           return; // reject silently for now
         }
       }
@@ -586,26 +598,35 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
       const parentRoute = parentNode?.route || "/";
       const childRoute = addRouteLevel(parentRoute, `sequence-${id}`);
       const childId = crypto.randomUUID();
-      // Resolve label from manifest
-      const manifest = pluginManifests.find((m) => m.slug === slug);
+      // Resolve label and settings from manifest or defaults for native nodes
       let childLabel = slug.split("/").pop() || "item";
-      const fc = (manifest?.manifest as any)?.frontendConfigs;
-      const visual = (fc?.visual || (manifest?.manifest as any)?.visual) as any;
-      childLabel =
-        visual?.labels?.title ||
-        (manifest?.manifest as any)?.name ||
-        childLabel;
-
-      // Build default settings for the child from its manifest
       const defaultSettings: Record<string, any> = {};
-      const settingsFields = (fc?.settingsFields ||
-        (manifest?.manifest as any)?.settingsFields) as any[] | undefined;
-      if (settingsFields) {
-        settingsFields.forEach((field: any) => {
-          if (field.defaultValue !== undefined) {
-            defaultSettings[field.key] = field.defaultValue;
-          }
-        });
+
+      if (slug === "@tensorify/core/CustomCodeNode") {
+        // Handle native CustomCodeNode
+        childLabel = "Custom Code";
+        // CustomCodeNode doesn't need default settings from manifest
+      } else {
+        // Handle plugin nodes
+        const manifest = pluginManifests.find((m) => m.slug === slug);
+        const fc = (manifest?.manifest as any)?.frontendConfigs;
+        const visual = (fc?.visual ||
+          (manifest?.manifest as any)?.visual) as any;
+        childLabel =
+          visual?.labels?.title ||
+          (manifest?.manifest as any)?.name ||
+          childLabel;
+
+        // Build default settings for the child from its manifest
+        const settingsFields = (fc?.settingsFields ||
+          (manifest?.manifest as any)?.settingsFields) as any[] | undefined;
+        if (settingsFields) {
+          settingsFields.forEach((field: any) => {
+            if (field.defaultValue !== undefined) {
+              defaultSettings[field.key] = field.defaultValue;
+            }
+          });
+        }
       }
 
       addNode({

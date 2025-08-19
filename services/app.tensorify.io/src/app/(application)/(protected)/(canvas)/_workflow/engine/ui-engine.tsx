@@ -308,13 +308,23 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
       }>
     >();
     nodes.forEach((n) => {
-      const mf = resolveManifestForNode(n.id);
-      const variables = ((mf as any)?.emits?.variables || []) as Array<{
+      let variables: Array<{
         value: string;
         switchKey?: string;
         isOnByDefault?: boolean;
         type?: string;
-      }>;
+      }> = [];
+
+      // Handle CustomCodeNode (native node with emits configuration)
+      if (n.type === "@tensorify/core/CustomCodeNode") {
+        const customCodeData = n.data as any;
+        variables = customCodeData?.emitsConfig?.variables || [];
+      } else {
+        // Handle plugin nodes
+        const mf = resolveManifestForNode(n.id);
+        variables = (mf as any)?.emits?.variables || [];
+      }
+
       const settings = ((n.data as any)?.pluginSettings || {}) as Record<
         string,
         any
@@ -328,7 +338,10 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
         isEnabled: boolean;
       }> = [];
       const pluginKey = ((n.data as any)?.pluginId || n.type || n.id) as string;
-      const fallbackPluginType = pluginTypeByKey.get(pluginKey) || "unknown";
+      const fallbackPluginType =
+        pluginTypeByKey.get(pluginKey) ||
+        (n.type === "@tensorify/core/CustomCodeNode" ? "function" : "unknown");
+
       for (const v of variables) {
         const rawKey = (v.switchKey || "").split(".").pop() || "";
         const isOn =

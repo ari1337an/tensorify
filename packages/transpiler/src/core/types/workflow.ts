@@ -39,6 +39,11 @@ export enum SpecialNodeType {
   Demultiplexer = "demultiplexer",
 }
 
+// Special node types that DO produce code chunks (handled differently from plugins)
+export enum CodeGeneratingNodeType {
+  CustomCode = "@tensorify/core/CustomCodeNode",
+}
+
 // Helper to check if a node is a special type
 export function isSpecialNode(nodeType?: string): boolean {
   if (!nodeType) return false;

@@ -241,7 +241,7 @@ export function VariablesTab({ node, nodeId }: VariablesTabProps) {
 
   const getPluginTypeColor = (pluginType: string) => {
     const colorMap: Record<string, string> = {
-      model_layer: "var(--primary)",
+      model_layer: "var(--primary-readable)",
       sequence: "var(--chart-2)",
       optimizer: "var(--chart-1)",
       criterion: "var(--destructive)",
@@ -249,12 +249,12 @@ export function VariablesTab({ node, nodeId }: VariablesTabProps) {
       dataloader: "var(--chart-4)",
       dataset: "var(--chart-5)",
       metric: "var(--accent)",
-      scheduler: "var(--primary)",
+      scheduler: "var(--primary-readable)",
       regularizer: "var(--chart-2)",
       preprocessor: "var(--chart-3)",
       postprocessor: "var(--chart-4)",
       function: "var(--chart-5)",
-      pipeline: "var(--primary)",
+      pipeline: "var(--primary-readable)",
       custom: "var(--accent)",
       unknown: "var(--muted-foreground)",
     };
@@ -409,7 +409,7 @@ export function VariablesTab({ node, nodeId }: VariablesTabProps) {
                           </div>
                           <div className="text-left">
                             <h3
-                              className="font-medium text-sm text-foreground"
+                              className="font-medium text-sm text-primary-readable"
                               style={{ color: typeColor }}
                             >
                               {getPluginTypeDisplayName(type)}
