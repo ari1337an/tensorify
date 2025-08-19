@@ -332,6 +332,7 @@ export const UIManifestSchema = z.object({
             value: z.string().min(1),
             switchKey: z.string().min(1),
             isOnByDefault: z.boolean().optional(),
+            type: z.string().optional(),
           })
         )
         .default([]),

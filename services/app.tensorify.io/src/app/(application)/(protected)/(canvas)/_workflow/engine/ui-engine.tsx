@@ -313,6 +313,7 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
         value: string;
         switchKey?: string;
         isOnByDefault?: boolean;
+        type?: string;
       }>;
       const settings = ((n.data as any)?.pluginSettings || {}) as Record<
         string,
@@ -327,7 +328,7 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
         isEnabled: boolean;
       }> = [];
       const pluginKey = ((n.data as any)?.pluginId || n.type || n.id) as string;
-      const pluginType = pluginTypeByKey.get(pluginKey) || "unknown";
+      const fallbackPluginType = pluginTypeByKey.get(pluginKey) || "unknown";
       for (const v of variables) {
         const rawKey = (v.switchKey || "").split(".").pop() || "";
         const isOn =
@@ -340,7 +341,7 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
             name: v.value,
             sourceNodeId: n.id,
             sourceNodeType: (n.type as string) || "",
-            pluginType,
+            pluginType: v.type || fallbackPluginType, // Use type from manifest, fallback to plugin type
             isEnabled: true,
           });
         }

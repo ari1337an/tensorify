@@ -133,6 +133,7 @@ export default class LinearLayerPlugin extends TensorifyPlugin {
             value: "linear_layer",
             switchKey: "settingsFields.emitLinearVar",
             isOnByDefault: true,
+            type: NodeType.MODEL_LAYER
           },
         ],
         imports: [{ path: "torch", items: ["nn"] }],

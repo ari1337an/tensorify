@@ -3,6 +3,7 @@ import {
   IPluginDefinition,
   PluginSettings,
   PluginCodeGenerationContext,
+  NodeType,
   PluginCapability,
   NodeViewContainerType,
   IconType,
@@ -76,9 +77,12 @@ export default class ReluPlugin extends TensorifyPlugin {
             value: "relu",
             switchKey: "settingsFields.emitReluVar",
             isOnByDefault: true,
+            type: NodeType.MODEL_LAYER,
           },
         ],
-        imports: [{ path: "torch.nn", items: ["ReLU"], as: { "ReLU": "myrelu" } }],
+        imports: [
+          { path: "torch.nn", items: ["ReLU"], as: { ReLU: "myrelu" } },
+        ],
       },
       requirements: {
         minSdkVersion: "1.0.0",

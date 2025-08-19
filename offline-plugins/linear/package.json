@@ -19,12 +19,9 @@
   ],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "@tensorify.io/sdk": "0.0.38"
-  },
   "devDependencies": {
-    "typescript": "^5.0.0",
-    "@types/node": "^18.0.0"
+    "@types/node": "^18.0.0",
+    "typescript": "^5.0.0"
   },
   "engines": {
     "node": ">=14.0.0"
@@ -34,8 +31,11 @@
     "url": "https://github.com/tensorify/linear"
   },
   "tensorify-settings": {
-    "sdk-version": "0.0.38",
+    "sdk-version": "0.0.43",
     "entrypointClassName": "LinearPlugin",
     "pluginType": "MODEL_LAYER"
+  },
+  "dependencies": {
+    "@tensorify.io/sdk": "0.0.43"
   }
 }

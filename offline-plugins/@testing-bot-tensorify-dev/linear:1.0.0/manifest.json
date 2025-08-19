@@ -17,7 +17,7 @@
     "build": "npx tsc"
   },
   "tensorifySettings": {
-    "sdkVersion": "0.0.38"
+    "sdkVersion": "0.0.43"
   },
   "metadata": {
     "repository": "https://github.com/tensorify/linear",
@@ -152,7 +152,8 @@
       {
         "value": "linear_layer",
         "switchKey": "settingsFields.emitLinearVar",
-        "isOnByDefault": true
+        "isOnByDefault": true,
+        "type": "model_layer"
       }
     ],
     "imports": [

@@ -100,27 +100,27 @@ var PluginBundle = (() => {
       init_define_process();
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.PluginCapability = exports.NodeType = void 0;
-      var NodeType;
-      (function(NodeType2) {
-        NodeType2["CUSTOM"] = "custom";
-        NodeType2["TRAINER"] = "trainer";
-        NodeType2["EVALUATOR"] = "evaluator";
-        NodeType2["MODEL"] = "model";
-        NodeType2["MODEL_LAYER"] = "model_layer";
-        NodeType2["SEQUENCE"] = "sequence";
-        NodeType2["DATALOADER"] = "dataloader";
-        NodeType2["PREPROCESSOR"] = "preprocessor";
-        NodeType2["POSTPROCESSOR"] = "postprocessor";
-        NodeType2["AUGMENTATION_STACK"] = "augmentation_stack";
-        NodeType2["OPTIMIZER"] = "optimizer";
-        NodeType2["LOSS_FUNCTION"] = "loss_function";
-        NodeType2["METRIC"] = "metric";
-        NodeType2["SCHEDULER"] = "scheduler";
-        NodeType2["REGULARIZER"] = "regularizer";
-        NodeType2["FUNCTION"] = "function";
-        NodeType2["PIPELINE"] = "pipeline";
-        NodeType2["REPORT"] = "report";
-      })(NodeType || (exports.NodeType = NodeType = {}));
+      var NodeType2;
+      (function(NodeType3) {
+        NodeType3["CUSTOM"] = "custom";
+        NodeType3["TRAINER"] = "trainer";
+        NodeType3["EVALUATOR"] = "evaluator";
+        NodeType3["MODEL"] = "model";
+        NodeType3["MODEL_LAYER"] = "model_layer";
+        NodeType3["SEQUENCE"] = "sequence";
+        NodeType3["DATALOADER"] = "dataloader";
+        NodeType3["PREPROCESSOR"] = "preprocessor";
+        NodeType3["POSTPROCESSOR"] = "postprocessor";
+        NodeType3["AUGMENTATION_STACK"] = "augmentation_stack";
+        NodeType3["OPTIMIZER"] = "optimizer";
+        NodeType3["LOSS_FUNCTION"] = "loss_function";
+        NodeType3["METRIC"] = "metric";
+        NodeType3["SCHEDULER"] = "scheduler";
+        NodeType3["REGULARIZER"] = "regularizer";
+        NodeType3["FUNCTION"] = "function";
+        NodeType3["PIPELINE"] = "pipeline";
+        NodeType3["REPORT"] = "report";
+      })(NodeType2 || (exports.NodeType = NodeType2 = {}));
       var PluginCapability2;
       (function(PluginCapability3) {
         PluginCapability3["CODE_GENERATION"] = "code-generation";
@@ -1501,10 +1501,13 @@ print(\${variableName})\`;
             {
               value: "relu",
               switchKey: "settingsFields.emitReluVar",
-              isOnByDefault: true
+              isOnByDefault: true,
+              type: import_sdk.NodeType.MODEL_LAYER
             }
           ],
-          imports: [{ path: "torch.nn", items: ["ReLU"], as: { "ReLU": "myrelu" } }]
+          imports: [
+            { path: "torch.nn", items: ["ReLU"], as: { ReLU: "myrelu" } }
+          ]
         },
         requirements: {
           minSdkVersion: "1.0.0",

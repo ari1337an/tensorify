@@ -14,7 +14,8 @@
     "publish:all": "sh scripts/version-management.sh publish",
     "seed:test-plugins": "node seed-test-plugins-simple.js",
     "offline:reset": "bash scripts/offline-dev-reset.sh",
-    "offline:build": "bash scripts/offline-dev-build.sh"
+    "offline:build": "bash scripts/offline-dev-build.sh",
+    "every": "./rebuild.sh"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

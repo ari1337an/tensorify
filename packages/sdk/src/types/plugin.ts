@@ -35,6 +35,8 @@ export interface EmittedVariableConfig {
   switchKey: string;
   /** Whether the variable is enabled by default */
   isOnByDefault?: boolean;
+  /** The semantic type of this variable (e.g., NodeType.OPTIMIZER, NodeType.MODEL_LAYER) */
+  type: NodeType;
 }
 
 export interface ImportConfig {

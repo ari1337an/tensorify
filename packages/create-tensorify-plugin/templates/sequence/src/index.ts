@@ -41,6 +41,24 @@ export default class {{classicProjectName}}Plugin extends TensorifyPlugin {
 
       settingsFields: [
         {
+          key: "sequenceVarName",
+          label: "Variable name",
+          type: SettingsUIType.INPUT_TEXT,
+          dataType: SettingsDataType.STRING,
+          defaultValue: "seq",
+          required: true,
+          description: "Name of the variable to assign when emit is enabled",
+        },
+        {
+          key: "emitSequenceVar",
+          label: "Emit Sequence Variable",
+          type: SettingsUIType.TOGGLE,
+          dataType: SettingsDataType.BOOLEAN,
+          defaultValue: true,
+          required: true,
+          description: "Whether to emit the sequence variable",
+        },
+        {
           key: "itemsCount",
           label: "Items Count (display only)",
           type: SettingsUIType.INPUT_NUMBER,
@@ -51,6 +69,17 @@ export default class {{classicProjectName}}Plugin extends TensorifyPlugin {
         },
       ],
 
+      emits: {
+        variables: [
+          {
+            value: "seq",
+            switchKey: "settingsFields.emitSequenceVar",
+            isOnByDefault: true,
+            type: NodeType.SEQUENCE,
+          },
+        ],
+        imports: [{ path: "torch.nn", items: ["Sequential"] }],
+      },
       capabilities: [PluginCapability.CODE_GENERATION],
       requirements: { minSdkVersion: "1.0.0", dependencies: ["torch"], pythonPackages: ["torch"] },
     };
@@ -63,10 +92,21 @@ export default class {{classicProjectName}}Plugin extends TensorifyPlugin {
     children?: Array<{ slug: string; code: string; settings?: any }>,
     _context?: PluginCodeGenerationContext
   ): string {
-    const variableName = settings.variableName || "seq";
-    const parts = (children || []).map((c) => (c.code || "").trim()).filter(Boolean);
+    const variableName = (settings as any).sequenceVarName || settings.variableName || "seq";
+    const shouldEmit = Boolean((settings as any).emitSequenceVar);
+    const indent = "  ";
+    const indentBlock = (s: string) =>
+      s
+        .split("\n")
+        .map((line) => (line.trim().length ? indent + line : line))
+        .join("\n");
+    const parts = (children || [])
+      .map((c) => (c.code || "").trim())
+      .filter(Boolean)
+      .map((p) => indentBlock(p));
     const inner = parts.join(",\n");
-    return `${variableName} = torch.nn.Sequential(\n${inner}\n)`;
+    const ctor = `torch.nn.Sequential(\n${inner}\n)`;
+    return shouldEmit ? `${variableName} = ${ctor}` : ctor;
   }
 }
 

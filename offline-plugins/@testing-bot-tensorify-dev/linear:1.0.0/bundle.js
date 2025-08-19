@@ -1542,7 +1542,8 @@ print(\${variableName})\`;
             {
               value: "linear_layer",
               switchKey: "settingsFields.emitLinearVar",
-              isOnByDefault: true
+              isOnByDefault: true,
+              type: import_sdk.NodeType.MODEL_LAYER
             }
           ],
           imports: [{ path: "torch", items: ["nn"] }]

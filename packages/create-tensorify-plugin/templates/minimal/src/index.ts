@@ -92,9 +92,29 @@ export default class MinimalPlugin extends TensorifyPlugin {
           required: false,
           description: "Whether to include timestamp in output",
         },
+        {
+          key: "emitOutput",
+          label: "Emit Output Variable",
+          type: SettingsUIType.TOGGLE,
+          dataType: SettingsDataType.BOOLEAN,
+          defaultValue: true,
+          required: true,
+          description: "Whether to emit the minimal_output variable",
+        },
       ],
 
       // Plugin Metadata
+      emits: {
+        variables: [
+          {
+            value: "minimal_output",
+            switchKey: "settingsFields.emitOutput",
+            isOnByDefault: true,
+            type: NodeType.CUSTOM,
+          },
+        ],
+        imports: [],
+      },
       capabilities: [PluginCapability.CODE_GENERATION],
       requirements: {
         minSdkVersion: "1.0.0",

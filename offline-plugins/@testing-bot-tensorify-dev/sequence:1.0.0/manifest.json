@@ -17,7 +17,7 @@
     "build": "npx tsc"
   },
   "tensorifySettings": {
-    "sdkVersion": "0.0.38"
+    "sdkVersion": "0.0.43"
   },
   "metadata": {
     "repository": "https://github.com/tensorify/sequence",
@@ -131,7 +131,8 @@
       {
         "value": "seq",
         "switchKey": "settingsFields.emitSequenceVar",
-        "isOnByDefault": true
+        "isOnByDefault": true,
+        "type": "model_layer"
       }
     ],
     "imports": [
