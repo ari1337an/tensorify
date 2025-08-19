@@ -394,14 +394,18 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
         // Inherit from parents
         for (const p of parents) {
           for (const v of availableByNode[p] || []) parentUnion.add(v);
+          // Add parent's own variables to the union (they become available to this node)
+          for (const v of localVarsByNode.get(p) || []) parentUnion.add(v);
           // details
           const parentDetails = availableDetailsByNode[p] || [];
+          const parentLocalDetails = localVarDetailsByNode.get(p) || [];
+          const allParentDetails = [...parentDetails, ...parentLocalDetails];
           const detailKeys = new Set(
             (availableDetailsByNode[n.id] || []).map(
               (d) => `${d.name}|${d.sourceNodeId}`
             )
           );
-          for (const d of parentDetails) {
+          for (const d of allParentDetails) {
             const key = `${d.name}|${d.sourceNodeId}`;
             if (!detailKeys.has(key)) {
               (availableDetailsByNode[n.id] =
@@ -410,22 +414,9 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
             }
           }
         }
-        // Add local variables of this node
-        for (const v of localVarsByNode.get(n.id) || []) parentUnion.add(v);
-        const localDetails = localVarDetailsByNode.get(n.id) || [];
-        const nodeDetailKeys = new Set(
-          (availableDetailsByNode[n.id] || []).map(
-            (d) => `${d.name}|${d.sourceNodeId}`
-          )
-        );
-        for (const d of localDetails) {
-          const key = `${d.name}|${d.sourceNodeId}`;
-          if (!nodeDetailKeys.has(key)) {
-            (availableDetailsByNode[n.id] =
-              availableDetailsByNode[n.id] || []).push(d);
-            nodeDetailKeys.add(key);
-          }
-        }
+        // NOTE: Current node's own variables are NOT added to its available variables
+        // This node's variables will be available to its children, but not to itself
+
         // If this node is a Nested container, bubble variables from its nested end nodes
         if (n.type === "@tensorify/core/NestedNode") {
           const endIds = nestedEndsByContainer.get(n.id) || [];
