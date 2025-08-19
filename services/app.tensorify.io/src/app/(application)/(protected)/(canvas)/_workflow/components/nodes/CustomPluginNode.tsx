@@ -354,11 +354,11 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
   }, [manifest, data.label, data.visualConfig, pluginManifests]);
 
   // Debug visual props changes
-  React.useEffect(() => {
-    console.log(
-      `🔄 Node ${id}: ${visualProps.width}x${visualProps.height}, container: ${visualProps.containerType}`
-    );
-  }, [visualProps, id]);
+  // React.useEffect(() => {
+  //   console.log(
+  //     `🔄 Node ${id}: ${visualProps.width}x${visualProps.height}, container: ${visualProps.containerType}`
+  //   );
+  // }, [visualProps, id]);
 
   // Extract handle configurations with proper typing and ensure unique IDs
   const { inputHandles, outputHandles } = useMemo((): {

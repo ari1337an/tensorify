@@ -49,8 +49,6 @@ import StartNode from "@workflow/components/nodes/StartNode";
 import EndNode from "@workflow/components/nodes/EndNode";
 import NestedNode from "@workflow/components/nodes/NestedNode";
 import BranchNode from "@workflow/components/nodes/BranchNode";
-import MultiplexerNode from "@workflow/components/nodes/MultiplexerNode";
-import DemultiplexerNode from "@workflow/components/nodes/DemultiplexerNode";
 import CustomPluginNode from "@workflow/components/nodes/CustomPluginNode";
 import GlobalNodeSettingsDialog from "@workflow/components/GlobalNodeSettingsDialog";
 import CustomEdge from "@workflow/components/CustomEdge";
@@ -121,11 +119,7 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
       // Special case: branch nodes
       nodeMap["@tensorify/core/BranchNode"] = BranchNode;
 
-      // Special case: multiplexer nodes
-      nodeMap["@tensorify/core/MultiplexerNode"] = MultiplexerNode;
-
-      // Special case: demultiplexer nodes
-      nodeMap["@tensorify/core/DemultiplexerNode"] = DemultiplexerNode;
+      // Removed Multiplexer/Demultiplexer node types
 
       // Check if any plugin slugs should use CustomPluginNode
       pluginManifests.forEach((manifest) => {

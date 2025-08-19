@@ -772,17 +772,22 @@ function generateArtifacts(
         }
       });
 
-      // Build import header intelligently
-      const header = buildPythonImports(importConfigs);
+      // Build import header intelligently with conflict resolution
+      const { importHeader, aliasReplacements } = buildIntelligentPythonImports(importConfigs);
 
-      // Combine header + code chunks with an empty line after imports when present
+      // Apply alias replacements to code chunks
+      const processedCodeChunks = codeChunks.map(code => 
+        applyAliasReplacements(code, aliasReplacements)
+      );
+
+      // Combine header + processed code chunks with an empty line after imports when present
       let combinedCode = "";
-      if (header && codeChunks.length > 0) {
-        combinedCode = [header, "", ...codeChunks].join("\n");
-      } else if (header) {
-        combinedCode = header;
+      if (importHeader && processedCodeChunks.length > 0) {
+        combinedCode = [importHeader, "", ...processedCodeChunks].join("\n");
+      } else if (importHeader) {
+        combinedCode = importHeader;
       } else {
-        combinedCode = codeChunks.join("\n");
+        combinedCode = processedCodeChunks.join("\n");
       }
 
       // Format the code (you could use a formatter here)
@@ -801,63 +806,192 @@ function generateArtifacts(
   return artifacts;
 }
 
-function buildPythonImports(
+
+
+/**
+ * Generate a unique alias by appending a number to avoid conflicts
+ */
+function generateUniqueAlias(originalAlias: string, conflictCount: number): string {
+  // Convert camelCase/PascalCase to snake_case for Python conventions
+  const pythonAlias = originalAlias
+    .replace(/([A-Z])/g, '_$1')
+    .toLowerCase()
+    .replace(/^_/, ''); // remove leading underscore
+  
+  return `${pythonAlias}${conflictCount}`;
+}
+
+/**
+ * Enhanced import builder that returns both import header and replacement mappings
+ */
+function buildIntelligentPythonImports(
   configs: Array<{
     path: string;
     items?: string[];
     alias?: string;
     as?: Record<string, string>;
   }>
-): string {
-  if (!configs || configs.length === 0) return "";
+): { importHeader: string; aliasReplacements: Map<string, string> } {
+  if (!configs || configs.length === 0) {
+    return { importHeader: "", aliasReplacements: new Map() };
+  }
 
-  // Track order and group by path
+  // Track imports and detect conflicts
   const pathOrder: string[] = [];
-  const basicImports: string[] = [];
+  const basicImports = new Set<string>();
   const fromImports: Map<
     string,
-    { items: string[]; aliases: Record<string, string>; order: number }
+    { 
+      items: Set<string>; 
+      aliases: Map<string, string>; 
+      order: number;
+    }
   > = new Map();
+  
+  // Track all used aliases globally to detect conflicts
+  const globalAliases = new Map<string, { path: string; item: string }>();
+  const aliasConflicts = new Map<string, number>(); // alias -> conflict count
+  const aliasReplacements = new Map<string, string>(); // originalAlias -> newAlias
 
+  // First pass: collect all imports and detect conflicts
   for (let i = 0; i < configs.length; i++) {
     const config = configs[i] || ({} as any);
     const { path, items, alias, as = {} } = config;
     if (!path) continue;
 
-    if (!items && !alias) {
-      basicImports.push(path);
+    // Handle basic imports (import path [as alias])
+    if (!items) {
+      const importStatement = alias ? `${path} as ${alias}` : path;
+      basicImports.add(importStatement);
       if (!pathOrder.includes("__basic__")) pathOrder.push("__basic__");
-    } else if (!items && alias) {
-      basicImports.push(`${path} as ${alias}`);
-      if (!pathOrder.includes("__basic__")) pathOrder.push("__basic__");
-    } else if (items) {
-      if (!fromImports.has(path)) {
-        fromImports.set(path, { items: [], aliases: {}, order: i });
-        pathOrder.push(path);
-      }
-      const existing = fromImports.get(path)!;
-      existing.items.push(...items);
-      Object.assign(existing.aliases, as);
+      continue;
     }
+
+    // Handle from imports (from path import items [as aliases])
+    if (!fromImports.has(path)) {
+      fromImports.set(path, { 
+        items: new Set(), 
+        aliases: new Map(), 
+        order: i
+      });
+      pathOrder.push(path);
+    }
+
+    const group = fromImports.get(path)!;
+    
+    // Add items and detect alias conflicts
+    items.forEach(item => {
+      group.items.add(item);
+      
+      const itemAlias = as[item];
+      if (itemAlias) {
+        const aliasKey = itemAlias.toLowerCase();
+        const existingAlias = globalAliases.get(aliasKey);
+        
+        if (existingAlias) {
+          // Check if this is a real conflict (different path/item with same alias)
+          if (existingAlias.path !== path || existingAlias.item !== item) {
+            // This is a conflict - increment counter
+            const currentCount = aliasConflicts.get(aliasKey) || 1;
+            aliasConflicts.set(aliasKey, currentCount + 1);
+            
+            // Generate new alias for this conflicting import
+            const newAlias = generateUniqueAlias(itemAlias, currentCount);
+            group.aliases.set(item, newAlias);
+            
+            // Track replacement mapping (original -> new)
+            aliasReplacements.set(itemAlias, newAlias);
+            
+            // Register the new alias to prevent future conflicts
+            globalAliases.set(newAlias.toLowerCase(), { path, item });
+          } else {
+            // Same path/item with same alias - no conflict, reuse existing
+            group.aliases.set(item, itemAlias);
+          }
+        } else {
+          // No conflict, use the alias as-is
+          group.aliases.set(item, itemAlias);
+          globalAliases.set(aliasKey, { path, item });
+        }
+      }
+    });
   }
 
+  // Second pass: build the import statements
   const result: string[] = [];
+  
   for (const pathKey of pathOrder) {
     if (pathKey === "__basic__") {
-      if (basicImports.length > 0) {
-        result.push(`import ${basicImports.join(", ")}`);
+      if (basicImports.size > 0) {
+        // Deduplicate and sort basic imports
+        const sortedBasicImports = Array.from(basicImports).sort();
+        result.push(`import ${sortedBasicImports.join(", ")}`);
       }
     } else {
       const group = fromImports.get(pathKey)!;
-      const importItems = group.items.map((item) => {
-        const alias = group.aliases[item];
-        return alias ? `${item} as ${alias}` : item;
-      });
-      result.push(`from ${pathKey} import ${importItems.join(", ")}`);
+      
+      if (group.items.size > 0) {
+        // Build import items with resolved aliases
+        const importItems: string[] = [];
+        const sortedItems = Array.from(group.items).sort();
+        
+        sortedItems.forEach(item => {
+          const alias = group.aliases.get(item);
+          if (alias) {
+            importItems.push(`${item} as ${alias}`);
+          } else {
+            importItems.push(item);
+          }
+        });
+        
+        // Remove duplicates (e.g., "nn, nn" becomes just "nn")
+        const uniqueImportItems = Array.from(new Set(importItems)).sort();
+        result.push(`from ${pathKey} import ${uniqueImportItems.join(", ")}`);
+      }
     }
   }
 
-  return result.join("\n");
+  return { 
+    importHeader: result.join("\n"), 
+    aliasReplacements 
+  };
+}
+
+/**
+ * Apply alias replacements to code, replacing old aliases with new ones
+ */
+function applyAliasReplacements(code: string, replacements: Map<string, string>): string {
+  let modifiedCode = code;
+  
+  // Apply each replacement with intelligent pattern matching
+  for (const [originalAlias, newAlias] of replacements.entries()) {
+    // Create regex patterns to match the alias in different contexts
+    const patterns = [
+      // Match standalone usage: alias(
+      new RegExp(`\\b${escapeRegex(originalAlias)}\\(`, 'g'),
+      // Match attribute access: alias.something
+      new RegExp(`\\b${escapeRegex(originalAlias)}\\.`, 'g'),
+      // Match in assignments: = alias
+      new RegExp(`=\\s*${escapeRegex(originalAlias)}\\b`, 'g'),
+      // Match as standalone word: alias (but not in strings)
+      new RegExp(`\\b${escapeRegex(originalAlias)}\\b(?=\\s*[^"']|$)`, 'g')
+    ];
+
+    patterns.forEach(pattern => {
+      modifiedCode = modifiedCode.replace(pattern, (match) => {
+        return match.replace(originalAlias, newAlias);
+      });
+    });
+  }
+  
+  return modifiedCode;
+}
+
+/**
+ * Escape special regex characters
+ */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 /**

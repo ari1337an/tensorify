@@ -80,9 +80,9 @@ export function useWorkflowPersistence({
       );
 
       if (!response.ok) {
-        console.error("Failed to save workflow state:", await response.text());
+        // console.error("Failed to save workflow state:", await response.text());
       } else {
-        console.log("Workflow state saved successfully");
+        // console.log("Workflow state saved successfully");
         setLastSavedAt(new Date());
       }
     } catch (error) {

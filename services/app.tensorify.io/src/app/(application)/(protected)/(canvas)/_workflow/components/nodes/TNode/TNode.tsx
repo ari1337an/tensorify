@@ -59,6 +59,7 @@ import useWorkflowStore, {
 import { PluginSettingsSection } from "./PluginSettingsSection";
 import useAppStore from "@/app/_store/store";
 import { useUIEngine } from "../../../engine/ui-engine";
+import { VariablesTab } from "./VariablesTab";
 
 type TNodeProps = NodeProps<WorkflowNode> & {
   children: ReactNode;
@@ -322,11 +323,11 @@ export default function TNode({
 
     // Debug log only for issues or when using saved values
     if (!pluginManifest || !manifestVisual) {
-      console.log(`📖 No visual config found for ${pluginId}, using default`);
+      // console.log(`📖 No visual config found for ${pluginId}, using default`);
     } else if (result !== defaultValue) {
-      console.log(
-        `📖 Using saved config: ${section || "root"}.${key} = ${result}`
-      );
+      // console.log(
+      //   `📖 Using saved config: ${section || "root"}.${key} = ${result}`
+      // );
     }
 
     return result;
@@ -341,11 +342,11 @@ export default function TNode({
 
   const handleSettingsDoubleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log("🔥 TNode handleSettingsDoubleClick fired!", {
-      id,
-      selected,
-      type,
-    });
+    // console.log("🔥 TNode handleSettingsDoubleClick fired!", {
+    //   id,
+    //   selected,
+    //   type,
+    // });
     openDialog(id);
   };
 
@@ -1265,43 +1266,19 @@ export default function TNode({
                 />
               </TabsContent>
 
-              <TabsContent value="scope" className="flex-1">
-                <Card>
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-base">Scope Variables</CardTitle>
-                    <CardDescription>
-                      Variables available in the current execution context
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {engine?.availableVariablesByNodeId?.[id]?.length ? (
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {engine.availableVariablesByNodeId[id].map((v) => (
-                          <Badge
-                            key={v}
-                            variant="secondary"
-                            className="justify-start"
-                          >
-                            {v}
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center h-32 text-center">
-                        <div className="space-y-2">
-                          <TypeIcon className="h-8 w-8 text-muted-foreground mx-auto" />
-                          <p className="text-sm text-muted-foreground">
-                            No variables available in current scope
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Variables appear when a node or its upstream emits
-                            them
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+              <TabsContent value="scope" className="flex-1 overflow-auto">
+                <VariablesTab
+                  node={{
+                    id,
+                    data,
+                    type: type || "",
+                    selected: selected || false,
+                    route: "",
+                    version: "1.0.0",
+                    position: { x: 0, y: 0 },
+                  }}
+                  nodeId={id}
+                />
               </TabsContent>
             </Tabs>
           </div>

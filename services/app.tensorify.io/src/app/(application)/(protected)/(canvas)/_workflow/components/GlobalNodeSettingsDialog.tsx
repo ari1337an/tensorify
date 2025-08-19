@@ -37,6 +37,7 @@ import useAppStore from "@/app/_store/store";
 import { PluginSettingsSection } from "./nodes/TNode/PluginSettingsSection";
 import { useUIEngine } from "../engine/ui-engine";
 import { toast } from "sonner";
+import { VariablesTab } from "./nodes/TNode/VariablesTab";
 
 export default function GlobalNodeSettingsDialog() {
   const nodes = useWorkflowStore((s) => s.nodes);
@@ -264,28 +265,8 @@ export default function GlobalNodeSettingsDialog() {
               />
             </TabsContent>
 
-            <TabsContent value="scope" className="flex-1">
-              <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-base">Scope Variables</CardTitle>
-                  <CardDescription>
-                    Variables available in the current execution context
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-center h-32 text-center">
-                    <div className="space-y-2">
-                      <TypeIcon className="h-8 w-8 text-muted-foreground mx-auto" />
-                      <p className="text-sm text-muted-foreground">
-                        No variables available in current scope
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Variables will appear here during execution
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            <TabsContent value="scope" className="flex-1 overflow-auto">
+              {node && <VariablesTab node={node} nodeId={node.id} />}
             </TabsContent>
           </Tabs>
         </div>

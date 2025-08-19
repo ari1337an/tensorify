@@ -30,12 +30,23 @@ type UIEngineState = {
   edges: Record<string, EdgeValidationState>;
   nodes: Record<string, NodeValidationState>;
   availableVariablesByNodeId: Record<string, string[]>;
+  availableVariableDetailsByNodeId: Record<
+    string,
+    Array<{
+      name: string;
+      sourceNodeId: string;
+      sourceNodeType: string;
+      pluginType: string;
+      isEnabled: boolean;
+    }>
+  >;
 };
 
 const UIEngineContext = createContext<UIEngineState>({
   edges: {},
   nodes: {},
   availableVariablesByNodeId: {},
+  availableVariableDetailsByNodeId: {},
 });
 
 const selector = (state: ReturnType<typeof useWorkflowStore.getState>) => ({
@@ -246,9 +257,17 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
 
     // Compute available variables per node based on manifests and toggles
     const manifestByKey = new Map<string, any>();
+    const pluginTypeByKey = new Map<string, string>();
     for (const pm of pluginManifests) {
       const slug = (pm as any)?.slug || (pm as any)?.id;
-      if (slug) manifestByKey.set(slug, (pm as any)?.manifest);
+      if (slug) {
+        manifestByKey.set(slug, (pm as any)?.manifest);
+        const pType =
+          (pm as any)?.pluginType ||
+          (pm as any)?.manifest?.pluginType ||
+          "unknown";
+        pluginTypeByKey.set(slug, pType);
+      }
     }
 
     // Helper to resolve manifest for a workflow node
@@ -278,6 +297,16 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
 
     // Local variables per node (based on manifest.emits.variables and toggle in node settings)
     const localVarsByNode = new Map<string, string[]>();
+    const localVarDetailsByNode = new Map<
+      string,
+      Array<{
+        name: string;
+        sourceNodeId: string;
+        sourceNodeType: string;
+        pluginType: string;
+        isEnabled: boolean;
+      }>
+    >();
     nodes.forEach((n) => {
       const mf = resolveManifestForNode(n.id);
       const variables = ((mf as any)?.emits?.variables || []) as Array<{
@@ -290,20 +319,70 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
         any
       >;
       const vars: string[] = [];
+      const varDetails: Array<{
+        name: string;
+        sourceNodeId: string;
+        sourceNodeType: string;
+        pluginType: string;
+        isEnabled: boolean;
+      }> = [];
+      const pluginKey = ((n.data as any)?.pluginId || n.type || n.id) as string;
+      const pluginType = pluginTypeByKey.get(pluginKey) || "unknown";
       for (const v of variables) {
         const rawKey = (v.switchKey || "").split(".").pop() || "";
         const isOn =
           rawKey && settings.hasOwnProperty(rawKey)
             ? Boolean(settings[rawKey])
             : Boolean(v.isOnByDefault);
-        if (isOn && v.value) vars.push(v.value);
+        if (isOn && v.value) {
+          vars.push(v.value);
+          varDetails.push({
+            name: v.value,
+            sourceNodeId: n.id,
+            sourceNodeType: (n.type as string) || "",
+            pluginType,
+            isEnabled: true,
+          });
+        }
       }
       localVarsByNode.set(n.id, vars);
+      localVarDetailsByNode.set(n.id, varDetails);
+    });
+
+    // Nested bubbling: compute variables from nested route end nodes and bubble them up to the container (NestedNode)
+    // Map containerId -> nested route prefix ("/" + containerId)
+    const nestedRoutePrefixByContainer = new Map<string, string>();
+    nodes
+      .filter((n) => n.type === "@tensorify/core/NestedNode")
+      .forEach((n) => nestedRoutePrefixByContainer.set(n.id, `/${n.id}`));
+
+    // Map containerId -> array of nested end node ids inside that route (including deeper levels like sequence route)
+    const nestedEndsByContainer = new Map<string, string[]>();
+    nestedRoutePrefixByContainer.forEach((routePrefix, containerId) => {
+      const endIds = nodes
+        .filter(
+          (n) =>
+            n.type === "@tensorify/core/EndNode" &&
+            (n.route || "").startsWith(routePrefix)
+        )
+        .map((n) => n.id);
+      nestedEndsByContainer.set(containerId, endIds);
     });
 
     // Fixed-point iteration to compute upstream union variables
     const availableByNode: Record<string, string[]> = {};
+    const availableDetailsByNode: Record<
+      string,
+      Array<{
+        name: string;
+        sourceNodeId: string;
+        sourceNodeType: string;
+        pluginType: string;
+        isEnabled: boolean;
+      }>
+    > = {};
     nodes.forEach((n) => (availableByNode[n.id] = []));
+    nodes.forEach((n) => (availableDetailsByNode[n.id] = []));
 
     const maxIterations = Math.max(1, nodes.length);
     for (let iter = 0; iter < maxIterations; iter++) {
@@ -311,10 +390,68 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
       for (const n of nodes) {
         const parents = parentsByNode.get(n.id) || [];
         const parentUnion = new Set<string>();
+        // Inherit from parents
         for (const p of parents) {
           for (const v of availableByNode[p] || []) parentUnion.add(v);
+          // details
+          const parentDetails = availableDetailsByNode[p] || [];
+          const detailKeys = new Set(
+            (availableDetailsByNode[n.id] || []).map(
+              (d) => `${d.name}|${d.sourceNodeId}`
+            )
+          );
+          for (const d of parentDetails) {
+            const key = `${d.name}|${d.sourceNodeId}`;
+            if (!detailKeys.has(key)) {
+              (availableDetailsByNode[n.id] =
+                availableDetailsByNode[n.id] || []).push(d);
+              detailKeys.add(key);
+            }
+          }
         }
+        // Add local variables of this node
         for (const v of localVarsByNode.get(n.id) || []) parentUnion.add(v);
+        const localDetails = localVarDetailsByNode.get(n.id) || [];
+        const nodeDetailKeys = new Set(
+          (availableDetailsByNode[n.id] || []).map(
+            (d) => `${d.name}|${d.sourceNodeId}`
+          )
+        );
+        for (const d of localDetails) {
+          const key = `${d.name}|${d.sourceNodeId}`;
+          if (!nodeDetailKeys.has(key)) {
+            (availableDetailsByNode[n.id] =
+              availableDetailsByNode[n.id] || []).push(d);
+            nodeDetailKeys.add(key);
+          }
+        }
+        // If this node is a Nested container, bubble variables from its nested end nodes
+        if (n.type === "@tensorify/core/NestedNode") {
+          const endIds = nestedEndsByContainer.get(n.id) || [];
+          for (const endId of endIds) {
+            for (const v of availableByNode[endId] || []) parentUnion.add(v);
+            for (const v of localVarsByNode.get(endId) || [])
+              parentUnion.add(v);
+            // details from end nodes
+            const endDetails = [
+              ...(availableDetailsByNode[endId] || []),
+              ...(localVarDetailsByNode.get(endId) || []),
+            ];
+            const nestedDetailKeys = new Set(
+              (availableDetailsByNode[n.id] || []).map(
+                (d) => `${d.name}|${d.sourceNodeId}`
+              )
+            );
+            for (const d of endDetails) {
+              const key = `${d.name}|${d.sourceNodeId}`;
+              if (!nestedDetailKeys.has(key)) {
+                (availableDetailsByNode[n.id] =
+                  availableDetailsByNode[n.id] || []).push(d);
+                nestedDetailKeys.add(key);
+              }
+            }
+          }
+        }
         const nextArr = Array.from(parentUnion);
         const prevArr = availableByNode[n.id] || [];
         if (
@@ -322,6 +459,12 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
           nextArr.some((v, i) => v !== prevArr[i])
         ) {
           availableByNode[n.id] = nextArr;
+          changed = true;
+        }
+        // details change detection (shallow)
+        const nextDetails = availableDetailsByNode[n.id] || [];
+        const prevDetails = availableDetailsByNode[n.id] || [];
+        if (nextDetails.length !== prevDetails.length) {
           changed = true;
         }
       }
@@ -332,6 +475,7 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
       nodes: nodesState,
       edges: edgesState,
       availableVariablesByNodeId: availableByNode,
+      availableVariableDetailsByNodeId: availableDetailsByNode,
     };
   }, [
     nodes,

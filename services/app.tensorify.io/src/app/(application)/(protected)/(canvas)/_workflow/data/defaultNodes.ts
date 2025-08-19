@@ -87,35 +87,6 @@ const defaultNodes: NodeItem[] = [
       },
     ],
   },
-  // MANIPULATION category
-  {
-    id: "manipulation",
-    draggable: false,
-    Icon: Wrench,
-    title: "Manipulation",
-    description:
-      "Data manipulation and signal routing components for complex workflow control.",
-    children: [
-      {
-        id: "@tensorify/core/MultiplexerNode",
-        version: "1.0.0",
-        draggable: true,
-        Icon: Merge,
-        title: "Multiplexer",
-        description:
-          "Combine multiple inputs into a single output. Configure 2-20 inputs for signal aggregation.",
-      },
-      {
-        id: "@tensorify/core/DemultiplexerNode",
-        version: "1.0.0",
-        draggable: true,
-        Icon: Split,
-        title: "Demultiplexer",
-        description:
-          "Split a single input into multiple outputs. Configure 2-20 outputs for signal distribution.",
-      },
-    ],
-  },
   // SEQUENCE category
   {
     id: "sequence",
