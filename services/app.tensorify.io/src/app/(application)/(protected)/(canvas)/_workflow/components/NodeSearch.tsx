@@ -469,10 +469,12 @@ const SearchBar = ({
   value,
   onChange,
   isSearching = false,
+  autoFocus = false,
 }: {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isSearching?: boolean;
+  autoFocus?: boolean;
 }) => (
   <div className="px-3 sticky top-0 z-10">
     <div className="relative">
@@ -490,6 +492,7 @@ const SearchBar = ({
         className="w-full pl-9 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground"
         value={value}
         onChange={onChange}
+        autoFocus={autoFocus}
       />
     </div>
   </div>
@@ -1155,6 +1158,7 @@ export default function NodeSearch() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               isSearching={searchState.isSearching && !hasLocalResults}
+              autoFocus
             />
             <ScrollArea className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 dark:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50">
               <div className="flex flex-col gap-1 pt-3 pb-3 px-3">
@@ -1519,6 +1523,7 @@ export default function NodeSearch() {
             <SearchBar
               value={nestedSearchTerm}
               onChange={(e) => setNestedSearchTerm(e.target.value)}
+              autoFocus
             />
 
             {/* Content */}
