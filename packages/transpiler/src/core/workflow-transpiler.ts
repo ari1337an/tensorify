@@ -51,11 +51,11 @@ export async function generateCode(
 ): Promise<TranspilerResult> {
   const { nodes, edges, s3Config, bucketName, debug } = config;
 
-  console.log("Generating code with config:", {
-    nodeCount: nodes.length,
-    edgeCount: edges.length,
-    debug,
-  });
+  // console.log("Generating code with config:", {
+  //   nodeCount: nodes.length,
+  //   edgeCount: edges.length,
+  //   debug,
+  // });
 
   // Create plugin engine with offline-first in development when bucketName points to a local folder
   let engine: any;
@@ -73,12 +73,12 @@ export async function generateCode(
   try {
     // Find all paths from start nodes to end nodes in root route
     const paths = findAllPaths(nodes, edges);
-    console.log("Found paths:", paths.length, "paths:");
-    paths.forEach((path, i) => {
-      console.log(
-        `  Path ${i + 1}: ${path.nodes.join(" → ")} (ends at ${path.endNodeId})`
-      );
-    });
+    // console.log("Found paths:", paths.length, "paths:");
+    // paths.forEach((path, i) => {
+    //   console.log(
+    //     `  Path ${i + 1}: ${path.nodes.join(" → ")} (ends at ${path.endNodeId})`
+    //   );
+    // });
 
     // Get plugin results for all plugin nodes in the paths
     const collectedChildErrors: Record<string, string> = {};
@@ -88,11 +88,11 @@ export async function generateCode(
       engine,
       collectedChildErrors
     );
-    console.log("Plugin results:", pluginResults);
+    // console.log("Plugin results:", pluginResults);
 
     // Generate artifacts for each path
     const artifacts = generateArtifacts(paths, pluginResults);
-    console.log("Generated artifacts:", Object.keys(artifacts));
+    // console.log("Generated artifacts:", Object.keys(artifacts));
 
     // Convert paths to simple format for response
     const pathsSimple: Record<string, string[]> = {};
@@ -188,15 +188,15 @@ export async function generateCode(
  * Uses DFS with stack-based approach for server safety
  */
 function findAllPaths(nodes: WorkflowNode[], edges: WorkflowEdge[]): Path[] {
-  console.log("Finding paths with enhanced nested node support");
-  console.log(
-    "Input nodes:",
-    nodes.map((n) => ({ id: n.id, type: n.type, route: n.route }))
-  );
+  // console.log("Finding paths with enhanced nested node support");
+  // console.log(
+  //   "Input nodes:",
+  //   nodes.map((n) => ({ id: n.id, type: n.type, route: n.route }))
+  // );
 
   // First, discover all routes and their structure
   const routeInfo = discoverRoutes(nodes, edges);
-  console.log("Discovered routes:", routeInfo);
+  // console.log("Discovered routes:", routeInfo);
 
   // Find paths within each route
   const allRoutePaths: Path[] = [];
@@ -205,7 +205,7 @@ function findAllPaths(nodes: WorkflowNode[], edges: WorkflowEdge[]): Path[] {
     allRoutePaths.push(...routePaths);
   }
 
-  console.log("Found route paths:", allRoutePaths);
+  // console.log("Found route paths:", allRoutePaths);
 
   // Expand nested paths to create final artifacts
   const expandedPaths = expandNestedPaths(
@@ -214,7 +214,7 @@ function findAllPaths(nodes: WorkflowNode[], edges: WorkflowEdge[]): Path[] {
     nodes,
     edges
   );
-  console.log("Final expanded paths:", expandedPaths);
+  // console.log("Final expanded paths:", expandedPaths);
 
   return expandedPaths;
 }
@@ -284,7 +284,7 @@ function findPathsInRoute(
   const paths: Path[] = [];
   const { route, startNodes, endNodes } = routeInfo;
 
-  console.log(`Finding paths in route ${route}:`, { startNodes, endNodes });
+  // console.log(`Finding paths in route ${route}:`, { startNodes, endNodes });
 
   // Build adjacency list for this route only
   const adjacency = buildAdjacencyForRoute(route, nodes, edges);
@@ -332,7 +332,7 @@ function findPathsInRoute(
     }
   });
 
-  console.log(`Found ${paths.length} paths in route ${route}`);
+  // console.log(`Found ${paths.length} paths in route ${route}`);
   return paths;
 }
 
@@ -425,7 +425,7 @@ function expandNestedPaths(
   const rootPaths = pathsByRoute["/"] || [];
 
   if (rootPaths.length === 0) {
-    console.log("No root paths found, returning all route paths as-is");
+    // console.log("No root paths found, returning all route paths as-is");
     return routePaths;
   }
 
@@ -471,9 +471,9 @@ function expandSinglePath(
     const nestedPaths = pathsByRoute[nestedRoute] || [];
 
     if (nestedPaths.length === 0) {
-      console.log(
-        `No internal paths found for nested node ${nestedNodeId} in route ${nestedRoute}`
-      );
+      // console.log(
+      //   `No internal paths found for nested node ${nestedNodeId} in route ${nestedRoute}`
+      // );
       return;
     }
 
@@ -605,7 +605,7 @@ async function getPluginResults(
       // Get plugin settings from node data (pluginSettings field)
       const baseSettings = (node.data as any)?.pluginSettings || {};
 
-      console.log({ baseSettings });
+      // console.log({ baseSettings });
 
       // Include the label in the plugin settings and pass children code if defined (for sequence-like plugins)
       const payload: any = {
@@ -714,7 +714,7 @@ async function getPluginResults(
         }
       }
 
-      console.log(`Executing plugin for node ${nodeId}:`, { slug, payload });
+      // console.log(`Executing plugin for node ${nodeId}:`, { slug, payload });
 
       // Execute the plugin
       const result = await engine.getExecutionResult(

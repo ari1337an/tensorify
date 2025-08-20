@@ -112,6 +112,9 @@ interface WorkflowCanvasState {
   // Export dialog state
   isExportDialogOpen: boolean;
 
+  // Drag state for visual feedback
+  currentlyDraggedNodeId: string | null;
+
   // ReactFlow event handlers
   onNodesChange: OnNodesChange<WorkflowNode>;
   onEdgesChange: OnEdgesChange;
@@ -148,6 +151,9 @@ interface WorkflowCanvasState {
   // Export dialog actions
   openExportDialog: () => void;
   closeExportDialog: () => void;
+
+  // Drag state actions
+  setCurrentlyDraggedNodeId: (nodeId: string | null) => void;
 
   // Utility functions
   getVisibleNodes: () => WorkflowNode[];
@@ -198,6 +204,7 @@ const useWorkflowStore = create<WorkflowCanvasState>()(
       lastExportArtifactErrors: {},
       reactFlowInstance: null,
       isExportDialogOpen: false,
+      currentlyDraggedNodeId: null,
 
       // ReactFlow event handlers
       onNodesChange: (changes) => {
@@ -482,6 +489,11 @@ const useWorkflowStore = create<WorkflowCanvasState>()(
 
       closeExportDialog: () => {
         set({ isExportDialogOpen: false });
+      },
+
+      // Drag state actions
+      setCurrentlyDraggedNodeId: (nodeId: string | null) => {
+        set({ currentlyDraggedNodeId: nodeId });
       },
 
       // Utility functions

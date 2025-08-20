@@ -1,7 +1,7 @@
 {
   "extends": "../config/tsconfig/base.json",
   "exclude": [
-    "./templates/**/*",
+    "templates/**/*",
     "node_modules",
     "dist",
     "coverage",

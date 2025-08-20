@@ -187,6 +187,7 @@ function getIconComponent(
 
 export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
   const { data, selected, id } = props;
+
   const [hasError, setHasError] = useState(false);
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const addNode = useWorkflowStore((state) => state.addNode);
@@ -531,6 +532,60 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
 
+  // Get currently dragged node for visual feedback
+  const currentlyDraggedNodeId = useWorkflowStore(
+    (state) => state.currentlyDraggedNodeId
+  );
+
+  // Check if the currently dragged node can be dropped into this sequence
+  const canAcceptDraggedNode = useMemo(() => {
+    if (!isSequence || !currentlyDraggedNodeId) return false;
+
+    // Don't allow dropping into self
+    if (currentlyDraggedNodeId === id) return false;
+
+    // Find the dragged node
+    const draggedNode = nodesInStore.find(
+      (n) => n.id === currentlyDraggedNodeId
+    );
+    if (!draggedNode) return false;
+
+    // Check if the dragged node type is compatible
+    if (allowedItemType) {
+      let draggedNodeType: string | undefined;
+
+      // Handle native CustomCodeNode
+      if (draggedNode.type === "@tensorify/core/CustomCodeNode") {
+        draggedNodeType = "function";
+      } else {
+        // Handle plugin nodes
+        const draggedManifest = pluginManifests.find(
+          (p) => p.slug === draggedNode.type
+        );
+        draggedNodeType =
+          (draggedManifest?.manifest as any)?.pluginType ||
+          (draggedManifest?.manifest as any)?.frontendConfigs?.nodeType;
+      }
+
+      if (
+        draggedNodeType &&
+        String(draggedNodeType).toLowerCase() !==
+          String(allowedItemType).toLowerCase()
+      ) {
+        return false;
+      }
+    }
+
+    return true;
+  }, [
+    isSequence,
+    currentlyDraggedNodeId,
+    id,
+    nodesInStore,
+    allowedItemType,
+    pluginManifests,
+  ]);
+
   const addSequenceItem = (slug: string) => {
     if (!slug) return;
     // Optional: enforce allowed item type using loaded manifests if available
@@ -575,6 +630,20 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
     e.preventDefault();
     e.stopPropagation();
     droppedInContainerRef.current = true;
+
+    console.log(
+      `🎯 CustomPluginNode handleDropIntoSequence triggered for sequence ${id}`
+    );
+    console.log(
+      `🎯 Available data transfer types:`,
+      Array.from(e.dataTransfer.types)
+    );
+    console.log(
+      `🎯 Current draggedNodeType from context: "${draggedNodeType}"`
+    );
+
+    // Note: Canvas node drops are now handled at ReactFlow level via onNodeDragStop
+
     const draggedRow = e.dataTransfer.getData("application/sequence-index");
     if (draggedRow !== "") {
       // Move dragged row to end
@@ -589,14 +658,26 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
       return;
     }
     // Otherwise treat as external plugin slug drop
-    const dt = e.dataTransfer.getData("application/reactflow");
-    const slug = draggedNodeType || dt;
-    if (!slug) return;
+    const dtTensorify = e.dataTransfer.getData("application/tensorify-node");
+    const dtReactFlow = e.dataTransfer.getData("application/reactflow");
+    const slug = draggedNodeType || dtTensorify || dtReactFlow;
+    console.log(
+      `🎯 NodeSearch drop - draggedNodeType: "${draggedNodeType}", tensorify: "${dtTensorify}", reactflow: "${dtReactFlow}", final slug: "${slug}"`
+    );
+
+    if (!slug) {
+      console.log(`🎯 No slug found, returning`);
+      return;
+    }
     // Create a real canvas node for this slug
     try {
       const parentNode = nodesInStore.find((n) => n.id === id);
       const parentRoute = parentNode?.route || "/";
-      const childRoute = addRouteLevel(parentRoute, `sequence-${id}`);
+      // Route should be: parentRoute + "/sequence-" + sequenceNodeId
+      const childRoute =
+        parentRoute === "/"
+          ? `/sequence-${id}`
+          : `${parentRoute}/sequence-${id}`;
       const childId = crypto.randomUUID();
       // Resolve label and settings from manifest or defaults for native nodes
       let childLabel = slug.split("/").pop() || "item";
@@ -697,6 +778,18 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
 
   const onRowDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     e.preventDefault();
+
+    // Check if this is a NodeSearch drag (don't interfere with container drag over handling)
+    const isNodeSearchDrag =
+      e.dataTransfer.types.includes("application/tensorify-node") ||
+      e.dataTransfer.types.includes("application/reactflow");
+
+    if (isNodeSearchDrag) {
+      // Let NodeSearch drags bubble up to the container dragover handler
+      return;
+    }
+
+    // Only stop propagation and handle row reordering for sequence row drags
     e.stopPropagation();
     if (draggingIndex !== null && index !== overIndex) {
       setOverIndex(index);
@@ -705,11 +798,37 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
 
   const onRowDrop = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     e.preventDefault();
+    // Intentionally DO NOT stopPropagation here for NodeSearch drops so the
+    // container-level handleDropIntoSequence receives the event.
+    console.log(
+      `🎯 Row ${index} onDrop triggered, checking data types:`,
+      Array.from(e.dataTransfer.types)
+    );
+
+    const fromStr = e.dataTransfer.getData("application/sequence-index");
+
+    // Check if this is a NodeSearch drop (has tensorify-node or reactflow data)
+    const isNodeSearchDrop =
+      e.dataTransfer.types.includes("application/tensorify-node") ||
+      e.dataTransfer.types.includes("application/reactflow");
+
+    if (isNodeSearchDrop && !fromStr) {
+      console.log(
+        `🎯 Row ${index}: NodeSearch drop detected over row - bubbling to container drop handler`
+      );
+      // Explicitly allow bubbling so the container's onDrop handles NodeSearch
+      return; // do not stopPropagation
+    }
+
+    // Only stop propagation for sequence row reordering
     e.stopPropagation();
     droppedInContainerRef.current = true;
-    const fromStr = e.dataTransfer.getData("application/sequence-index");
+
     const from = parseInt(fromStr, 10);
     if (!isNaN(from) && from >= 0 && from < sequenceItems.length) {
+      console.log(
+        `🎯 Row ${index}: Reordering sequence item from ${from} to ${index}`
+      );
       const next = moveItem(sequenceItems, from, index);
       updateNodeData(id, { sequenceItems: next });
     }
@@ -719,8 +838,48 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
 
   const onRowDragEnd = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     e.stopPropagation();
-    // If not dropped inside the container, treat as removal
+    // If not dropped inside the container, create a new node on canvas
     if (!droppedInContainerRef.current && draggingIndex !== null) {
+      const sequenceItem = sequenceItems[draggingIndex];
+      if (sequenceItem?.slug) {
+        // Create new node on canvas
+        const currentRoute = useWorkflowStore.getState().currentRoute;
+        const addNode = useWorkflowStore.getState().addNode;
+
+        // Get mouse position and convert to flow coordinates
+        const reactFlowInstance = useWorkflowStore.getState().reactFlowInstance;
+        if (reactFlowInstance) {
+          const screenToFlowPosition = reactFlowInstance.screenToFlowPosition({
+            x: e.clientX,
+            y: e.clientY,
+          });
+
+          // Create the new node
+          const newNode: WorkflowNode = {
+            id: crypto.randomUUID(),
+            type: sequenceItem.slug,
+            position: screenToFlowPosition,
+            route: currentRoute,
+            version: sequenceItem.version || "1.0.0",
+            data: {
+              label:
+                sequenceItem.name ||
+                sequenceItem.slug.split("/").pop() ||
+                "item",
+              pluginId: sequenceItem.slug.startsWith("@tensorify/core/")
+                ? undefined
+                : sequenceItem.slug,
+              pluginSettings: sequenceItem.pluginSettings || {},
+            },
+            selected: false,
+            dragging: false,
+          };
+
+          addNode(newNode);
+        }
+      }
+
+      // Remove from sequence
       removeSequenceItem(draggingIndex);
     }
     setDraggingIndex(null);
@@ -860,6 +1019,7 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
   return (
     <TNode {...props}>
       <div
+        data-id={id}
         className={`
           relative group
           transition-all duration-200
@@ -875,6 +1035,7 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                 : "border-4 border-destructive shadow-lg shadow-destructive/30"
               : "border border-border"
           }
+
         `}
         style={{
           width: `${visualProps.width}px`,
@@ -913,6 +1074,7 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                 : visualProps.borderColor || "var(--border)",
           backgroundColor: getBackgroundColor,
           padding: `${visualProps.outerPadding}px`,
+          cursor: isSequence ? "default" : "grab",
         }}
       >
         {(invalidPrevNext.missingPrev || invalidPrevNext.missingNext) && (
@@ -984,13 +1146,20 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
         <div
           className="flex flex-col items-center justify-center h-full space-y-2"
           style={{ padding: `${visualProps.innerPadding}px` }}
+          data-sequence-drop-zone={isSequence ? "true" : undefined}
           onDragOver={(e) => {
             if (isSequence) {
               e.preventDefault();
+              e.stopPropagation();
+              e.dataTransfer.dropEffect = "move";
+              console.log(`🎯 Main sequence container drag over`);
             }
           }}
           onDrop={(e) => {
-            if (isSequence) handleDropIntoSequence(e);
+            if (isSequence) {
+              console.log(`🎯 Main sequence container drop event captured`);
+              handleDropIntoSequence(e);
+            }
           }}
         >
           {/* Primary Icon (hide for sequence to declutter) */}
@@ -1038,13 +1207,89 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
           {/* Sequence container UI (minimal: title → rows → drag target) */}
           {isSequence && (
             <div className="w-full flex flex-col gap-2">
-              <p className="text-sm font-medium text-center">
+              <p
+                className="text-sm font-medium text-center"
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log(`🎯 Drag over sequence TITLE for sequence ${id}`);
+                }}
+                onDrop={(e) => {
+                  console.log(`🎯 Drop on sequence TITLE for sequence ${id}`);
+                  handleDropIntoSequence(e);
+                }}
+              >
                 {visualProps.title}
               </p>
               <div
-                className="w-full min-h-[64px] rounded-lg border border-dashed border-input bg-accent p-3 flex flex-col gap-2 overflow-y-auto relative nodrag nowheel"
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={handleDropIntoSequence}
+                className={`
+                  w-full min-h-[64px] rounded-lg border border-dashed p-3 flex flex-col gap-2 overflow-y-auto relative nodrag nowheel
+                  transition-all duration-200
+                  ${
+                    canAcceptDraggedNode
+                      ? "border-primary/60 bg-primary/10 shadow-lg ring-2 ring-primary/20"
+                      : "border-input bg-accent"
+                  }
+                `}
+                data-sequence-drop-zone="true"
+                onDragOverCapture={(e) => {
+                  // Ensure drops are allowed even when hovering over child elements (like inputs)
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = canAcceptDraggedNode
+                    ? "move"
+                    : "none";
+                }}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log(
+                    `🎯 Drag entered sequence DROP ZONE for sequence ${id}`
+                  );
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.dataTransfer.dropEffect = canAcceptDraggedNode
+                    ? "move"
+                    : "none";
+                  // Debug logging for NodeSearch drops (can only read types during dragover)
+                  const dragTypes = Array.from(e.dataTransfer.types);
+                  console.log(
+                    `🎯 DROP ZONE Drag over - draggedNodeType: "${draggedNodeType}"`
+                  );
+                  console.log(`🎯 DROP ZONE data types:`, dragTypes);
+                  console.log(
+                    `🎯 Has NodeSearch types:`,
+                    dragTypes.includes("application/tensorify-node") &&
+                      dragTypes.includes("application/reactflow")
+                  );
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log(`🎯 Drag left sequence container`);
+                }}
+                onDropCapture={(e) => {
+                  // Capture NodeSearch drops even when the actual target is a child (e.g., input inside a row)
+                  const types = Array.from(e.dataTransfer.types);
+                  const isNodeSearchDrop =
+                    types.includes("application/tensorify-node") ||
+                    types.includes("application/reactflow");
+                  if (isNodeSearchDrop) {
+                    console.log(
+                      `🎯 Drop CAPTURE on sequence DROP ZONE for sequence ${id}`
+                    );
+                    handleDropIntoSequence(e);
+                    // Prevent duplicate handling in bubbling phase
+                    e.stopPropagation();
+                  }
+                }}
+                onDrop={(e) => {
+                  console.log(
+                    `🎯 Drop on sequence DROP ZONE for sequence ${id}`
+                  );
+                  handleDropIntoSequence(e);
+                }}
                 onMouseDown={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
                 onDoubleClick={(e) => e.stopPropagation()}
@@ -1072,6 +1317,33 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                               : "hover:ring-primary/50"
                         }`}
                         draggable
+                        onDragOverCapture={(e) => {
+                          // Ensure NodeSearch drops are accepted even when hovering child row controls
+                          const types = Array.from(e.dataTransfer.types);
+                          const isNodeSearchDrop =
+                            types.includes("application/tensorify-node") ||
+                            types.includes("application/reactflow");
+                          if (isNodeSearchDrop) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.dataTransfer.dropEffect = "move";
+                          }
+                        }}
+                        onDropCapture={(e) => {
+                          // Route NodeSearch drops at row level to the sequence handler
+                          const types = Array.from(e.dataTransfer.types);
+                          const isSequenceRowDrag = types.includes(
+                            "application/sequence-index"
+                          );
+                          const isNodeSearchDrop =
+                            (types.includes("application/tensorify-node") ||
+                              types.includes("application/reactflow")) &&
+                            !isSequenceRowDrag;
+                          if (isNodeSearchDrop) {
+                            handleDropIntoSequence(e);
+                            e.stopPropagation();
+                          }
+                        }}
                         onDragStart={(e) => onRowDragStart(e, idx)}
                         onDragOver={(e) => onRowDragOver(e, idx)}
                         onDrop={(e) => onRowDrop(e, idx)}
@@ -1172,12 +1444,21 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                   })
                 )}
                 <div
-                  className="w-full h-9 rounded-md border border-dashed border-input bg-accent flex items-center justify-center text-[11px] text-muted-foreground mt-1 select-none nodrag nowheel"
+                  className={`
+                    w-full h-9 rounded-md border border-dashed flex items-center justify-center text-[11px] mt-1 select-none nodrag nowheel
+                    transition-all duration-200
+                    ${
+                      canAcceptDraggedNode
+                        ? "border-primary/40 bg-primary/5 text-primary font-medium"
+                        : "border-input bg-accent text-muted-foreground"
+                    }
+                  `}
                   onMouseDown={(e) => e.stopPropagation()}
                   onPointerDown={(e) => e.stopPropagation()}
                   onDoubleClick={(e) => e.stopPropagation()}
                 >
-                  <Grip className="w-3 h-3 mr-1" /> Drag Here
+                  <Grip className="w-3 h-3 mr-1" />
+                  {canAcceptDraggedNode ? "Drop Node Here" : "Drag Here"}
                 </div>
               </div>
             </div>

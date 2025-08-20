@@ -838,7 +838,11 @@ export default function NodeSearch() {
     setDraggedNodeType(nodeType);
     setDraggedVersion(version || null);
     setIsDragging(true);
+    // Set both data types:
+    // - "application/reactflow" for ReactFlow's native canvas drop handling
+    // - "application/tensorify-node" for our custom sequence drop handling
     event.dataTransfer.setData("application/reactflow", nodeType);
+    event.dataTransfer.setData("application/tensorify-node", nodeType);
     event.dataTransfer.effectAllowed = "move";
   };
 

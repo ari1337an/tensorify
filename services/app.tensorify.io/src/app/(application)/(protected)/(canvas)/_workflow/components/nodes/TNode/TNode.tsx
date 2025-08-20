@@ -352,8 +352,17 @@ export default function TNode({
   };
 
   const handleNestedClick = () => {
-    console.log("🔥 TNode handleNestedClick fired!", { id, currentRoute });
-    setRoute(addRouteLevel(currentRoute, id));
+    console.log("🔥 TNode handleNestedClick fired!", {
+      id,
+      currentRoute,
+      nodeType: type,
+    });
+
+    // For sequence nodes, use sequence-{id} format for navigation
+    const isSequenceNode = type?.includes("sequence");
+    const routeSegment = isSequenceNode ? `sequence-${id}` : id;
+
+    setRoute(addRouteLevel(currentRoute, routeSegment));
   };
 
   const handleLabelDoubleClick = (e: React.MouseEvent) => {
