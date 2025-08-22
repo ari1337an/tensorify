@@ -45,6 +45,76 @@ function isNestedNode(nodeType?: string): boolean {
 }
 
 /**
+ * Check if a node is in variable provider mode
+ */
+function isVariableProviderNode(node: WorkflowNode): boolean {
+  return (node.data as any)?.nodeMode === "variable_provider";
+}
+
+/**
+ * Find variable provider dependencies between nodes
+ */
+function findVariableProviderDependencies(
+  nodes: WorkflowNode[],
+  edges: WorkflowEdge[]
+): Record<string, string[]> {
+  const dependencies: Record<string, string[]> = {};
+
+  // Find all variable provider connections (non-prev/next edges)
+  const variableEdges = edges.filter(
+    (edge) => edge.sourceHandle !== "next" && edge.targetHandle !== "prev"
+  );
+
+  variableEdges.forEach((edge) => {
+    const sourceNode = nodes.find((n) => n.id === edge.source);
+    const targetNode = nodes.find((n) => n.id === edge.target);
+
+    if (sourceNode && targetNode && isVariableProviderNode(sourceNode)) {
+      if (!dependencies[edge.target]) {
+        dependencies[edge.target] = [];
+      }
+      dependencies[edge.target].push(edge.source);
+    }
+  });
+
+  return dependencies;
+}
+
+/**
+ * Enhance paths to include variable provider dependencies
+ */
+function enhancePathsWithVariableProviders(
+  paths: Path[],
+  variableProviderDeps: Record<string, string[]>
+): Path[] {
+  return paths.map((path) => {
+    const enhancedNodes: string[] = [];
+    const addedProviders = new Set<string>();
+
+    // For each node in the path, add its variable providers first
+    path.nodes.forEach((nodeId) => {
+      const providers = variableProviderDeps[nodeId] || [];
+
+      // Add variable providers that haven't been added yet
+      providers.forEach((providerId) => {
+        if (!addedProviders.has(providerId)) {
+          enhancedNodes.push(providerId);
+          addedProviders.add(providerId);
+        }
+      });
+
+      // Then add the original node
+      enhancedNodes.push(nodeId);
+    });
+
+    return {
+      ...path,
+      nodes: enhancedNodes,
+    };
+  });
+}
+
+/**
  * Main function to generate code from a workflow
  */
 export async function generateCode(
@@ -74,33 +144,38 @@ export async function generateCode(
   try {
     // Find all paths from start nodes to end nodes in root route
     const paths = findAllPaths(nodes, edges);
-    // console.log("Found paths:", paths.length, "paths:");
-    // paths.forEach((path, i) => {
-    //   console.log(
-    //     `  Path ${i + 1}: ${path.nodes.join(" → ")} (ends at ${path.endNodeId})`
-    //   );
-    // });
 
-    // Get plugin results for all plugin nodes in the paths
+    // Find variable provider dependencies
+    const variableProviderDeps = findVariableProviderDependencies(nodes, edges);
+    console.log("Variable provider dependencies:", variableProviderDeps);
+
+    // Enhance paths with variable provider dependencies
+    const enhancedPaths = enhancePathsWithVariableProviders(
+      paths,
+      variableProviderDeps
+    );
+    console.log("Enhanced paths with variable providers:", enhancedPaths);
+
+    // Get plugin results for all plugin nodes in the enhanced paths
     const collectedChildErrors: Record<string, string> = {};
     const pluginResults = await getPluginResults(
       nodes,
-      paths,
+      enhancedPaths,
       engine,
       collectedChildErrors
     );
     // console.log("Plugin results:", pluginResults);
 
-    // Generate artifacts for each path
-    const artifacts = generateArtifacts(paths, pluginResults);
+    // Generate artifacts for each enhanced path
+    const artifacts = generateArtifacts(enhancedPaths, pluginResults);
     // console.log("Generated artifacts:", Object.keys(artifacts));
 
-    // Convert paths to simple format for response
+    // Convert enhanced paths to simple format for response
     const pathsSimple: Record<string, string[]> = {};
 
-    // Group paths by endNodeId to handle multiple paths to same endpoint
+    // Group enhanced paths by endNodeId to handle multiple paths to same endpoint
     const pathsByEndNode: Record<string, Path[]> = {};
-    paths.forEach((path) => {
+    enhancedPaths.forEach((path) => {
       if (!pathsByEndNode[path.endNodeId]) {
         pathsByEndNode[path.endNodeId] = [];
       }

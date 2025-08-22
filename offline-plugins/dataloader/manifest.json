@@ -87,6 +87,15 @@
       "edgeType": "default",
       "dataType": "any",
       "description": "Flow to next node"
+    },
+    {
+      "id": "dataloader_out",
+      "position": "right",
+      "viewType": "default",
+      "label": "DataLoader",
+      "edgeType": "default",
+      "dataType": "dataloader",
+      "description": "DataLoader output for use by other components"
     }
   ],
   "settingsFields": [

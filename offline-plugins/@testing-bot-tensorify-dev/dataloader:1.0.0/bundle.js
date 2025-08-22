@@ -1501,11 +1501,22 @@ print(\${variableName})\`;
             required: true,
             label: "Dataset",
             edgeType: import_sdk.EdgeType.DEFAULT,
-            dataType: "dataset",
+            dataType: import_sdk.NodeType.DATASET,
             description: "Dataset to load from"
           }
         ],
-        outputHandles: [import_sdk.NextNodeAsOutput],
+        outputHandles: [
+          import_sdk.NextNodeAsOutput,
+          {
+            id: "dataloader_out",
+            position: import_sdk.HandlePosition.RIGHT,
+            viewType: import_sdk.HandleViewType.DEFAULT,
+            label: "DataLoader",
+            edgeType: import_sdk.EdgeType.DEFAULT,
+            dataType: import_sdk.NodeType.DATALOADER,
+            description: "DataLoader output for use by other components"
+          }
+        ],
         // Settings Configuration
         settingsFields: [
           {
@@ -1627,6 +1638,7 @@ print(\${variableName})\`;
           ],
           imports: [{ path: "torch.utils.data", items: ["DataLoader"] }]
         },
+        nodeType: import_sdk.NodeType.DATALOADER,
         capabilities: [import_sdk.PluginCapability.CODE_GENERATION],
         requirements: {
           minSdkVersion: "1.0.0",

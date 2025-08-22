@@ -159,10 +159,7 @@
     ],
     "imports": [
       {
-        "path": "torchvision.datasets",
-        "items": [
-          "CIFAR10"
-        ]
+        "path": "torchvision"
       }
     ]
   }

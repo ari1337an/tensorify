@@ -157,7 +157,7 @@ export default class Cifar10datasetPlugin extends TensorifyPlugin {
             type: NodeType.DATASET,
           },
         ],
-        imports: [{ path: "torchvision.datasets", items: ["CIFAR10"] }],
+        imports: [{ path: "torchvision" }],
       },
       nodeType: NodeType.DATASET,
       capabilities: [PluginCapability.CODE_GENERATION],

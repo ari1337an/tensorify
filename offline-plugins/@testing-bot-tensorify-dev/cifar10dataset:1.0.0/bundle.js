@@ -1500,7 +1500,7 @@ print(\${variableName})\`;
             viewType: import_sdk.HandleViewType.DEFAULT,
             label: "Dataset",
             edgeType: import_sdk.EdgeType.DEFAULT,
-            dataType: "dataset",
+            dataType: import_sdk.NodeType.DATASET,
             description: "CIFAR-10 dataset output"
           }
         ],
@@ -1580,7 +1580,7 @@ print(\${variableName})\`;
               type: import_sdk.NodeType.DATASET
             }
           ],
-          imports: [{ path: "torchvision.datasets", items: ["CIFAR10"] }]
+          imports: [{ path: "torchvision" }]
         },
         nodeType: import_sdk.NodeType.DATASET,
         capabilities: [import_sdk.PluginCapability.CODE_GENERATION],
