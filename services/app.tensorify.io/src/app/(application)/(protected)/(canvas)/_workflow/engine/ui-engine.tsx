@@ -22,6 +22,8 @@ type NodeValidationState = {
   isTransientError: boolean;
   hasExportError: boolean;
   exportErrorMessage?: string;
+  hasValidationError: boolean;
+  validationErrorMessage?: string;
   isSequenceChild: boolean;
   parentSequenceId?: string;
 };
@@ -173,6 +175,19 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
       const hasExportError = Boolean(lastExportErrorsByNodeId[n.id]);
       const exportErrorMessage = lastExportErrorsByNodeId[n.id];
 
+      // Check for ClassNode validation errors
+      let hasValidationError = false;
+      let validationErrorMessage = "";
+      if (n.type === "@tensorify/core/ClassNode") {
+        const classData = n.data as any;
+        if (classData?.validationErrors?.hasErrors) {
+          hasValidationError = true;
+          validationErrorMessage =
+            classData.validationErrors.errorMessage ||
+            "Validation errors detected";
+        }
+      }
+
       // Check if this is a sequence child node
       const isSequenceChild = n.route.includes("/sequence-");
       const parentSequenceId = isSequenceChild
@@ -190,6 +205,8 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
         isTransientError: isFlashing,
         hasExportError,
         exportErrorMessage,
+        hasValidationError,
+        validationErrorMessage,
         isSequenceChild,
         parentSequenceId,
       };
@@ -315,10 +332,13 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
         type?: string;
       }> = [];
 
-      // Handle CustomCodeNode (native node with emits configuration)
-      if (n.type === "@tensorify/core/CustomCodeNode") {
-        const customCodeData = n.data as any;
-        variables = customCodeData?.emitsConfig?.variables || [];
+      // Handle native nodes with emits configuration (CustomCodeNode and ClassNode)
+      if (
+        n.type === "@tensorify/core/CustomCodeNode" ||
+        n.type === "@tensorify/core/ClassNode"
+      ) {
+        const nodeData = n.data as any;
+        variables = nodeData?.emitsConfig?.variables || [];
       } else {
         // Handle plugin nodes
         const mf = resolveManifestForNode(n.id);
@@ -340,7 +360,11 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
       const pluginKey = ((n.data as any)?.pluginId || n.type || n.id) as string;
       const fallbackPluginType =
         pluginTypeByKey.get(pluginKey) ||
-        (n.type === "@tensorify/core/CustomCodeNode" ? "function" : "unknown");
+        (n.type === "@tensorify/core/CustomCodeNode"
+          ? "function"
+          : n.type === "@tensorify/core/ClassNode"
+            ? "custom"
+            : "unknown");
 
       for (const v of variables) {
         const rawKey = (v.switchKey || "").split(".").pop() || "";
@@ -348,6 +372,7 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
           rawKey && settings.hasOwnProperty(rawKey)
             ? Boolean(settings[rawKey])
             : Boolean(v.isOnByDefault);
+
         if (isOn && v.value) {
           vars.push(v.value);
           varDetails.push({

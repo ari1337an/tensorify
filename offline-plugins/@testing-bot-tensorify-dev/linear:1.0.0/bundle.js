@@ -108,6 +108,7 @@ var PluginBundle = (() => {
         NodeType3["MODEL"] = "model";
         NodeType3["MODEL_LAYER"] = "model_layer";
         NodeType3["SEQUENCE"] = "sequence";
+        NodeType3["DATASET"] = "dataset";
         NodeType3["DATALOADER"] = "dataloader";
         NodeType3["PREPROCESSOR"] = "preprocessor";
         NodeType3["POSTPROCESSOR"] = "postprocessor";

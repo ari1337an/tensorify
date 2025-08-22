@@ -17,7 +17,7 @@
     "build": "npx tsc"
   },
   "tensorifySettings": {
-    "sdkVersion": "0.0.44"
+    "sdkVersion": "0.0.45"
   },
   "metadata": {
     "repository": "https://github.com/tensorify/relu",

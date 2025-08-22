@@ -34,6 +34,7 @@ import {
   Merge,
   Split,
   Code,
+  Code2,
 } from "lucide-react";
 import { NodeItem } from "../types/NodeItem";
 
@@ -86,6 +87,15 @@ const defaultNodes: NodeItem[] = [
     title: "Custom Code",
     description:
       "Write custom Python code with intelligent variable injection and type inference. Perfect for custom transformations, calculations, and advanced logic.",
+  },
+  {
+    id: "@tensorify/core/ClassNode",
+    version: "1.0.0",
+    draggable: true,
+    Icon: Code2,
+    title: "Python Class",
+    description:
+      "Create Python classes with intelligent constructor and method management. Perfect for defining custom datasets, models, and complex data structures with upstream variable integration.",
   },
   // SEQUENCE category
   {
@@ -277,7 +287,7 @@ const defaultNodes: NodeItem[] = [
     title: "Custom",
     description: "Your custom nodes and plugins installed into this workspace.",
     children: [],
-  }
+  },
 ];
 
 export default defaultNodes;

@@ -43,13 +43,10 @@ import useAppStore from "@/app/_store/store";
 import { useUIEngine } from "../../../engine/ui-engine";
 import type { CustomCodeNodeData } from "../CustomCodeNode";
 import { NodeType } from "@packages/sdk/src/types/core";
-
-// Monaco Editor - dynamically imported to avoid SSR issues
-const MonacoEditor = React.lazy(() =>
-  import("@monaco-editor/react").then((module) => ({
-    default: module.default,
-  }))
-);
+import {
+  IntelligentCodeEditor,
+  type AvailableVariable,
+} from "../../common/IntelligentCodeEditor";
 
 interface CustomCodeSettingsProps {
   nodeId: string;
@@ -87,7 +84,7 @@ export function CustomCodeSettings({
   );
 
   // Get available variables from upstream nodes
-  const availableVariables = useMemo(() => {
+  const availableVariables: AvailableVariable[] = useMemo(() => {
     const details = engine.availableVariableDetailsByNodeId[nodeId] || [];
     return details.map((d) => ({
       name: d.name,
@@ -135,13 +132,6 @@ export function CustomCodeSettings({
     };
   }, []);
 
-  // Handle code changes
-  const handleCodeChange = (value: string | undefined) => {
-    const newCode = value || "";
-    setCode(newCode);
-    debouncedSave({ code: newCode });
-  };
-
   // Toggle section expansion
   const toggleSection = (sectionId: string) => {
     const newExpanded = new Set(expandedSections);
@@ -167,7 +157,13 @@ export function CustomCodeSettings({
   // Handle imports changes
   const handleImportsChange = (newImports: any[]) => {
     setCustomImports(newImports);
-    debouncedSave({ customImports: newImports });
+    debouncedSave({
+      customImports: newImports,
+      emitsConfig: {
+        ...customCodeData.emitsConfig,
+        imports: newImports,
+      },
+    });
   };
 
   // Add new emitted variable
@@ -332,9 +328,8 @@ export function CustomCodeSettings({
       .replace(/\bas\s+(\w+)/g, 'as <span style="color: #FFCB6B;">$1</span>');
   };
 
-  // Insert variable into code
-  const insertVariable = (variableName: string) => {
-    const newCode = code + `$${variableName}`;
+  // Handle code changes
+  const handleCodeChange = (newCode: string) => {
     setCode(newCode);
     debouncedSave({ code: newCode });
   };
@@ -400,199 +395,20 @@ export function CustomCodeSettings({
           </CollapsibleTrigger>
           <CollapsibleContent>
             <CardContent className="pt-0">
-              {/* Available Variables Helper */}
-              {availableVariables.length > 0 && (
-                <div className="mb-4 p-3 bg-muted/30 rounded-md border">
-                  <Label className="text-xs font-medium mb-2 block">
-                    Available Variables (click to insert)
-                  </Label>
-                  <div className="flex flex-wrap gap-1">
-                    {availableVariables.map((variable, index) => (
-                      <Button
-                        key={index}
-                        variant="outline"
-                        size="sm"
-                        className="h-6 px-2 text-xs"
-                        onClick={() => insertVariable(variable.name)}
-                      >
-                        <Variable className="h-3 w-3 mr-1" />${variable.name}
-                        <span className="ml-1 text-muted-foreground">
-                          ({variable.type})
-                        </span>
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Monaco Editor */}
-              <div className="border rounded-md overflow-hidden">
-                <React.Suspense
-                  fallback={
-                    <Textarea
-                      placeholder="# Write your Python code here...
+              <IntelligentCodeEditor
+                value={code}
+                onChange={handleCodeChange}
+                availableVariables={availableVariables}
+                placeholder="# Write your Python code here...
 # Use $variable_name to reference upstream variables
 # Example:
 # result = $input_tensor * 2
 # return result"
-                      value={code}
-                      onChange={(e) => handleCodeChange(e.target.value)}
-                      className="min-h-[300px] font-mono text-sm resize-none"
-                    />
-                  }
-                >
-                  <MonacoEditor
-                    height="300px"
-                    language="python"
-                    value={code}
-                    onChange={handleCodeChange}
-                    options={{
-                      minimap: { enabled: false },
-                      fontSize: 14,
-                      lineNumbers: "on",
-                      scrollBeyondLastLine: false,
-                      wordWrap: "on",
-                      theme: "vs-dark",
-                      automaticLayout: true,
-                      quickSuggestions: true,
-                      suggestOnTriggerCharacters: true,
-                      acceptSuggestionOnEnter: "on",
-                      parameterHints: { enabled: true },
-                    }}
-                    onMount={(editor, monaco) => {
-                      // Register variable autocomplete provider
-                      monaco.languages.registerCompletionItemProvider(
-                        "python",
-                        {
-                          triggerCharacters: ["$"],
-                          provideCompletionItems: (model, position) => {
-                            const word = model.getWordUntilPosition(position);
-                            const range = {
-                              startLineNumber: position.lineNumber,
-                              endLineNumber: position.lineNumber,
-                              startColumn: word.startColumn,
-                              endColumn: word.endColumn,
-                            };
-
-                            // Check if we're after a $ symbol
-                            const lineContent = model.getLineContent(
-                              position.lineNumber
-                            );
-                            const charBeforeWord = lineContent.charAt(
-                              word.startColumn - 2
-                            );
-
-                            if (charBeforeWord === "$") {
-                              // Provide variable suggestions
-                              const suggestions = availableVariables.map(
-                                (variable) => ({
-                                  label: variable.name,
-                                  kind: monaco.languages.CompletionItemKind
-                                    .Variable,
-                                  insertText: variable.name,
-                                  documentation: `Type: ${variable.type}\nFrom: ${variable.sourceNode}`,
-                                  detail: `$${variable.name}`,
-                                  range: range,
-                                })
-                              );
-                              return { suggestions };
-                            }
-
-                            return { suggestions: [] };
-                          },
-                        }
-                      );
-
-                      // Register hover provider for variables
-                      monaco.languages.registerHoverProvider("python", {
-                        provideHover: (model, position) => {
-                          const word = model.getWordAtPosition(position);
-                          if (!word) return null;
-
-                          // Check if this word is preceded by $
-                          const lineContent = model.getLineContent(
-                            position.lineNumber
-                          );
-                          const startPos = word.startColumn - 1;
-                          if (
-                            startPos > 0 &&
-                            lineContent.charAt(startPos - 1) === "$"
-                          ) {
-                            const variable = availableVariables.find(
-                              (v) => v.name === word.word
-                            );
-                            if (variable) {
-                              return {
-                                range: new monaco.Range(
-                                  position.lineNumber,
-                                  word.startColumn - 1, // Include the $
-                                  position.lineNumber,
-                                  word.endColumn
-                                ),
-                                contents: [
-                                  { value: `**Variable:** ${variable.name}` },
-                                  { value: `**Type:** ${variable.type}` },
-                                  {
-                                    value: `**Source:** ${variable.sourceNode}`,
-                                  },
-                                  {
-                                    value: `**Node ID:** ${variable.sourceNodeId}`,
-                                  },
-                                ],
-                              };
-                            }
-                          }
-                          return null;
-                        },
-                      });
-
-                      // Add custom token provider for $variable highlighting
-                      monaco.languages.setMonarchTokensProvider("python", {
-                        tokenizer: {
-                          root: [
-                            // Variable references
-                            [/\$[a-zA-Z_][a-zA-Z0-9_]*/, "variable.custom"],
-                            // Keep existing Python tokens
-                            [/#.*$/, "comment"],
-                            [/".*?"/, "string"],
-                            [/'.*?'/, "string"],
-                            [
-                              /\b(def|class|if|else|elif|while|for|try|except|finally|with|as|import|from|return|yield|lambda|global|nonlocal|pass|break|continue|raise|assert|del|and|or|not|in|is)\b/,
-                              "keyword",
-                            ],
-                            [/\b(True|False|None)\b/, "constant"],
-                            [/\b\d+\.?\d*\b/, "number"],
-                            [/[a-zA-Z_][a-zA-Z0-9_]*/, "identifier"],
-                          ],
-                        },
-                      });
-
-                      // Define custom theme with variable highlighting
-                      monaco.editor.defineTheme("custom-dark", {
-                        base: "vs-dark",
-                        inherit: true,
-                        rules: [
-                          {
-                            token: "variable.custom",
-                            foreground: "#4FC3F7",
-                            fontStyle: "bold",
-                          }, // Light blue for variables
-                        ],
-                        colors: {},
-                      });
-
-                      // Apply the custom theme
-                      monaco.editor.setTheme("custom-dark");
-                    }}
-                  />
-                </React.Suspense>
-              </div>
+                height="300px"
+                showVariableHelper={true}
+              />
 
               <div className="mt-2 text-xs text-muted-foreground">
-                <p>
-                  • Use <code>$variable_name</code> syntax to reference upstream
-                  variables
-                </p>
                 <p>• The code will be wrapped in a function automatically</p>
                 <p>
                   • Return values using <code>return</code> statement

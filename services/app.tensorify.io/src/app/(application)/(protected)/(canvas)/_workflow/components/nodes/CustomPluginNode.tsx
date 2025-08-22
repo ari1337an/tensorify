@@ -1235,9 +1235,12 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                 onDragOverCapture={(e) => {
                   // Ensure drops are allowed even when hovering over child elements (like inputs)
                   e.preventDefault();
-                  e.dataTransfer.dropEffect = canAcceptDraggedNode
-                    ? "move"
-                    : "none";
+                  const types = Array.from(e.dataTransfer.types);
+                  const isNodeSearchDrag =
+                    types.includes("application/tensorify-node") ||
+                    types.includes("application/reactflow");
+                  e.dataTransfer.dropEffect =
+                    isNodeSearchDrag || canAcceptDraggedNode ? "move" : "none";
                 }}
                 onDragEnter={(e) => {
                   e.preventDefault();
@@ -1249,9 +1252,12 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                 onDragOver={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  e.dataTransfer.dropEffect = canAcceptDraggedNode
-                    ? "move"
-                    : "none";
+                  const types = Array.from(e.dataTransfer.types);
+                  const isNodeSearchDrag =
+                    types.includes("application/tensorify-node") ||
+                    types.includes("application/reactflow");
+                  e.dataTransfer.dropEffect =
+                    isNodeSearchDrag || canAcceptDraggedNode ? "move" : "none";
                   // Debug logging for NodeSearch drops (can only read types during dragover)
                   const dragTypes = Array.from(e.dataTransfer.types);
                   console.log(
@@ -1271,6 +1277,7 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                 }}
                 onDropCapture={(e) => {
                   // Capture NodeSearch drops even when the actual target is a child (e.g., input inside a row)
+                  e.preventDefault();
                   const types = Array.from(e.dataTransfer.types);
                   const isNodeSearchDrop =
                     types.includes("application/tensorify-node") ||
@@ -1331,6 +1338,7 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                         }}
                         onDropCapture={(e) => {
                           // Route NodeSearch drops at row level to the sequence handler
+                          e.preventDefault();
                           const types = Array.from(e.dataTransfer.types);
                           const isSequenceRowDrag = types.includes(
                             "application/sequence-index"
@@ -1359,6 +1367,34 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                             const next = sequenceItems.slice();
                             next[idx] = { ...next[idx], name: e.target.value };
                             updateNodeData(id, { sequenceItems: next });
+                          }}
+                          onDragOverCapture={(e) => {
+                            // Accept NodeSearch drops directly over the input field
+                            const types = Array.from(e.dataTransfer.types);
+                            const isNodeSearchDrop =
+                              types.includes("application/tensorify-node") ||
+                              types.includes("application/reactflow");
+                            if (isNodeSearchDrop) {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              e.dataTransfer.dropEffect = "move";
+                            }
+                          }}
+                          onDropCapture={(e) => {
+                            // Route NodeSearch drops to the sequence handler when dropped on the input
+                            const types = Array.from(e.dataTransfer.types);
+                            const isSequenceRowDrag = types.includes(
+                              "application/sequence-index"
+                            );
+                            const isNodeSearchDrop =
+                              (types.includes("application/tensorify-node") ||
+                                types.includes("application/reactflow")) &&
+                              !isSequenceRowDrag;
+                            if (isNodeSearchDrop) {
+                              e.preventDefault();
+                              handleDropIntoSequence(e);
+                              e.stopPropagation();
+                            }
                           }}
                           onMouseDown={(e) => e.stopPropagation()}
                           onPointerDown={(e) => e.stopPropagation()}

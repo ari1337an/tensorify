@@ -42,6 +42,7 @@ export enum SpecialNodeType {
 // Special node types that DO produce code chunks (handled differently from plugins)
 export enum CodeGeneratingNodeType {
   CustomCode = "@tensorify/core/CustomCodeNode",
+  ClassNode = "@tensorify/core/ClassNode",
 }
 
 // Helper to check if a node is a special type

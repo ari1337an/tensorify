@@ -68,31 +68,15 @@ export function VariablesTab({ node, nodeId }: VariablesTabProps) {
 
   // Get variable flow information for this node from the UI engine
   const variableInfo = useMemo(() => {
-    console.log(`🔍 [VariablesTab] Opening Variables tab for node: ${nodeId}`);
     const names = engine.availableVariablesByNodeId[nodeId] || [];
     const details = engine.availableVariableDetailsByNodeId[nodeId] || [];
 
-    // Debug manifest data for this node
+    // Get manifest data for this node
     const nodeData = node.data as any;
     const pluginId = nodeData?.pluginId || node.type;
     const matchingManifest = pluginManifests.find(
       (pm) => (pm as any)?.slug === pluginId || (pm as any)?.id === pluginId
     );
-
-    console.log(`🔍 [VariablesTab] DEBUG manifest for node ${nodeId}:`, {
-      nodeId,
-      nodeType: node.type,
-      pluginId,
-      matchingManifest,
-      manifestEmits: matchingManifest
-        ? (matchingManifest as any)?.manifest?.emits
-        : "No matching manifest",
-      allManifests: pluginManifests.map((pm) => ({
-        slug: (pm as any)?.slug,
-        pluginType: (pm as any)?.pluginType,
-        manifestEmits: (pm as any)?.manifest?.emits,
-      })),
-    });
 
     const availableVariables: EmittedVariable[] = details.map((d) => ({
       name: d.name,
@@ -114,22 +98,6 @@ export function VariablesTab({ node, nodeId }: VariablesTabProps) {
       },
       {} as Record<string, EmittedVariable[]>
     );
-
-    console.log(`📊 [VariablesTab] Variables for node ${nodeId}:`, {
-      nodeId,
-      nodeRoute: node.route,
-      nodeType: node.type,
-      availableVariables: availableVariables.map((v) => ({
-        name: v.name,
-        sourceNodeId: v.sourceNodeId,
-        sourceNodeType: v.sourceNodeType,
-        pluginType: v.pluginType,
-        isEnabled: v.isEnabled,
-      })),
-      variablesByType,
-      variableNames: names,
-      variableCount: names.length,
-    });
 
     return {
       availableVariables,

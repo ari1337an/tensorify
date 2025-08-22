@@ -58,6 +58,7 @@ import useWorkflowStore, {
 } from "../../../store/workflowStore";
 import { PluginSettingsSection } from "./PluginSettingsSection";
 import { CustomCodeSettings } from "./CustomCodeSettings";
+import { ClassNodeSettings } from "./ClassNodeSettings";
 import useAppStore from "@/app/_store/store";
 import { useUIEngine } from "../../../engine/ui-engine";
 import { VariablesTab } from "./VariablesTab";
@@ -1272,6 +1273,14 @@ export default function TNode({
                 {/* Custom Code Settings for CustomCodeNode */}
                 {type === "@tensorify/core/CustomCodeNode" ? (
                   <CustomCodeSettings
+                    nodeId={id}
+                    onSettingsChange={(newData) => {
+                      updateNodeData(id, newData);
+                    }}
+                  />
+                ) : type === "@tensorify/core/ClassNode" ? (
+                  /* Class Node Settings for ClassNode */
+                  <ClassNodeSettings
                     nodeId={id}
                     onSettingsChange={(newData) => {
                       updateNodeData(id, newData);

@@ -51,6 +51,7 @@ import EndNode from "@workflow/components/nodes/EndNode";
 import NestedNode from "@workflow/components/nodes/NestedNode";
 import BranchNode from "@workflow/components/nodes/BranchNode";
 import CustomCodeNode from "@workflow/components/nodes/CustomCodeNode";
+import ClassNode from "@workflow/components/nodes/ClassNode";
 import CustomPluginNode from "@workflow/components/nodes/CustomPluginNode";
 import GlobalNodeSettingsDialog from "@workflow/components/GlobalNodeSettingsDialog";
 import CustomEdge from "@workflow/components/CustomEdge";
@@ -354,6 +355,9 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
 
       // Special case: custom code nodes
       nodeMap["@tensorify/core/CustomCodeNode"] = CustomCodeNode;
+
+      // Special case: class nodes
+      nodeMap["@tensorify/core/ClassNode"] = ClassNode;
 
       // Removed Multiplexer/Demultiplexer node types
 

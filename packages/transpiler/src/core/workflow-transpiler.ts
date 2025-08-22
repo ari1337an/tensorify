@@ -522,6 +522,232 @@ function createNodeMap(nodes: WorkflowNode[]): Record<string, WorkflowNode> {
 }
 
 /**
+ * Generate Python class code from ClassNode data with support for constructor items and @classnodeself
+ */
+function generatePythonClassCode(data: {
+  className: string;
+  baseClass?: { name: string; importPath?: string } | null;
+  constructorParameters?: Array<{
+    name: string;
+    type: string;
+    value: string;
+    defaultValue?: string;
+    propertyName?: string;
+  }>;
+  constructorItems?: Array<{
+    id: string;
+    type: "parameter" | "code";
+    parameter?: {
+      name: string;
+      type: string;
+      value: string;
+      defaultValue?: string;
+      propertyName?: string;
+    };
+    code?: string;
+  }>;
+  methods: Array<{
+    name: string;
+    parameters: Array<{
+      name: string;
+      type: string;
+      value: string;
+      defaultValue?: string;
+    }>;
+    code: string;
+  }>;
+}): string {
+  const {
+    className,
+    baseClass,
+    constructorParameters = [],
+    constructorItems = [],
+    methods,
+  } = data;
+  const lines: string[] = [];
+
+  // Class definition
+  const classLine = baseClass
+    ? `class ${className}(${baseClass.name}):`
+    : `class ${className}:`;
+  lines.push(classLine);
+
+  // Collect all constructor parameters (legacy + new items)
+  const allConstructorParams: Array<{
+    name: string;
+    defaultValue?: string;
+  }> = [];
+
+  // Add legacy constructor parameters
+  constructorParameters.forEach((p) => {
+    allConstructorParams.push({
+      name: p.name,
+      defaultValue: p.defaultValue,
+    });
+  });
+
+  // Add parameters from constructor items
+  constructorItems.forEach((item) => {
+    if (item.type === "parameter" && item.parameter) {
+      allConstructorParams.push({
+        name: item.parameter.name,
+        defaultValue: item.parameter.defaultValue,
+      });
+    }
+  });
+
+  // Constructor signature
+  const hasParams = allConstructorParams.length > 0;
+  if (hasParams) {
+    const paramList = [
+      "self",
+      ...allConstructorParams.map((p) => {
+        const defaultPart = p.defaultValue ? `=${p.defaultValue}` : "";
+        return `${p.name}${defaultPart}`;
+      }),
+    ].join(", ");
+    lines.push(`    def __init__(${paramList}):`);
+  } else {
+    lines.push("    def __init__(self):");
+  }
+
+  // Add super() call if base class exists
+  if (baseClass) {
+    lines.push("        super().__init__()");
+  }
+
+  // Constructor body - legacy parameters first
+  let hasConstructorBody = false;
+  constructorParameters.forEach((param) => {
+    const propertyName = param.propertyName || param.name;
+    lines.push(`        self.${propertyName} = ${param.name}`);
+    hasConstructorBody = true;
+  });
+
+  // Constructor body - process constructor items
+  constructorItems.forEach((item) => {
+    if (item.type === "parameter" && item.parameter) {
+      const propertyName = item.parameter.propertyName || item.parameter.name;
+      lines.push(`        self.${propertyName} = ${item.parameter.name}`);
+      hasConstructorBody = true;
+    } else if (item.type === "code" && item.code) {
+      // Process code block - remove @classnodeself decorators
+      const processedCode = removeClassNodeSelfDecorators(item.code);
+      const codeLines = processedCode.split("\n");
+      codeLines.forEach((line) => {
+        if (line.trim()) {
+          lines.push(`        ${line}`);
+          hasConstructorBody = true;
+        }
+      });
+    }
+  });
+
+  // Add pass if no constructor body
+  if (!hasConstructorBody) {
+    lines.push("        pass");
+  }
+
+  // Add auto-methods for base classes if they don't exist
+  const autoMethods = getAutoMethodsForBaseClass(baseClass, methods);
+  const allMethods = [...autoMethods, ...methods];
+
+  // Methods
+  allMethods.forEach((method) => {
+    lines.push("");
+    const methodParamList = [
+      "self",
+      ...method.parameters.map((p) => {
+        const defaultPart = p.defaultValue ? `=${p.defaultValue}` : "";
+        return `${p.name}${defaultPart}`;
+      }),
+    ].join(", ");
+    lines.push(`    def ${method.name}(${methodParamList}):`);
+
+    if (method.code.trim()) {
+      const codeLines = method.code.split("\n");
+      codeLines.forEach((line) => {
+        lines.push(`        ${line}`);
+      });
+    } else {
+      lines.push("        pass");
+    }
+  });
+
+  return lines.join("\n");
+}
+
+/**
+ * Remove @classnodeself decorators from code blocks (they're for UI intellisense only)
+ */
+function removeClassNodeSelfDecorators(code: string): string {
+  const lines = code.split("\n");
+  const filteredLines: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // Skip @classnodeself decorator lines
+    if (line.trim() === "@classnodeself") {
+      continue;
+    }
+    filteredLines.push(line);
+  }
+
+  return filteredLines.join("\n");
+}
+
+/**
+ * Get auto-methods for base classes (torch.nn.Module, Dataset, etc.)
+ */
+function getAutoMethodsForBaseClass(
+  baseClass: { name: string; importPath?: string } | null | undefined,
+  existingMethods: Array<{ name: string; parameters: any[]; code: string }>
+): Array<{ name: string; parameters: any[]; code: string }> {
+  if (!baseClass || baseClass.name === "No base class") {
+    return [];
+  }
+
+  const autoMethods: Array<{ name: string; parameters: any[]; code: string }> =
+    [];
+  const existingMethodNames = existingMethods.map((m) => m.name);
+
+  if (baseClass.name === "torch.nn.Module") {
+    // Add forward method if it doesn't exist
+    if (!existingMethodNames.includes("forward")) {
+      autoMethods.push({
+        name: "forward",
+        parameters: [
+          { name: "x", type: "variable", value: "", defaultValue: "" },
+        ],
+        code: "        # Define the forward pass of your neural network\n        # Example:\n        # x = self.layer1(x)\n        # return x\n        pass",
+      });
+    }
+  } else if (baseClass.name === "torch.utils.data.Dataset") {
+    // Add __len__ method if it doesn't exist
+    if (!existingMethodNames.includes("__len__")) {
+      autoMethods.push({
+        name: "__len__",
+        parameters: [],
+        code: "        # Return the size of the dataset\n        # Example:\n        # return len(self.data)\n        pass",
+      });
+    }
+
+    // Add __getitem__ method if it doesn't exist
+    if (!existingMethodNames.includes("__getitem__")) {
+      autoMethods.push({
+        name: "__getitem__",
+        parameters: [
+          { name: "idx", type: "variable", value: "", defaultValue: "" },
+        ],
+        code: "        # Return a single item from the dataset\n        # Example:\n        # return self.data[idx], self.labels[idx]\n        pass",
+      });
+    }
+  }
+
+  return autoMethods;
+}
+
+/**
  * Get plugin results for all plugin nodes in the paths
  */
 async function getPluginResults(
@@ -597,6 +823,105 @@ async function getPluginResults(
         };
 
         continue; // Skip the plugin execution for CustomCodeNode
+      }
+
+      // Handle ClassNode differently from regular plugin nodes
+      if (node.type === CodeGeneratingNodeType.ClassNode) {
+        const classNodeData = node.data as any;
+        const className = classNodeData?.className || "MyClass";
+        const baseClass = classNodeData?.baseClass;
+        const constructorParameters =
+          classNodeData?.constructorParameters || [];
+        const constructorItems = classNodeData?.constructorItems || [];
+        const methods = classNodeData?.methods || [];
+        const customImports = classNodeData?.customImports || [];
+        const emitsImports = classNodeData?.emitsConfig?.imports || [];
+
+        // Generate Python class code with new constructor items support
+        const classCode = generatePythonClassCode({
+          className,
+          baseClass,
+          constructorParameters,
+          constructorItems,
+          methods,
+        });
+
+        // Process the class code to replace $variable_name with actual variable references
+        let processedCode = classCode;
+        const variablePattern = /\$(\w+)/g;
+        processedCode = processedCode.replace(
+          variablePattern,
+          (match: string, varName: string) => {
+            return varName;
+          }
+        );
+
+        // Enhanced import handling with proper base class imports
+        let allImports = [...emitsImports];
+
+        // Add custom imports with alias support
+        customImports.forEach((customImport: any) => {
+          const importObj: any = {
+            path: customImport.path,
+            items: customImport.items || [],
+          };
+
+          // Handle import aliases
+          if (customImport.alias) {
+            importObj.alias = customImport.alias;
+          }
+
+          allImports.push(importObj);
+        });
+
+        // Add base class import with correct handling for torch.nn.Module, etc.
+        if (baseClass && baseClass.name !== "No base class") {
+          let baseClassImport: any = null;
+
+          if (baseClass.name === "torch.nn.Module") {
+            baseClassImport = {
+              path: "torch",
+              items: [],
+              alias: undefined,
+            };
+          } else if (baseClass.name === "torch.utils.data.Dataset") {
+            baseClassImport = {
+              path: "torch",
+              items: [],
+              alias: undefined,
+            };
+          } else if (baseClass.importPath) {
+            // Custom base class
+            baseClassImport = {
+              path: baseClass.importPath,
+              items: [baseClass.name],
+              alias: undefined,
+            };
+          }
+
+          // Check if this import already exists to avoid duplication
+          if (baseClassImport) {
+            const existsAlready = allImports.some(
+              (imp) =>
+                imp.path === baseClassImport.path &&
+                (baseClassImport.items.length === 0 ||
+                  (imp.items && imp.items.includes(baseClass.name)))
+            );
+            if (!existsAlready) {
+              allImports.unshift(baseClassImport);
+            }
+          }
+        }
+
+        // Store the result for this class node
+        results[nodeId] = {
+          nodeId: nodeId,
+          code: processedCode,
+          imports: allImports,
+          error: undefined,
+        };
+
+        continue; // Skip the plugin execution for ClassNode
       }
 
       // Get the plugin slug from node data (pluginId field)
@@ -902,7 +1227,7 @@ function buildIntelligentPythonImports(
     if (!path) continue;
 
     // Handle basic imports (import path [as alias])
-    if (!items) {
+    if (!items || items.length === 0) {
       const importStatement = alias ? `${path} as ${alias}` : path;
       basicImports.add(importStatement);
       if (!pathOrder.includes("__basic__")) pathOrder.push("__basic__");
@@ -959,15 +1284,23 @@ function buildIntelligentPythonImports(
     });
   }
 
-  // Second pass: build the import statements
+  // Second pass: build the import statements with enhanced grouping
   const result: string[] = [];
 
   for (const pathKey of pathOrder) {
     if (pathKey === "__basic__") {
       if (basicImports.size > 0) {
-        // Deduplicate and sort basic imports
+        // Option 1: Grouped basic imports (as user requested)
         const sortedBasicImports = Array.from(basicImports).sort();
-        result.push(`import ${sortedBasicImports.join(", ")}`);
+        if (sortedBasicImports.length > 3) {
+          // For many imports, use separate lines for readability
+          sortedBasicImports.forEach((imp) => {
+            result.push(`import ${imp}`);
+          });
+        } else {
+          // For few imports, group them
+          result.push(`import ${sortedBasicImports.join(", ")}`);
+        }
       }
     } else {
       const group = fromImports.get(pathKey)!;
@@ -986,8 +1319,10 @@ function buildIntelligentPythonImports(
           }
         });
 
-        // Remove duplicates (e.g., "nn, nn" becomes just "nn")
+        // Remove duplicates and sort
         const uniqueImportItems = Array.from(new Set(importItems)).sort();
+
+        // Group imports from same path
         result.push(`from ${pathKey} import ${uniqueImportItems.join(", ")}`);
       }
     }
