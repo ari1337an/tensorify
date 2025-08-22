@@ -2,13 +2,21 @@
 
 import React, { createContext, useContext, useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
-import useWorkflowStore from "@workflow/store/workflowStore";
+import useWorkflowStore, { NodeMode } from "@workflow/store/workflowStore";
 import useAppStore from "@/app/_store/store";
+import { validateVariableProviderConnection } from "../components/nodes/handles/HandleValidation";
 
 type EdgeValidationState = {
   id: string;
   isCompatible: boolean;
-  reason: null | "incompatible" | "multi-prev" | "multi-next";
+  reason:
+    | null
+    | "incompatible"
+    | "multi-prev"
+    | "multi-next"
+    | "type-mismatch"
+    | "workflow-mode-error";
+  errorMessage?: string;
 };
 
 type NodeValidationState = {
@@ -42,6 +50,16 @@ type UIEngineState = {
       isEnabled: boolean;
     }>
   >;
+  localVariableDetailsByNodeId: Record<
+    string,
+    Array<{
+      name: string;
+      sourceNodeId: string;
+      sourceNodeType: string;
+      pluginType: string;
+      isEnabled: boolean;
+    }>
+  >;
 };
 
 const UIEngineContext = createContext<UIEngineState>({
@@ -49,7 +67,28 @@ const UIEngineContext = createContext<UIEngineState>({
   nodes: {},
   availableVariablesByNodeId: {},
   availableVariableDetailsByNodeId: {},
+  localVariableDetailsByNodeId: {},
 });
+
+// Helper function to get variable handles from manifest
+function getVariableHandlesFromManifest(
+  nodeId: string,
+  pluginManifests: any
+): string[] {
+  const manifest = pluginManifests[nodeId];
+  if (!manifest?.manifest) return [];
+
+  // Support contracts shape (frontendConfigs) and legacy
+  const fc = (manifest.manifest as any).frontendConfigs;
+  const emitsConfig = fc?.emits || (manifest.manifest as any).emits;
+
+  if (!emitsConfig?.variables) return [];
+
+  // Extract variable names from emits configuration
+  return emitsConfig.variables
+    .filter((v: any) => v.value && v.isOnByDefault !== false)
+    .map((v: any) => v.value);
+}
 
 const selector = (state: ReturnType<typeof useWorkflowStore.getState>) => ({
   nodes: state.nodes,
@@ -88,25 +127,57 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
       // Determine required handles per node type
       const inputHandles = new Set<string>();
       const outputHandles = new Set<string>();
+
+      // Check if node is in Variable Provider mode
+      const nodeMode = (node.data as any)?.nodeMode || NodeMode.WORKFLOW;
+      const isVariableProvider = nodeMode === NodeMode.VARIABLE_PROVIDER;
+
       if (node.type === "@tensorify/core/StartNode") {
-        // Start requires only NEXT
+        // Start requires only NEXT (never variable provider)
         outputHandles.add("next");
       } else if (node.type === "@tensorify/core/EndNode") {
-        // End requires only PREV
+        // End requires only PREV (never variable provider)
         inputHandles.add("prev");
       } else if (node.type === "@tensorify/core/NestedNode") {
-        // Nested nodes use their own handle IDs
+        // Nested nodes use their own handle IDs (never variable provider)
         inputHandles.add("nested-input");
         outputHandles.add("nested-output");
       } else if (node.type === "@tensorify/core/BranchNode") {
-        // Branch nodes have prev input and numbered next outputs
+        // Branch nodes have prev input and numbered next outputs (never variable provider)
         inputHandles.add("prev");
         const branchCount = (node.data as any)?.branchCount || 2;
         for (let i = 1; i <= branchCount; i++) {
           outputHandles.add(`next-${i}`);
         }
+      } else if (isVariableProvider) {
+        // Variable Provider mode: NO input handles, ONLY variable output handles
+        // No prev handle - node is disconnected from workflow sequence
+
+        // Get variable handles from manifest or emitsConfig
+        let variableNames: string[] = [];
+
+        // First try to get from manifest (for plugin nodes)
+        if (!node.type?.startsWith("@tensorify/core/")) {
+          variableNames = getVariableHandlesFromManifest(
+            node.id,
+            pluginManifests
+          );
+        }
+
+        // Fallback to emitsConfig for native nodes (ClassNode, CustomCodeNode)
+        if (variableNames.length === 0) {
+          const emitsConfig = (node.data as any)?.emitsConfig;
+          if (emitsConfig?.variables) {
+            variableNames = emitsConfig.variables
+              .filter((v: any) => v.value && v.isOnByDefault !== false)
+              .map((v: any) => v.value);
+          }
+        }
+
+        // Add ONLY variable handles as outputs (no fallback to next)
+        variableNames.forEach((varName) => outputHandles.add(varName));
       } else {
-        // Custom/plugin and other functional nodes require both
+        // Workflow mode: Custom/plugin and other functional nodes require both
         inputHandles.add("prev");
         outputHandles.add("next");
       }
@@ -243,32 +314,62 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
     rfEdges.forEach((e) => {
       const sh = (e.sourceHandle ?? "").toString();
       const th = (e.targetHandle ?? "").toString();
-      const compatible =
+
+      // Check if this is a standard workflow connection (next/prev)
+      const isWorkflowConnection =
         (NEXT_ALIASES.has(sh) || isBranchNextHandle(sh)) &&
         PREV_ALIASES.has(th);
+
       let reason: EdgeValidationState["reason"] = null;
-      if (!compatible) {
-        reason = "incompatible";
-      } else if (
-        (NEXT_ALIASES.has(sh) || isBranchNextHandle(sh)) &&
-        (nextCountsByNode.get(e.source) || 0) > 1
-      ) {
-        // Check if source node is a Branch node - if so, multiple connections are expected
-        const sourceNode = nodes.find((n) => n.id === e.source);
-        const isBranchNode = sourceNode?.type === "@tensorify/core/BranchNode";
-        if (!isBranchNode) {
-          reason = "multi-next";
+      let errorMessage: string | undefined = undefined;
+
+      if (isWorkflowConnection) {
+        // Standard workflow connection validation
+        if (
+          (NEXT_ALIASES.has(sh) || isBranchNextHandle(sh)) &&
+          (nextCountsByNode.get(e.source) || 0) > 1
+        ) {
+          // Check if source node is a Branch node - if so, multiple connections are expected
+          const sourceNode = nodes.find((n) => n.id === e.source);
+          const isBranchNode =
+            sourceNode?.type === "@tensorify/core/BranchNode";
+          if (!isBranchNode) {
+            reason = "multi-next";
+          }
+        } else if (
+          PREV_ALIASES.has(th) &&
+          (prevCountsByNode.get(e.target) || 0) > 1
+        ) {
+          reason = "multi-prev";
         }
-      } else if (
-        PREV_ALIASES.has(th) &&
-        (prevCountsByNode.get(e.target) || 0) > 1
-      ) {
-        reason = "multi-prev";
+      } else {
+        // Non-workflow connection - could be variable provider or invalid workflow connection
+        const sourceNode = nodes.find((n) => n.id === e.source);
+        const targetNode = nodes.find((n) => n.id === e.target);
+
+        if (sourceNode && targetNode) {
+          // Check if both nodes are in workflow mode trying to connect via variable handles
+          const sourceMode = (sourceNode.data as any)?.nodeMode || "workflow";
+          const targetMode = (targetNode.data as any)?.nodeMode || "workflow";
+
+          if (sourceMode === "workflow" && targetMode === "workflow") {
+            // Both in workflow mode but connecting via non-workflow handles
+            reason = "workflow-mode-error";
+            errorMessage = `Both nodes are in workflow mode. For variable connections, the source node "${sourceNode.data?.label || sourceNode.id}" should be in "variable provider" mode.`;
+          } else {
+            // This should be a variable provider connection - will be validated later
+            reason = null;
+          }
+        } else {
+          reason = "incompatible";
+        }
       }
+
       edgesState[e.id] = {
         id: e.id,
-        isCompatible: compatible && reason === null,
+        isCompatible: reason === null,
         reason,
+        errorMessage,
       };
     });
 
@@ -290,10 +391,22 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
     // Helper to resolve manifest for a workflow node
     function resolveManifestForNode(nodeId: string): any | null {
       const node = nodes.find((n) => n.id === nodeId);
-      if (!node) return null;
+      if (!node) {
+        console.log(`🔍 resolveManifestForNode - Node not found: ${nodeId}`);
+        return null;
+      }
       const pluginId = (node.data as any)?.pluginId || node.type || nodeId;
+      console.log(
+        `🔍 resolveManifestForNode - Node ${nodeId}, pluginId: ${pluginId}, node.type: ${node.type}`
+      );
+      console.log(
+        `🔍 resolveManifestForNode - Available keys in manifestByKey:`,
+        Array.from(manifestByKey.keys())
+      );
       const primary = manifestByKey.get(pluginId);
       const secondary = node.type ? manifestByKey.get(node.type) : undefined;
+      console.log(`🔍 resolveManifestForNode - Primary manifest:`, primary);
+      console.log(`🔍 resolveManifestForNode - Secondary manifest:`, secondary);
       return primary || secondary || null;
     }
 
@@ -373,6 +486,10 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
             ? Boolean(settings[rawKey])
             : Boolean(v.isOnByDefault);
 
+        console.log(
+          `🔍 UI Engine - Variable ${v.value}: isOn=${isOn}, rawKey=${rawKey}, settings[${rawKey}]=${settings[rawKey]}, isOnByDefault=${v.isOnByDefault}`
+        );
+
         if (isOn && v.value) {
           vars.push(v.value);
           varDetails.push({
@@ -384,6 +501,11 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
           });
         }
       }
+      console.log(`🔍 UI Engine - Final vars for node ${n.id}:`, vars);
+      console.log(
+        `🔍 UI Engine - Final varDetails for node ${n.id}:`,
+        varDetails
+      );
       localVarsByNode.set(n.id, vars);
       localVarDetailsByNode.set(n.id, varDetails);
     });
@@ -501,11 +623,70 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
       if (!changed) break;
     }
 
+    // Convert Map to Record for localVarDetailsByNode before using it
+    const localVariableDetailsByNodeId: Record<
+      string,
+      Array<{
+        name: string;
+        sourceNodeId: string;
+        sourceNodeType: string;
+        pluginType: string;
+        isEnabled: boolean;
+      }>
+    > = {};
+    localVarDetailsByNode.forEach((details, nodeId) => {
+      localVariableDetailsByNodeId[nodeId] = details;
+    });
+
+    // Now validate variable provider connections with computed availableDetailsByNode
+    rfEdges.forEach((e) => {
+      const sh = (e.sourceHandle ?? "").toString();
+      const th = (e.targetHandle ?? "").toString();
+
+      // Only validate edges that haven't already been marked as incompatible
+      // and are non-workflow handles (potential variable provider connections)
+      if (
+        edgesState[e.id]?.reason === null &&
+        !NEXT_ALIASES.has(sh) &&
+        !PREV_ALIASES.has(th) &&
+        !isBranchNextHandle(sh)
+      ) {
+        const sourceNode = nodes.find((n) => n.id === e.source);
+        const targetNode = nodes.find((n) => n.id === e.target);
+
+        if (sourceNode && targetNode) {
+          const validationResult = validateVariableProviderConnection(
+            {
+              source: e.source,
+              sourceHandle: sh,
+              target: e.target,
+              targetHandle: th,
+            },
+            sourceNode,
+            targetNode,
+            localVariableDetailsByNodeId, // Use local variables instead of available
+            pluginManifests
+          );
+
+          if (!validationResult.isValid) {
+            // Update the edge state with type mismatch error
+            edgesState[e.id] = {
+              ...edgesState[e.id],
+              isCompatible: false,
+              reason: "type-mismatch",
+              errorMessage: validationResult.errors.join(", "),
+            };
+          }
+        }
+      }
+    });
+
     return {
       nodes: nodesState,
       edges: edgesState,
       availableVariablesByNodeId: availableByNode,
       availableVariableDetailsByNodeId: availableDetailsByNode,
+      localVariableDetailsByNodeId, // Add local variables for validation
     };
   }, [
     nodes,
@@ -536,14 +717,18 @@ export function getEdgeStyle(
   if (!state) return undefined;
   if (!state.isCompatible) {
     const glow =
-      state.reason === "incompatible"
+      state.reason === "incompatible" ||
+      state.reason === "type-mismatch" ||
+      state.reason === "workflow-mode-error"
         ? "drop-shadow(0 0 6px rgba(239,68,68,0.6))"
         : state.reason === "multi-prev" || state.reason === "multi-next"
           ? "drop-shadow(0 0 6px rgba(234,179,8,0.6))"
           : undefined;
     return {
       stroke:
-        state.reason === "incompatible"
+        state.reason === "incompatible" ||
+        state.reason === "type-mismatch" ||
+        state.reason === "workflow-mode-error"
           ? "var(--destructive)"
           : "hsl(var(--warning, 40 100% 50%))",
       strokeWidth: 5,

@@ -69,6 +69,7 @@ export enum NodeType {
   SEQUENCE = "sequence",
 
   // Data Processing
+  DATASET = "dataset",
   DATALOADER = "dataloader",
   PREPROCESSOR = "preprocessor",
   POSTPROCESSOR = "postprocessor",

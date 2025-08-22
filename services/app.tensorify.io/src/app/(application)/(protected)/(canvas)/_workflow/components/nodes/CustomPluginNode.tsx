@@ -4,7 +4,7 @@ import React, { useState, useMemo, useRef, useCallback } from "react";
 import { type NodeProps } from "@xyflow/react";
 import * as LucideIcons from "lucide-react";
 import TNode from "./TNode/TNode";
-import { type WorkflowNode } from "../../store/workflowStore";
+import { type WorkflowNode, NodeMode } from "../../store/workflowStore";
 import useWorkflowStore, { addRouteLevel } from "../../store/workflowStore";
 import useAppStore from "@/app/_store/store";
 import CustomHandle from "./handles/CustomHandle";
@@ -12,6 +12,9 @@ import { useHandleValidation } from "./handles/useHandleValidation";
 import {
   type InputHandle,
   type OutputHandle,
+  HandlePosition,
+  HandleViewType,
+  EdgeType,
 } from "@packages/sdk/src/types/visual";
 import { useUIEngine } from "@workflow/engine";
 import {
@@ -361,6 +364,10 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
   //   );
   // }, [visualProps, id]);
 
+  // Get node mode
+  const nodeMode = (data as any)?.nodeMode || NodeMode.WORKFLOW;
+  const isVariableProvider = nodeMode === NodeMode.VARIABLE_PROVIDER;
+
   // Extract handle configurations with proper typing and ensure unique IDs
   const { inputHandles, outputHandles } = useMemo((): {
     inputHandles: ExtendedInputHandle[];
@@ -373,26 +380,71 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
     // Support contracts shape (frontendConfigs) and legacy
     const fc = (manifest.manifest as any).frontendConfigs;
 
-    const inputHandles: ExtendedInputHandle[] =
-      (
-        (fc?.inputHandles ||
-          (manifest.manifest as any).inputHandles) as InputHandle[]
-      )?.map((handle, index) => ({
-        ...handle,
-        uniqueKey: `${handle.id}-${index}-${crypto.randomUUID().slice(0, 8)}`,
-      })) || [];
+    let inputHandles: ExtendedInputHandle[] = [];
+    let outputHandles: ExtendedOutputHandle[] = [];
 
-    const outputHandles: ExtendedOutputHandle[] =
-      (
-        (fc?.outputHandles ||
-          (manifest.manifest as any).outputHandles) as OutputHandle[]
-      )?.map((handle, index) => ({
-        ...handle,
-        uniqueKey: `${handle.id}-${index}-${crypto.randomUUID().slice(0, 8)}`,
-      })) || [];
+    if (isVariableProvider) {
+      // Variable Provider mode: NO input handles, ONLY variable output handles
+      inputHandles = [];
+
+      // Generate handles from emits.variables
+      const emitsConfig = fc?.emits || (manifest.manifest as any).emits;
+      if (emitsConfig?.variables && emitsConfig.variables.length > 0) {
+        const variableCount = emitsConfig.variables.filter(
+          (v: any) => v.value && v.isOnByDefault !== false
+        ).length;
+
+        outputHandles = emitsConfig.variables
+          .filter((v: any) => v.value && v.isOnByDefault !== false)
+          .map((variable: any, index: number) => {
+            // Distribute handles around the node - right, top, bottom, left
+            let position = HandlePosition.RIGHT;
+            if (variableCount > 1) {
+              if (index === 0) position = HandlePosition.RIGHT;
+              else if (index === 1 && variableCount > 1)
+                position = HandlePosition.TOP;
+              else if (index === 2 && variableCount > 2)
+                position = HandlePosition.BOTTOM;
+              else if (index === 3 && variableCount > 3)
+                position = HandlePosition.LEFT;
+              else position = HandlePosition.RIGHT; // Fallback for more handles
+            }
+
+            return {
+              id: variable.value,
+              label: variable.value,
+              position,
+              viewType: HandleViewType.VERTICAL_BOX,
+              edgeType: EdgeType.DEFAULT,
+              dataType: "any",
+              uniqueKey: `${variable.value}-${index}-${crypto.randomUUID().slice(0, 8)}`,
+            };
+          });
+      }
+      // Variable Provider with no variables: no handles at all
+    } else {
+      // Workflow mode: use regular manifest handles
+      inputHandles =
+        (
+          (fc?.inputHandles ||
+            (manifest.manifest as any).inputHandles) as InputHandle[]
+        )?.map((handle, index) => ({
+          ...handle,
+          uniqueKey: `${handle.id}-${index}-${crypto.randomUUID().slice(0, 8)}`,
+        })) || [];
+
+      outputHandles =
+        (
+          (fc?.outputHandles ||
+            (manifest.manifest as any).outputHandles) as OutputHandle[]
+        )?.map((handle, index) => ({
+          ...handle,
+          uniqueKey: `${handle.id}-${index}-${crypto.randomUUID().slice(0, 8)}`,
+        })) || [];
+    }
 
     return { inputHandles, outputHandles };
-  }, [manifest]);
+  }, [manifest, isVariableProvider]);
 
   // Validate node inputs
   const inputValidationResults = useMemo(() => {

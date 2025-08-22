@@ -1,0 +1,41 @@
+{
+  "name": "@tensorify/dataloader",
+  "version": "1.0.0",
+  "description": "my data loader",
+  "main": "src/index.ts",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npx tsc",
+    "dev": "npx tsc --watch",
+    "test": "node test.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "tensorify",
+    "plugin",
+    "ml",
+    "machine-learning",
+    "neural-network"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@tensorify.io/sdk": "0.0.58"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^18.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tensorify/dataloader"
+  },
+  "tensorify-settings": {
+    "sdk-version": "0.0.58",
+    "entrypointClassName": "DataloaderPlugin",
+    "pluginType": "DATALOADER"
+  }
+}

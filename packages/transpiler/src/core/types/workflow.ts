@@ -63,11 +63,21 @@ export function isSpecialNode(nodeType?: string): boolean {
       coreType === "branchnode" ||
       coreType === "nestednode" ||
       coreType === "multiplexernode" ||
-      coreType === "demultiplexernode"
+      coreType === "demultiplexernode" ||
+      coreType === "classnode" ||
+      coreType === "customcodenode"
     );
   }
 
   return false;
+}
+
+// Helper to check if a node is a code-generating type
+export function isCodeGeneratingNode(nodeType?: string): boolean {
+  if (!nodeType) return false;
+  return Object.values(CodeGeneratingNodeType).includes(
+    nodeType as CodeGeneratingNodeType
+  );
 }
 
 // Helper to check if a node produces code

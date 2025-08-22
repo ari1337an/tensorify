@@ -55,6 +55,7 @@ import useWorkflowStore, {
   addRouteLevel,
   type WorkflowNode,
   type VisualConfig,
+  NodeMode,
 } from "../../../store/workflowStore";
 import { PluginSettingsSection } from "./PluginSettingsSection";
 import { CustomCodeSettings } from "./CustomCodeSettings";
@@ -665,6 +666,44 @@ export default function TNode({
                         placeholder="Enter display name"
                         className="transition-colors"
                       />
+                    </div>
+
+                    {/* Node Mode - Variable Provider or Workflow */}
+                    <div className="space-y-3">
+                      <Label
+                        htmlFor="node-mode"
+                        className="text-sm font-medium flex items-center gap-2"
+                      >
+                        <span>Node Mode</span>
+                        <Badge variant="outline" className="text-xs">
+                          Handle Type
+                        </Badge>
+                      </Label>
+                      <Select
+                        value={data.nodeMode || NodeMode.WORKFLOW}
+                        onValueChange={(value: NodeMode) =>
+                          updateNodeData(id, { nodeMode: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select node mode" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={NodeMode.WORKFLOW}>
+                            Workflow Node
+                          </SelectItem>
+                          <SelectItem value={NodeMode.VARIABLE_PROVIDER}>
+                            Variable Provider
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <div className="text-xs text-muted-foreground">
+                        <strong>Workflow:</strong> Standard prev/next handles
+                        for sequential flow
+                        <br />
+                        <strong>Variable Provider:</strong> Multiple handles
+                        named after emitted variables
+                      </div>
                     </div>
 
                     <Separator />

@@ -9,6 +9,7 @@ import {
   type InputHandle,
   type OutputHandle,
 } from "@packages/sdk/src/types/visual";
+import { NodeType } from "@packages/sdk/src/types/core";
 
 export interface ValidationResult {
   isValid: boolean;
@@ -29,9 +30,30 @@ export function validateDataTypeCompatibility(
   sourceType: HandleDataType,
   targetType: HandleDataType
 ): boolean {
-  // Allow any connection between any handle types
-  // User explicitly wants to connect any input handle with output handle and vice versa
-  return true;
+  // "any" type is compatible with everything
+  if (sourceType === "any" || targetType === "any") return true;
+
+  // Exact type matches
+  if (sourceType === targetType) return true;
+
+  // Compatible node type mappings for variable providers
+  const compatibilityMap: Record<string, string[]> = {
+    dataset: ["dataloader"], // dataset can connect to dataloader
+    model_layer: ["sequence"], // model layers can connect to sequences
+    model: ["trainer", "evaluator"], // models can connect to trainers/evaluators
+    dataloader: ["trainer"], // dataloaders can connect to trainers
+  };
+
+  // Check if sourceType can connect to targetType
+  if (compatibilityMap[sourceType]?.includes(targetType)) return true;
+
+  // Basic type compatibility (fallback for flexibility)
+  const basicTypes = ["string", "number", "boolean", "object", "array"];
+  if (basicTypes.includes(sourceType) && basicTypes.includes(targetType)) {
+    return true; // Allow basic type connections for flexibility
+  }
+
+  return false;
 }
 
 /**
@@ -90,6 +112,33 @@ function validateValueDataType(
       );
     case "array":
       return Array.isArray(value);
+
+    // Node types for variable providers - validate variable name structure
+    case "dataset":
+    case "dataloader":
+    case "model":
+    case "model_layer":
+    case "sequence":
+    case "trainer":
+    case "evaluator":
+    case "preprocessor":
+    case "postprocessor":
+    case "augmentation_stack":
+    case "optimizer":
+    case "loss_function":
+    case "metric":
+    case "scheduler":
+    case "regularizer":
+    case "function":
+    case "pipeline":
+    case "report":
+    case "custom":
+      // For node types, we expect either a variable name (string) or variable object
+      return (
+        typeof value === "string" ||
+        (typeof value === "object" && value !== null && "variableName" in value)
+      );
+
     default:
       return false;
   }
@@ -164,16 +213,255 @@ export function validateConnection(
 ): ValidationResult {
   const errors: string[] = [];
 
-  // Allow all connections - user wants to connect any input/output handles
-  // Data type compatibility check is removed to allow flexibility
+  // Check data type compatibility
+  if (
+    !validateDataTypeCompatibility(sourceHandle.dataType, targetHandle.dataType)
+  ) {
+    errors.push(
+      `Incompatible types: Cannot connect ${sourceHandle.dataType} to ${targetHandle.dataType}`
+    );
+  }
 
-  // Check if target handle is required and has no existing connections
-  // This would need to be checked against the actual flow state
+  // Additional validation for variable provider connections
+  if (isVariableProviderType(sourceHandle.dataType)) {
+    // Variable providers should only connect to compatible workflow nodes
+    if (!isWorkflowCompatibleType(targetHandle.dataType)) {
+      errors.push(
+        `Variable provider of type ${sourceHandle.dataType} cannot connect to ${targetHandle.dataType}`
+      );
+    }
+  }
 
   return {
     isValid: errors.length === 0,
     errors,
   };
+}
+
+/**
+ * Checks if a data type is a variable provider type
+ */
+function isVariableProviderType(dataType: HandleDataType): boolean {
+  const variableProviderTypes = [
+    "dataset",
+    "dataloader",
+    "model",
+    "model_layer",
+    "sequence",
+    "trainer",
+    "evaluator",
+    "preprocessor",
+    "postprocessor",
+    "augmentation_stack",
+    "optimizer",
+    "loss_function",
+    "metric",
+    "scheduler",
+    "regularizer",
+    "function",
+    "pipeline",
+    "report",
+    "custom",
+  ];
+  return variableProviderTypes.includes(dataType);
+}
+
+/**
+ * Checks if a data type is compatible with workflow connections
+ */
+function isWorkflowCompatibleType(dataType: HandleDataType): boolean {
+  // Basic types and node types are workflow compatible
+  return true; // Allow flexibility for now, can be tightened later
+}
+
+/**
+ * Validates connections specifically for variable provider nodes
+ */
+export function validateVariableProviderConnection(
+  params: ConnectionValidationParams,
+  sourceNode: any,
+  targetNode: any,
+  availableVariableDetailsByNodeId: Record<
+    string,
+    Array<{
+      name: string;
+      sourceNodeId: string;
+      sourceNodeType: string;
+      pluginType: string;
+      isEnabled: boolean;
+    }>
+  >,
+  pluginManifests: any[]
+): ValidationResult {
+  const errors: string[] = [];
+
+  // Check if source is a variable provider (has variable emits)
+  const sourceVariables = availableVariableDetailsByNodeId[sourceNode.id] || [];
+  const isVariableProvider = sourceVariables.length > 0;
+
+  if (!isVariableProvider) {
+    // Not a variable provider connection, use standard validation
+    return { isValid: true, errors: [] };
+  }
+
+  // For variable provider connections, we need to validate the specific handle being connected
+  const sourceHandle = params.sourceHandle;
+  const targetHandle = params.targetHandle;
+
+  // Skip standard workflow handles (prev/next)
+  if (sourceHandle === "next" || targetHandle === "prev") {
+    return { isValid: true, errors: [] };
+  }
+
+  // Find the emitted variable that corresponds to the source handle
+  const emittedVariable = sourceVariables.find((variable) => {
+    // Check for exact match first, then fallback to partial matches
+    const exactMatch = sourceHandle === variable.name;
+    const partialMatch = sourceHandle?.includes(variable.name);
+    return exactMatch || partialMatch;
+  });
+
+  if (!emittedVariable) {
+    // Can't find matching emitted variable, reject connection
+    errors.push(
+      `No emitted variable found for source handle "${sourceHandle}" from "${sourceNode.data?.label || sourceNode.id}"`
+    );
+    return { isValid: false, errors };
+  }
+
+  // Get the emitted variable type
+  const emittedType = emittedVariable.pluginType;
+
+  // Get target node's plugin manifest to find the expected input handle type
+  const targetPluginId = targetNode.data?.pluginId || targetNode.type;
+  const targetManifest = pluginManifests.find(
+    (p) => p.slug === targetPluginId || p.id === targetPluginId
+  );
+
+  if (!targetManifest?.manifest) {
+    // Can't find target manifest, reject connection
+    errors.push(
+      `No plugin manifest found for target node "${targetNode.data?.label || targetNode.id}"`
+    );
+    return { isValid: false, errors };
+  }
+
+  // Extract input handles from target manifest
+  const fc = (targetManifest.manifest as any).frontendConfigs;
+  const inputHandles =
+    fc?.inputHandles || (targetManifest.manifest as any).inputHandles || [];
+
+  // Find the specific input handle being connected to
+  const targetInputHandle = inputHandles.find(
+    (handle: any) => handle.id === targetHandle
+  );
+
+  if (!targetInputHandle) {
+    // Can't find target input handle, reject connection
+    errors.push(
+      `No input handle "${targetHandle}" found in target node "${targetNode.data?.label || targetNode.id}"`
+    );
+    return { isValid: false, errors };
+  }
+
+  // Get the expected data type from the target input handle
+  const expectedType = targetInputHandle.dataType;
+
+  // Perform type compatibility check
+  const isCompatible = checkTypeCompatibility(emittedType, expectedType);
+
+  if (!isCompatible) {
+    errors.push(
+      `Type mismatch: Cannot connect type '${emittedType}' from node "${sourceNode.data?.label || sourceNode.id}" to type '${expectedType}' expected by node "${targetNode.data?.label || targetNode.id}"`
+    );
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+  };
+}
+
+/**
+ * Checks if two data types are compatible for variable provider connections
+ */
+function checkTypeCompatibility(
+  emittedType: string,
+  expectedType: string
+): boolean {
+  // Direct match
+  if (emittedType === expectedType) {
+    return true;
+  }
+
+  // Normalize enum values to strings for comparison
+  const normalizeType = (type: string) => {
+    if (typeof type === "object" && type !== null) {
+      return String(type).toLowerCase();
+    }
+    return type.toLowerCase();
+  };
+
+  const normalizedEmitted = normalizeType(emittedType);
+  const normalizedExpected = normalizeType(expectedType);
+
+  // Check normalized match
+  if (normalizedEmitted === normalizedExpected) {
+    return true;
+  }
+
+  // Define compatible type mappings
+  const compatibilityMap: Record<string, string[]> = {
+    // Dataset types
+    dataset: ["dataset", NodeType.DATASET.toLowerCase()],
+    [NodeType.DATASET.toLowerCase()]: [
+      "dataset",
+      NodeType.DATASET.toLowerCase(),
+    ],
+
+    // DataLoader types
+    dataloader: ["dataloader", NodeType.DATALOADER.toLowerCase()],
+    [NodeType.DATALOADER.toLowerCase()]: [
+      "dataloader",
+      NodeType.DATALOADER.toLowerCase(),
+    ],
+
+    // Model layer types
+    model_layer: ["model_layer", NodeType.MODEL_LAYER.toLowerCase()],
+    [NodeType.MODEL_LAYER.toLowerCase()]: [
+      "model_layer",
+      NodeType.MODEL_LAYER.toLowerCase(),
+    ],
+
+    // Any type accepts everything
+    any: ["*"],
+  };
+
+  // Check if types are compatible
+  const compatibleTypes = compatibilityMap[normalizedEmitted];
+  if (compatibleTypes) {
+    const isCompatible =
+      compatibleTypes.includes("*") ||
+      compatibleTypes.includes(normalizedExpected);
+    if (isCompatible) {
+      return true;
+    }
+  }
+
+  // Check reverse compatibility (expected type accepts emitted type)
+  const expectedCompatibleTypes = compatibilityMap[normalizedExpected];
+  if (expectedCompatibleTypes) {
+    const isCompatible =
+      expectedCompatibleTypes.includes("*") ||
+      expectedCompatibleTypes.includes(normalizedEmitted);
+    if (isCompatible) {
+      return true;
+    }
+  }
+
+  // If no explicit compatibility found, reject the connection
+  // This ensures type safety for variable provider connections
+  return false;
 }
 
 /**

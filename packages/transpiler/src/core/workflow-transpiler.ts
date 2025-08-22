@@ -10,6 +10,7 @@ import {
   CodeGeneratingNodeType,
   isPluginNode,
   isSpecialNode,
+  isCodeGeneratingNode,
 } from "./types/workflow";
 import {
   TranspilerConfig,
@@ -770,7 +771,10 @@ async function getPluginResults(
   paths.forEach((path) => {
     path.nodes.forEach((nodeId) => {
       const node = nodeMap[nodeId];
-      if (node && isPluginNode(node.type)) {
+      if (
+        node &&
+        (isPluginNode(node.type) || isCodeGeneratingNode(node.type))
+      ) {
         pluginNodeIds.add(nodeId);
       }
     });

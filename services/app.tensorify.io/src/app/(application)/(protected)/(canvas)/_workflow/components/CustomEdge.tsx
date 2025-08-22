@@ -42,7 +42,16 @@ export default function CustomEdge({
   const getErrorMessage = () => {
     if (!edgeState || edgeState.isCompatible) return null;
 
+    // If there's a custom error message, use it
+    if (edgeState.errorMessage) {
+      return edgeState.errorMessage;
+    }
+
     switch (edgeState.reason) {
+      case "type-mismatch":
+        return "Variable type mismatch: The emitted variable type is not compatible with the expected input type";
+      case "workflow-mode-error":
+        return "Node mode mismatch: Both nodes are in workflow mode but connecting via variable handles";
       case "incompatible":
         const actualConnection = `'${sourceHandle || "unknown"}' → '${targetHandle || "unknown"}'`;
         return `Incompatible connection: Got ${actualConnection} but only 'next' → 'prev' connections are allowed`;

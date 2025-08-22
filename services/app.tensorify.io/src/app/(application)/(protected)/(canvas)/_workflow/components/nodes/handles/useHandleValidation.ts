@@ -9,11 +9,14 @@ import {
   validateHandleInput,
   ValidationResult,
   ConnectionValidationParams,
+  validateVariableProviderConnection,
 } from "./HandleValidation";
 import {
   type InputHandle,
   type OutputHandle,
 } from "@packages/sdk/src/types/visual";
+import { useUIEngine } from "../../../engine/ui-engine";
+import useAppStore from "@/app/_store/store";
 
 export interface HandleConnectionState {
   isConnected: boolean;
@@ -40,16 +43,42 @@ export interface UseHandleValidationReturn {
  */
 export function useHandleValidation(): UseHandleValidationReturn {
   const { getNodes, getEdges } = useReactFlow();
+  const uiEngine = useUIEngine();
+  const pluginManifests = useAppStore((state) => state.pluginManifests);
 
   /**
    * Validates a potential connection between two handles
    */
   const validateHandleConnection = useCallback(
     (params: ConnectionValidationParams): boolean => {
-      // Allow any connection between any nodes - user explicitly wants flexibility
-      return true;
+      const nodes = getNodes();
+
+      // Find source and target nodes
+      const sourceNode = nodes.find((node) => node.id === params.source);
+      const targetNode = nodes.find((node) => node.id === params.target);
+
+      if (!sourceNode || !targetNode) {
+        return false;
+      }
+
+      // Use the new variable provider validation with local variables
+      const validationResult = validateVariableProviderConnection(
+        params,
+        sourceNode,
+        targetNode,
+        (uiEngine as any).localVariableDetailsByNodeId ||
+          uiEngine.availableVariableDetailsByNodeId,
+        pluginManifests
+      );
+
+      return validationResult.isValid;
     },
-    []
+    [
+      getNodes,
+      uiEngine.availableVariableDetailsByNodeId,
+      (uiEngine as any).localVariableDetailsByNodeId,
+      pluginManifests,
+    ]
   );
 
   /**

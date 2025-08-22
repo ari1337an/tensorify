@@ -3,6 +3,8 @@
  * Defines how plugins appear and behave in the frontend
  */
 
+import { NodeType } from "./core";
+
 // ========================================
 // HANDLE CONFIGURATION TYPES
 // ========================================
@@ -50,6 +52,7 @@ export enum EdgeType {
 
 /**
  * Data types for handle validation
+ * Includes basic types and node types for variable provider validation
  */
 export type HandleDataType =
   | "any"
@@ -57,7 +60,28 @@ export type HandleDataType =
   | "number"
   | "boolean"
   | "object"
-  | "array";
+  | "array"
+  // Node types for variable provider validation (supporting both strings and enum values)
+  | NodeType
+  | "dataset"
+  | "dataloader"
+  | "model"
+  | "model_layer"
+  | "sequence"
+  | "trainer"
+  | "evaluator"
+  | "preprocessor"
+  | "postprocessor"
+  | "augmentation_stack"
+  | "optimizer"
+  | "loss_function"
+  | "metric"
+  | "scheduler"
+  | "regularizer"
+  | "function"
+  | "pipeline"
+  | "report"
+  | "custom";
 
 /**
  * Validation rules for handle inputs

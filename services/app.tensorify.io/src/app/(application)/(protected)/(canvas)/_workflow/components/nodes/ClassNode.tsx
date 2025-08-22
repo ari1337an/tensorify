@@ -5,7 +5,7 @@ import { type NodeProps } from "@xyflow/react";
 import { Code2, AlertCircle } from "lucide-react";
 import TNode from "./TNode/TNode";
 import CustomHandle from "./handles/CustomHandle";
-import { type WorkflowNode } from "../../store/workflowStore";
+import { type WorkflowNode, NodeMode } from "../../store/workflowStore";
 import { useUIEngine } from "@workflow/engine";
 import {
   Tooltip,
@@ -104,26 +104,84 @@ export default function ClassNode(props: NodeProps<WorkflowNode>) {
   const hasValidationErrors = Boolean(nodeValidation?.hasValidationError);
   const validationErrorMessage = nodeValidation?.validationErrorMessage;
 
-  // Define the input handle for the class node
-  const inputHandle: InputHandle = {
-    id: "prev",
-    label: "Prev",
-    position: HandlePosition.LEFT,
-    viewType: HandleViewType.VERTICAL_BOX,
-    edgeType: EdgeType.DEFAULT,
-    dataType: "any",
-    required: true,
-  };
+  // Get node mode
+  const nodeMode = (data as any)?.nodeMode || NodeMode.WORKFLOW;
+  const isVariableProvider = nodeMode === NodeMode.VARIABLE_PROVIDER;
 
-  // Define the output handle for the class node
-  const outputHandle: OutputHandle = {
-    id: "next",
-    label: "Next",
-    position: HandlePosition.RIGHT,
-    viewType: HandleViewType.VERTICAL_BOX,
-    edgeType: EdgeType.DEFAULT,
-    dataType: "any",
-  };
+  // Generate input handles based on node mode
+  const inputHandles: InputHandle[] = useMemo(() => {
+    if (isVariableProvider) {
+      // Variable Provider mode: NO input handles
+      return [];
+    }
+
+    // Workflow mode: standard prev handle
+    return [
+      {
+        id: "prev",
+        label: "Prev",
+        position: HandlePosition.LEFT,
+        viewType: HandleViewType.VERTICAL_BOX,
+        edgeType: EdgeType.DEFAULT,
+        dataType: "any",
+        required: true,
+      },
+    ];
+  }, [isVariableProvider]);
+
+  // Generate output handles based on node mode
+  const outputHandles: OutputHandle[] = useMemo(() => {
+    if (!isVariableProvider) {
+      // Workflow mode: single "next" handle
+      return [
+        {
+          id: "next",
+          label: "Next",
+          position: HandlePosition.RIGHT,
+          viewType: HandleViewType.VERTICAL_BOX,
+          edgeType: EdgeType.DEFAULT,
+          dataType: "any",
+        },
+      ];
+    }
+
+    // Variable Provider mode: ONLY variable handles
+    const emitsConfig = classData.emitsConfig;
+    if (emitsConfig?.variables && emitsConfig.variables.length > 0) {
+      const variableCount = emitsConfig.variables.filter(
+        (v) => v.value && v.isOnByDefault !== false
+      ).length;
+
+      return emitsConfig.variables
+        .filter((v) => v.value && v.isOnByDefault !== false)
+        .map((variable, index) => {
+          // Distribute handles around the node - right, top, bottom, left
+          let position = HandlePosition.RIGHT;
+          if (variableCount > 1) {
+            if (index === 0) position = HandlePosition.RIGHT;
+            else if (index === 1 && variableCount > 1)
+              position = HandlePosition.TOP;
+            else if (index === 2 && variableCount > 2)
+              position = HandlePosition.BOTTOM;
+            else if (index === 3 && variableCount > 3)
+              position = HandlePosition.LEFT;
+            else position = HandlePosition.RIGHT; // Fallback for more handles
+          }
+
+          return {
+            id: variable.value,
+            label: variable.value,
+            position,
+            viewType: HandleViewType.VERTICAL_BOX,
+            edgeType: EdgeType.DEFAULT,
+            dataType: "any",
+          };
+        });
+    }
+
+    // Variable Provider with no variables: no handles at all
+    return [];
+  }, [isVariableProvider, classData.emitsConfig]);
 
   // Get class name for display
   const className = classData.className || "MyClass";
@@ -294,23 +352,29 @@ export default function ClassNode(props: NodeProps<WorkflowNode>) {
           </div>
         </div>
 
-        {/* Input Handle */}
-        <CustomHandle
-          handle={inputHandle}
-          type="target"
-          nodeId={id}
-          index={0}
-          totalHandles={1}
-        />
+        {/* Input Handles - Only in Workflow mode */}
+        {inputHandles.map((handle, index) => (
+          <CustomHandle
+            key={handle.id}
+            handle={handle}
+            type="target"
+            nodeId={id}
+            index={index}
+            totalHandles={inputHandles.length}
+          />
+        ))}
 
-        {/* Output Handle */}
-        <CustomHandle
-          handle={outputHandle}
-          type="source"
-          nodeId={id}
-          index={0}
-          totalHandles={1}
-        />
+        {/* Output Handles */}
+        {outputHandles.map((handle, index) => (
+          <CustomHandle
+            key={handle.id}
+            handle={handle}
+            type="source"
+            nodeId={id}
+            index={index}
+            totalHandles={outputHandles.length}
+          />
+        ))}
       </div>
     </TNode>
   );

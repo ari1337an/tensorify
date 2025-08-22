@@ -80,6 +80,10 @@ const NODE_TYPES = {
     value: "model_layer",
     name: "Model Layer - Neural network layer",
   },
+  DATASET: {
+    value: "dataset",
+    name: "Dataset - Data source/provider",
+  },
   DATALOADER: {
     value: "dataloader",
     name: "Data Loader - Data loading component",
@@ -125,6 +129,7 @@ function getNodeTypeEnumKey(pluginTypeValue) {
     evaluator: "EVALUATOR",
     model: "MODEL",
     model_layer: "MODEL_LAYER",
+    dataset: "DATASET",
     dataloader: "DATALOADER",
     preprocessor: "PREPROCESSOR",
     postprocessor: "POSTPROCESSOR",

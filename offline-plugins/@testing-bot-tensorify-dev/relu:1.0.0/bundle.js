@@ -464,6 +464,20 @@ ${errors.join("\n")}`);
           }
         }
         /**
+         * Check if this plugin is a variable provider type
+         */
+        isVariableProviderPlugin() {
+          const nodeType = this.definition.nodeType;
+          if (!nodeType)
+            return false;
+          const variableProviderTypes = [
+            core_1.NodeType.DATASET,
+            core_1.NodeType.DATALOADER
+            // Add more variable provider types as needed
+          ];
+          return variableProviderTypes.includes(nodeType);
+        }
+        /**
          * Validate handle configurations
          */
         validateHandles(errors) {
@@ -518,10 +532,11 @@ ${errors.join("\n")}`);
               }
             }
           }
-          if (!hasPrev) {
+          const isVariableProvider = this.isVariableProviderPlugin();
+          if (!isVariableProvider && !hasPrev) {
             errors.push("Plugin must define an input handle with id 'prev'");
           }
-          if (!hasNext) {
+          if (!isVariableProvider && !hasNext) {
             errors.push("Plugin must define an output handle with id 'next'");
           }
         }

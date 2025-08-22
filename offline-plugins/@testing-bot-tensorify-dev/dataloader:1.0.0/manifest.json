@@ -1,0 +1,231 @@
+{
+  "name": "@tensorify/dataloader",
+  "version": "1.0.0",
+  "description": "my data loader",
+  "author": "",
+  "main": "src/index.ts",
+  "entrypointClassName": "DataloaderPlugin",
+  "keywords": [
+    "tensorify",
+    "plugin",
+    "ml",
+    "machine-learning",
+    "neural-network"
+  ],
+  "pluginType": "dataloader",
+  "scripts": {
+    "build": "npx tsc"
+  },
+  "tensorifySettings": {
+    "sdkVersion": "0.0.58"
+  },
+  "metadata": {
+    "repository": "https://github.com/tensorify/dataloader",
+    "license": "ISC"
+  },
+  "visual": {
+    "containerType": "default",
+    "size": {
+      "width": 280,
+      "height": 180
+    },
+    "padding": {
+      "inner": 16,
+      "outer": 8,
+      "extraPadding": false
+    },
+    "styling": {
+      "borderRadius": 8,
+      "borderWidth": 2,
+      "shadowLevel": 1,
+      "theme": "auto"
+    },
+    "icons": {
+      "primary": {
+        "type": "lucide",
+        "value": "database"
+      },
+      "secondary": [],
+      "showIconBackground": true,
+      "iconSize": "medium"
+    },
+    "labels": {
+      "title": "DataLoader",
+      "dynamicLabelTemplate": "batch={batch_size}, workers={num_workers}",
+      "showLabels": true,
+      "labelPosition": "top"
+    }
+  },
+  "inputHandles": [
+    {
+      "id": "prev",
+      "position": "left",
+      "viewType": "default",
+      "required": true,
+      "label": "Prev",
+      "edgeType": "default",
+      "dataType": "any",
+      "description": "Previous node output"
+    },
+    {
+      "id": "dataset",
+      "position": "left",
+      "viewType": "default",
+      "required": true,
+      "label": "Dataset",
+      "edgeType": "default",
+      "dataType": "dataset",
+      "description": "Dataset to load from"
+    }
+  ],
+  "outputHandles": [
+    {
+      "id": "next",
+      "position": "right",
+      "viewType": "default",
+      "label": "Next",
+      "edgeType": "default",
+      "dataType": "any",
+      "description": "Flow to next node"
+    }
+  ],
+  "settingsFields": [
+    {
+      "key": "dataloaderVarName",
+      "label": "Variable name",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "dataloader",
+      "required": true,
+      "description": "Name of the variable to assign when emit is enabled"
+    },
+    {
+      "key": "emitDataloaderVar",
+      "label": "Emit variable name",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": true,
+      "required": true,
+      "description": "Controls emission of the DataLoader variable"
+    },
+    {
+      "key": "batch_size",
+      "label": "Batch Size",
+      "type": "input-number",
+      "dataType": "number",
+      "defaultValue": 1,
+      "required": false,
+      "description": "How many samples per batch to load",
+      "validation": {
+        "min": 1,
+        "max": 10000
+      }
+    },
+    {
+      "key": "shuffle",
+      "label": "Shuffle",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": false,
+      "required": false,
+      "description": "Set to True to have the data reshuffled at every epoch"
+    },
+    {
+      "key": "num_workers",
+      "label": "Num Workers",
+      "type": "input-number",
+      "dataType": "number",
+      "defaultValue": 0,
+      "required": false,
+      "description": "How many subprocesses to use for data loading. 0 means main process",
+      "validation": {
+        "min": 0,
+        "max": 32
+      }
+    },
+    {
+      "key": "pin_memory",
+      "label": "Pin Memory",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": false,
+      "required": false,
+      "description": "If True, copies Tensors into CUDA pinned memory before returning"
+    },
+    {
+      "key": "drop_last",
+      "label": "Drop Last",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": false,
+      "required": false,
+      "description": "Set to True to drop the last incomplete batch"
+    },
+    {
+      "key": "timeout",
+      "label": "Timeout",
+      "type": "input-number",
+      "dataType": "number",
+      "defaultValue": 0,
+      "required": false,
+      "description": "Timeout value for collecting a batch from workers",
+      "validation": {
+        "min": 0,
+        "max": 3600
+      }
+    },
+    {
+      "key": "prefetch_factor",
+      "label": "Prefetch Factor",
+      "type": "input-number",
+      "dataType": "number",
+      "defaultValue": 2,
+      "required": false,
+      "description": "Number of batches loaded in advance by each worker",
+      "validation": {
+        "min": 1,
+        "max": 100
+      }
+    },
+    {
+      "key": "persistent_workers",
+      "label": "Persistent Workers",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": false,
+      "required": false,
+      "description": "If True, workers will not shut down after dataset is consumed"
+    }
+  ],
+  "settingsGroups": [],
+  "capabilities": [
+    "code-generation"
+  ],
+  "requirements": {
+    "minSdkVersion": "1.0.0",
+    "dependencies": [
+      "torch"
+    ],
+    "pythonPackages": [
+      "torch"
+    ]
+  },
+  "emits": {
+    "variables": [
+      {
+        "value": "dataloader",
+        "switchKey": "settingsFields.emitDataloaderVar",
+        "isOnByDefault": true,
+        "type": "dataloader"
+      }
+    ],
+    "imports": [
+      {
+        "path": "torch.utils.data",
+        "items": [
+          "DataLoader"
+        ]
+      }
+    ]
+  }
+}

@@ -325,6 +325,21 @@ export abstract class TensorifyPlugin {
   }
 
   /**
+   * Check if this plugin is a variable provider type
+   */
+  private isVariableProviderPlugin(): boolean {
+    const nodeType = this.definition.nodeType;
+    if (!nodeType) return false;
+
+    const variableProviderTypes = [
+      NodeType.DATASET,
+      NodeType.DATALOADER,
+      // Add more variable provider types as needed
+    ];
+    return variableProviderTypes.includes(nodeType);
+  }
+
+  /**
    * Validate handle configurations
    */
   private validateHandles(errors: string[]): void {
@@ -394,11 +409,12 @@ export abstract class TensorifyPlugin {
       }
     }
 
-    // Enforce presence of prev/next handles
-    if (!hasPrev) {
+    // Enforce presence of prev/next handles for non-variable-provider plugins
+    const isVariableProvider = this.isVariableProviderPlugin();
+    if (!isVariableProvider && !hasPrev) {
       errors.push("Plugin must define an input handle with id 'prev'");
     }
-    if (!hasNext) {
+    if (!isVariableProvider && !hasNext) {
       errors.push("Plugin must define an output handle with id 'next'");
     }
   }

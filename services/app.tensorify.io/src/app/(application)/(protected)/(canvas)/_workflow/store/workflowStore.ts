@@ -64,10 +64,17 @@ export interface VisualConfig {
   labels?: VisualLabels;
 }
 
+// Node modes for handle generation
+export enum NodeMode {
+  WORKFLOW = "workflow",
+  VARIABLE_PROVIDER = "variable_provider",
+}
+
 // Custom node data interface
 export interface WorkflowNodeData {
   label: string;
   visualConfig?: VisualConfig;
+  nodeMode?: NodeMode;
   [key: string]: unknown;
 }
 

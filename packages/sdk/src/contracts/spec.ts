@@ -11,6 +11,7 @@ export const NodeTypeEnum = z.enum([
   "model",
   "model_layer",
   "sequence",
+  "dataset",
   "dataloader",
   "preprocessor",
   "postprocessor",
@@ -65,6 +66,26 @@ export const HandleDataTypeEnum = z.enum([
   "boolean",
   "object",
   "array",
+  // Node types for variable provider validation
+  "dataset",
+  "dataloader",
+  "model",
+  "model_layer",
+  "sequence",
+  "trainer",
+  "evaluator",
+  "preprocessor",
+  "postprocessor",
+  "augmentation_stack",
+  "optimizer",
+  "loss_function",
+  "metric",
+  "scheduler",
+  "regularizer",
+  "function",
+  "pipeline",
+  "report",
+  "custom",
 ]);
 
 // Handles
@@ -285,29 +306,8 @@ export const UIManifestSchema = z.object({
     category: NodeTypeEnum,
     nodeType: NodeTypeEnum,
     visual: NodeVisualConfigSchema,
-    inputHandles: z
-      .array(InputHandleSchema)
-      .refine(
-        (arr: Array<z.infer<typeof InputHandleSchema>>) =>
-          arr.some(
-            (h: z.infer<typeof InputHandleSchema>) =>
-              h.id === "prev" && h.position === "left" && h.required === true
-          ),
-        {
-          message:
-            "An input handle 'prev' on the LEFT marked required: true is required",
-        }
-      ),
-    outputHandles: z
-      .array(OutputHandleSchema)
-      .refine(
-        (arr: Array<z.infer<typeof OutputHandleSchema>>) =>
-          arr.some(
-            (h: z.infer<typeof OutputHandleSchema>) =>
-              h.id === "next" && h.position === "right"
-          ),
-        { message: "An output handle 'next' on the RIGHT is required" }
-      ),
+    inputHandles: z.array(InputHandleSchema),
+    outputHandles: z.array(OutputHandleSchema),
     settingsFields: z.array(SettingsFieldSchema),
     settingsGroups: z.array(SettingsGroupSchema).optional(),
   }),
@@ -414,6 +414,32 @@ export function normalizeUiManifest(manifest: unknown): UIManifest {
   );
   const fromLegacyTensorify = coerceLegacyPluginType(m.tensorify?.pluginType);
   m.pluginType = fromTensorifySettings || fromLegacyTensorify || m.pluginType;
+  // Check if this is a variable provider plugin that doesn't need prev/next handles
+  const isVariableProvider = ["dataset", "dataloader"].includes(m.pluginType);
+
+  // For non-variable providers, validate prev/next handles before parsing
+  if (!isVariableProvider) {
+    const inputHandles = m.frontendConfigs?.inputHandles || [];
+    const outputHandles = m.frontendConfigs?.outputHandles || [];
+
+    const hasPrev = inputHandles.some(
+      (h: any) =>
+        h.id === "prev" && h.position === "left" && h.required === true
+    );
+    const hasNext = outputHandles.some(
+      (h: any) => h.id === "next" && h.position === "right"
+    );
+
+    if (!hasPrev) {
+      throw new Error(
+        "An input handle 'prev' on the LEFT marked required: true is required"
+      );
+    }
+    if (!hasNext) {
+      throw new Error("An output handle 'next' on the RIGHT is required");
+    }
+  }
+
   const parsed = UIManifestSchema.parse(m);
 
   // Validate that for each emitted variable switchKey, a corresponding settings field exists

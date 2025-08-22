@@ -26,6 +26,8 @@ import {
   type InputHandle,
   type OutputHandle,
 } from "@packages/sdk/src/types/visual";
+import useWorkflowStore, { NodeMode } from "../../../store/workflowStore";
+import useAppStore from "@/app/_store/store";
 
 // Position mapping: 8-point visual system mapped to ReactFlow's 4 positions
 // ReactFlow only supports left/right/top/bottom, so corner positions map to nearest edge
@@ -42,6 +44,91 @@ const REACTFLOW_POSITION_MAP: Record<HandlePosition, Position> = {
 
 // Consistent gray color for all handle types
 const HANDLE_COLOR = "#9ca3af";
+
+/**
+ * Determines if a handle is a variable handle (not prev/next workflow handle)
+ */
+const isVariableHandle = (handle: InputHandle | OutputHandle): boolean => {
+  return handle.id !== "prev" && handle.id !== "next";
+};
+
+/**
+ * Generates the enhanced label with receives/emits information and type
+ */
+const getEnhancedLabel = (
+  handle: InputHandle | OutputHandle,
+  type: "source" | "target",
+  nodeId: string
+): string => {
+  const nodes = useWorkflowStore.getState().nodes;
+  const node = nodes.find((n) => n.id === nodeId);
+
+  // If no label, return empty
+  if (!handle.label) return "";
+
+  // If not a variable handle, return original label
+  if (!isVariableHandle(handle)) {
+    return handle.label;
+  }
+
+  // For variable handles, add receives/emits information with type
+  const nodeMode = (node?.data as any)?.nodeMode || NodeMode.WORKFLOW;
+
+  if (nodeMode === NodeMode.VARIABLE_PROVIDER && type === "source") {
+    // Variable provider nodes emit data - get type from emits config
+    const nodeData = node?.data as any;
+    let emitsConfig;
+    let variable;
+
+    // Check if this is a native node or plugin node
+    if (
+      node?.type === "@tensorify/core/CustomCodeNode" ||
+      node?.type === "@tensorify/core/ClassNode"
+    ) {
+      // Native node - get emits from node data
+      emitsConfig = nodeData?.emitsConfig;
+      variable = emitsConfig?.variables?.find(
+        (v: any) => v.value === handle.id
+      );
+    } else {
+      // Plugin node - get emits from plugin manifest
+      const pluginManifests = useAppStore.getState().pluginManifests;
+      const pluginId = nodeData?.pluginId || node?.id;
+      const manifest = pluginManifests.find(
+        (p) => p.slug === pluginId || p.id === pluginId
+      );
+      emitsConfig = manifest?.manifest?.emits;
+      variable = emitsConfig?.variables?.find(
+        (v: any) => v.value === handle.id
+      );
+    }
+
+    const variableType = variable?.type;
+
+    if (variableType) {
+      // Convert enum value to uppercase (e.g., "model_layer" -> "MODEL_LAYER")
+      const typeDisplay =
+        typeof variableType === "string"
+          ? variableType.toUpperCase()
+          : variableType;
+      return `${handle.label} (emits: ${typeDisplay})`;
+    }
+
+    return `${handle.label} (emits)`;
+  } else if (nodeMode === NodeMode.WORKFLOW && type === "target") {
+    // Workflow nodes receive data - get type from handle dataType
+    const dataType = handle.dataType;
+    if (dataType && dataType !== "any") {
+      return `${handle.label} (receives: ${dataType.toUpperCase()})`;
+    }
+
+    return `${handle.label} (receives)`;
+  }
+
+  // Fallback for other cases
+  const action = nodeMode === NodeMode.VARIABLE_PROVIDER ? "emits" : "receives";
+  return `${handle.label} (${action})`;
+};
 
 interface CustomHandleProps {
   handle: InputHandle | OutputHandle;
@@ -361,7 +448,7 @@ const CustomHandle = forwardRef<HTMLDivElement, CustomHandleProps>(
               className="absolute text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
               style={calculateLabelPosition(handle.position)}
             >
-              {handle.label}
+              {getEnhancedLabel(handle, type, nodeId)}
             </div>
           )}
         </div>
@@ -394,7 +481,7 @@ const CustomHandle = forwardRef<HTMLDivElement, CustomHandleProps>(
               className="absolute text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
               style={calculateLabelPosition(handle.position)}
             >
-              {handle.label}
+              {getEnhancedLabel(handle, type, nodeId)}
             </div>
           )}
         </div>
@@ -434,7 +521,7 @@ const CustomHandle = forwardRef<HTMLDivElement, CustomHandleProps>(
               className="absolute text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
               style={calculateLabelPosition(handle.position)}
             >
-              {handle.label}
+              {getEnhancedLabel(handle, type, nodeId)}
             </div>
           )}
         </div>
@@ -500,7 +587,7 @@ const CustomHandle = forwardRef<HTMLDivElement, CustomHandleProps>(
             className="absolute text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
             style={calculateLabelPosition(handle.position)}
           >
-            {handle.label}
+            {getEnhancedLabel(handle, type, nodeId)}
           </div>
         )}
       </div>
