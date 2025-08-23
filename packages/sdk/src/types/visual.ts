@@ -6,6 +6,62 @@
 import { NodeType } from "./core";
 
 // ========================================
+// TENSOR SHAPE TYPES
+// ========================================
+
+/**
+ * Represents a single dimension in a tensor shape
+ * Can be a literal value, settings reference, input reference, expression, or conditional
+ */
+export type ShapeDimension = string | number | ShapeExpression;
+
+/**
+ * Conditional shape logic with if/else support
+ */
+export interface ShapeCondition {
+  /** Condition expression (e.g., "{settings.adaptive_pooling}") */
+  if: string;
+  /** Value/expression to use when condition is true */
+  then: ShapeDimension;
+  /** Value/expression to use when condition is false (optional, for else-if chains) */
+  else?: ShapeDimension;
+}
+
+/**
+ * Complex shape expression with conditional logic
+ */
+export interface ShapeExpression {
+  /** Array of conditions to evaluate in order */
+  conditions: ShapeCondition[];
+}
+
+/**
+ * Complete shape definition for a tensor
+ */
+export interface TensorShape {
+  /**
+   * Type of shape calculation:
+   * - 'static': Fixed dimensions, no calculation needed
+   * - 'dynamic': Calculated based on inputs/settings
+   * - 'passthrough': Copies shape from a specific input
+   * - 'conditional': Uses conditional logic
+   */
+  type: "static" | "dynamic" | "passthrough" | "conditional";
+
+  /** Array of dimensions defining the tensor shape */
+  dimensions: ShapeDimension[];
+
+  /**
+   * For passthrough type: which input handle to copy shape from
+   * Format: 'handleId' or 'handleId.outputIndex' for multi-output handles
+   */
+  passthroughSource?: string;
+
+  /** Human-readable description of this shape */
+  description?: string;
+}
+
+// ========================================
 // HANDLE CONFIGURATION TYPES
 // ========================================
 
@@ -115,6 +171,11 @@ export interface InputHandle {
   validation?: HandleValidation;
   /** Tooltip description */
   description?: string;
+  /**
+   * Expected tensor shape for this input (optional)
+   * Used for validation and intellisense
+   */
+  expectedShape?: TensorShape;
 }
 
 /**

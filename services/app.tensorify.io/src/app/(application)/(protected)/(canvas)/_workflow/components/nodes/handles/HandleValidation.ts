@@ -10,6 +10,7 @@ import {
   type OutputHandle,
 } from "@packages/sdk/src/types/visual";
 import { NodeType } from "@packages/sdk/src/types/core";
+import { NodeMode } from "../../../store/workflowStore";
 
 export interface ValidationResult {
   isValid: boolean;
@@ -295,9 +296,28 @@ export function validateVariableProviderConnection(
 ): ValidationResult {
   const errors: string[] = [];
 
+  // Check node mode
+  const sourceNodeMode = (sourceNode.data as any)?.nodeMode || NodeMode.WORKFLOW;
+  const isCodeProvider = sourceNodeMode === NodeMode.CODE_PROVIDER;
+
   // Check if source is a variable provider (has variable emits)
   const sourceVariables = availableVariableDetailsByNodeId[sourceNode.id] || [];
   const isVariableProvider = sourceVariables.length > 0;
+
+  if (isCodeProvider) {
+    // Code provider connection: validate that source handle is "code"
+    const sourceHandle = params.sourceHandle;
+    
+    if (sourceHandle !== "code") {
+      errors.push(
+        `Code provider "${sourceNode.data?.label || sourceNode.id}" can only emit from "code" handle, but "${sourceHandle}" was used`
+      );
+      return { isValid: false, errors };
+    }
+    
+    // For code provider connections, accept any target that can receive code
+    return { isValid: true, errors: [] };
+  }
 
   if (!isVariableProvider) {
     // Not a variable provider connection, use standard validation

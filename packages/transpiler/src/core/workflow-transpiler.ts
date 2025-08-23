@@ -52,7 +52,14 @@ function isVariableProviderNode(node: WorkflowNode): boolean {
 }
 
 /**
- * Find variable provider dependencies between nodes
+ * Check if a node is in code provider mode
+ */
+function isCodeProviderNode(node: WorkflowNode): boolean {
+  return (node.data as any)?.nodeMode === "code_provider";
+}
+
+/**
+ * Find variable provider and code provider dependencies between nodes
  */
 function findVariableProviderDependencies(
   nodes: WorkflowNode[],
@@ -60,16 +67,21 @@ function findVariableProviderDependencies(
 ): Record<string, string[]> {
   const dependencies: Record<string, string[]> = {};
 
-  // Find all variable provider connections (non-prev/next edges)
-  const variableEdges = edges.filter(
+  // Find all variable/code provider connections (non-prev/next edges)
+  const providerEdges = edges.filter(
     (edge) => edge.sourceHandle !== "next" && edge.targetHandle !== "prev"
   );
 
-  variableEdges.forEach((edge) => {
+  providerEdges.forEach((edge) => {
     const sourceNode = nodes.find((n) => n.id === edge.source);
     const targetNode = nodes.find((n) => n.id === edge.target);
 
-    if (sourceNode && targetNode && isVariableProviderNode(sourceNode)) {
+    // Track dependencies for both variable providers AND code providers
+    if (
+      sourceNode &&
+      targetNode &&
+      (isVariableProviderNode(sourceNode) || isCodeProviderNode(sourceNode))
+    ) {
       if (!dependencies[edge.target]) {
         dependencies[edge.target] = [];
       }
@@ -160,6 +172,7 @@ export async function generateCode(
     const collectedChildErrors: Record<string, string> = {};
     const pluginResults = await getPluginResults(
       nodes,
+      edges,
       enhancedPaths,
       engine,
       collectedChildErrors
@@ -167,7 +180,7 @@ export async function generateCode(
     // console.log("Plugin results:", pluginResults);
 
     // Generate artifacts for each enhanced path
-    const artifacts = generateArtifacts(enhancedPaths, pluginResults);
+    const artifacts = generateArtifacts(enhancedPaths, pluginResults, nodes);
     // console.log("Generated artifacts:", Object.keys(artifacts));
 
     // Convert enhanced paths to simple format for response
@@ -598,41 +611,135 @@ function createNodeMap(nodes: WorkflowNode[]): Record<string, WorkflowNode> {
 }
 
 /**
+ * Get code from a connected code provider node
+ */
+function getCodeFromProvider(
+  codeProvider: {
+    handleLabel: string;
+    handlePosition: string;
+  },
+  targetNodeId: string,
+  itemId: string,
+  nodes: WorkflowNode[],
+  edges: WorkflowEdge[],
+  pluginResults?: Record<string, PluginResult>
+): string | null {
+  // Find connections to this node's code provider handle
+  // The target handle ID is exactly "code_provider_{itemId}"
+  const expectedTargetHandle = `code_provider_${itemId}`;
+  const incomingEdge = edges.find(
+    (edge) =>
+      edge.target === targetNodeId &&
+      edge.sourceHandle === "code" &&
+      edge.targetHandle === expectedTargetHandle
+  );
+
+  if (!incomingEdge) {
+    console.warn(
+      `No code provider connection found for handle: ${codeProvider.handleLabel}`
+    );
+    return `# No code provider connected to ${codeProvider.handleLabel}`;
+  }
+
+  // Find the source node that's providing the code
+  const sourceNode = nodes.find((node) => node.id === incomingEdge.source);
+
+  if (!sourceNode) {
+    console.warn(`Code provider source node not found: ${incomingEdge.source}`);
+    return `# Error: Source node ${incomingEdge.source} not found`;
+  }
+
+  // Check if source is in code provider mode
+  const sourceNodeMode = (sourceNode.data as any)?.nodeMode;
+  if (sourceNodeMode !== "code_provider") {
+    console.warn(
+      `Source node ${incomingEdge.source} is not in code provider mode`
+    );
+    return `# Error: Node ${incomingEdge.source} is not a code provider (mode: ${sourceNodeMode})`;
+  }
+
+  // Check if we have plugin results for this node first (for plugin nodes)
+  if (pluginResults && pluginResults[incomingEdge.source]) {
+    const result = pluginResults[incomingEdge.source];
+    if (result.code) {
+      return result.code;
+    }
+  }
+
+  // If it's a ClassNode in code provider mode, generate its class code
+  if (sourceNode.type === "@tensorify/core/ClassNode") {
+    const classData = sourceNode.data as any;
+    const generatedCode = generatePythonClassCode(
+      {
+        className: classData.className || "GeneratedClass",
+        baseClass: classData.baseClass,
+        constructorParameters: classData.constructorParameters || [],
+        constructorItems: classData.constructorItems || [],
+        methods: classData.methods || [],
+      },
+      incomingEdge.source,
+      nodes,
+      edges,
+      pluginResults
+    );
+    return generatedCode;
+  }
+
+  // If it's a CustomCodeNode in code provider mode, return its code
+  if (sourceNode.type === "@tensorify/core/CustomCodeNode") {
+    const customCodeData = sourceNode.data as any;
+    return customCodeData.code || "# No code provided";
+  }
+
+  return `# Code from provider: ${sourceNode.data?.label || incomingEdge.source}`;
+}
+
+/**
  * Generate Python class code from ClassNode data with support for constructor items and @classnodeself
  */
-function generatePythonClassCode(data: {
-  className: string;
-  baseClass?: { name: string; importPath?: string } | null;
-  constructorParameters?: Array<{
-    name: string;
-    type: string;
-    value: string;
-    defaultValue?: string;
-    propertyName?: string;
-  }>;
-  constructorItems?: Array<{
-    id: string;
-    type: "parameter" | "code";
-    parameter?: {
+function generatePythonClassCode(
+  data: {
+    className: string;
+    baseClass?: { name: string; importPath?: string } | null;
+    constructorParameters?: Array<{
       name: string;
       type: string;
       value: string;
       defaultValue?: string;
       propertyName?: string;
-    };
-    code?: string;
-  }>;
-  methods: Array<{
-    name: string;
-    parameters: Array<{
-      name: string;
-      type: string;
-      value: string;
-      defaultValue?: string;
     }>;
-    code: string;
-  }>;
-}): string {
+    constructorItems?: Array<{
+      id: string;
+      type: "parameter" | "code" | "code_provider";
+      parameter?: {
+        name: string;
+        type: string;
+        value: string;
+        defaultValue?: string;
+        propertyName?: string;
+      };
+      code?: string;
+      codeProvider?: {
+        handleLabel: string;
+        handlePosition: string;
+      };
+    }>;
+    methods: Array<{
+      name: string;
+      parameters: Array<{
+        name: string;
+        type: string;
+        value: string;
+        defaultValue?: string;
+      }>;
+      code: string;
+    }>;
+  },
+  nodeId: string,
+  nodes: WorkflowNode[],
+  edges: WorkflowEdge[],
+  pluginResults?: Record<string, PluginResult>
+): string {
   const {
     className,
     baseClass,
@@ -716,6 +823,25 @@ function generatePythonClassCode(data: {
           hasConstructorBody = true;
         }
       });
+    } else if (item.type === "code_provider" && item.codeProvider) {
+      // Inject code from connected code provider
+      const injectedCode = getCodeFromProvider(
+        item.codeProvider,
+        nodeId,
+        item.id, // Pass the item ID for exact targetHandle matching
+        nodes,
+        edges,
+        pluginResults
+      );
+      if (injectedCode) {
+        const codeLines = injectedCode.split("\n");
+        codeLines.forEach((line) => {
+          if (line.trim()) {
+            lines.push(`        ${line}`);
+            hasConstructorBody = true;
+          }
+        });
+      }
     }
   });
 
@@ -828,6 +954,7 @@ function getAutoMethodsForBaseClass(
  */
 async function getPluginResults(
   nodes: WorkflowNode[],
+  edges: WorkflowEdge[],
   paths: Path[],
   engine: any,
   childErrors?: Record<string, string>
@@ -917,13 +1044,19 @@ async function getPluginResults(
         const emitsImports = classNodeData?.emitsConfig?.imports || [];
 
         // Generate Python class code with new constructor items support
-        const classCode = generatePythonClassCode({
-          className,
-          baseClass,
-          constructorParameters,
-          constructorItems,
-          methods,
-        });
+        const classCode = generatePythonClassCode(
+          {
+            className,
+            baseClass,
+            constructorParameters,
+            constructorItems,
+            methods,
+          },
+          nodeId,
+          nodes,
+          edges,
+          results
+        );
 
         // Process the class code to replace $variable_name with actual variable references
         let processedCode = classCode;
@@ -1001,6 +1134,52 @@ async function getPluginResults(
         };
 
         continue; // Skip the plugin execution for ClassNode
+      }
+
+      // Handle ConstantsNode differently from regular plugin nodes
+      if (node.type === CodeGeneratingNodeType.ConstantsNode) {
+        const constantsNodeData = node.data as any;
+        const constants = constantsNodeData?.constants || [];
+        const emitsImports = constantsNodeData?.emitsConfig?.imports || [];
+
+        // Generate Python variable assignments for enabled constants
+        const constantAssignments: string[] = [];
+        constants
+          .filter(
+            (constant: any) => constant.isEnabled && constant.name.trim() !== ""
+          )
+          .forEach((constant: any) => {
+            const { name, value, type } = constant;
+            let formattedValue: string;
+
+            switch (type) {
+              case "string":
+                formattedValue = `"${value}"`;
+                break;
+              case "integer":
+                formattedValue = parseInt(value).toString();
+                break;
+              case "double":
+                formattedValue = parseFloat(value).toString();
+                break;
+              default:
+                formattedValue = `"${value}"`; // Default to string
+            }
+
+            constantAssignments.push(`${name} = ${formattedValue}`);
+          });
+
+        const constantsCode = constantAssignments.join("\n");
+
+        // Store the result for this constants node
+        results[nodeId] = {
+          nodeId: nodeId,
+          code: constantsCode,
+          imports: emitsImports,
+          error: undefined,
+        };
+
+        continue; // Skip the plugin execution for ConstantsNode
       }
 
       // Get the plugin slug from node data (pluginId field)
@@ -1179,9 +1358,16 @@ async function getPluginResults(
  */
 function generateArtifacts(
   paths: Path[],
-  pluginResults: Record<string, PluginResult>
+  pluginResults: Record<string, PluginResult>,
+  nodes: WorkflowNode[]
 ): Record<string, string> {
   const artifacts: Record<string, string> = {};
+
+  // Create node lookup
+  const nodeMap: Record<string, WorkflowNode> = {};
+  nodes.forEach((node) => {
+    nodeMap[node.id] = node;
+  });
 
   // Group paths by endNodeId to handle multiple paths to same endpoint
   const pathsByEndNode: Record<string, Path[]> = {};
@@ -1205,11 +1391,21 @@ function generateArtifacts(
 
       // Collect code chunks from plugin nodes in the path
       path.nodes.forEach((nodeId) => {
+        const node = nodeMap[nodeId];
         const result = pluginResults[nodeId];
+
         if (result) {
-          if (result.code) codeChunks.push(result.code);
-          if (Array.isArray(result.imports))
-            importConfigs.push(...result.imports);
+          // For code provider nodes: include imports but exclude standalone code
+          if (node && isCodeProviderNode(node)) {
+            // Only add imports from code provider nodes
+            if (Array.isArray(result.imports))
+              importConfigs.push(...result.imports);
+          } else {
+            // For regular nodes: include both code and imports
+            if (result.code) codeChunks.push(result.code);
+            if (Array.isArray(result.imports))
+              importConfigs.push(...result.imports);
+          }
         }
       });
 

@@ -33,6 +33,7 @@ import {
 } from "@/app/_components/ui/tooltip";
 import { Button } from "@/app/_components/ui/button";
 import { Input } from "@/app/_components/ui/input";
+import { NodeShapeDebugTooltip } from "./NodeShapeDebugTooltip";
 
 // Extended handle types with unique keys for React rendering
 type ExtendedInputHandle = InputHandle & { uniqueKey: string };
@@ -189,7 +190,7 @@ function getIconComponent(
 // This function has been replaced by calculateHandlePosition in CustomHandle.tsx
 
 export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
-  const { data, selected, id } = props;
+  const { data, selected, id, type } = props;
 
   const [hasError, setHasError] = useState(false);
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
@@ -367,6 +368,7 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
   // Get node mode
   const nodeMode = (data as any)?.nodeMode || NodeMode.WORKFLOW;
   const isVariableProvider = nodeMode === NodeMode.VARIABLE_PROVIDER;
+  const isCodeProvider = nodeMode === NodeMode.CODE_PROVIDER;
 
   // Extract handle configurations with proper typing and ensure unique IDs
   const { inputHandles, outputHandles } = useMemo((): {
@@ -422,6 +424,20 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
           });
       }
       // Variable Provider with no variables: no handles at all
+    } else if (isCodeProvider) {
+      // Code Provider mode: NO input handles, ONLY one code output handle
+      inputHandles = [];
+      outputHandles = [
+        {
+          id: "code",
+          label: "code",
+          position: HandlePosition.RIGHT,
+          viewType: HandleViewType.VERTICAL_BOX,
+          edgeType: EdgeType.DEFAULT,
+          dataType: "code",
+          uniqueKey: `code-output-${crypto.randomUUID().slice(0, 8)}`,
+        },
+      ];
     } else {
       // Workflow mode: use regular manifest handles
       inputHandles =
@@ -444,7 +460,7 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
     }
 
     return { inputHandles, outputHandles };
-  }, [manifest, isVariableProvider]);
+  }, [manifest, isVariableProvider, isCodeProvider]);
 
   // Validate node inputs
   const inputValidationResults = useMemo(() => {
@@ -1034,45 +1050,56 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
   if (hasError || !manifest) {
     const isDarkTheme = visualProps.theme === "dark";
     return (
-      <TNode {...props}>
-        <div
-          className="rounded-lg p-4 min-w-[180px] min-h-[80px] border-2"
-          style={{
-            backgroundColor: isDarkTheme ? "#7f1d1d" : "#fef2f2", // red-900 for dark, red-50 for light
-            borderColor: isDarkTheme ? "#f87171" : "#ef4444", // red-400 for dark, red-500 for light
-          }}
-        >
-          <div className="flex flex-col items-center justify-center space-y-2">
-            <LucideIcons.AlertCircle
-              className={`w-6 h-6 ${
-                isDarkTheme ? "text-red-400" : "text-red-500"
-              }`}
-            />
-            <p
-              className={`text-sm font-medium ${
-                isDarkTheme ? "text-red-200" : "text-red-700"
-              }`}
-            >
-              Plugin Error
-            </p>
-            <p
-              className={`text-xs ${
-                isDarkTheme ? "text-red-300" : "text-red-600"
-              }`}
-            >
-              Missing manifest
-            </p>
+      <NodeShapeDebugTooltip
+        nodeId={id}
+        nodeType={String(data.type || type || "")}
+        pluginId={String(data.pluginId || "")}
+      >
+        <TNode {...props}>
+          <div
+            className="rounded-lg p-4 min-w-[180px] min-h-[80px] border-2"
+            style={{
+              backgroundColor: isDarkTheme ? "#7f1d1d" : "#fef2f2", // red-900 for dark, red-50 for light
+              borderColor: isDarkTheme ? "#f87171" : "#ef4444", // red-400 for dark, red-500 for light
+            }}
+          >
+            <div className="flex flex-col items-center justify-center space-y-2">
+              <LucideIcons.AlertCircle
+                className={`w-6 h-6 ${
+                  isDarkTheme ? "text-red-400" : "text-red-500"
+                }`}
+              />
+              <p
+                className={`text-sm font-medium ${
+                  isDarkTheme ? "text-red-200" : "text-red-700"
+                }`}
+              >
+                Plugin Error
+              </p>
+              <p
+                className={`text-xs ${
+                  isDarkTheme ? "text-red-300" : "text-red-600"
+                }`}
+              >
+                Missing manifest
+              </p>
+            </div>
           </div>
-        </div>
-      </TNode>
+        </TNode>
+      </NodeShapeDebugTooltip>
     );
   }
 
   return (
-    <TNode {...props}>
-      <div
-        data-id={id}
-        className={`
+    <NodeShapeDebugTooltip
+      nodeId={id}
+      nodeType={String(data.type || type || "")}
+      pluginId={String(data.pluginId || "")}
+    >
+      <TNode {...props}>
+        <div
+          data-id={id}
+          className={`
           relative group
           transition-all duration-200
           bg-card
@@ -1089,135 +1116,143 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
           }
 
         `}
-        style={{
-          width: `${visualProps.width}px`,
-          height: isSequence ? undefined : `${visualProps.height}px`,
-          minWidth: visualProps.minWidth
-            ? `${visualProps.minWidth}px`
-            : undefined,
-          minHeight: isSequence
-            ? undefined
-            : visualProps.minHeight
-              ? `${visualProps.minHeight}px`
+          style={{
+            width: `${visualProps.width}px`,
+            height: isSequence ? undefined : `${visualProps.height}px`,
+            minWidth: visualProps.minWidth
+              ? `${visualProps.minWidth}px`
               : undefined,
-          maxWidth: visualProps.maxWidth
-            ? `${visualProps.maxWidth}px`
-            : undefined,
-          maxHeight: isSequence
-            ? undefined
-            : visualProps.maxHeight
-              ? `${visualProps.maxHeight}px`
+            minHeight: isSequence
+              ? undefined
+              : visualProps.minHeight
+                ? `${visualProps.minHeight}px`
+                : undefined,
+            maxWidth: visualProps.maxWidth
+              ? `${visualProps.maxWidth}px`
               : undefined,
-          borderWidth: nodeErrorState.hasExportError
-            ? "4px"
-            : `${visualProps.borderWidth}px`,
-          borderRadius:
-            visualProps.containerType === "circle"
-              ? "50%"
-              : visualProps.containerType === "left-round"
-                ? undefined // Let CSS classes handle left-round styling
-                : `${visualProps.borderRadius}px`,
-          borderColor: nodeErrorState.hasExportError
-            ? "var(--destructive)"
-            : invalidPrevNext.missingPrev || invalidPrevNext.missingNext
+            maxHeight: isSequence
+              ? undefined
+              : visualProps.maxHeight
+                ? `${visualProps.maxHeight}px`
+                : undefined,
+            borderWidth: nodeErrorState.hasExportError
+              ? "4px"
+              : `${visualProps.borderWidth}px`,
+            borderRadius:
+              visualProps.containerType === "circle"
+                ? "50%"
+                : visualProps.containerType === "left-round"
+                  ? undefined // Let CSS classes handle left-round styling
+                  : `${visualProps.borderRadius}px`,
+            borderColor: nodeErrorState.hasExportError
               ? "var(--destructive)"
-              : selected
-                ? "var(--primary)"
-                : visualProps.borderColor || "var(--border)",
-          backgroundColor: getBackgroundColor,
-          padding: `${visualProps.outerPadding}px`,
-          cursor: isSequence ? "default" : "grab",
-        }}
-      >
-        {(invalidPrevNext.missingPrev || invalidPrevNext.missingNext) && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  className="absolute -top-2 -right-2 z-10 bg-destructive text-destructive-foreground rounded-full p-1 shadow-md cursor-help"
-                  title={
-                    invalidPrevNext.missingPrev && invalidPrevNext.missingNext
-                      ? "Connect prev and next"
-                      : invalidPrevNext.missingPrev
-                        ? "Connect prev"
-                        : "Connect next"
-                  }
-                  aria-label="Node connection issue"
-                >
-                  <AlertCircle className="w-4 h-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="left" align="center" className="max-w-xs">
-                <div className="text-xs space-y-1">
-                  {invalidPrevNext.missingPrev &&
-                    invalidPrevNext.missingNext && (
-                      <>
-                        <p className="font-medium">Missing connections</p>
-                        <ul className="list-disc pl-4">
-                          <li>Connect an incoming edge to the "prev" handle</li>
-                          <li>
-                            Connect an outgoing edge from the "next" handle
-                          </li>
-                        </ul>
-                      </>
-                    )}
-                  {invalidPrevNext.missingPrev &&
-                    !invalidPrevNext.missingNext && (
-                      <>
-                        <p className="font-medium">Missing "prev" connection</p>
-                        <p>Connect an incoming edge to the "prev" handle.</p>
-                      </>
-                    )}
-                  {!invalidPrevNext.missingPrev &&
-                    invalidPrevNext.missingNext && (
-                      <>
-                        <p className="font-medium">Missing "next" connection</p>
-                        <p>Connect an outgoing edge from the "next" handle.</p>
-                      </>
-                    )}
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-        {/* Input Handles */}
-        {inputHandles.map((handle, index) => (
-          <CustomHandle
-            key={`input-${handle.uniqueKey}`}
-            handle={handle}
-            type="target"
-            nodeId={id}
-            index={index}
-            totalHandles={inputHandles.length}
-            borderWidth={visualProps.borderWidth}
-            isValidConnection={isConnectionValid}
-          />
-        ))}
-
-        <div
-          className="flex flex-col items-center justify-center h-full space-y-2"
-          style={{ padding: `${visualProps.innerPadding}px` }}
-          data-sequence-drop-zone={isSequence ? "true" : undefined}
-          onDragOver={(e) => {
-            if (isSequence) {
-              e.preventDefault();
-              e.stopPropagation();
-              e.dataTransfer.dropEffect = "move";
-              console.log(`🎯 Main sequence container drag over`);
-            }
-          }}
-          onDrop={(e) => {
-            if (isSequence) {
-              console.log(`🎯 Main sequence container drop event captured`);
-              handleDropIntoSequence(e);
-            }
+              : invalidPrevNext.missingPrev || invalidPrevNext.missingNext
+                ? "var(--destructive)"
+                : selected
+                  ? "var(--primary)"
+                  : visualProps.borderColor || "var(--border)",
+            backgroundColor: getBackgroundColor,
+            padding: `${visualProps.outerPadding}px`,
+            cursor: isSequence ? "default" : "grab",
           }}
         >
-          {/* Primary Icon (hide for sequence to declutter) */}
-          {!isSequence && visualProps.primaryIcon && (
-            <div
-              className={`
+          {(invalidPrevNext.missingPrev || invalidPrevNext.missingNext) && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="absolute -top-2 -right-2 z-10 bg-destructive text-destructive-foreground rounded-full p-1 shadow-md cursor-help"
+                    title={
+                      invalidPrevNext.missingPrev && invalidPrevNext.missingNext
+                        ? "Connect prev and next"
+                        : invalidPrevNext.missingPrev
+                          ? "Connect prev"
+                          : "Connect next"
+                    }
+                    aria-label="Node connection issue"
+                  >
+                    <AlertCircle className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="left" align="center" className="max-w-xs">
+                  <div className="text-xs space-y-1">
+                    {invalidPrevNext.missingPrev &&
+                      invalidPrevNext.missingNext && (
+                        <>
+                          <p className="font-medium">Missing connections</p>
+                          <ul className="list-disc pl-4">
+                            <li>
+                              Connect an incoming edge to the "prev" handle
+                            </li>
+                            <li>
+                              Connect an outgoing edge from the "next" handle
+                            </li>
+                          </ul>
+                        </>
+                      )}
+                    {invalidPrevNext.missingPrev &&
+                      !invalidPrevNext.missingNext && (
+                        <>
+                          <p className="font-medium">
+                            Missing "prev" connection
+                          </p>
+                          <p>Connect an incoming edge to the "prev" handle.</p>
+                        </>
+                      )}
+                    {!invalidPrevNext.missingPrev &&
+                      invalidPrevNext.missingNext && (
+                        <>
+                          <p className="font-medium">
+                            Missing "next" connection
+                          </p>
+                          <p>
+                            Connect an outgoing edge from the "next" handle.
+                          </p>
+                        </>
+                      )}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          {/* Input Handles */}
+          {inputHandles.map((handle, index) => (
+            <CustomHandle
+              key={`input-${handle.uniqueKey}`}
+              handle={handle}
+              type="target"
+              nodeId={id}
+              index={index}
+              totalHandles={inputHandles.length}
+              borderWidth={visualProps.borderWidth}
+              isValidConnection={isConnectionValid}
+            />
+          ))}
+
+          <div
+            className="flex flex-col items-center justify-center h-full space-y-2"
+            style={{ padding: `${visualProps.innerPadding}px` }}
+            data-sequence-drop-zone={isSequence ? "true" : undefined}
+            onDragOver={(e) => {
+              if (isSequence) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.dataTransfer.dropEffect = "move";
+                console.log(`🎯 Main sequence container drag over`);
+              }
+            }}
+            onDrop={(e) => {
+              if (isSequence) {
+                console.log(`🎯 Main sequence container drop event captured`);
+                handleDropIntoSequence(e);
+              }
+            }}
+          >
+            {/* Primary Icon (hide for sequence to declutter) */}
+            {!isSequence && visualProps.primaryIcon && (
+              <div
+                className={`
                 rounded-md transition-colors duration-200
                 ${
                   visualProps.showIconBackground
@@ -1229,52 +1264,54 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                       : getIconClasses.primary
                 }
               `}
-            >
-              <IconWrapper
-                icon={visualProps.primaryIcon}
-                className={iconSizeClass}
-                iconUrl={data.iconUrl as string | undefined}
-              />
-            </div>
-          )}
-
-          {/* Secondary Icons */}
-          {visualProps.secondaryIcons.length > 0 &&
-            visualProps.secondaryIcons.map((icon: any, idx: number) => (
-              <div
-                key={`secondary-icon-${idx}`}
-                className={calculateIconPosition(icon.position)}
               >
-                <div
-                  className={`p-1 rounded ${getIconClasses.secondaryBackground}`}
-                >
-                  <IconWrapper
-                    icon={icon}
-                    className={`w-3 h-3 ${getIconClasses.secondary}`}
-                  />
-                </div>
+                <IconWrapper
+                  icon={visualProps.primaryIcon}
+                  className={iconSizeClass}
+                  iconUrl={data.iconUrl as string | undefined}
+                />
               </div>
-            ))}
+            )}
 
-          {/* Sequence container UI (minimal: title → rows → drag target) */}
-          {isSequence && (
-            <div className="w-full flex flex-col gap-2">
-              <p
-                className="text-sm font-medium text-center"
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log(`🎯 Drag over sequence TITLE for sequence ${id}`);
-                }}
-                onDrop={(e) => {
-                  console.log(`🎯 Drop on sequence TITLE for sequence ${id}`);
-                  handleDropIntoSequence(e);
-                }}
-              >
-                {visualProps.title}
-              </p>
-              <div
-                className={`
+            {/* Secondary Icons */}
+            {visualProps.secondaryIcons.length > 0 &&
+              visualProps.secondaryIcons.map((icon: any, idx: number) => (
+                <div
+                  key={`secondary-icon-${idx}`}
+                  className={calculateIconPosition(icon.position)}
+                >
+                  <div
+                    className={`p-1 rounded ${getIconClasses.secondaryBackground}`}
+                  >
+                    <IconWrapper
+                      icon={icon}
+                      className={`w-3 h-3 ${getIconClasses.secondary}`}
+                    />
+                  </div>
+                </div>
+              ))}
+
+            {/* Sequence container UI (minimal: title → rows → drag target) */}
+            {isSequence && (
+              <div className="w-full flex flex-col gap-2">
+                <p
+                  className="text-sm font-medium text-center"
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log(
+                      `🎯 Drag over sequence TITLE for sequence ${id}`
+                    );
+                  }}
+                  onDrop={(e) => {
+                    console.log(`🎯 Drop on sequence TITLE for sequence ${id}`);
+                    handleDropIntoSequence(e);
+                  }}
+                >
+                  {visualProps.title}
+                </p>
+                <div
+                  className={`
                   w-full min-h-[64px] rounded-lg border border-dashed p-3 flex flex-col gap-2 overflow-y-auto relative nodrag nowheel
                   transition-all duration-200
                   ${
@@ -1283,145 +1320,130 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                       : "border-input bg-accent"
                   }
                 `}
-                data-sequence-drop-zone="true"
-                onDragOverCapture={(e) => {
-                  // Ensure drops are allowed even when hovering over child elements (like inputs)
-                  e.preventDefault();
-                  const types = Array.from(e.dataTransfer.types);
-                  const isNodeSearchDrag =
-                    types.includes("application/tensorify-node") ||
-                    types.includes("application/reactflow");
-                  e.dataTransfer.dropEffect =
-                    isNodeSearchDrag || canAcceptDraggedNode ? "move" : "none";
-                }}
-                onDragEnter={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log(
-                    `🎯 Drag entered sequence DROP ZONE for sequence ${id}`
-                  );
-                }}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  const types = Array.from(e.dataTransfer.types);
-                  const isNodeSearchDrag =
-                    types.includes("application/tensorify-node") ||
-                    types.includes("application/reactflow");
-                  e.dataTransfer.dropEffect =
-                    isNodeSearchDrag || canAcceptDraggedNode ? "move" : "none";
-                  // Debug logging for NodeSearch drops (can only read types during dragover)
-                  const dragTypes = Array.from(e.dataTransfer.types);
-                  console.log(
-                    `🎯 DROP ZONE Drag over - draggedNodeType: "${draggedNodeType}"`
-                  );
-                  console.log(`🎯 DROP ZONE data types:`, dragTypes);
-                  console.log(
-                    `🎯 Has NodeSearch types:`,
-                    dragTypes.includes("application/tensorify-node") &&
-                      dragTypes.includes("application/reactflow")
-                  );
-                }}
-                onDragLeave={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log(`🎯 Drag left sequence container`);
-                }}
-                onDropCapture={(e) => {
-                  // Capture NodeSearch drops even when the actual target is a child (e.g., input inside a row)
-                  e.preventDefault();
-                  const types = Array.from(e.dataTransfer.types);
-                  const isNodeSearchDrop =
-                    types.includes("application/tensorify-node") ||
-                    types.includes("application/reactflow");
-                  if (isNodeSearchDrop) {
+                  data-sequence-drop-zone="true"
+                  onDragOverCapture={(e) => {
+                    // Ensure drops are allowed even when hovering over child elements (like inputs)
+                    e.preventDefault();
+                    const types = Array.from(e.dataTransfer.types);
+                    const isNodeSearchDrag =
+                      types.includes("application/tensorify-node") ||
+                      types.includes("application/reactflow");
+                    e.dataTransfer.dropEffect =
+                      isNodeSearchDrag || canAcceptDraggedNode
+                        ? "move"
+                        : "none";
+                  }}
+                  onDragEnter={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     console.log(
-                      `🎯 Drop CAPTURE on sequence DROP ZONE for sequence ${id}`
+                      `🎯 Drag entered sequence DROP ZONE for sequence ${id}`
+                    );
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const types = Array.from(e.dataTransfer.types);
+                    const isNodeSearchDrag =
+                      types.includes("application/tensorify-node") ||
+                      types.includes("application/reactflow");
+                    e.dataTransfer.dropEffect =
+                      isNodeSearchDrag || canAcceptDraggedNode
+                        ? "move"
+                        : "none";
+                    // Debug logging for NodeSearch drops (can only read types during dragover)
+                    const dragTypes = Array.from(e.dataTransfer.types);
+                    console.log(
+                      `🎯 DROP ZONE Drag over - draggedNodeType: "${draggedNodeType}"`
+                    );
+                    console.log(`🎯 DROP ZONE data types:`, dragTypes);
+                    console.log(
+                      `🎯 Has NodeSearch types:`,
+                      dragTypes.includes("application/tensorify-node") &&
+                        dragTypes.includes("application/reactflow")
+                    );
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log(`🎯 Drag left sequence container`);
+                  }}
+                  onDropCapture={(e) => {
+                    // Capture NodeSearch drops even when the actual target is a child (e.g., input inside a row)
+                    e.preventDefault();
+                    const types = Array.from(e.dataTransfer.types);
+                    const isNodeSearchDrop =
+                      types.includes("application/tensorify-node") ||
+                      types.includes("application/reactflow");
+                    if (isNodeSearchDrop) {
+                      console.log(
+                        `🎯 Drop CAPTURE on sequence DROP ZONE for sequence ${id}`
+                      );
+                      handleDropIntoSequence(e);
+                      // Prevent duplicate handling in bubbling phase
+                      e.stopPropagation();
+                    }
+                  }}
+                  onDrop={(e) => {
+                    console.log(
+                      `🎯 Drop on sequence DROP ZONE for sequence ${id}`
                     );
                     handleDropIntoSequence(e);
-                    // Prevent duplicate handling in bubbling phase
-                    e.stopPropagation();
-                  }
-                }}
-                onDrop={(e) => {
-                  console.log(
-                    `🎯 Drop on sequence DROP ZONE for sequence ${id}`
-                  );
-                  handleDropIntoSequence(e);
-                }}
-                onMouseDown={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-                onDoubleClick={(e) => e.stopPropagation()}
-              >
-                {sequenceItems.length === 0 ? (
-                  <div className="text-xs text-muted-foreground italic">
-                    Empty
-                  </div>
-                ) : (
-                  sequenceItems.map((it, idx) => {
-                    // Check if this sequence child has export errors
-                    const childNodeId = it.nodeId;
-                    const childHasError =
-                      childNodeId &&
-                      engine?.nodes?.[childNodeId]?.hasExportError;
+                  }}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onDoubleClick={(e) => e.stopPropagation()}
+                >
+                  {sequenceItems.length === 0 ? (
+                    <div className="text-xs text-muted-foreground italic">
+                      Empty
+                    </div>
+                  ) : (
+                    sequenceItems.map((it, idx) => {
+                      // Check if this sequence child has export errors
+                      const childNodeId = it.nodeId;
+                      const childHasError =
+                        childNodeId &&
+                        engine?.nodes?.[childNodeId]?.hasExportError;
 
-                    const sequenceRowContent = (
-                      <div
-                        key={`seq-${idx}`}
-                        className={`w-full flex items-center justify-between gap-2 pl-3 pr-4 py-2 rounded-md bg-background text-xs border border-input/80 shadow-sm overflow-hidden transition-colors ${
-                          childHasError
-                            ? "ring-4 ring-destructive bg-destructive/10 "
-                            : overIndex === idx
-                              ? "ring-primary/60"
-                              : "hover:ring-primary/50"
-                        }`}
-                        draggable
-                        onDragOverCapture={(e) => {
-                          // Ensure NodeSearch drops are accepted even when hovering child row controls
-                          const types = Array.from(e.dataTransfer.types);
-                          const isNodeSearchDrop =
-                            types.includes("application/tensorify-node") ||
-                            types.includes("application/reactflow");
-                          if (isNodeSearchDrop) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            e.dataTransfer.dropEffect = "move";
+                      // Check if this sequence item has shape validation errors
+                      const sequenceValidation =
+                        engine?.sequenceShapeValidations?.[id];
+                      const itemShapeInfo =
+                        sequenceValidation?.itemShapeInfos?.[idx];
+                      const hasShapeError =
+                        itemShapeInfo?.hasShapeError || false;
+
+                      // Debug logging for sequence item validation
+                      if (idx === 0) {
+                        console.log(
+                          `🎯 CustomPluginNode validation for ${id}:`,
+                          {
+                            hasSequenceValidation: !!sequenceValidation,
+                            itemCount:
+                              sequenceValidation?.itemShapeInfos?.length || 0,
+                            hasAnyErrors: sequenceValidation?.hasAnyErrors,
+                            currentItemError: hasShapeError,
+                            itemShapeInfo,
                           }
-                        }}
-                        onDropCapture={(e) => {
-                          // Route NodeSearch drops at row level to the sequence handler
-                          e.preventDefault();
-                          const types = Array.from(e.dataTransfer.types);
-                          const isSequenceRowDrag = types.includes(
-                            "application/sequence-index"
-                          );
-                          const isNodeSearchDrop =
-                            (types.includes("application/tensorify-node") ||
-                              types.includes("application/reactflow")) &&
-                            !isSequenceRowDrag;
-                          if (isNodeSearchDrop) {
-                            handleDropIntoSequence(e);
-                            e.stopPropagation();
-                          }
-                        }}
-                        onDragStart={(e) => onRowDragStart(e, idx)}
-                        onDragOver={(e) => onRowDragOver(e, idx)}
-                        onDrop={(e) => onRowDrop(e, idx)}
-                        onDragEnd={(e) => onRowDragEnd(e, idx)}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onDoubleClick={(e) => e.stopPropagation()}
-                      >
-                        <input
-                          className="flex-1 min-w-0 bg-transparent outline-none border-none text-foreground truncate nodrag nowheel"
-                          value={String(it.name || "item")}
-                          onChange={(e) => {
-                            const next = sequenceItems.slice();
-                            next[idx] = { ...next[idx], name: e.target.value };
-                            updateNodeData(id, { sequenceItems: next });
-                          }}
+                        );
+                      }
+
+                      const sequenceRowContent = (
+                        <div
+                          key={`seq-${idx}`}
+                          className={`w-full flex items-center justify-between gap-2 pl-3 pr-4 py-2 rounded-md bg-background text-xs border border-input/80 shadow-sm overflow-hidden transition-colors ${
+                            childHasError
+                              ? "ring-4 ring-destructive bg-destructive/10"
+                              : hasShapeError
+                                ? "ring-2 ring-destructive bg-destructive/10 border-destructive/20"
+                                : overIndex === idx
+                                  ? "ring-primary/60"
+                                  : "hover:ring-primary/50"
+                          }`}
+                          draggable
                           onDragOverCapture={(e) => {
-                            // Accept NodeSearch drops directly over the input field
+                            // Ensure NodeSearch drops are accepted even when hovering child row controls
                             const types = Array.from(e.dataTransfer.types);
                             const isNodeSearchDrop =
                               types.includes("application/tensorify-node") ||
@@ -1433,7 +1455,8 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                             }
                           }}
                           onDropCapture={(e) => {
-                            // Route NodeSearch drops to the sequence handler when dropped on the input
+                            // Route NodeSearch drops at row level to the sequence handler
+                            e.preventDefault();
                             const types = Array.from(e.dataTransfer.types);
                             const isSequenceRowDrag = types.includes(
                               "application/sequence-index"
@@ -1443,96 +1466,199 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                                 types.includes("application/reactflow")) &&
                               !isSequenceRowDrag;
                             if (isNodeSearchDrop) {
-                              e.preventDefault();
                               handleDropIntoSequence(e);
                               e.stopPropagation();
                             }
                           }}
+                          onDragStart={(e) => onRowDragStart(e, idx)}
+                          onDragOver={(e) => onRowDragOver(e, idx)}
+                          onDrop={(e) => onRowDrop(e, idx)}
+                          onDragEnd={(e) => onRowDragEnd(e, idx)}
                           onMouseDown={(e) => e.stopPropagation()}
                           onPointerDown={(e) => e.stopPropagation()}
                           onDoubleClick={(e) => e.stopPropagation()}
-                        />
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            className="p-1.5 rounded-sm text-muted-foreground hover:bg-accent"
-                            title="Settings"
-                            aria-label="Settings"
-                            onClick={() => {
-                              const row = sequenceItems[idx];
-                              if (row?.nodeId) {
-                                openNodeSettingsDialog(row.nodeId);
+                        >
+                          <input
+                            className="flex-1 min-w-0 bg-transparent outline-none border-none text-foreground truncate nodrag nowheel"
+                            value={String(it.name || "item")}
+                            onChange={(e) => {
+                              const next = sequenceItems.slice();
+                              next[idx] = {
+                                ...next[idx],
+                                name: e.target.value,
+                              };
+                              updateNodeData(id, { sequenceItems: next });
+                            }}
+                            onDragOverCapture={(e) => {
+                              // Accept NodeSearch drops directly over the input field
+                              const types = Array.from(e.dataTransfer.types);
+                              const isNodeSearchDrop =
+                                types.includes("application/tensorify-node") ||
+                                types.includes("application/reactflow");
+                              if (isNodeSearchDrop) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                e.dataTransfer.dropEffect = "move";
+                              }
+                            }}
+                            onDropCapture={(e) => {
+                              // Route NodeSearch drops to the sequence handler when dropped on the input
+                              const types = Array.from(e.dataTransfer.types);
+                              const isSequenceRowDrag = types.includes(
+                                "application/sequence-index"
+                              );
+                              const isNodeSearchDrop =
+                                (types.includes("application/tensorify-node") ||
+                                  types.includes("application/reactflow")) &&
+                                !isSequenceRowDrag;
+                              if (isNodeSearchDrop) {
+                                e.preventDefault();
+                                handleDropIntoSequence(e);
+                                e.stopPropagation();
                               }
                             }}
                             onMouseDown={(e) => e.stopPropagation()}
                             onPointerDown={(e) => e.stopPropagation()}
-                          >
-                            <SettingsIcon className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            className="p-1.5 rounded-sm text-muted-foreground hover:bg-accent hover:text-destructive"
-                            title="Remove"
-                            aria-label="Remove"
-                            onClick={() => removeSequenceItem(idx)}
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onPointerDown={(e) => e.stopPropagation()}
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-
-                    // Wrap with tooltip if there's an error
-                    if (childHasError) {
-                      return (
-                        <TooltipProvider key={`seq-${idx}`} delayDuration={0}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              {sequenceRowContent}
-                            </TooltipTrigger>
-                            <TooltipContent
-                              side="top"
-                              className="max-w-sm p-4 bg-background border border-destructive/20 shadow-2xl ring-4 ring-destructive/20"
-                              sideOffset={8}
+                            onDoubleClick={(e) => e.stopPropagation()}
+                          />
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              className="p-1.5 rounded-sm text-muted-foreground hover:bg-accent"
+                              title="Settings"
+                              aria-label="Settings"
+                              onClick={() => {
+                                const row = sequenceItems[idx];
+                                if (row?.nodeId) {
+                                  openNodeSettingsDialog(row.nodeId);
+                                }
+                              }}
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onPointerDown={(e) => e.stopPropagation()}
                             >
-                              <div className="space-y-3">
-                                <div className="flex items-center gap-2">
-                                  <div className="p-1.5 bg-destructive/10 rounded-md">
-                                    <AlertCircle className="w-3 h-3 text-destructive" />
-                                  </div>
-                                  <div className="font-semibold text-sm text-foreground">
-                                    Sequence Item Error
-                                  </div>
-                                </div>
-                                <div className="bg-destructive/10 rounded-lg p-3 border border-destructive/20">
-                                  <div className="text-xs font-mono text-destructive leading-relaxed">
-                                    {engine?.nodes?.[childNodeId]
-                                      ?.exportErrorMessage ||
-                                      "This item has an error"}
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2 pt-1 border-t border-border">
-                                  <div className="p-1 bg-muted rounded">
-                                    <span className="text-xs">⚙️</span>
-                                  </div>
-                                  <span className="text-xs text-muted-foreground">
-                                    Click settings button to fix
-                                  </span>
-                                </div>
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                              <SettingsIcon className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              className="p-1.5 rounded-sm text-muted-foreground hover:bg-accent hover:text-destructive"
+                              title="Remove"
+                              aria-label="Remove"
+                              onClick={() => removeSequenceItem(idx)}
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onPointerDown={(e) => e.stopPropagation()}
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
                       );
-                    }
 
-                    return sequenceRowContent;
-                  })
-                )}
-                <div
-                  className={`
+                      // Wrap with tooltip if there's an error
+                      if (childHasError) {
+                        return (
+                          <TooltipProvider key={`seq-${idx}`} delayDuration={0}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                {sequenceRowContent}
+                              </TooltipTrigger>
+                              <TooltipContent
+                                side="top"
+                                className="max-w-sm p-4 bg-background border border-destructive/20 shadow-2xl ring-4 ring-destructive/20"
+                                sideOffset={8}
+                              >
+                                <div className="space-y-3">
+                                  <div className="flex items-center gap-2">
+                                    <div className="p-1.5 bg-destructive/10 rounded-md">
+                                      <AlertCircle className="w-3 h-3 text-destructive" />
+                                    </div>
+                                    <div className="font-semibold text-sm text-foreground">
+                                      Sequence Item Error
+                                    </div>
+                                  </div>
+                                  <div className="bg-destructive/10 rounded-lg p-3 border border-destructive/20">
+                                    <div className="text-xs font-mono text-destructive leading-relaxed">
+                                      {engine?.nodes?.[childNodeId]
+                                        ?.exportErrorMessage ||
+                                        "This item has an error"}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2 pt-1 border-t border-border">
+                                    <div className="p-1 bg-muted rounded">
+                                      <span className="text-xs">⚙️</span>
+                                    </div>
+                                    <span className="text-xs text-muted-foreground">
+                                      Click settings button to fix
+                                    </span>
+                                  </div>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        );
+                      }
+
+                      // Wrap with tooltip if there's a shape error
+                      if (hasShapeError && itemShapeInfo?.shapeErrorMessage) {
+                        return (
+                          <TooltipProvider
+                            key={`seq-${idx}`}
+                            delayDuration={300}
+                          >
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                {sequenceRowContent}
+                              </TooltipTrigger>
+                              <TooltipContent
+                                side="right"
+                                className="max-w-xs p-4 bg-background border border-red-500/20 shadow-2xl ring-4 ring-red-500/20"
+                                sideOffset={8}
+                              >
+                                <div className="space-y-3">
+                                  <div className="flex items-center gap-2">
+                                    <div className="p-1.5 bg-red-500/10 rounded-md">
+                                      <AlertCircle className="w-3 h-3 text-red-500" />
+                                    </div>
+                                    <div className="font-semibold text-sm text-foreground">
+                                      Tensor Shape Mismatch
+                                    </div>
+                                  </div>
+                                  <div className="bg-red-50/50 rounded-lg p-3 border border-red-200/50">
+                                    <div className="text-xs text-red-700 leading-relaxed">
+                                      {itemShapeInfo.shapeErrorMessage}
+                                    </div>
+                                    {itemShapeInfo.expectedInputShape && (
+                                      <div className="text-xs font-mono mt-2 pt-2 border-t border-red-200">
+                                        <div>
+                                          Expected: (
+                                          {itemShapeInfo.expectedInputShape.dimensions
+                                            ?.map((d) => (d === -1 ? "N" : d))
+                                            .join(", ")}
+                                          )
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2 pt-1 border-t border-border">
+                                    <div className="p-1 bg-muted rounded">
+                                      <span className="text-xs">🔧</span>
+                                    </div>
+                                    <span className="text-xs text-muted-foreground">
+                                      Adjust layer settings to fix shape
+                                      mismatch
+                                    </span>
+                                  </div>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        );
+                      }
+
+                      return sequenceRowContent;
+                    })
+                  )}
+                  <div
+                    className={`
                     w-full h-9 rounded-md border border-dashed flex items-center justify-center text-[11px] mt-1 select-none nodrag nowheel
                     transition-all duration-200
                     ${
@@ -1541,78 +1667,79 @@ export default function CustomPluginNode(props: NodeProps<WorkflowNode>) {
                         : "border-input bg-accent text-muted-foreground"
                     }
                   `}
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onDoubleClick={(e) => e.stopPropagation()}
-                >
-                  <Grip className="w-3 h-3 mr-1" />
-                  {canAcceptDraggedNode ? "Drop Node Here" : "Drag Here"}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onDoubleClick={(e) => e.stopPropagation()}
+                  >
+                    <Grip className="w-3 h-3 mr-1" />
+                    {canAcceptDraggedNode ? "Drop Node Here" : "Drag Here"}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Label (hide for sequence – title already shown above) */}
-          {!isSequence && visualProps.showLabels && (
-            <div className="text-center w-full">
-              <div className="text-center">
-                {/* Main Title (non-editable – edit in Info tab) */}
-                <p
-                  className={`text-sm font-medium ${getTextClasses.primary} ${getTextClasses.primaryHover} transition-colors text-center`}
-                  title={`${visualProps.title}`}
-                  style={{
-                    maxWidth: `${visualProps.width - 40}px`,
-                    margin: "0 auto",
-                  }}
-                >
-                  {visualProps.title}
-                </p>
-                {/* Dynamic Label below main title */}
-                {processedDynamicLabel && (
+            {/* Label (hide for sequence – title already shown above) */}
+            {!isSequence && visualProps.showLabels && (
+              <div className="text-center w-full">
+                <div className="text-center">
+                  {/* Main Title (non-editable – edit in Info tab) */}
                   <p
-                    className={`text-xs ${getTextClasses.secondary} mt-1 font-mono text-center`}
+                    className={`text-sm font-medium ${getTextClasses.primary} ${getTextClasses.primaryHover} transition-colors text-center`}
+                    title={`${visualProps.title}`}
                     style={{
                       maxWidth: `${visualProps.width - 40}px`,
                       margin: "0 auto",
                     }}
                   >
-                    {processedDynamicLabel}
+                    {visualProps.title}
+                  </p>
+                  {/* Dynamic Label below main title */}
+                  {processedDynamicLabel && (
+                    <p
+                      className={`text-xs ${getTextClasses.secondary} mt-1 font-mono text-center`}
+                      style={{
+                        maxWidth: `${visualProps.width - 40}px`,
+                        margin: "0 auto",
+                      }}
+                    >
+                      {processedDynamicLabel}
+                    </p>
+                  )}
+                </div>
+                {visualProps.titleDescription && (
+                  <p
+                    className={`text-xs ${getTextClasses.secondary} mt-1 text-center`}
+                  >
+                    {visualProps.titleDescription}
                   </p>
                 )}
-              </div>
-              {visualProps.titleDescription && (
-                <p
-                  className={`text-xs ${getTextClasses.secondary} mt-1 text-center`}
-                >
-                  {visualProps.titleDescription}
-                </p>
-              )}
-              {/* Node Type Badge */}
-              <div className="flex items-center justify-center gap-2 mt-2">
-                <div
-                  className={`${nodeTypeColor} text-white text-xs px-2 py-0.5 rounded-full font-medium`}
-                >
-                  {nodeType.replace(/_/g, " ")}
+                {/* Node Type Badge */}
+                <div className="flex items-center justify-center gap-2 mt-2">
+                  <div
+                    className={`${nodeTypeColor} text-white text-xs px-2 py-0.5 rounded-full font-medium`}
+                  >
+                    {nodeType.replace(/_/g, " ")}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
 
-        {/* Output Handles */}
-        {outputHandles.map((handle, index) => (
-          <CustomHandle
-            key={`output-${handle.uniqueKey}`}
-            handle={handle}
-            type="source"
-            nodeId={id}
-            index={index}
-            totalHandles={outputHandles.length}
-            borderWidth={visualProps.borderWidth}
-            isValidConnection={isConnectionValid}
-          />
-        ))}
-      </div>
-    </TNode>
+          {/* Output Handles */}
+          {outputHandles.map((handle, index) => (
+            <CustomHandle
+              key={`output-${handle.uniqueKey}`}
+              handle={handle}
+              type="source"
+              nodeId={id}
+              index={index}
+              totalHandles={outputHandles.length}
+              borderWidth={visualProps.borderWidth}
+              isValidConnection={isConnectionValid}
+            />
+          ))}
+        </div>
+      </TNode>
+    </NodeShapeDebugTooltip>
   );
 }

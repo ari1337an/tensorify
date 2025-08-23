@@ -70,6 +70,7 @@ export function VariablesTab({ node, nodeId }: VariablesTabProps) {
   const variableInfo = useMemo(() => {
     const names = engine.availableVariablesByNodeId[nodeId] || [];
     const details = engine.availableVariableDetailsByNodeId[nodeId] || [];
+    const localDetails = engine.localVariableDetailsByNodeId[nodeId] || [];
 
     // Get manifest data for this node
     const nodeData = node.data as any;
@@ -78,6 +79,7 @@ export function VariablesTab({ node, nodeId }: VariablesTabProps) {
       (pm) => (pm as any)?.slug === pluginId || (pm as any)?.id === pluginId
     );
 
+    // Available variables (from upstream nodes)
     const availableVariables: EmittedVariable[] = details.map((d) => ({
       name: d.name,
       sourceNodeId: d.sourceNodeId,
@@ -88,8 +90,30 @@ export function VariablesTab({ node, nodeId }: VariablesTabProps) {
       isOnByDefault: true,
     }));
 
-    // Group variables by type for organized display
+    // Emitted variables (from this node)
+    const emittedVariables: EmittedVariable[] = localDetails.map((d) => ({
+      name: d.name,
+      sourceNodeId: d.sourceNodeId,
+      sourceNodeType: d.sourceNodeType,
+      pluginType: d.pluginType,
+      switchKey: `emit_${d.name}`, // For constants node
+      isEnabled: d.isEnabled,
+      isOnByDefault: true,
+    }));
+
+    // Group available variables by type for organized display
     const variablesByType = availableVariables.reduce(
+      (acc, variable) => {
+        const type = variable.pluginType || "unknown";
+        if (!acc[type]) acc[type] = [];
+        acc[type].push(variable);
+        return acc;
+      },
+      {} as Record<string, EmittedVariable[]>
+    );
+
+    // Group emitted variables by type
+    const emittedVariablesByType = emittedVariables.reduce(
       (acc, variable) => {
         const type = variable.pluginType || "unknown";
         if (!acc[type]) acc[type] = [];
@@ -102,10 +126,18 @@ export function VariablesTab({ node, nodeId }: VariablesTabProps) {
     return {
       availableVariables,
       variablesByType,
-      emittedVariables: [],
+      emittedVariables,
+      emittedVariablesByType,
       imports: [],
     };
-  }, [engine, nodeId, node.route, node.type]);
+  }, [
+    engine,
+    nodeId,
+    node.route,
+    node.type,
+    node.data, // Include node data to detect changes in constants, code, etc.
+    pluginManifests,
+  ]);
 
   // Handle variable emission toggle
   const handleVariableToggle = (
@@ -434,6 +466,112 @@ export function VariablesTab({ node, nodeId }: VariablesTabProps) {
                   </p>
                   <p className="text-xs text-muted-foreground/70">
                     Connect upstream nodes to see their variables here
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Emitted Variables Section */}
+      <Card className="border-border shadow-sm">
+        <CardHeader className="pb-4 bg-card rounded-t-lg">
+          <CardTitle className="text-base flex items-center gap-2">
+            <SendIcon className="h-4 w-4 text-green-600" />
+            Emitted Variables
+          </CardTitle>
+          <CardDescription>
+            Variables that this node provides to downstream nodes
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          {variableInfo.emittedVariables.length > 0 ? (
+            <div className="space-y-1">
+              {Object.entries(variableInfo.emittedVariablesByType)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([type, variables]) => {
+                  const isCollapsed = collapsedSections.has(`emitted-${type}`);
+                  const typeColor = getPluginTypeColor(type);
+
+                  return (
+                    <div
+                      key={`emitted-${type}`}
+                      className="border-b border-border last:border-b-0"
+                    >
+                      {/* Type Header */}
+                      <button
+                        onClick={() => toggleSection(`emitted-${type}`)}
+                        className="w-full p-4 flex items-center justify-between hover:bg-muted/20 transition-colors duration-200"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="p-1.5 rounded-md bg-muted/50"
+                            style={{
+                              backgroundColor: `color-mix(in srgb, ${typeColor} 15%, transparent)`,
+                            }}
+                          >
+                            {getPluginTypeIcon(type)}
+                          </div>
+                          <div className="text-left">
+                            <h3
+                              className="font-medium text-sm text-primary-readable"
+                              style={{ color: typeColor }}
+                            >
+                              {getPluginTypeDisplayName(type)}
+                            </h3>
+                            <p className="text-xs text-muted-foreground">
+                              {variables.length} variable
+                              {variables.length !== 1 ? "s" : ""}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant="secondary"
+                            className="text-xs px-2 py-0.5 border"
+                            style={{
+                              backgroundColor: `color-mix(in srgb, ${typeColor} 20%, transparent)`,
+                              color: typeColor,
+                              borderColor: `color-mix(in srgb, ${typeColor} 30%, transparent)`,
+                            }}
+                          >
+                            {variables.length}
+                          </Badge>
+                          {isCollapsed ? (
+                            <ChevronRightIcon className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronDownIcon className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </div>
+                      </button>
+
+                      {/* Variables Grid */}
+                      {!isCollapsed && (
+                        <div className="px-4 pb-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {variables.map((variable) =>
+                              renderVariableBadge(variable, true)
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-32 text-center p-6">
+              <div className="space-y-3">
+                <div className="relative">
+                  <SendIcon className="h-8 w-8 text-muted-foreground mx-auto" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    No variables emitted
+                  </p>
+                  <p className="text-xs text-muted-foreground/70">
+                    This node doesn't emit any variables to downstream nodes
                   </p>
                 </div>
               </div>

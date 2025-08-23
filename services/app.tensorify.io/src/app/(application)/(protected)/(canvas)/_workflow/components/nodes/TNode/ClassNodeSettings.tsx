@@ -42,7 +42,7 @@ import {
   Variable,
 } from "lucide-react";
 import { cn } from "@/app/_lib/utils";
-import useWorkflowStore from "../../../store/workflowStore";
+import useWorkflowStore, { NodeMode } from "../../../store/workflowStore";
 import { useUIEngine } from "../../../engine/ui-engine";
 import type {
   ClassNodeData,
@@ -50,6 +50,7 @@ import type {
   ClassMethod,
   BaseClass,
   ConstructorItem,
+  CodeProviderConfig,
 } from "../ClassNode";
 import {
   IntelligentCodeEditor,
@@ -500,6 +501,10 @@ export function ClassNodeSettings({
           .split("\n")
           .map((line) => (line ? `        ${line}` : ""));
         constructorBody.push(...codeLines);
+      } else if (item.type === "code_provider" && item.codeProvider) {
+        constructorBody.push(
+          `        # injected code block (generated after export, preview not available)`
+        );
       }
     });
 
@@ -581,8 +586,8 @@ export function ClassNodeSettings({
     }, 0);
   };
 
-  // Add constructor item (parameter or code)
-  const addConstructorItem = (type: "parameter" | "code") => {
+  // Add constructor item (parameter, code, or code_provider)
+  const addConstructorItem = (type: "parameter" | "code" | "code_provider") => {
     const id = `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const newItem: ConstructorItem = {
       id,
@@ -594,9 +599,16 @@ export function ClassNodeSettings({
               propertyName: `param_${constructorItems.length + 1}`,
             },
           }
-        : {
-            code: "# Add your custom code here\n",
-          }),
+        : type === "code"
+          ? {
+              code: "# Add your custom code here\n",
+            }
+          : {
+              codeProvider: {
+                handleLabel: `handle_${constructorItems.length + 1}`,
+                handlePosition: "top",
+              },
+            }),
     };
     handleConstructorItemsChange([...constructorItems, newItem]);
   };
@@ -1243,7 +1255,9 @@ export function ClassNodeSettings({
                       <Label className="text-sm font-medium">
                         {item.type === "parameter"
                           ? "Parameter"
-                          : "Custom Code"}{" "}
+                          : item.type === "code"
+                            ? "Custom Code"
+                            : "Code Provider"}{" "}
                         {index + 1}
                       </Label>
                       <Button
@@ -1329,7 +1343,7 @@ export function ClassNodeSettings({
                           )}
                         </div>
                       </>
-                    ) : (
+                    ) : item.type === "code" ? (
                       <div className="space-y-2">
                         <Label className="text-xs">Custom Code</Label>
                         <IntelligentCodeEditor
@@ -1372,12 +1386,59 @@ export function ClassNodeSettings({
                           })()}
                         />
                       </div>
-                    )}
+                    ) : item.type === "code_provider" && item.codeProvider ? (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-2">
+                            <Label className="text-xs">Handle Label</Label>
+                            <Input
+                              value={item.codeProvider.handleLabel}
+                              onChange={(e) =>
+                                updateConstructorItem(index, {
+                                  codeProvider: {
+                                    ...item.codeProvider,
+                                    handleLabel: e.target.value,
+                                  },
+                                })
+                              }
+                              placeholder="handle_name"
+                              className="text-sm"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs">Handle Position</Label>
+                            <Select
+                              value={item.codeProvider.handlePosition}
+                              onValueChange={(value: "top" | "bottom") =>
+                                updateConstructorItem(index, {
+                                  codeProvider: {
+                                    ...item.codeProvider,
+                                    handlePosition: value,
+                                  },
+                                })
+                              }
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="top">Top</SelectItem>
+                                <SelectItem value="bottom">Bottom</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="text-xs text-muted-foreground bg-muted/20 p-2 rounded">
+                          Connect a code provider node to this handle on the
+                          canvas to inject code.
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 ))}
 
                 {/* Add buttons */}
-                <div className="flex gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <Button
                     onClick={() => addConstructorItem("parameter")}
                     variant="outline"
@@ -1395,6 +1456,15 @@ export function ClassNodeSettings({
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Custom Code
+                  </Button>
+                  <Button
+                    onClick={() => addConstructorItem("code_provider")}
+                    variant="outline"
+                    className="flex-1"
+                    size="sm"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Code Provider
                   </Button>
                 </div>
               </CardContent>

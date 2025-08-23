@@ -28,6 +28,7 @@ import {
 } from "@packages/sdk/src/types/visual";
 import useWorkflowStore, { NodeMode } from "../../../store/workflowStore";
 import useAppStore from "@/app/_store/store";
+import { HandleTooltip, useHandleShapeValidation } from "./HandleTooltip";
 
 // Position mapping: 8-point visual system mapped to ReactFlow's 4 positions
 // ReactFlow only supports left/right/top/bottom, so corner positions map to nearest edge
@@ -328,9 +329,10 @@ const TriangleHandle = forwardRef<
     className: string;
     style: React.CSSProperties;
     position: HandlePosition;
+    color?: string;
   }
 >((props, ref) => {
-  const { position, ...otherProps } = props;
+  const { position, color = HANDLE_COLOR, ...otherProps } = props;
 
   // Get triangle border styles based on position direction
   const getTriangleStyle = (pos: HandlePosition): React.CSSProperties => {
@@ -344,7 +346,7 @@ const TriangleHandle = forwardRef<
           height: 0,
           borderLeft: "5px solid transparent",
           borderRight: "5px solid transparent",
-          borderBottom: `6px solid ${HANDLE_COLOR}`,
+          borderBottom: `6px solid ${color}`,
           borderTop: 0,
         };
       case Position.Bottom:
@@ -354,7 +356,7 @@ const TriangleHandle = forwardRef<
           height: 0,
           borderLeft: "5px solid transparent",
           borderRight: "5px solid transparent",
-          borderTop: `6px solid ${HANDLE_COLOR}`,
+          borderTop: `6px solid ${color}`,
           borderBottom: 0,
         };
       case Position.Left:
@@ -364,7 +366,7 @@ const TriangleHandle = forwardRef<
           height: 0,
           borderTop: "5px solid transparent",
           borderBottom: "5px solid transparent",
-          borderRight: `6px solid ${HANDLE_COLOR}`,
+          borderRight: `6px solid ${color}`,
           borderLeft: 0,
         };
       case Position.Right:
@@ -374,7 +376,7 @@ const TriangleHandle = forwardRef<
           height: 0,
           borderTop: "5px solid transparent",
           borderBottom: "5px solid transparent",
-          borderLeft: `6px solid ${HANDLE_COLOR}`,
+          borderLeft: `6px solid ${color}`,
           borderRight: 0,
         };
       default:
@@ -384,7 +386,7 @@ const TriangleHandle = forwardRef<
           height: 0,
           borderLeft: "5px solid transparent",
           borderRight: "5px solid transparent",
-          borderBottom: `6px solid ${HANDLE_COLOR}`,
+          borderBottom: `6px solid ${color}`,
           borderTop: 0,
         };
     }
@@ -424,67 +426,111 @@ const CustomHandle = forwardRef<HTMLDivElement, CustomHandleProps>(
       borderWidth
     );
 
+    // Get shape validation status for this handle
+    const { hasShape, hasValidationError } = useHandleShapeValidation(
+      nodeId,
+      handle.id,
+      type === "target"
+    );
+
+    // Determine handle color based on shape validation
+    const getHandleColor = () => {
+      if (!hasShape) return HANDLE_COLOR; // Default gray
+      if (hasValidationError) return "#ef4444"; // Red for validation errors
+      return "#22c55e"; // Green for valid shapes
+    };
+
+    const handleColor = getHandleColor();
+
+    // Add glow effect for shape validation states
+    const getHandleGlow = () => {
+      if (!hasShape) return undefined;
+      if (hasValidationError) return "0 0 8px rgba(239, 68, 68, 0.6)"; // Red glow
+      return "0 0 6px rgba(34, 197, 94, 0.4)"; // Green glow
+    };
+
+    const handleGlow = getHandleGlow();
+
     // Special case for triangle handles
     if (handle.viewType === HandleViewType.TRIANGLE) {
       return (
-        <div className="absolute group" style={handleStyle}>
-          <ReactFlowHandle
-            ref={ref}
-            id={handle.id}
-            type={type}
-            position={REACTFLOW_POSITION_MAP[handle.position]}
-            onConnect={onConnect}
-            isValidConnection={isValidConnection}
-            className="opacity-0 w-3 h-3"
-          />
-          <TriangleHandle
-            className=""
-            style={{ position: "absolute", top: 0, left: 0 }}
-            position={handle.position}
-          />
-          {/* Handle label */}
-          {handle.label && (
-            <div
-              className="absolute text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
-              style={calculateLabelPosition(handle.position)}
-            >
-              {getEnhancedLabel(handle, type, nodeId)}
-            </div>
-          )}
-        </div>
+        <HandleTooltip
+          nodeId={nodeId}
+          handleId={handle.id}
+          isInput={type === "target"}
+        >
+          <div className="absolute group" style={handleStyle}>
+            <ReactFlowHandle
+              ref={ref}
+              id={handle.id}
+              type={type}
+              position={REACTFLOW_POSITION_MAP[handle.position]}
+              onConnect={onConnect}
+              isValidConnection={isValidConnection}
+              className="opacity-0 w-3 h-3"
+            />
+            <TriangleHandle
+              className=""
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                filter: handleGlow ? `drop-shadow(${handleGlow})` : undefined,
+              }}
+              position={handle.position}
+              color={handleColor}
+            />
+            {/* Handle label */}
+            {handle.label && (
+              <div
+                className="absolute text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
+                style={calculateLabelPosition(handle.position)}
+              >
+                {getEnhancedLabel(handle, type, nodeId)}
+              </div>
+            )}
+          </div>
+        </HandleTooltip>
       );
     }
 
     // Special case for DEFAULT (ring/donut handles - medium)
     if (handle.viewType === HandleViewType.DEFAULT) {
       return (
-        <div className="absolute group" style={handleStyle}>
-          <ReactFlowHandle
-            ref={ref}
-            id={handle.id}
-            type={type}
-            position={REACTFLOW_POSITION_MAP[handle.position]}
-            onConnect={onConnect}
-            isValidConnection={isValidConnection}
-            className="w-4 h-4 rounded-full bg-transparent transition-all duration-200 hover:scale-110 relative z-10"
-            style={
-              {
-                border: `5px solid ${HANDLE_COLOR}`,
-                backgroundColor: "white",
-                boxShadow: "inset 0 0 0 1px white",
-              } as React.CSSProperties
-            }
-          />
-          {/* Handle label */}
-          {handle.label && (
-            <div
-              className="absolute text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
-              style={calculateLabelPosition(handle.position)}
-            >
-              {getEnhancedLabel(handle, type, nodeId)}
-            </div>
-          )}
-        </div>
+        <HandleTooltip
+          nodeId={nodeId}
+          handleId={handle.id}
+          isInput={type === "target"}
+        >
+          <div className="absolute group" style={handleStyle}>
+            <ReactFlowHandle
+              ref={ref}
+              id={handle.id}
+              type={type}
+              position={REACTFLOW_POSITION_MAP[handle.position]}
+              onConnect={onConnect}
+              isValidConnection={isValidConnection}
+              className="w-4 h-4 rounded-full bg-transparent transition-all duration-200 hover:scale-110 relative z-10"
+              style={
+                {
+                  border: `5px solid ${handleColor}`,
+                  backgroundColor: "white",
+                  boxShadow: `inset 0 0 0 1px white${handleGlow ? `, 0 0 0 1px ${handleColor}` : ""}`,
+                  filter: handleGlow ? `drop-shadow(${handleGlow})` : undefined,
+                } as React.CSSProperties
+              }
+            />
+            {/* Handle label */}
+            {handle.label && (
+              <div
+                className="absolute text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
+                style={calculateLabelPosition(handle.position)}
+              >
+                {getEnhancedLabel(handle, type, nodeId)}
+              </div>
+            )}
+          </div>
+        </HandleTooltip>
       );
     }
 
@@ -496,6 +542,92 @@ const CustomHandle = forwardRef<HTMLDivElement, CustomHandleProps>(
         handle.position === HandlePosition.BOTTOM;
 
       return (
+        <HandleTooltip
+          nodeId={nodeId}
+          handleId={handle.id}
+          isInput={type === "target"}
+        >
+          <div className="absolute group" style={handleStyle}>
+            <ReactFlowHandle
+              ref={ref}
+              id={handle.id}
+              type={type}
+              position={REACTFLOW_POSITION_MAP[handle.position]}
+              onConnect={onConnect}
+              isValidConnection={isValidConnection}
+              className="border-0 transition-all duration-200 hover:scale-110 hover:brightness-110 relative z-10"
+              style={
+                {
+                  width: isTopOrBottom ? "24px" : "8px",
+                  height: isTopOrBottom ? "8px" : "24px",
+                  borderRadius: "2px",
+                  border: "none",
+                  backgroundColor: handleColor,
+                  filter: handleGlow ? `drop-shadow(${handleGlow})` : undefined,
+                } as React.CSSProperties
+              }
+            />
+            {/* Handle label */}
+            {handle.label && (
+              <div
+                className="absolute text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
+                style={calculateLabelPosition(handle.position)}
+              >
+                {getEnhancedLabel(handle, type, nodeId)}
+              </div>
+            )}
+          </div>
+        </HandleTooltip>
+      );
+    }
+
+    // Special case for CIRCLE_LG (ring/donut handles - large)
+    if (handle.viewType === HandleViewType.CIRCLE_LG) {
+      return (
+        <HandleTooltip
+          nodeId={nodeId}
+          handleId={handle.id}
+          isInput={type === "target"}
+        >
+          <div className="absolute group" style={handleStyle}>
+            <ReactFlowHandle
+              ref={ref}
+              id={handle.id}
+              type={type}
+              position={REACTFLOW_POSITION_MAP[handle.position]}
+              onConnect={onConnect}
+              isValidConnection={isValidConnection}
+              className="w-5 h-5 rounded-full bg-transparent transition-all duration-200 hover:scale-110 relative z-10"
+              style={
+                {
+                  border: `5px solid ${handleColor}`,
+                  backgroundColor: "white",
+                  boxShadow: `inset 0 0 0 1px white${handleGlow ? `, 0 0 0 1px ${handleColor}` : ""}`,
+                  filter: handleGlow ? `drop-shadow(${handleGlow})` : undefined,
+                } as React.CSSProperties
+              }
+            />
+
+            {/* Handle label */}
+            {handle.label && (
+              <div
+                className="absolute text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
+                style={calculateLabelPositionWithMargin(handle.position, 12)}
+              >
+                {handle.label}
+              </div>
+            )}
+          </div>
+        </HandleTooltip>
+      );
+    }
+
+    return (
+      <HandleTooltip
+        nodeId={nodeId}
+        handleId={handle.id}
+        isInput={type === "target"}
+      >
         <div className="absolute group" style={handleStyle}>
           <ReactFlowHandle
             ref={ref}
@@ -504,17 +636,17 @@ const CustomHandle = forwardRef<HTMLDivElement, CustomHandleProps>(
             position={REACTFLOW_POSITION_MAP[handle.position]}
             onConnect={onConnect}
             isValidConnection={isValidConnection}
-            className="border-0 transition-all duration-200 hover:scale-110 hover:brightness-110 relative z-10"
+            className="transition-all duration-200 hover:scale-110 hover:brightness-110 relative z-10"
             style={
               {
-                width: isTopOrBottom ? "24px" : "8px",
-                height: isTopOrBottom ? "8px" : "24px",
-                borderRadius: "2px",
+                backgroundColor: handleColor,
                 border: "none",
-                backgroundColor: HANDLE_COLOR,
+                filter: handleGlow ? `drop-shadow(${handleGlow})` : undefined,
+                ...getHandleViewStyle(handle.viewType),
               } as React.CSSProperties
             }
           />
+
           {/* Handle label */}
           {handle.label && (
             <div
@@ -525,72 +657,7 @@ const CustomHandle = forwardRef<HTMLDivElement, CustomHandleProps>(
             </div>
           )}
         </div>
-      );
-    }
-
-    // Special case for CIRCLE_LG (ring/donut handles - large)
-    if (handle.viewType === HandleViewType.CIRCLE_LG) {
-      return (
-        <div className="absolute group" style={handleStyle}>
-          <ReactFlowHandle
-            ref={ref}
-            id={handle.id}
-            type={type}
-            position={REACTFLOW_POSITION_MAP[handle.position]}
-            onConnect={onConnect}
-            isValidConnection={isValidConnection}
-            className="w-5 h-5 rounded-full bg-transparent transition-all duration-200 hover:scale-110 relative z-10"
-            style={
-              {
-                border: `5px solid ${HANDLE_COLOR}`,
-                backgroundColor: "white",
-                boxShadow: "inset 0 0 0 1px white",
-              } as React.CSSProperties
-            }
-          />
-
-          {/* Handle label */}
-          {handle.label && (
-            <div
-              className="absolute text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
-              style={calculateLabelPositionWithMargin(handle.position, 12)}
-            >
-              {handle.label}
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    return (
-      <div className="absolute group" style={handleStyle}>
-        <ReactFlowHandle
-          ref={ref}
-          id={handle.id}
-          type={type}
-          position={REACTFLOW_POSITION_MAP[handle.position]}
-          onConnect={onConnect}
-          isValidConnection={isValidConnection}
-          className="transition-all duration-200 hover:scale-110 hover:brightness-110 relative z-10"
-          style={
-            {
-              backgroundColor: HANDLE_COLOR,
-              border: "none",
-              ...getHandleViewStyle(handle.viewType),
-            } as React.CSSProperties
-          }
-        />
-
-        {/* Handle label */}
-        {handle.label && (
-          <div
-            className="absolute text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
-            style={calculateLabelPosition(handle.position)}
-          >
-            {getEnhancedLabel(handle, type, nodeId)}
-          </div>
-        )}
-      </div>
+      </HandleTooltip>
     );
   }
 );

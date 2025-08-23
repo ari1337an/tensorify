@@ -87,6 +87,7 @@ interface StoreState {
   pluginRefreshTrigger: number;
   triggerPluginRefresh: () => void;
   pluginManifests: PluginManifest[];
+  pluginManifestsLoading: boolean;
   setPluginManifests: (manifests: PluginManifest[]) => void;
   updatePluginManifest: (
     pluginId: string,
@@ -144,6 +145,7 @@ const useStore = create<StoreState>()(
           "triggerPluginRefresh"
         ),
       pluginManifests: [],
+      pluginManifestsLoading: false,
       setPluginManifests: (manifests: PluginManifest[]) =>
         set({ pluginManifests: manifests }, undefined, "setPluginManifests"),
       updatePluginManifest: (
@@ -202,6 +204,13 @@ const useStore = create<StoreState>()(
         }
       },
       fetchPluginManifests: async (workflowId: string) => {
+        // Set loading state
+        set(
+          { pluginManifestsLoading: true },
+          undefined,
+          "fetchPluginManifests:start"
+        );
+
         try {
           const { getWorkflowPlugins } = await import(
             "@/app/api/v1/_client/client"
@@ -216,17 +225,32 @@ const useStore = create<StoreState>()(
               {
                 pluginManifests: response.body
                   .data as unknown as PluginManifest[],
+                pluginManifestsLoading: false,
               },
               undefined,
-              "fetchPluginManifests"
+              "fetchPluginManifests:success"
             );
           } else {
             console.error("Failed to fetch plugin manifests");
-            set({ pluginManifests: [] }, undefined, "fetchPluginManifests");
+            set(
+              {
+                pluginManifests: [],
+                pluginManifestsLoading: false,
+              },
+              undefined,
+              "fetchPluginManifests:error"
+            );
           }
         } catch (error) {
           console.error("Error fetching plugin manifests:", error);
-          set({ pluginManifests: [] }, undefined, "fetchPluginManifests");
+          set(
+            {
+              pluginManifests: [],
+              pluginManifestsLoading: false,
+            },
+            undefined,
+            "fetchPluginManifests:error"
+          );
         }
       },
     }),

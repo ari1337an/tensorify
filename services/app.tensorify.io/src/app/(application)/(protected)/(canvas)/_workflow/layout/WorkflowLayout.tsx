@@ -52,9 +52,13 @@ import NestedNode from "@workflow/components/nodes/NestedNode";
 import BranchNode from "@workflow/components/nodes/BranchNode";
 import CustomCodeNode from "@workflow/components/nodes/CustomCodeNode";
 import ClassNode from "@workflow/components/nodes/ClassNode";
+import ConstantsNode from "@workflow/components/nodes/ConstantsNode";
 import CustomPluginNode from "@workflow/components/nodes/CustomPluginNode";
+import MissingPluginNode from "@workflow/components/nodes/MissingPluginNode";
+import LoadingPluginNode from "@workflow/components/nodes/LoadingPluginNode";
 import GlobalNodeSettingsDialog from "@workflow/components/GlobalNodeSettingsDialog";
 import CustomEdge from "@workflow/components/CustomEdge";
+import defaultNodes from "@workflow/data/defaultNodes";
 
 // ID generator for nodes using crypto.randomUUID for better uniqueness
 const getId = () => crypto.randomUUID();
@@ -92,7 +96,12 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
   } = useWorkflowStore(useShallow(selector));
 
   // Get plugin manifests from store
-  const pluginManifests = useAppStore((state) => state.pluginManifests);
+  const { pluginManifests, pluginManifestsLoading } = useAppStore(
+    useShallow((state) => ({
+      pluginManifests: state.pluginManifests,
+      pluginManifestsLoading: state.pluginManifestsLoading,
+    }))
+  );
 
   const { screenToFlowPosition, getNode } = useReactFlow();
   const engine = useUIEngine();
@@ -337,6 +346,13 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
 
   // Node types registry - general approach: nested vs all others
   const nodeTypes = useMemo(() => {
+    // Create a set of native node IDs for fast lookup
+    const nativeNodeIds = new Set(
+      defaultNodes
+        .filter((node) => node.draggable) // Only draggable nodes are actual node types
+        .map((node) => node.id)
+    );
+
     // Create a default mapping function
     const createNodeTypeMap = () => {
       const nodeMap: Record<
@@ -359,6 +375,9 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
       // Special case: class nodes
       nodeMap["@tensorify/core/ClassNode"] = ClassNode;
 
+      // Special case: constants nodes
+      nodeMap["@tensorify/core/ConstantsNode"] = ConstantsNode;
+
       // Removed Multiplexer/Demultiplexer node types
 
       // Check if any plugin slugs should use CustomPluginNode
@@ -375,14 +394,48 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
           if (typeof prop === "string" && prop in target) {
             return target[prop];
           }
-          // Default to StartNode for any other node type
+
+          // Check if this looks like a plugin slug that's missing
+          if (typeof prop === "string") {
+            // Check if this is a native node first
+            const isNativeNode = nativeNodeIds.has(prop);
+            if (isNativeNode) {
+              return StartNode;
+            }
+
+            const isPluginSlug =
+              prop.startsWith("@") || // Plugin slugs usually start with @
+              prop.includes("/") || // Plugin slugs contain /
+              prop.includes(":") || // Plugin slugs contain version :
+              (prop !== "input" && prop !== "output" && prop !== "default"); // Not a basic node type
+
+            if (isPluginSlug) {
+              // Show loading node while plugins are loading
+              if (pluginManifestsLoading) {
+                const LoadingComponent = (
+                  nodeProps: NodeProps<WorkflowNode>
+                ) => <LoadingPluginNode {...nodeProps} nodeType={prop} />;
+                return LoadingComponent;
+              }
+
+              // After loading, show missing plugin node for uninstalled plugins
+              const MissingPluginComponent = (
+                nodeProps: NodeProps<WorkflowNode>
+              ) => (
+                <MissingPluginNode {...nodeProps} missingPluginSlug={prop} />
+              );
+              return MissingPluginComponent;
+            }
+          }
+
+          // Default to StartNode for other node types (like input, output, etc.)
           return StartNode;
         },
       });
     };
 
     return createNodeTypeMap();
-  }, [pluginManifests]);
+  }, [pluginManifests, pluginManifestsLoading]);
 
   // Edge types for custom edge components with hover tooltips
   const edgeTypes = useMemo(

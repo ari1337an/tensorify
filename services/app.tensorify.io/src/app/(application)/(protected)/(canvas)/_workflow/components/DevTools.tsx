@@ -45,6 +45,7 @@ import useWorkflowStore from "../store/workflowStore";
 import { type WorkflowNode } from "../store/workflowStore";
 import useAppStore, { type PluginManifest } from "@/app/_store/store";
 import { useShallow } from "zustand/react/shallow";
+import { useUIEngine } from "@workflow/engine";
 
 // Change Logger Component
 function ChangeLogger({ limit = 6 }: { limit?: number }) {
@@ -149,6 +150,7 @@ function NodeInspector() {
   const nodes = useNodes<WorkflowNode>();
   const pluginManifests = useAppStore((state: any) => state.pluginManifests);
   const [copiedNodeId, setCopiedNodeId] = useState<string | null>(null);
+  const engine = useUIEngine();
 
   const NodeInfo = ({
     id,
@@ -174,6 +176,9 @@ function NodeInspector() {
     nodeData: any;
   }) => {
     if (!width || !height) return null;
+
+    // Get edges for this specific NodeInfo component
+    const edges = useWorkflowStore((state) => state.edges);
 
     // Find plugin manifest for this node
     const pluginId = nodeData.pluginId || type;
@@ -335,6 +340,257 @@ function NodeInspector() {
             </div>
           </>
         )}
+
+        {/* Tensor Shape Debug Section */}
+        {(() => {
+          // Get shape information for this node
+          const nodeShapeInfo = engine?.nodeShapes?.[id];
+          const pluginIdValue = nodeData.pluginId || type;
+          const uiManifest = engine?.pluginManifests
+            ? Object.values(engine.pluginManifests).find(
+                (m: any) => m.slug === pluginIdValue || m.slug === type
+              )
+            : undefined;
+
+          // Get emitted variables with shapes from UI manifest
+          const emittedVariables =
+            uiManifest?.emits?.variables ||
+            uiManifest?.visual?.emits?.variables ||
+            [];
+          const variablesWithShapes = emittedVariables.filter(
+            (v: any) => v.shape
+          );
+
+          const hasShapeInfo = nodeShapeInfo || variablesWithShapes.length > 0;
+
+          // Always show tensor shape debug section for debugging purposes
+          return (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-foreground">
+                    🔍 Tensor Shapes
+                  </span>
+                  <Badge variant="outline" className="text-xs">
+                    Debug
+                  </Badge>
+                </div>
+
+                {/* Engine Debug Status */}
+                <div className="space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground text-xs">
+                      Engine:
+                    </span>
+                    <Badge
+                      variant={engine ? "default" : "destructive"}
+                      className="text-xs"
+                    >
+                      {engine ? "✓" : "✗"}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground text-xs">
+                      Manifests:
+                    </span>
+                    <Badge
+                      variant={
+                        engine?.pluginManifests ? "default" : "destructive"
+                      }
+                      className="text-xs"
+                    >
+                      {engine?.pluginManifests
+                        ? Object.keys(engine.pluginManifests).length
+                        : "0"}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground text-xs">
+                      UI Manifest:
+                    </span>
+                    <Badge
+                      variant={uiManifest ? "default" : "destructive"}
+                      className="text-xs"
+                    >
+                      {uiManifest ? "✓" : "✗"}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Manifest Shape Definitions */}
+                {variablesWithShapes.length > 0 && (
+                  <>
+                    <div className="font-medium text-foreground text-xs">
+                      📋 Manifest Shapes:
+                    </div>
+                    <div className="space-y-1 max-h-24 overflow-y-auto bg-blue-50/50 p-2 rounded">
+                      {variablesWithShapes.map(
+                        (variable: any, index: number) => (
+                          <div key={index} className="text-xs">
+                            <div className="font-medium">
+                              {variable.value} ({variable.type})
+                            </div>
+                            <div className="text-muted-foreground">
+                              Type:{" "}
+                              <code className="bg-muted px-1 rounded">
+                                {variable.shape.type}
+                              </code>
+                            </div>
+                            <div className="text-muted-foreground">
+                              Dims:{" "}
+                              <code className="bg-muted px-1 rounded">
+                                [
+                                {variable.shape.dimensions?.join(", ") ||
+                                  "none"}
+                                ]
+                              </code>
+                            </div>
+                            {variable.shape.description && (
+                              <div className="text-muted-foreground text-xs italic">
+                                {variable.shape.description}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {/* Calculated Shape Information */}
+                {nodeShapeInfo && (
+                  <>
+                    <div className="font-medium text-foreground text-xs">
+                      🧮 Calculated Shapes:
+                    </div>
+
+                    {Object.keys(nodeShapeInfo.outputShapes).length > 0 && (
+                      <div className="bg-green-50/50 p-2 rounded">
+                        <div className="font-medium text-xs mb-1">
+                          Output Shapes:
+                        </div>
+                        {Object.entries(nodeShapeInfo.outputShapes).map(
+                          ([key, shape]: [string, any]) => (
+                            <div key={key} className="text-xs">
+                              <strong>{key}:</strong> (
+                              {shape.dimensions?.join(", ")}) -{" "}
+                              {shape.description}
+                            </div>
+                          )
+                        )}
+                      </div>
+                    )}
+
+                    {Object.keys(nodeShapeInfo.expectedInputShapes).length >
+                      0 && (
+                      <div className="bg-yellow-50/50 p-2 rounded">
+                        <div className="font-medium text-xs mb-1">
+                          Expected Input Shapes:
+                        </div>
+                        {Object.entries(nodeShapeInfo.expectedInputShapes).map(
+                          ([key, shape]: [string, any]) => (
+                            <div key={key} className="text-xs">
+                              <strong>{key}:</strong> (
+                              {shape.dimensions?.join(", ")}) -{" "}
+                              {shape.description}
+                            </div>
+                          )
+                        )}
+                      </div>
+                    )}
+
+                    {nodeShapeInfo.shapeErrors.length > 0 && (
+                      <div className="bg-red-50/50 p-2 rounded">
+                        <div className="font-medium text-xs mb-1 text-red-600">
+                          ❌ Shape Errors:
+                        </div>
+                        {nodeShapeInfo.shapeErrors.map(
+                          (error: string, index: number) => (
+                            <div key={index} className="text-xs text-red-700">
+                              {error}
+                            </div>
+                          )
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Connection Validation Errors */}
+                {(() => {
+                  // Get connection validation errors for this node
+                  const nodeEdges = edges.filter(
+                    (edge) => edge.target === id || edge.source === id
+                  );
+                  const validationErrors = nodeEdges
+                    .map((edge) => {
+                      const validationKey = `${edge.source}:${edge.sourceHandle}->${edge.target}:${edge.targetHandle}`;
+                      const validation =
+                        engine?.connectionShapeValidations?.[validationKey];
+                      if (validation && !validation.isValid) {
+                        return {
+                          edge,
+                          validation,
+                          direction:
+                            edge.target === id ? "incoming" : "outgoing",
+                        };
+                      }
+                      return null;
+                    })
+                    .filter(Boolean);
+
+                  return validationErrors.length > 0 ? (
+                    <div className="bg-red-50/50 p-2 rounded border border-red-200">
+                      <div className="font-medium text-xs mb-1 text-red-600">
+                        🔗 Connection Validation Errors:
+                      </div>
+                      {validationErrors.map((errorInfo: any, index: number) => (
+                        <div
+                          key={index}
+                          className="text-xs text-red-700 space-y-1"
+                        >
+                          <div className="font-medium">
+                            {errorInfo.direction === "incoming" ? "📥" : "📤"}{" "}
+                            {errorInfo.direction === "incoming" ? "From" : "To"}{" "}
+                            {errorInfo.direction === "incoming"
+                              ? errorInfo.edge.source
+                              : errorInfo.edge.target}
+                          </div>
+                          <div className="text-xs pl-4">
+                            <div>{errorInfo.validation.message}</div>
+                            {errorInfo.validation.outputShape &&
+                              errorInfo.validation.expectedShape && (
+                                <div className="mt-1 font-mono">
+                                  Output: (
+                                  {errorInfo.validation.outputShape.dimensions
+                                    ?.map((d: number) => (d === -1 ? "N" : d))
+                                    .join(", ")}
+                                  )<br />
+                                  Expected: (
+                                  {errorInfo.validation.expectedShape.dimensions
+                                    ?.map((d: number) => (d === -1 ? "N" : d))
+                                    .join(", ")}
+                                  )
+                                </div>
+                              )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null;
+                })()}
+
+                {/* No Shape Info */}
+                {!nodeShapeInfo && variablesWithShapes.length === 0 && (
+                  <div className="text-xs text-muted-foreground italic">
+                    No tensor shape information available for this node.
+                  </div>
+                )}
+              </div>
+            </>
+          );
+        })()}
       </div>
     );
   };

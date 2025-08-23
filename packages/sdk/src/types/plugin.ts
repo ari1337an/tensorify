@@ -10,7 +10,12 @@ import {
   PluginSettings,
   PluginCodeGenerationContext,
 } from "./core";
-import { NodeVisualConfig, InputHandle, OutputHandle } from "./visual";
+import {
+  NodeVisualConfig,
+  InputHandle,
+  OutputHandle,
+  TensorShape,
+} from "./visual";
 import { SettingsField, SettingsGroup } from "./settings";
 
 // ========================================
@@ -37,6 +42,11 @@ export interface EmittedVariableConfig {
   isOnByDefault?: boolean;
   /** The semantic type of this variable (e.g., NodeType.OPTIMIZER, NodeType.MODEL_LAYER) */
   type: NodeType;
+  /**
+   * Shape of the tensor this variable represents (optional)
+   * If not provided, UI engine won't show shape-based intellisense
+   */
+  shape?: TensorShape;
 }
 
 export interface ImportConfig {

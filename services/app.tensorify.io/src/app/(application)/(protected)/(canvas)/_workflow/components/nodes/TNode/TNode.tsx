@@ -60,6 +60,7 @@ import useWorkflowStore, {
 import { PluginSettingsSection } from "./PluginSettingsSection";
 import { CustomCodeSettings } from "./CustomCodeSettings";
 import { ClassNodeSettings } from "./ClassNodeSettings";
+import { ConstantsNodeSettings } from "./ConstantsNodeSettings";
 import useAppStore from "@/app/_store/store";
 import { useUIEngine } from "../../../engine/ui-engine";
 import { VariablesTab } from "./VariablesTab";
@@ -116,6 +117,21 @@ export default function TNode({
   const nodeValidation = engine.nodes[id];
   const isFlashingError = Boolean(nodeValidation?.isTransientError);
   const hasExportError = Boolean(nodeValidation?.hasExportError);
+
+  // Shape validation for this node
+  const hasShapeValidationErrors = React.useMemo(() => {
+    if (!engine?.nodeShapes?.[id] || !engine?.connectionShapeValidations) {
+      return false;
+    }
+
+    // Check if this node has any incoming connections with shape validation errors
+    const nodeEdges = edges.filter((edge) => edge.target === id);
+    return nodeEdges.some((edge) => {
+      const validationKey = `${edge.source}:${edge.sourceHandle}->${edge.target}:${edge.targetHandle}`;
+      const validation = engine.connectionShapeValidations[validationKey];
+      return validation && !validation.isValid;
+    });
+  }, [engine, id, edges]);
   const exportErrorMessage = nodeValidation?.exportErrorMessage;
 
   // Force re-render when plugin manifests change (for reactive form fields)
@@ -463,14 +479,34 @@ export default function TNode({
       >
         {selected ? (
           type === "@tensorify/core/NestedNode" ? (
-            <div ref={nodeRef} onClick={handleNestedClick}>
+            <div
+              ref={nodeRef}
+              onClick={handleNestedClick}
+              className={
+                hasShapeValidationErrors
+                  ? "ring-2 ring-red-500 ring-opacity-60 rounded-md"
+                  : ""
+              }
+            >
               {children}
             </div>
           ) : (
-            <div ref={nodeRef} onDoubleClick={handleSettingsDoubleClick}>
+            <div
+              ref={nodeRef}
+              onDoubleClick={handleSettingsDoubleClick}
+              className={
+                hasShapeValidationErrors
+                  ? "ring-2 ring-red-500 ring-opacity-60 rounded-md"
+                  : ""
+              }
+            >
               {children}
             </div>
           )
+        ) : hasShapeValidationErrors ? (
+          <div className="ring-2 ring-red-500 ring-opacity-60 rounded-md">
+            {children}
+          </div>
         ) : (
           children
         )}
@@ -695,6 +731,9 @@ export default function TNode({
                           <SelectItem value={NodeMode.VARIABLE_PROVIDER}>
                             Variable Provider
                           </SelectItem>
+                          <SelectItem value={NodeMode.CODE_PROVIDER}>
+                            Code Provider
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <div className="text-xs text-muted-foreground">
@@ -703,6 +742,9 @@ export default function TNode({
                         <br />
                         <strong>Variable Provider:</strong> Multiple handles
                         named after emitted variables
+                        <br />
+                        <strong>Code Provider:</strong> Provides generated code
+                        to other nodes via custom handles
                       </div>
                     </div>
 
@@ -1320,6 +1362,14 @@ export default function TNode({
                 ) : type === "@tensorify/core/ClassNode" ? (
                   /* Class Node Settings for ClassNode */
                   <ClassNodeSettings
+                    nodeId={id}
+                    onSettingsChange={(newData) => {
+                      updateNodeData(id, newData);
+                    }}
+                  />
+                ) : type === "@tensorify/core/ConstantsNode" ? (
+                  /* Constants Node Settings for ConstantsNode */
+                  <ConstantsNodeSettings
                     nodeId={id}
                     onSettingsChange={(newData) => {
                       updateNodeData(id, newData);

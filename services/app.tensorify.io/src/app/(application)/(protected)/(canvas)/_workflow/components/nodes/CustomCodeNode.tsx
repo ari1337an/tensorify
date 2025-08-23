@@ -58,32 +58,31 @@ export default function CustomCodeNode(props: NodeProps<WorkflowNode>) {
 
   // Get node mode
   const nodeMode = (data as any)?.nodeMode || NodeMode.WORKFLOW;
-  const isVariableProvider = nodeMode === NodeMode.VARIABLE_PROVIDER;
 
   // Generate input handles based on node mode
   const inputHandles: InputHandle[] = useMemo(() => {
-    if (isVariableProvider) {
-      // Variable Provider mode: NO input handles
-      return [];
+    // Only Workflow mode gets prev handle
+    if (nodeMode === NodeMode.WORKFLOW) {
+      return [
+        {
+          id: "prev",
+          label: "Prev",
+          position: HandlePosition.LEFT,
+          viewType: HandleViewType.VERTICAL_BOX,
+          edgeType: EdgeType.DEFAULT,
+          dataType: "any",
+          required: needsPrev,
+        },
+      ];
     }
 
-    // Workflow mode: standard prev handle
-    return [
-      {
-        id: "prev",
-        label: "Prev",
-        position: HandlePosition.LEFT,
-        viewType: HandleViewType.VERTICAL_BOX,
-        edgeType: EdgeType.DEFAULT,
-        dataType: "any",
-        required: true,
-      },
-    ];
-  }, [isVariableProvider]);
+    // Variable Provider and Code Provider modes: NO input handles
+    return [];
+  }, [nodeMode, needsPrev]);
 
   // Generate output handles based on node mode
   const outputHandles: OutputHandle[] = useMemo(() => {
-    if (!isVariableProvider) {
+    if (nodeMode === NodeMode.WORKFLOW) {
       // Workflow mode: single "next" handle
       return [
         {
@@ -97,43 +96,61 @@ export default function CustomCodeNode(props: NodeProps<WorkflowNode>) {
       ];
     }
 
-    // Variable Provider mode: ONLY variable handles
-    const emitsConfig = customCodeData.emitsConfig;
-    if (emitsConfig?.variables && emitsConfig.variables.length > 0) {
-      const variableCount = emitsConfig.variables.filter(
-        (v) => v.value && v.isOnByDefault !== false
-      ).length;
+    if (nodeMode === NodeMode.VARIABLE_PROVIDER) {
+      // Variable Provider mode: ONLY variable handles
+      const emitsConfig = customCodeData.emitsConfig;
+      if (emitsConfig?.variables && emitsConfig.variables.length > 0) {
+        const variableCount = emitsConfig.variables.filter(
+          (v) => v.value && v.isOnByDefault !== false
+        ).length;
 
-      return emitsConfig.variables
-        .filter((v) => v.value && v.isOnByDefault !== false)
-        .map((variable, index) => {
-          // Distribute handles around the node - right, top, bottom, left
-          let position = HandlePosition.RIGHT;
-          if (variableCount > 1) {
-            if (index === 0) position = HandlePosition.RIGHT;
-            else if (index === 1 && variableCount > 1)
-              position = HandlePosition.TOP;
-            else if (index === 2 && variableCount > 2)
-              position = HandlePosition.BOTTOM;
-            else if (index === 3 && variableCount > 3)
-              position = HandlePosition.LEFT;
-            else position = HandlePosition.RIGHT; // Fallback for more handles
-          }
+        return emitsConfig.variables
+          .filter((v) => v.value && v.isOnByDefault !== false)
+          .map((variable, index) => {
+            // Distribute handles around the node - right, top, bottom, left
+            let position = HandlePosition.RIGHT;
+            if (variableCount > 1) {
+              if (index === 0) position = HandlePosition.RIGHT;
+              else if (index === 1 && variableCount > 1)
+                position = HandlePosition.TOP;
+              else if (index === 2 && variableCount > 2)
+                position = HandlePosition.BOTTOM;
+              else if (index === 3 && variableCount > 3)
+                position = HandlePosition.LEFT;
+              else position = HandlePosition.RIGHT; // Fallback for more handles
+            }
 
-          return {
-            id: variable.value,
-            label: variable.value,
-            position,
-            viewType: HandleViewType.VERTICAL_BOX,
-            edgeType: EdgeType.DEFAULT,
-            dataType: "any",
-          };
-        });
+            return {
+              id: variable.value,
+              label: variable.value,
+              position,
+              viewType: HandleViewType.VERTICAL_BOX,
+              edgeType: EdgeType.DEFAULT,
+              dataType: "any",
+            };
+          });
+      }
+
+      // Variable Provider with no variables: no handles at all
+      return [];
     }
 
-    // Variable Provider with no variables: no handles at all
+    if (nodeMode === NodeMode.CODE_PROVIDER) {
+      // Code Provider mode: output handle for generated code
+      return [
+        {
+          id: "code_output",
+          label: "Generated Code",
+          position: HandlePosition.RIGHT,
+          viewType: HandleViewType.VERTICAL_BOX,
+          edgeType: EdgeType.DEFAULT,
+          dataType: "code",
+        },
+      ];
+    }
+
     return [];
-  }, [isVariableProvider, customCodeData.emitsConfig]);
+  }, [nodeMode, customCodeData.emitsConfig]);
 
   // Get code preview for display
   const codePreview = useMemo(() => {

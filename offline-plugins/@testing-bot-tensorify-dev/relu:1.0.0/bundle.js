@@ -1518,7 +1518,15 @@ print(\${variableName})\`;
               value: "relu",
               switchKey: "settingsFields.emitReluVar",
               isOnByDefault: true,
-              type: import_sdk.NodeType.MODEL_LAYER
+              type: import_sdk.NodeType.MODEL_LAYER,
+              // ReLU is a passthrough operation - doesn't change tensor shape
+              shape: {
+                type: "passthrough",
+                dimensions: [],
+                // Empty for passthrough - will be copied from input
+                passthroughSource: "prev",
+                description: "Same shape as input tensor (ReLU preserves shape)"
+              }
             }
           ],
           imports: [

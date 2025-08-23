@@ -64,7 +64,27 @@ export default class LinearLayerPlugin extends TensorifyPlugin {
       },
 
       // Handle Configuration
-      inputHandles: [PrevNodeAsInput],
+      inputHandles: [
+        PrevNodeAsInput,
+        {
+          id: "input_tensor",
+          position: HandlePosition.LEFT,
+          viewType: HandleViewType.DEFAULT,
+          required: true,
+          label: "Input",
+          edgeType: EdgeType.DEFAULT,
+          dataType: NodeType.MODEL_LAYER,
+          description: "Input tensor for linear transformation",
+          expectedShape: {
+            type: "dynamic",
+            dimensions: [
+              "N", // Batch size (any value)
+              "{settings.inFeatures}", // Must match input features setting
+            ],
+            description: "2D tensor (batch_size, input_features)",
+          },
+        },
+      ],
 
       outputHandles: [NextNodeAsOutput],
 
@@ -125,6 +145,15 @@ export default class LinearLayerPlugin extends TensorifyPlugin {
             switchKey: "settingsFields.emitLinearVar",
             isOnByDefault: true,
             type: NodeType.MODEL_LAYER,
+            // Linear layer transforms input features to output features
+            shape: {
+              type: "dynamic",
+              dimensions: [
+                "{input.input_tensor.shape[0]}", // Same batch size as input
+                "{settings.outFeatures}", // Output features from settings
+              ],
+              description: "2D tensor (batch_size, output_features)",
+            },
           },
         ],
         imports: [{ path: "torch", items: ["nn"] }],

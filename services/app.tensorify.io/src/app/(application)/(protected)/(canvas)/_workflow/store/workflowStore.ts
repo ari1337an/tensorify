@@ -68,6 +68,7 @@ export interface VisualConfig {
 export enum NodeMode {
   WORKFLOW = "workflow",
   VARIABLE_PROVIDER = "variable_provider",
+  CODE_PROVIDER = "code_provider",
 }
 
 // Custom node data interface

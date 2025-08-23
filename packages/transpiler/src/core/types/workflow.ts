@@ -43,6 +43,7 @@ export enum SpecialNodeType {
 export enum CodeGeneratingNodeType {
   CustomCode = "@tensorify/core/CustomCodeNode",
   ClassNode = "@tensorify/core/ClassNode",
+  ConstantsNode = "@tensorify/core/ConstantsNode",
 }
 
 // Helper to check if a node is a special type
@@ -65,7 +66,8 @@ export function isSpecialNode(nodeType?: string): boolean {
       coreType === "multiplexernode" ||
       coreType === "demultiplexernode" ||
       coreType === "classnode" ||
-      coreType === "customcodenode"
+      coreType === "customcodenode" ||
+      coreType === "constantsnode"
     );
   }
 

@@ -1494,7 +1494,29 @@ print(\${variableName})\`;
           }
         },
         // Handle Configuration
-        inputHandles: [import_sdk.PrevNodeAsInput],
+        inputHandles: [
+          import_sdk.PrevNodeAsInput,
+          {
+            id: "input_tensor",
+            position: import_sdk.HandlePosition.LEFT,
+            viewType: import_sdk.HandleViewType.DEFAULT,
+            required: true,
+            label: "Input",
+            edgeType: import_sdk.EdgeType.DEFAULT,
+            dataType: import_sdk.NodeType.MODEL_LAYER,
+            description: "Input tensor for linear transformation",
+            expectedShape: {
+              type: "dynamic",
+              dimensions: [
+                "N",
+                // Batch size (any value)
+                "{settings.inFeatures}"
+                // Must match input features setting
+              ],
+              description: "2D tensor (batch_size, input_features)"
+            }
+          }
+        ],
         outputHandles: [import_sdk.NextNodeAsOutput],
         // Settings Configuration (UI components automatically generated)
         settingsFields: [
@@ -1559,7 +1581,18 @@ print(\${variableName})\`;
               value: "linear_layer",
               switchKey: "settingsFields.emitLinearVar",
               isOnByDefault: true,
-              type: import_sdk.NodeType.MODEL_LAYER
+              type: import_sdk.NodeType.MODEL_LAYER,
+              // Linear layer transforms input features to output features
+              shape: {
+                type: "dynamic",
+                dimensions: [
+                  "{input.input_tensor.shape[0]}",
+                  // Same batch size as input
+                  "{settings.outFeatures}"
+                  // Output features from settings
+                ],
+                description: "2D tensor (batch_size, output_features)"
+              }
             }
           ],
           imports: [{ path: "torch", items: ["nn"] }]

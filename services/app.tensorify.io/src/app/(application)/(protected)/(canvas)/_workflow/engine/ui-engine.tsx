@@ -5,6 +5,15 @@ import { useShallow } from "zustand/react/shallow";
 import useWorkflowStore, { NodeMode } from "@workflow/store/workflowStore";
 import useAppStore from "@/app/_store/store";
 import { validateVariableProviderConnection } from "../components/nodes/handles/HandleValidation";
+import {
+  ShapeIntelliSenseManager,
+  NodeShapeInfo,
+  ConnectionShapeValidation,
+} from "../utils/ShapeIntelliSense";
+import {
+  SequenceShapeValidator,
+  type SequenceShapeValidation,
+} from "../utils/SequenceShapeValidator";
 
 type EdgeValidationState = {
   id: string;
@@ -60,6 +69,14 @@ type UIEngineState = {
       isEnabled: boolean;
     }>
   >;
+  // NEW: Shape intellisense system
+  nodeShapes: Record<string, NodeShapeInfo>;
+  connectionShapeValidations: Record<string, ConnectionShapeValidation>;
+  shapeIntelliSenseManager: ShapeIntelliSenseManager;
+  // Sequence shape validation system
+  sequenceShapeValidations: Record<string, SequenceShapeValidation>;
+  // Plugin manifests for debugging and shape calculations
+  pluginManifests: Record<string, any>;
 };
 
 const UIEngineContext = createContext<UIEngineState>({
@@ -68,6 +85,11 @@ const UIEngineContext = createContext<UIEngineState>({
   availableVariablesByNodeId: {},
   availableVariableDetailsByNodeId: {},
   localVariableDetailsByNodeId: {},
+  nodeShapes: {},
+  connectionShapeValidations: {},
+  shapeIntelliSenseManager: new ShapeIntelliSenseManager(),
+  sequenceShapeValidations: {},
+  pluginManifests: {},
 });
 
 // Helper function to get variable handles from manifest
@@ -128,22 +150,30 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
       const inputHandles = new Set<string>();
       const outputHandles = new Set<string>();
 
-      // Check if node is in Variable Provider mode
+      // Check node mode
       const nodeMode = (node.data as any)?.nodeMode || NodeMode.WORKFLOW;
       const isVariableProvider = nodeMode === NodeMode.VARIABLE_PROVIDER;
+      const isCodeProvider = nodeMode === NodeMode.CODE_PROVIDER;
+
+      // Debug logging for code provider nodes
+      if (isCodeProvider) {
+        console.log(
+          `[DEBUG] Code Provider Node: ${node.id}, type: ${node.type}, mode: ${nodeMode}`
+        );
+      }
 
       if (node.type === "@tensorify/core/StartNode") {
-        // Start requires only NEXT (never variable provider)
+        // Start requires only NEXT (always workflow mode)
         outputHandles.add("next");
       } else if (node.type === "@tensorify/core/EndNode") {
-        // End requires only PREV (never variable provider)
+        // End requires only PREV (always workflow mode)
         inputHandles.add("prev");
       } else if (node.type === "@tensorify/core/NestedNode") {
-        // Nested nodes use their own handle IDs (never variable provider)
+        // Nested nodes use their own handle IDs (always workflow mode)
         inputHandles.add("nested-input");
         outputHandles.add("nested-output");
       } else if (node.type === "@tensorify/core/BranchNode") {
-        // Branch nodes have prev input and numbered next outputs (never variable provider)
+        // Branch nodes have prev input and numbered next outputs (always workflow mode)
         inputHandles.add("prev");
         const branchCount = (node.data as any)?.branchCount || 2;
         for (let i = 1; i <= branchCount; i++) {
@@ -151,8 +181,6 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
         }
       } else if (isVariableProvider) {
         // Variable Provider mode: NO input handles, ONLY variable output handles
-        // No prev handle - node is disconnected from workflow sequence
-
         // Get variable handles from manifest or emitsConfig
         let variableNames: string[] = [];
 
@@ -176,11 +204,56 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
 
         // Add ONLY variable handles as outputs (no fallback to next)
         variableNames.forEach((varName) => outputHandles.add(varName));
+      } else if (isCodeProvider) {
+        // Code Provider mode: NO input handles, ONLY code output handle
+        outputHandles.add("code_output");
+
+        // Add dynamic input handles for code provider constructor items (for ClassNode)
+        if (node.type === "@tensorify/core/ClassNode") {
+          const classData = node.data as any;
+          if (classData.constructorItems) {
+            classData.constructorItems
+              .filter(
+                (item: any) =>
+                  item.type === "code_provider" && item.codeProvider
+              )
+              .forEach((item: any) => {
+                inputHandles.add(`code_provider_${item.id}`);
+              });
+          }
+        }
       } else {
-        // Workflow mode: Custom/plugin and other functional nodes require both
+        // Workflow mode: Custom/plugin and other functional nodes require both prev and next
         inputHandles.add("prev");
         outputHandles.add("next");
+
+        // Add dynamic input handles for code provider constructor items (for ClassNode in workflow mode)
+        if (node.type === "@tensorify/core/ClassNode") {
+          const classData = node.data as any;
+          if (classData.constructorItems) {
+            classData.constructorItems
+              .filter(
+                (item: any) =>
+                  item.type === "code_provider" && item.codeProvider
+              )
+              .forEach((item: any) => {
+                inputHandles.add(`code_provider_${item.id}`);
+              });
+          }
+        }
       }
+
+      // Debug logging for all calculated handles
+      if (isCodeProvider || nodeMode === "code_provider") {
+        console.log(`[DEBUG] Node ${node.id} handles:`, {
+          nodeMode,
+          inputHandles: Array.from(inputHandles),
+          outputHandles: Array.from(outputHandles),
+          isCodeProvider,
+          nodeType: node.type,
+        });
+      }
+
       nodeIdToHandles.set(node.id, {
         input: inputHandles,
         output: outputHandles,
@@ -265,6 +338,20 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
         ? n.route.split("/sequence-")[1]?.split("/")[0]
         : undefined;
 
+      // Debug logging for validation calculation
+      const nodeMode = (n.data as any)?.nodeMode || NodeMode.WORKFLOW;
+      if (nodeMode === NodeMode.CODE_PROVIDER || nodeMode === "code_provider") {
+        console.log(`[DEBUG] Validation for code provider node ${n.id}:`, {
+          nodeMode,
+          handlesPrev: handles.input.has("prev"),
+          handlesNext: handles.output.has("next"),
+          hasPrev,
+          hasNext,
+          inputHandles: Array.from(handles.input),
+          outputHandles: Array.from(handles.output),
+        });
+      }
+
       nodesState[n.id] = {
         id: n.id,
         missingPrev: handles.input.has("prev") ? !hasPrev : false,
@@ -343,23 +430,11 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
           reason = "multi-prev";
         }
       } else {
-        // Non-workflow connection - could be variable provider or invalid workflow connection
+        // Non-workflow connection (variable handle) – allow by default and validate later
         const sourceNode = nodes.find((n) => n.id === e.source);
         const targetNode = nodes.find((n) => n.id === e.target);
-
         if (sourceNode && targetNode) {
-          // Check if both nodes are in workflow mode trying to connect via variable handles
-          const sourceMode = (sourceNode.data as any)?.nodeMode || "workflow";
-          const targetMode = (targetNode.data as any)?.nodeMode || "workflow";
-
-          if (sourceMode === "workflow" && targetMode === "workflow") {
-            // Both in workflow mode but connecting via non-workflow handles
-            reason = "workflow-mode-error";
-            errorMessage = `Both nodes are in workflow mode. For variable connections, the source node "${sourceNode.data?.label || sourceNode.id}" should be in "variable provider" mode.`;
-          } else {
-            // This should be a variable provider connection - will be validated later
-            reason = null;
-          }
+          reason = null; // defer to variable/type + shape validation
         } else {
           reason = "incompatible";
         }
@@ -445,10 +520,11 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
         type?: string;
       }> = [];
 
-      // Handle native nodes with emits configuration (CustomCodeNode and ClassNode)
+      // Handle native nodes with emits configuration (CustomCodeNode, ClassNode, and ConstantsNode)
       if (
         n.type === "@tensorify/core/CustomCodeNode" ||
-        n.type === "@tensorify/core/ClassNode"
+        n.type === "@tensorify/core/ClassNode" ||
+        n.type === "@tensorify/core/ConstantsNode"
       ) {
         const nodeData = n.data as any;
         variables = nodeData?.emitsConfig?.variables || [];
@@ -477,7 +553,9 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
           ? "function"
           : n.type === "@tensorify/core/ClassNode"
             ? "custom"
-            : "unknown");
+            : n.type === "@tensorify/core/ConstantsNode"
+              ? "function"
+              : "unknown");
 
       for (const v of variables) {
         const rawKey = (v.switchKey || "").split(".").pop() || "";
@@ -485,10 +563,6 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
           rawKey && settings.hasOwnProperty(rawKey)
             ? Boolean(settings[rawKey])
             : Boolean(v.isOnByDefault);
-
-        console.log(
-          `🔍 UI Engine - Variable ${v.value}: isOn=${isOn}, rawKey=${rawKey}, settings[${rawKey}]=${settings[rawKey]}, isOnByDefault=${v.isOnByDefault}`
-        );
 
         if (isOn && v.value) {
           vars.push(v.value);
@@ -501,11 +575,6 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
           });
         }
       }
-      console.log(`🔍 UI Engine - Final vars for node ${n.id}:`, vars);
-      console.log(
-        `🔍 UI Engine - Final varDetails for node ${n.id}:`,
-        varDetails
-      );
       localVarsByNode.set(n.id, vars);
       localVarDetailsByNode.set(n.id, varDetails);
     });
@@ -681,20 +750,269 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
+    // NEW: Initialize Shape IntelliSense Manager
+    const shapeManager = new ShapeIntelliSenseManager();
+
+    // Debug: Log plugin manifests to check if shapes are loaded
+    console.log("🔍 Plugin manifests loaded:", Object.keys(pluginManifests));
+    Object.values(pluginManifests).forEach((manifest) => {
+      // Check both possible locations for emits (root level and visual.emits)
+      const manifestData = manifest?.manifest as any;
+      const emitsVariables =
+        manifestData?.emits?.variables ||
+        manifestData?.visual?.emits?.variables;
+      if (emitsVariables?.some((v: any) => v.shape)) {
+        console.log(
+          "✅ Found manifest with shape info:",
+          manifest.slug,
+          emitsVariables
+        );
+      }
+    });
+
+    // Calculate node shapes for tensor intellisense
+    const nodeShapesMap = shapeManager.calculateAllNodeShapes(
+      nodes,
+      rfEdges,
+      Object.values(pluginManifests)
+    );
+
+    // Convert map to object for state
+    const nodeShapes: Record<string, NodeShapeInfo> = {};
+    nodeShapesMap.forEach((shapeInfo, nodeId) => {
+      nodeShapes[nodeId] = shapeInfo;
+    });
+
+    // Calculate connection shape validations
+    const connectionShapeValidations: Record<
+      string,
+      ConnectionShapeValidation
+    > = {};
+    console.log("🔍 Starting edge validation for", rfEdges.length, "edges");
+
+    rfEdges.forEach((edge) => {
+      console.log("🔍 Validating edge:", {
+        edgeId: edge.id,
+        source: edge.source,
+        target: edge.target,
+        sourceHandle: edge.sourceHandle,
+        targetHandle: edge.targetHandle,
+      });
+
+      const validation = shapeManager.validateConnection(
+        edge.source,
+        edge.sourceHandle || "",
+        edge.target,
+        edge.targetHandle || "",
+        rfEdges
+      );
+
+      const key = `${edge.source}:${edge.sourceHandle || ""}->${edge.target}:${edge.targetHandle || ""}`;
+      // Determine if this is a standard workflow connection (next/prev).
+      const sh2 = (edge.sourceHandle || "").toString();
+      const th2 = (edge.targetHandle || "").toString();
+      const isWorkflowConnection2 =
+        (NEXT_ALIASES.has(sh2) || isBranchNextHandle(sh2)) &&
+        PREV_ALIASES.has(th2);
+
+      // Only record shape validations for non-workflow (variable) connections
+      if (!isWorkflowConnection2) {
+        connectionShapeValidations[key] = validation;
+
+        // Debug: Log the validation key being set with detailed handle info
+        console.log("🔑 SETTING VALIDATION KEY:", {
+          edgeId: edge.id,
+          key,
+          sourceHandle: edge.sourceHandle,
+          targetHandle: edge.targetHandle,
+          sourceHandleType: typeof edge.sourceHandle,
+          targetHandleType: typeof edge.targetHandle,
+          isWorkflowConnection2,
+          validation: {
+            isValid: validation.isValid,
+            message: validation.message,
+          },
+        });
+      }
+
+      // Debug: Log ALL shape validations with detailed node info
+      const sourceNode = nodes.find((n) => n.id === edge.source);
+      const targetNode = nodes.find((n) => n.id === edge.target);
+
+      console.log("🔍 DETAILED EDGE VALIDATION:", {
+        edgeId: edge.id,
+        sourceNode: {
+          id: sourceNode?.id,
+          type: sourceNode?.type,
+          pluginSettings: sourceNode?.data?.pluginSettings,
+          // output shape omitted to avoid type mismatches in logs
+        },
+        targetNode: {
+          id: targetNode?.id,
+          type: targetNode?.type,
+          pluginSettings: targetNode?.data?.pluginSettings,
+          // expected input shape omitted to avoid type mismatches in logs
+        },
+        validation: {
+          isValid: validation.isValid,
+          error: validation.message,
+          expectedShape: validation.expectedShape,
+          actualShape: validation.outputShape,
+        },
+        sourceHandle: edge.sourceHandle,
+        targetHandle: edge.targetHandle,
+        connectionValidationKey: key,
+      });
+
+      // Special focus on the Linear layer connection
+      if (
+        edge.sourceHandle === "linear_layer" &&
+        edge.targetHandle === "input_tensor"
+      ) {
+        console.log("🎯 LINEAR LAYER EDGE SPECIFIC DEBUG:", {
+          edgeId: edge.id,
+          isValid: validation.isValid,
+          error: validation.message,
+          sourceOutputDimensions: validation.outputShape?.dimensions,
+          targetExpectedDimensions: validation.expectedShape?.dimensions,
+          fullValidationObject: validation,
+          key: key,
+          willBeStoredAs: `${edge.source}:${edge.sourceHandle}->${edge.target}:${edge.targetHandle}`,
+        });
+      }
+
+      // Debug: Show ONLY failed validations to identify the issue
+      if (!validation.isValid) {
+        console.log("🔴 FAILED EDGE VALIDATION:", {
+          edge: `${edge.source} → ${edge.target}`,
+          error: validation.message,
+          shapes: {
+            actual: validation.outputShape,
+            expected: validation.expectedShape,
+            actualDimensions: validation.outputShape?.dimensions,
+            expectedDimensions: validation.expectedShape?.dimensions,
+          },
+          sourceSettings: sourceNode?.data?.pluginSettings,
+          targetSettings: targetNode?.data?.pluginSettings,
+        });
+      }
+
+      if (!validation.isValid) {
+        console.log("🔴 Shape validation error details:", {
+          edgeId: edge.id,
+          source: edge.source,
+          target: edge.target,
+          error: validation.message,
+          expectedShape: validation.expectedShape,
+          actualShape: validation.outputShape,
+        });
+      }
+
+      // Update edge validation with shape information
+      if (
+        !validation.isValid &&
+        edgesState[edge.id]?.reason === null &&
+        !isWorkflowConnection2
+      ) {
+        edgesState[edge.id] = {
+          ...edgesState[edge.id],
+          isCompatible: false,
+          reason: "type-mismatch",
+          errorMessage: validation.message,
+        };
+      }
+    });
+
+    // Calculate sequence shape validations for sequence nodes
+    const sequenceShapeValidations: Record<string, SequenceShapeValidation> =
+      {};
+    const sequenceNodes = nodes.filter((node) => {
+      const pluginId = node.data?.pluginId || node.type;
+      if (!pluginId || typeof pluginId !== "string") return false;
+
+      // Find manifest from the available manifests array
+      const manifest = Object.values(pluginManifests).find(
+        (m: any) => m.slug === pluginId || m.id === pluginId
+      );
+      if (!manifest?.manifest) return false;
+
+      const nodeType =
+        manifest.manifest.pluginType ||
+        manifest.manifest.frontendConfigs?.nodeType;
+      return nodeType === "sequence";
+    });
+
+    for (const sequenceNode of sequenceNodes) {
+      // Get input shape for the sequence node (from connected edges)
+      const sequenceNodeShapeInfo = nodeShapesMap.get(sequenceNode.id);
+      const inputShape = sequenceNodeShapeInfo
+        ? Object.values(sequenceNodeShapeInfo.expectedInputShapes)[0]
+        : undefined;
+
+      const validation = SequenceShapeValidator.validateSequenceShapes(
+        sequenceNode,
+        Object.values(pluginManifests),
+        nodes,
+        inputShape
+      );
+
+      sequenceShapeValidations[sequenceNode.id] = validation;
+
+      // Debug logging for sequence validation (basic info only)
+      console.log(
+        `🔗 Sequence validation for ${sequenceNode.id}: ${validation.hasAnyErrors ? "❌" : "✅"} (${validation.itemShapeInfos.length} items)`
+      );
+
+      if (validation.hasAnyErrors) {
+        console.log(
+          "🔴 Sequence shape validation errors:",
+          SequenceShapeValidator.formatValidationResults(validation)
+        );
+      }
+    }
+
     return {
       nodes: nodesState,
       edges: edgesState,
       availableVariablesByNodeId: availableByNode,
       availableVariableDetailsByNodeId: availableDetailsByNode,
       localVariableDetailsByNodeId, // Add local variables for validation
+      nodeShapes,
+      connectionShapeValidations,
+      shapeIntelliSenseManager: shapeManager,
+      sequenceShapeValidations,
+      pluginManifests: Object.fromEntries(manifestByKey),
     };
   }, [
-    nodes,
-    edges,
-    pluginManifests,
-    transientErrorUntilByNodeId,
-    lastExportErrorsByNodeId,
-    lastExportArtifactErrors,
+    // Force deep comparison for reactivity on settings changes
+    JSON.stringify(
+      nodes.map((node) => ({
+        id: node.id,
+        pluginSettings: node.data?.pluginSettings,
+        settings: node.data?.settings,
+        type: node.type,
+        // Include native node-specific data that affects variable emission
+        emitsConfig: node.data?.emitsConfig,
+        constants: node.data?.constants, // For ConstantsNode
+        code: node.data?.code, // For CustomCodeNode
+        methods: node.data?.methods, // For ClassNode
+        className: node.data?.className, // For ClassNode
+        customImports: node.data?.customImports, // For CustomCode/ClassNode
+      }))
+    ),
+    JSON.stringify(
+      edges.map((edge) => ({
+        id: edge.id,
+        source: edge.source,
+        target: edge.target,
+        sourceHandle: edge.sourceHandle,
+        targetHandle: edge.targetHandle,
+      }))
+    ),
+    Object.keys(pluginManifests).join(","),
+    JSON.stringify(transientErrorUntilByNodeId),
+    JSON.stringify(lastExportErrorsByNodeId),
+    JSON.stringify(lastExportArtifactErrors),
   ]);
 
   return (

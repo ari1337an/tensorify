@@ -98,6 +98,9 @@ export const InputHandleSchema = z.object({
   edgeType: EdgeTypeEnum.optional(),
   dataType: HandleDataTypeEnum,
   description: z.string().optional(),
+  // Tensor shape expected at this input (client-side evaluated)
+  // Keep schema permissive to avoid breaking older manifests
+  expectedShape: z.any().optional(),
   validation: z
     .object({
       minLength: z.number().optional(),
@@ -333,6 +336,9 @@ export const UIManifestSchema = z.object({
             switchKey: z.string().min(1),
             isOnByDefault: z.boolean().optional(),
             type: z.string().optional(),
+            // Tensor shape description for this emitted variable
+            // Use z.any() to preserve forward/backward compatibility
+            shape: z.any().optional(),
           })
         )
         .default([]),

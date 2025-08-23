@@ -49,6 +49,11 @@ export {
   NodeIcons,
   NodeLabels,
   NodeVisualConfig,
+  // Tensor Shape types
+  ShapeDimension,
+  ShapeCondition,
+  ShapeExpression,
+  TensorShape,
 } from "./types/visual";
 
 // Convenience handle presets for mandatory flow

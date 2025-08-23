@@ -97,6 +97,15 @@ const defaultNodes: NodeItem[] = [
     description:
       "Create Python classes with intelligent constructor and method management. Perfect for defining custom datasets, models, and complex data structures with upstream variable integration.",
   },
+  {
+    id: "@tensorify/core/ConstantsNode",
+    version: "1.0.0",
+    draggable: true,
+    Icon: Calculator,
+    title: "Constants",
+    description:
+      "Define constant values (strings, integers, doubles) that can be used by downstream nodes. Emits variables containing your constant values for use throughout the workflow.",
+  },
   // SEQUENCE category
   {
     id: "sequence",

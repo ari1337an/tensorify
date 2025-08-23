@@ -20,7 +20,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@tensorify.io/sdk": "0.0.58"
+    "@tensorify.io/sdk": "0.0.60"
   },
   "devDependencies": {
     "typescript": "^5.0.0",
@@ -34,7 +34,7 @@
     "url": "https://github.com/tensorify/dataloader"
   },
   "tensorify-settings": {
-    "sdk-version": "0.0.58",
+    "sdk-version": "0.0.60",
     "entrypointClassName": "DataloaderPlugin",
     "pluginType": "DATALOADER"
   }

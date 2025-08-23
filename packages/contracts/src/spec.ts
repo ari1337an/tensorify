@@ -77,6 +77,8 @@ export const InputHandleSchema = z.object({
   edgeType: EdgeTypeEnum.optional(),
   dataType: HandleDataTypeEnum,
   description: z.string().optional(),
+  // Tensor shape expected at this input (client-side evaluated)
+  expectedShape: z.any().optional(),
   validation: z
     .object({
       minLength: z.number().optional(),
@@ -328,6 +330,8 @@ export const UIManifestSchema = z.object({
             value: z.string().min(1),
             switchKey: z.string().min(1),
             isOnByDefault: z.boolean().optional(),
+            // Tensor shape description to power intellisense
+            shape: z.any().optional(),
           })
         )
         .default([]),
