@@ -64,18 +64,8 @@
       "required": true,
       "label": "Prev",
       "edgeType": "default",
-      "dataType": "any",
-      "description": "Previous node output"
-    },
-    {
-      "id": "input_tensor",
-      "position": "left",
-      "viewType": "default",
-      "required": true,
-      "label": "Input",
-      "edgeType": "default",
       "dataType": "model_layer",
-      "description": "Input tensor for linear transformation",
+      "description": "Previous node output (input tensor for linear transformation)",
       "expectedShape": {
         "type": "dynamic",
         "dimensions": [

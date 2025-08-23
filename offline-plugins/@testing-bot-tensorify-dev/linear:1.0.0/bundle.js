@@ -1495,16 +1495,11 @@ print(\${variableName})\`;
         },
         // Handle Configuration
         inputHandles: [
-          import_sdk.PrevNodeAsInput,
           {
-            id: "input_tensor",
-            position: import_sdk.HandlePosition.LEFT,
-            viewType: import_sdk.HandleViewType.DEFAULT,
-            required: true,
-            label: "Input",
-            edgeType: import_sdk.EdgeType.DEFAULT,
+            ...import_sdk.PrevNodeAsInput,
+            // Extend with tensor shape validation
             dataType: import_sdk.NodeType.MODEL_LAYER,
-            description: "Input tensor for linear transformation",
+            description: "Previous node output (input tensor for linear transformation)",
             expectedShape: {
               type: "dynamic",
               dimensions: [

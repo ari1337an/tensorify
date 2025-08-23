@@ -20,8 +20,17 @@ export default function CustomEdge({
   targetPosition,
   style = {},
   markerEnd,
+  source,
+  target,
+  sourceHandle,
+  targetHandle,
   ...props
-}: EdgeProps) {
+}: EdgeProps & {
+  source: string;
+  target: string;
+  sourceHandle?: string;
+  targetHandle?: string;
+}) {
   const engine = useUIEngine();
   const edgeState = engine.edges[id];
 
@@ -34,26 +43,25 @@ export default function CustomEdge({
     targetPosition,
   });
 
-  // Get edge handles from props
-  const sourceHandle = (props as any).sourceHandle;
-  const targetHandle = (props as any).targetHandle;
-  const sourceNodeId = (props as any).source;
-  const targetNodeId = (props as any).target;
+  // Use destructured values from props
+  const sourceNodeId = source;
+  const targetNodeId = target;
 
-  // Get shape validation information
-  const validationKey = `${sourceNodeId}:${sourceHandle || ""}->${targetNodeId}:${targetHandle || ""}`;
-  const shapeValidation = engine.connectionShapeValidations[validationKey];
+  // Get shape validation information - try the exact key format used by UI engine
+  const correctValidationKey = `${sourceNodeId}:next->${targetNodeId}:prev`;
+  const shapeValidation =
+    engine.connectionShapeValidations[correctValidationKey];
 
   // Try alternative key formats if the main one doesn't work
   const alternativeKey1 = `${sourceNodeId}:linear_layer->${targetNodeId}:input_tensor`;
-  const alternativeKey2 = `${sourceNodeId}:${sourceHandle}->${targetNodeId}:${targetHandle}`;
+  const alternativeKey2 = `${sourceNodeId}:${sourceHandle || ""}->${targetNodeId}:${targetHandle || ""}`;
   const alternativeValidation =
     engine.connectionShapeValidations[alternativeKey1] ||
     engine.connectionShapeValidations[alternativeKey2];
 
   // For debugging
   console.log("🔍 Edge Validation Keys:", {
-    mainKey: validationKey,
+    correctKey: correctValidationKey,
     mainValidation: shapeValidation,
     alternativeKey1,
     alternativeKey2,
@@ -66,7 +74,7 @@ export default function CustomEdge({
   React.useEffect(() => {
     console.log("🔍 CustomEdge Debug:", {
       edgeId: id,
-      validationKey,
+      correctValidationKey,
       sourceHandle,
       targetHandle,
       sourceHandleType: typeof sourceHandle,
@@ -79,7 +87,7 @@ export default function CustomEdge({
     });
   }, [
     id,
-    validationKey,
+    correctValidationKey,
     engine.connectionShapeValidations,
     sourceHandle,
     targetHandle,
@@ -115,20 +123,15 @@ export default function CustomEdge({
 
   // Determine edge styling based on validation state
   const getEdgeStyle = () => {
-    const baseStyle = {
-      ...style,
-      // stroke: "#64748b", // Default gray color (slate-500)
-      strokeWidth: 5,
-    };
-
     // Use alternative validation if direct lookup failed
     const finalValidation = shapeValidation || alternativeValidation;
 
     // Shape validation error - red edge with glow
     if (finalValidation && !finalValidation.isValid) {
       return {
-        ...baseStyle,
+        ...style,
         stroke: "#ef4444", // Red color for shape errors
+        strokeWidth: 3,
         filter: "drop-shadow(0px 0px 6px rgba(239, 68, 68, 0.4))",
       };
     }
@@ -136,15 +139,15 @@ export default function CustomEdge({
     // Other validation errors - orange edge
     if (errorMessage) {
       return {
-        ...baseStyle,
+        ...style,
         stroke: "#f97316", // Orange color for other errors
-        strokeWidth: 2,
+        strokeWidth: 3,
         filter: "drop-shadow(0px 0px 4px rgba(249, 115, 22, 0.3))",
       };
     }
 
-    // Valid connection - use default style
-    return baseStyle;
+    // No errors - use default React Flow edge style
+    return style;
   };
 
   const edgeStyle = getEdgeStyle();

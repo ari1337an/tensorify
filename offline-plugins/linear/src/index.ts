@@ -65,16 +65,12 @@ export default class LinearLayerPlugin extends TensorifyPlugin {
 
       // Handle Configuration
       inputHandles: [
-        PrevNodeAsInput,
         {
-          id: "input_tensor",
-          position: HandlePosition.LEFT,
-          viewType: HandleViewType.DEFAULT,
-          required: true,
-          label: "Input",
-          edgeType: EdgeType.DEFAULT,
+          ...PrevNodeAsInput,
+          // Extend with tensor shape validation
           dataType: NodeType.MODEL_LAYER,
-          description: "Input tensor for linear transformation",
+          description:
+            "Previous node output (input tensor for linear transformation)",
           expectedShape: {
             type: "dynamic",
             dimensions: [

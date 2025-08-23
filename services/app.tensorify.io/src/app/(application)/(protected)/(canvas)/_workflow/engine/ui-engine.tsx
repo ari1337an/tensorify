@@ -815,25 +815,23 @@ export function UIEngineProvider({ children }: { children: React.ReactNode }) {
         (NEXT_ALIASES.has(sh2) || isBranchNextHandle(sh2)) &&
         PREV_ALIASES.has(th2);
 
-      // Only record shape validations for non-workflow (variable) connections
-      if (!isWorkflowConnection2) {
-        connectionShapeValidations[key] = validation;
+      // Record shape validations for all connections (both workflow and variable)
+      connectionShapeValidations[key] = validation;
 
-        // Debug: Log the validation key being set with detailed handle info
-        console.log("🔑 SETTING VALIDATION KEY:", {
-          edgeId: edge.id,
-          key,
-          sourceHandle: edge.sourceHandle,
-          targetHandle: edge.targetHandle,
-          sourceHandleType: typeof edge.sourceHandle,
-          targetHandleType: typeof edge.targetHandle,
-          isWorkflowConnection2,
-          validation: {
-            isValid: validation.isValid,
-            message: validation.message,
-          },
-        });
-      }
+      // Debug: Log the validation key being set with detailed handle info
+      console.log("🔑 SETTING VALIDATION KEY:", {
+        edgeId: edge.id,
+        key,
+        sourceHandle: edge.sourceHandle,
+        targetHandle: edge.targetHandle,
+        sourceHandleType: typeof edge.sourceHandle,
+        targetHandleType: typeof edge.targetHandle,
+        isWorkflowConnection2,
+        validation: {
+          isValid: validation.isValid,
+          message: validation.message,
+        },
+      });
 
       // Debug: Log ALL shape validations with detailed node info
       const sourceNode = nodes.find((n) => n.id === edge.source);
