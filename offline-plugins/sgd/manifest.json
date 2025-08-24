@@ -1,0 +1,212 @@
+{
+  "name": "@tensorify/sgd",
+  "version": "1.0.0",
+  "description": "SGD optimizer plugin",
+  "author": "",
+  "main": "src/index.ts",
+  "entrypointClassName": "SgdPlugin",
+  "keywords": [
+    "tensorify",
+    "plugin",
+    "ml",
+    "machine-learning",
+    "neural-network"
+  ],
+  "pluginType": "optimizer",
+  "scripts": {
+    "build": "npx tsc"
+  },
+  "tensorifySettings": {
+    "sdkVersion": "0.0.62"
+  },
+  "metadata": {
+    "repository": "https://github.com/tensorify/sgd",
+    "license": "ISC"
+  },
+  "visual": {
+    "containerType": "default",
+    "size": {
+      "width": 300,
+      "height": 200
+    },
+    "padding": {
+      "inner": 16,
+      "outer": 8,
+      "extraPadding": false
+    },
+    "styling": {
+      "borderRadius": 8,
+      "borderWidth": 2,
+      "shadowLevel": 1,
+      "theme": "auto"
+    },
+    "icons": {
+      "primary": {
+        "type": "lucide",
+        "value": "trending-up"
+      },
+      "secondary": [],
+      "showIconBackground": true,
+      "iconSize": "medium"
+    },
+    "labels": {
+      "title": "SGD Optimizer",
+      "dynamicLabelTemplate": "lr={lr}, momentum={momentum}",
+      "showLabels": true,
+      "labelPosition": "top"
+    }
+  },
+  "inputHandles": [
+    {
+      "id": "prev",
+      "position": "left",
+      "viewType": "default",
+      "required": true,
+      "label": "Prev",
+      "edgeType": "default",
+      "dataType": "any",
+      "description": "Previous node output"
+    }
+  ],
+  "outputHandles": [
+    {
+      "id": "next",
+      "position": "right",
+      "viewType": "default",
+      "label": "Next",
+      "edgeType": "default",
+      "dataType": "any",
+      "description": "Flow to next node"
+    }
+  ],
+  "settingsFields": [
+    {
+      "key": "optimizerVarName",
+      "label": "Variable name",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "optimizer",
+      "required": true,
+      "description": "Name of the variable to assign when emit is enabled"
+    },
+    {
+      "key": "emitOptimizerVar",
+      "label": "Emit variable name",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": true,
+      "required": true,
+      "description": "Controls emission of the optimizer variable"
+    },
+    {
+      "key": "model_params_input",
+      "label": "Model Parameters Variable",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "model.parameters()",
+      "required": true,
+      "description": "Variable or expression for model parameters"
+    },
+    {
+      "key": "lr",
+      "label": "Learning Rate",
+      "type": "input-number",
+      "dataType": "number",
+      "defaultValue": 0.001,
+      "required": false,
+      "description": "Learning rate (default: 1e-3)",
+      "validation": {
+        "min": 1e-7,
+        "max": 10
+      }
+    },
+    {
+      "key": "momentum",
+      "label": "Momentum",
+      "type": "input-number",
+      "dataType": "number",
+      "defaultValue": 0,
+      "required": false,
+      "description": "Momentum factor (default: 0)",
+      "validation": {
+        "min": 0,
+        "max": 1
+      }
+    },
+    {
+      "key": "dampening",
+      "label": "Dampening",
+      "type": "input-number",
+      "dataType": "number",
+      "defaultValue": 0,
+      "required": false,
+      "description": "Dampening for momentum (default: 0)",
+      "validation": {
+        "min": 0,
+        "max": 1
+      }
+    },
+    {
+      "key": "weight_decay",
+      "label": "Weight Decay",
+      "type": "input-number",
+      "dataType": "number",
+      "defaultValue": 0,
+      "required": false,
+      "description": "Weight decay (L2 penalty) (default: 0)",
+      "validation": {
+        "min": 0,
+        "max": 1
+      }
+    },
+    {
+      "key": "nesterov",
+      "label": "Nesterov",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": false,
+      "required": false,
+      "description": "Enables Nesterov momentum"
+    },
+    {
+      "key": "maximize",
+      "label": "Maximize",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": false,
+      "required": false,
+      "description": "Maximize the objective with respect to the params, instead of minimizing"
+    }
+  ],
+  "settingsGroups": [],
+  "capabilities": [
+    "code-generation"
+  ],
+  "requirements": {
+    "minSdkVersion": "1.0.0",
+    "dependencies": [
+      "torch"
+    ],
+    "pythonPackages": [
+      "torch"
+    ]
+  },
+  "emits": {
+    "variables": [
+      {
+        "value": "optimizer",
+        "switchKey": "settingsFields.emitOptimizerVar",
+        "isOnByDefault": true,
+        "type": "optimizer"
+      }
+    ],
+    "imports": [
+      {
+        "path": "torch.optim",
+        "items": [
+          "SGD"
+        ]
+      }
+    ]
+  }
+}

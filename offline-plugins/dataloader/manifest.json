@@ -17,7 +17,7 @@
     "build": "npx tsc"
   },
   "tensorifySettings": {
-    "sdkVersion": "0.0.60"
+    "sdkVersion": "0.0.62"
   },
   "metadata": {
     "repository": "https://github.com/tensorify/dataloader",
@@ -87,15 +87,6 @@
       "edgeType": "default",
       "dataType": "any",
       "description": "Flow to next node"
-    },
-    {
-      "id": "dataloader_out",
-      "position": "right",
-      "viewType": "default",
-      "label": "DataLoader",
-      "edgeType": "default",
-      "dataType": "dataloader",
-      "description": "DataLoader output for use by other components"
     }
   ],
   "settingsFields": [

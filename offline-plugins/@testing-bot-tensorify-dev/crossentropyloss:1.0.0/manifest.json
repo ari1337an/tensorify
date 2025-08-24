@@ -1,0 +1,205 @@
+{
+  "name": "@tensorify/crossentropyloss",
+  "version": "1.0.0",
+  "description": "CrossEntropyLoss function plugin",
+  "author": "",
+  "main": "src/index.ts",
+  "entrypointClassName": "CrossentropylossPlugin",
+  "keywords": [
+    "tensorify",
+    "plugin",
+    "ml",
+    "machine-learning",
+    "neural-network"
+  ],
+  "pluginType": "loss_function",
+  "scripts": {
+    "build": "npx tsc"
+  },
+  "tensorifySettings": {
+    "sdkVersion": "0.0.62"
+  },
+  "metadata": {
+    "repository": "https://github.com/tensorify/crossentropyloss",
+    "license": "ISC"
+  },
+  "visual": {
+    "containerType": "default",
+    "size": {
+      "width": 280,
+      "height": 180
+    },
+    "padding": {
+      "inner": 16,
+      "outer": 8,
+      "extraPadding": false
+    },
+    "styling": {
+      "borderRadius": 8,
+      "borderWidth": 2,
+      "shadowLevel": 1,
+      "theme": "auto"
+    },
+    "icons": {
+      "primary": {
+        "type": "lucide",
+        "value": "zap"
+      },
+      "secondary": [],
+      "showIconBackground": true,
+      "iconSize": "medium"
+    },
+    "labels": {
+      "title": "CrossEntropyLoss",
+      "dynamicLabelTemplate": "reduction={reduction}",
+      "showLabels": true,
+      "labelPosition": "top"
+    }
+  },
+  "inputHandles": [
+    {
+      "id": "prev",
+      "position": "left",
+      "viewType": "default",
+      "required": true,
+      "label": "Prev",
+      "edgeType": "default",
+      "dataType": "any",
+      "description": "Previous node output"
+    }
+  ],
+  "outputHandles": [
+    {
+      "id": "next",
+      "position": "right",
+      "viewType": "default",
+      "label": "Next",
+      "edgeType": "default",
+      "dataType": "any",
+      "description": "Flow to next node"
+    },
+    {
+      "id": "loss_out",
+      "position": "right",
+      "viewType": "default",
+      "label": "Loss Function",
+      "edgeType": "default",
+      "dataType": "loss_function",
+      "description": "CrossEntropyLoss function output"
+    },
+    {
+      "id": "code",
+      "position": "right",
+      "viewType": "default",
+      "label": "Code",
+      "edgeType": "default",
+      "dataType": "custom",
+      "description": "Generated code for loss computation"
+    }
+  ],
+  "settingsFields": [
+    {
+      "key": "lossVarName",
+      "label": "Variable name",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "criterion",
+      "required": true,
+      "description": "Name of the variable to assign when emit is enabled"
+    },
+    {
+      "key": "emitLossVar",
+      "label": "Emit variable name",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": true,
+      "required": true,
+      "description": "Controls emission of the loss function variable"
+    },
+    {
+      "key": "weight_input",
+      "label": "Weight Input Variable",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "",
+      "required": false,
+      "description": "Variable name for class weights (e.g., 'class_weights'). Leave empty for None"
+    },
+    {
+      "key": "ignore_index",
+      "label": "Ignore Index",
+      "type": "input-number",
+      "dataType": "number",
+      "defaultValue": -100,
+      "required": false,
+      "description": "Specifies a target value that is ignored and does not contribute to the input gradient"
+    },
+    {
+      "key": "reduction",
+      "label": "Reduction",
+      "type": "dropdown",
+      "dataType": "string",
+      "defaultValue": "mean",
+      "required": false,
+      "description": "Specifies the reduction to apply to the output",
+      "options": [
+        {
+          "value": "none",
+          "label": "none"
+        },
+        {
+          "value": "mean",
+          "label": "mean"
+        },
+        {
+          "value": "sum",
+          "label": "sum"
+        }
+      ]
+    },
+    {
+      "key": "label_smoothing",
+      "label": "Label Smoothing",
+      "type": "input-number",
+      "dataType": "number",
+      "defaultValue": 0,
+      "required": false,
+      "description": "A float in [0.0, 1.0]. Specifies the amount of smoothing when computing the loss",
+      "validation": {
+        "min": 0,
+        "max": 1
+      }
+    }
+  ],
+  "settingsGroups": [],
+  "capabilities": [
+    "code-generation"
+  ],
+  "requirements": {
+    "minSdkVersion": "1.0.0",
+    "dependencies": [
+      "torch"
+    ],
+    "pythonPackages": [
+      "torch"
+    ]
+  },
+  "emits": {
+    "variables": [
+      {
+        "value": "criterion",
+        "switchKey": "settingsFields.emitLossVar",
+        "isOnByDefault": true,
+        "type": "loss_function"
+      }
+    ],
+    "imports": [
+      {
+        "path": "torch.nn",
+        "items": [
+          "CrossEntropyLoss"
+        ]
+      }
+    ]
+  }
+}

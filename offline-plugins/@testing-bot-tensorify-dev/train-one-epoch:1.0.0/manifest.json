@@ -1,0 +1,203 @@
+{
+  "name": "@tensorify/train-one-epoch",
+  "version": "1.0.0",
+  "description": "Training one epoch function plugin",
+  "author": "",
+  "main": "src/index.ts",
+  "entrypointClassName": "TrainOneEpochPlugin",
+  "keywords": [
+    "tensorify",
+    "plugin",
+    "ml",
+    "machine-learning",
+    "neural-network"
+  ],
+  "pluginType": "function",
+  "scripts": {
+    "build": "npx tsc"
+  },
+  "tensorifySettings": {
+    "sdkVersion": "0.0.62"
+  },
+  "metadata": {
+    "repository": "https://github.com/tensorify/train-one-epoch",
+    "license": "ISC"
+  },
+  "visual": {
+    "containerType": "default",
+    "size": {
+      "width": 350,
+      "height": 280
+    },
+    "padding": {
+      "inner": 16,
+      "outer": 8,
+      "extraPadding": false
+    },
+    "styling": {
+      "borderRadius": 8,
+      "borderWidth": 2,
+      "shadowLevel": 1,
+      "theme": "auto"
+    },
+    "icons": {
+      "primary": {
+        "type": "lucide",
+        "value": "play-circle"
+      },
+      "secondary": [],
+      "showIconBackground": true,
+      "iconSize": "medium"
+    },
+    "labels": {
+      "title": "Train One Epoch",
+      "dynamicLabelTemplate": "fn: {function_name}",
+      "showLabels": true,
+      "labelPosition": "top"
+    }
+  },
+  "inputHandles": [
+    {
+      "id": "prev",
+      "position": "left",
+      "viewType": "default",
+      "required": true,
+      "label": "Prev",
+      "edgeType": "default",
+      "dataType": "any",
+      "description": "Previous node output"
+    },
+    {
+      "id": "predict_code_input",
+      "position": "left",
+      "viewType": "default",
+      "required": false,
+      "label": "Predict Code",
+      "edgeType": "default",
+      "dataType": "custom",
+      "description": "Code provider for prediction logic"
+    },
+    {
+      "id": "loss_code_input",
+      "position": "left",
+      "viewType": "default",
+      "required": false,
+      "label": "Loss Code",
+      "edgeType": "default",
+      "dataType": "custom",
+      "description": "Code provider for loss computation logic"
+    },
+    {
+      "id": "report_code_input",
+      "position": "left",
+      "viewType": "default",
+      "required": false,
+      "label": "Report Code",
+      "edgeType": "default",
+      "dataType": "custom",
+      "description": "Code provider for reporting logic"
+    }
+  ],
+  "outputHandles": [
+    {
+      "id": "next",
+      "position": "right",
+      "viewType": "default",
+      "label": "Next",
+      "edgeType": "default",
+      "dataType": "any",
+      "description": "Flow to next node"
+    }
+  ],
+  "settingsFields": [
+    {
+      "key": "function_name",
+      "label": "Function Name",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "train_one_epoch",
+      "required": true,
+      "description": "Name of the training function"
+    },
+    {
+      "key": "destructure_variables",
+      "label": "Destructure Variables",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "images, labels",
+      "required": true,
+      "description": "Comma-separated variables to destructure from dataloader (e.g., 'images, labels' or 'X, y')"
+    },
+    {
+      "key": "device_variable",
+      "label": "Device Variable",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "",
+      "required": false,
+      "description": "Device variable for tensor movement (e.g., 'device'). Leave empty to skip device movement"
+    },
+    {
+      "key": "report_condition",
+      "label": "Report Condition",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "batch_no % 100 == 99",
+      "required": false,
+      "description": "Condition for when to report progress (e.g., 'batch_no % 100 == 99')"
+    },
+    {
+      "key": "enable_reporting",
+      "label": "Enable Reporting",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": true,
+      "required": false,
+      "description": "Whether to include progress reporting in the training loop"
+    },
+    {
+      "key": "return_variable",
+      "label": "Return Variable",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "last_loss",
+      "required": true,
+      "description": "Variable to return from the function"
+    },
+    {
+      "key": "predict_output_var",
+      "label": "Prediction Output Variable",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "outputs",
+      "required": true,
+      "description": "Variable name for model prediction output"
+    },
+    {
+      "key": "loss_output_var",
+      "label": "Loss Output Variable",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "loss",
+      "required": true,
+      "description": "Variable name for loss computation output"
+    }
+  ],
+  "settingsGroups": [],
+  "capabilities": [
+    "code-generation"
+  ],
+  "requirements": {
+    "minSdkVersion": "1.0.0",
+    "dependencies": [
+      "torch"
+    ],
+    "pythonPackages": [
+      "torch"
+    ]
+  },
+  "emits": {
+    "variables": [],
+    "imports": []
+  }
+}

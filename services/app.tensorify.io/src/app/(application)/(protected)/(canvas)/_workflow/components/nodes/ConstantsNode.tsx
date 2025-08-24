@@ -30,6 +30,7 @@ export interface ConstantVariable {
 }
 
 export interface ConstantsNodeData {
+  nodeMode?: NodeMode;
   constants?: ConstantVariable[];
   emitsConfig?: {
     variables?: Array<{

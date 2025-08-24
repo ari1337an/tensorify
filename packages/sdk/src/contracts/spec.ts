@@ -66,6 +66,7 @@ export const HandleDataTypeEnum = z.enum([
   "boolean",
   "object",
   "array",
+  "code",
   // Node types for variable provider validation
   "dataset",
   "dataloader",

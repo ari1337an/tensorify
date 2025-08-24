@@ -117,6 +117,7 @@ export type HandleDataType =
   | "boolean"
   | "object"
   | "array"
+  | "code"
   // Node types for variable provider validation (supporting both strings and enum values)
   | NodeType
   | "dataset"

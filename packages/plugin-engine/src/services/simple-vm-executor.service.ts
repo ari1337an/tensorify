@@ -411,22 +411,28 @@ export class SimpleVMExecutorService implements IExecutorService {
                  try {
                    instance = new exported.default();
                    if (instance && typeof instance.getTranslationCode === 'function') {
-                     fn = function(payload) {
-                       return instance.getTranslationCode(payload);
-                     };
+                                        fn = function(payload) {
+                     var childrenArg = (payload && payload.children) ? payload.children : undefined;
+                     var contextArg = (payload && payload.context) ? payload.context : undefined;
+                     return instance.getTranslationCode(payload, childrenArg, contextArg);
+                   };
                    }
                  } catch (e) {
                    // Constructor failed, check if it has static methods
                    if (typeof exported.default.getTranslationCode === 'function') {
                      fn = function(payload) {
-                       return exported.default.getTranslationCode(payload);
+                       var childrenArg = (payload && payload.children) ? payload.children : undefined;
+                       var contextArg = (payload && payload.context) ? payload.context : undefined;
+                       return exported.default.getTranslationCode(payload, childrenArg, contextArg);
                      };
                    }
                  }
                } else if (exported.default && typeof exported.default.getTranslationCode === 'function') {
                  // Default is already an instance
                  fn = function(payload) {
-                   return exported.default.getTranslationCode(payload);
+                   var childrenArg = (payload && payload.children) ? payload.children : undefined;
+                   var contextArg = (payload && payload.context) ? payload.context : undefined;
+                   return exported.default.getTranslationCode(payload, childrenArg, contextArg);
                  };
                }
              }
@@ -436,7 +442,9 @@ export class SimpleVMExecutorService implements IExecutorService {
                  var obj = exported[key];
                  if (obj && typeof obj === 'object' && typeof obj.getTranslationCode === 'function') {
                    fn = function(payload) {
-                     return obj.getTranslationCode(payload);
+                     var childrenArg = (payload && payload.children) ? payload.children : undefined;
+                     var contextArg = (payload && payload.context) ? payload.context : undefined;
+                     return obj.getTranslationCode(payload, childrenArg, contextArg);
                    };
                    break;
                  } else if (typeof obj === 'function') {
@@ -444,7 +452,9 @@ export class SimpleVMExecutorService implements IExecutorService {
                      var inst = new obj();
                      if (inst && typeof inst.getTranslationCode === 'function') {
                        fn = function(payload) {
-                         return inst.getTranslationCode(payload);
+                         var childrenArg = (payload && payload.children) ? payload.children : undefined;
+                         var contextArg = (payload && payload.context) ? payload.context : undefined;
+                         return inst.getTranslationCode(payload, childrenArg, contextArg);
                        };
                        break;
                      }

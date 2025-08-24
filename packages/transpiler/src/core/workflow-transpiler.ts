@@ -950,6 +950,138 @@ function getAutoMethodsForBaseClass(
 }
 
 /**
+ * Resolve variable name from source node based on source handle
+ */
+function resolveVariableNameFromSource(
+  sourceNode: WorkflowNode,
+  sourceHandle: string
+): string {
+  const pluginSettings = (sourceNode.data as any)?.pluginSettings || {};
+
+  // Map common source handles to their corresponding variable name settings
+  const handleToVariableMap: Record<string, string[]> = {
+    // Dataset handles
+    mnist_dataset: ["datasetVarName", "variableName"],
+    cifar10_dataset: ["datasetVarName", "variableName"],
+    dataset_out: ["datasetVarName", "variableName"],
+    dataset: ["datasetVarName", "variableName"],
+
+    // DataLoader handles
+    dataloader_out: ["dataloaderVarName", "variableName"],
+    dataloader: ["dataloaderVarName", "variableName"],
+
+    // Model/Loss/Optimizer handles
+    model_out: ["modelVarName", "variableName"],
+    model: ["modelVarName", "variableName"],
+    loss_out: ["lossVarName", "variableName"],
+    loss: ["lossVarName", "variableName"],
+    optimizer_out: ["optimizerVarName", "variableName"],
+    optimizer: ["optimizerVarName", "variableName"],
+
+    // Generic handles
+    output: ["variableName"],
+    out: ["variableName"],
+    result: ["variableName"],
+  };
+
+  // Try to find the variable name based on the source handle
+  const possibleKeys = handleToVariableMap[sourceHandle] || ["variableName"];
+
+  for (const key of possibleKeys) {
+    if (pluginSettings[key]) {
+      return pluginSettings[key];
+    }
+  }
+
+  // Fallback to checking node data directly
+  const nodeVariableName = (sourceNode.data as any)?.variableName;
+  if (nodeVariableName) {
+    return nodeVariableName;
+  }
+
+  // Final fallback to node ID
+  return `node_${sourceNode.id}`;
+}
+
+/**
+ * Helper function to resolve variable references in plugin settings
+ */
+function resolveVariableReferences(
+  settings: Record<string, any>,
+  nodes: WorkflowNode[]
+): Record<string, any> {
+  const resolvedSettings: Record<string, any> = {};
+  
+  // Create a map of variable names to their values
+  const variableMap: Record<string, any> = {};
+  
+  // Collect variables from ConstantsNode
+  nodes.forEach(node => {
+    if (node.type === CodeGeneratingNodeType.ConstantsNode) {
+      const constantsData = node.data as any;
+      const constants = constantsData?.constants || [];
+      
+      constants
+        .filter((constant: any) => constant.isEnabled && constant.name.trim() !== "")
+        .forEach((constant: any) => {
+          let value: any = constant.value;
+          
+          // Convert value based on type
+          switch (constant.type) {
+            case "integer":
+              value = parseInt(constant.value, 10);
+              if (isNaN(value)) value = constant.value; // fallback to string
+              break;
+            case "double":
+              value = parseFloat(constant.value);
+              if (isNaN(value)) value = constant.value; // fallback to string
+              break;
+            case "boolean":
+              value = constant.value === "true" || constant.value === true;
+              break;
+            case "string":
+            default:
+              value = constant.value;
+              break;
+          }
+          
+          variableMap[constant.name] = value;
+        });
+    }
+    
+    // Collect variables from CustomCodeNode emits
+    if (node.type === CodeGeneratingNodeType.CustomCode) {
+      const customCodeData = node.data as any;
+      const emitsConfig = customCodeData?.emitsConfig || {};
+      const variables = emitsConfig?.variables || [];
+      
+      variables.forEach((variable: any) => {
+        if (variable.value && variable.value.trim() !== "") {
+          // For CustomCodeNode, we don't know the actual value, so we keep it as string reference
+          // This could be enhanced to parse the code and extract actual values
+          variableMap[variable.value] = variable.value;
+        }
+      });
+    }
+  });
+  
+  // Resolve variable references in settings
+  Object.keys(settings).forEach(key => {
+    const value = settings[key];
+    
+    if (typeof value === 'string' && variableMap.hasOwnProperty(value)) {
+      // This is a variable reference, resolve it
+      resolvedSettings[key] = variableMap[value];
+    } else {
+      // Keep the original value
+      resolvedSettings[key] = value;
+    }
+  });
+  
+  return resolvedSettings;
+}
+
+/**
  * Get plugin results for all plugin nodes in the paths
  */
 async function getPluginResults(
@@ -1186,14 +1318,108 @@ async function getPluginResults(
       const slug = (node.data as any)?.pluginId || node.type;
 
       // Get plugin settings from node data (pluginSettings field)
-      const baseSettings = (node.data as any)?.pluginSettings || {};
+      const rawSettings = (node.data as any)?.pluginSettings || {};
+
+      // Resolve variable references in settings
+      const baseSettings = resolveVariableReferences(rawSettings, nodes);
 
       // console.log({ baseSettings });
+
+      // Build input context for multi-handle workflow nodes
+      let context: any = undefined;
+      try {
+        const manifest = await engine.getPluginManifest(slug);
+        const inputHandles = manifest?.inputHandles || [];
+
+        if (inputHandles.length > 0) {
+          const inputData: Record<number, any> = {};
+
+          // Process each input handle to build context
+          for (
+            let handleIndex = 0;
+            handleIndex < inputHandles.length;
+            handleIndex++
+          ) {
+            const handle = inputHandles[handleIndex];
+
+            // Find edges connected to this input handle
+            const connectedEdge = edges.find(
+              (edge) =>
+                edge.target === nodeId && edge.targetHandle === handle.id
+            );
+
+            if (connectedEdge) {
+              // Get the source node
+              const sourceNode = nodes.find(
+                (n) => n.id === connectedEdge.source
+              );
+
+              if (sourceNode) {
+                // Check if we have plugin results for the source node
+                if (results[connectedEdge.source]) {
+                  const sourceResult = results[connectedEdge.source];
+
+                  // Resolve variable name from source handle and plugin settings
+                  const resolvedVariableName = resolveVariableNameFromSource(
+                    sourceNode,
+                    connectedEdge.sourceHandle || "output"
+                  );
+
+                  inputData[handleIndex] = {
+                    code: sourceResult.code,
+                    variableName: resolvedVariableName,
+                    nodeId: connectedEdge.source,
+                    handleId: handle.id,
+                    sourceHandle: connectedEdge.sourceHandle,
+                  };
+                } else {
+                  // Handle cases where source node hasn't been processed yet
+                  // This could be a variable provider or other node type
+
+                  // Resolve variable name from source handle and plugin settings
+                  const resolvedVariableName = resolveVariableNameFromSource(
+                    sourceNode,
+                    connectedEdge.sourceHandle || "output"
+                  );
+
+                  inputData[handleIndex] = {
+                    code: `# Source node ${connectedEdge.source} not processed`,
+                    variableName: resolvedVariableName,
+                    nodeId: connectedEdge.source,
+                    handleId: handle.id,
+                    sourceHandle: connectedEdge.sourceHandle,
+                  };
+                }
+              }
+            }
+            // If no connection, inputData[handleIndex] remains undefined (null)
+          }
+
+          // Create context if we have any input data
+          if (Object.keys(inputData).length > 0) {
+            context = {
+              workflowId: "current-workflow", // TODO: Get actual workflow ID
+              nodeId: nodeId,
+              inputData: inputData,
+              globalContext: {},
+              executionMetadata: {
+                timestamp: Date.now(),
+                userId: "system", // TODO: Get actual user ID
+                environmentType: "development" as const,
+              },
+            };
+          }
+        }
+      } catch (error) {
+        // If manifest fetching fails, continue without context
+        console.warn(`Failed to fetch manifest for ${slug}:`, error);
+      }
 
       // Include the label in the plugin settings and pass children code if defined (for sequence-like plugins)
       const payload: any = {
         ...baseSettings,
         labelName: (node.data as any)?.label, // Some plugins might expect labelName
+        context: context, // Add context to payload if available
       };
 
       // If node carries sequence items in data.sequenceItems, execute them first and pass their code + settings

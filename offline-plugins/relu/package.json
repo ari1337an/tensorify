@@ -31,11 +31,11 @@
     "url": "https://github.com/tensorify/relu"
   },
   "tensorify-settings": {
-    "sdk-version": "0.0.60",
+    "sdk-version": "0.0.62",
     "entrypointClassName": "ReluPlugin",
     "pluginType": "MODEL_LAYER"
   },
   "dependencies": {
-    "@tensorify.io/sdk": "0.0.60"
+    "@tensorify.io/sdk": "0.0.62"
   }
 }

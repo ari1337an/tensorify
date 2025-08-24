@@ -1,0 +1,166 @@
+{
+  "name": "@tensorify/mnist",
+  "version": "1.0.0",
+  "description": "MNIST dataset plugin",
+  "author": "",
+  "main": "src/index.ts",
+  "entrypointClassName": "MnistPlugin",
+  "keywords": [
+    "tensorify",
+    "plugin",
+    "ml",
+    "machine-learning",
+    "neural-network"
+  ],
+  "pluginType": "dataset",
+  "scripts": {
+    "build": "npx tsc"
+  },
+  "tensorifySettings": {
+    "sdkVersion": "0.0.62"
+  },
+  "metadata": {
+    "repository": "https://github.com/tensorify/mnist",
+    "license": "ISC"
+  },
+  "visual": {
+    "containerType": "default",
+    "size": {
+      "width": 260,
+      "height": 160
+    },
+    "padding": {
+      "inner": 16,
+      "outer": 8,
+      "extraPadding": false
+    },
+    "styling": {
+      "borderRadius": 8,
+      "borderWidth": 2,
+      "shadowLevel": 1,
+      "theme": "auto"
+    },
+    "icons": {
+      "primary": {
+        "type": "lucide",
+        "value": "folder-open"
+      },
+      "secondary": [],
+      "showIconBackground": true,
+      "iconSize": "medium"
+    },
+    "labels": {
+      "title": "MNIST Dataset",
+      "dynamicLabelTemplate": "{train ? 'Train' : 'Test'} • {download ? 'Download' : 'Local'}",
+      "showLabels": true,
+      "labelPosition": "top"
+    }
+  },
+  "inputHandles": [],
+  "outputHandles": [
+    {
+      "id": "mnist_dataset",
+      "position": "right",
+      "viewType": "default",
+      "label": "Dataset",
+      "edgeType": "default",
+      "dataType": "dataset",
+      "description": "MNIST dataset output"
+    }
+  ],
+  "settingsFields": [
+    {
+      "key": "datasetVarName",
+      "label": "Variable name",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "mnist_dataset",
+      "required": true,
+      "description": "Name of the variable to assign when emit is enabled"
+    },
+    {
+      "key": "emitDatasetVar",
+      "label": "Emit variable name",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": true,
+      "required": true,
+      "description": "Controls emission of the dataset variable"
+    },
+    {
+      "key": "root",
+      "label": "Root Directory",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "./data",
+      "required": true,
+      "description": "Root directory where dataset will be stored/loaded from"
+    },
+    {
+      "key": "train",
+      "label": "Training Set",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": true,
+      "required": false,
+      "description": "If True, creates dataset from training set, otherwise from test set"
+    },
+    {
+      "key": "download",
+      "label": "Download",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": true,
+      "required": false,
+      "description": "If True, downloads the dataset from internet if not already present"
+    },
+    {
+      "key": "transform_input",
+      "label": "Transform Input Variable",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "transform",
+      "required": false,
+      "description": "Variable name for transform (e.g., 'transform'). Leave empty for None"
+    },
+    {
+      "key": "target_transform_input",
+      "label": "Target Transform Input Variable",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "",
+      "required": false,
+      "description": "Variable name for target transform. Leave empty for None"
+    }
+  ],
+  "settingsGroups": [],
+  "capabilities": [
+    "code-generation"
+  ],
+  "requirements": {
+    "minSdkVersion": "1.0.0",
+    "dependencies": [
+      "torch",
+      "torchvision"
+    ],
+    "pythonPackages": [
+      "torch",
+      "torchvision"
+    ]
+  },
+  "emits": {
+    "variables": [
+      {
+        "value": "mnist_dataset",
+        "switchKey": "settingsFields.emitDatasetVar",
+        "isOnByDefault": true,
+        "type": "dataset"
+      }
+    ],
+    "imports": [
+      {
+        "path": "torchvision"
+      }
+    ]
+  }
+}

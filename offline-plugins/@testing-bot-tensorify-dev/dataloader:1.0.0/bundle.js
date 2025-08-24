@@ -1505,18 +1505,7 @@ print(\${variableName})\`;
             description: "Dataset to load from"
           }
         ],
-        outputHandles: [
-          import_sdk.NextNodeAsOutput,
-          {
-            id: "dataloader_out",
-            position: import_sdk.HandlePosition.RIGHT,
-            viewType: import_sdk.HandleViewType.DEFAULT,
-            label: "DataLoader",
-            edgeType: import_sdk.EdgeType.DEFAULT,
-            dataType: import_sdk.NodeType.DATALOADER,
-            description: "DataLoader output for use by other components"
-          }
-        ],
+        outputHandles: [import_sdk.NextNodeAsOutput],
         // Settings Configuration
         settingsFields: [
           {

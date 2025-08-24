@@ -141,7 +141,7 @@ const defaultNodes: NodeItem[] = [
     id: "trainer",
     draggable: false,
     Icon: ChartNetwork,
-    title: "Trainers",
+    title: "Trainer",
     description:
       "Master the art of training your models with state-of-the-art trainers. Whether you need reinforcement learning or standard backpropagation, we've got you covered.",
     children: [],
@@ -194,6 +194,16 @@ const defaultNodes: NodeItem[] = [
     title: "Criterions",
     description:
       "Define how your model measures errors. Choose from a wide array of loss functions tailored for different use cases.",
+    children: [],
+  },
+  // LOSS_FUNCTION category
+  {
+    id: "loss_function",
+    draggable: false,
+    Icon: Radical,
+    title: "Loss Functions",
+    description:
+      "Implement specific loss functions for training neural networks. From CrossEntropy to MSE, define how your model calculates training loss.",
     children: [],
   },
   // METRIC category
@@ -265,6 +275,16 @@ const defaultNodes: NodeItem[] = [
     title: "Train One Epoch Functions",
     description:
       "Execute training operations for a single epoch with precision. Customize metrics and operations to optimize learning.",
+    children: [],
+  },
+  // FUNCTION category
+  {
+    id: "function",
+    draggable: false,
+    Icon: Wrench,
+    title: "Functions",
+    description:
+      "Create reusable utility functions for data processing, transformations, and custom operations. Build modular components for your workflows.",
     children: [],
   },
   // REPORT category

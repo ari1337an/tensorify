@@ -1,0 +1,196 @@
+{
+  "name": "@tensorify/multi-epoch-trainer",
+  "version": "1.0.0",
+  "description": "Multi-epoch training orchestrator plugin",
+  "author": "",
+  "main": "src/index.ts",
+  "entrypointClassName": "MultiEpochTrainerPlugin",
+  "keywords": [
+    "tensorify",
+    "plugin",
+    "ml",
+    "machine-learning",
+    "neural-network"
+  ],
+  "pluginType": "trainer",
+  "scripts": {
+    "build": "npx tsc"
+  },
+  "tensorifySettings": {
+    "sdkVersion": "0.0.62"
+  },
+  "metadata": {
+    "repository": "https://github.com/tensorify/multi-epoch-trainer",
+    "license": "ISC"
+  },
+  "visual": {
+    "containerType": "default",
+    "size": {
+      "width": 320,
+      "height": 240
+    },
+    "padding": {
+      "inner": 16,
+      "outer": 8,
+      "extraPadding": false
+    },
+    "styling": {
+      "borderRadius": 8,
+      "borderWidth": 2,
+      "shadowLevel": 1,
+      "theme": "auto"
+    },
+    "icons": {
+      "primary": {
+        "type": "lucide",
+        "value": "repeat"
+      },
+      "secondary": [],
+      "showIconBackground": true,
+      "iconSize": "medium"
+    },
+    "labels": {
+      "title": "Multi-Epoch Trainer",
+      "dynamicLabelTemplate": "{number_of_epochs} epochs",
+      "showLabels": true,
+      "labelPosition": "top"
+    }
+  },
+  "inputHandles": [
+    {
+      "id": "prev",
+      "position": "left",
+      "viewType": "default",
+      "required": true,
+      "label": "Prev",
+      "edgeType": "default",
+      "dataType": "any",
+      "description": "Previous node output"
+    },
+    {
+      "id": "additional_code_input",
+      "position": "left",
+      "viewType": "default",
+      "required": false,
+      "label": "Additional Code",
+      "edgeType": "default",
+      "dataType": "custom",
+      "description": "Code provider for additional processing between epochs"
+    }
+  ],
+  "outputHandles": [
+    {
+      "id": "next",
+      "position": "right",
+      "viewType": "default",
+      "label": "Next",
+      "edgeType": "default",
+      "dataType": "any",
+      "description": "Flow to next node"
+    }
+  ],
+  "settingsFields": [
+    {
+      "key": "number_of_epochs",
+      "label": "Number of Epochs",
+      "type": "input-number",
+      "dataType": "number",
+      "defaultValue": 10,
+      "required": true,
+      "description": "Number of training epochs",
+      "validation": {
+        "min": 1,
+        "max": 1000
+      }
+    },
+    {
+      "key": "model_variable",
+      "label": "Model Variable",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "model",
+      "required": true,
+      "description": "Variable name for the model"
+    },
+    {
+      "key": "optimizer_variable",
+      "label": "Optimizer Variable",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "optimizer",
+      "required": true,
+      "description": "Variable name for the optimizer"
+    },
+    {
+      "key": "dataloader_variable",
+      "label": "DataLoader Variable",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "train_loader",
+      "required": true,
+      "description": "Variable name for the training data loader"
+    },
+    {
+      "key": "loss_function_variable",
+      "label": "Loss Function Variable",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "criterion",
+      "required": true,
+      "description": "Variable name for the loss function"
+    },
+    {
+      "key": "train_function_name",
+      "label": "Train Function Name",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "train_one_epoch",
+      "required": true,
+      "description": "Name of the single epoch training function"
+    },
+    {
+      "key": "avg_loss_variable",
+      "label": "Average Loss Variable",
+      "type": "input-text",
+      "dataType": "string",
+      "defaultValue": "avg_loss",
+      "required": true,
+      "description": "Variable name for storing average loss per epoch"
+    },
+    {
+      "key": "enable_train_mode",
+      "label": "Enable Train Mode",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": true,
+      "required": false,
+      "description": "Whether to call model.train(True) before each epoch"
+    },
+    {
+      "key": "print_epoch_loss",
+      "label": "Print Epoch Loss",
+      "type": "toggle",
+      "dataType": "boolean",
+      "defaultValue": true,
+      "required": false,
+      "description": "Whether to print the average loss after each epoch"
+    }
+  ],
+  "settingsGroups": [],
+  "capabilities": [
+    "code-generation"
+  ],
+  "requirements": {
+    "minSdkVersion": "1.0.0",
+    "dependencies": [
+      "torch"
+    ],
+    "pythonPackages": [
+      "torch"
+    ]
+  },
+  "emits": {
+    "variables": [],
+    "imports": []
+  }
+}

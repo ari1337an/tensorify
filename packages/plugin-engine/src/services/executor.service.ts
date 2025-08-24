@@ -362,7 +362,8 @@ export class IsolatedVMExecutorService implements IExecutorService {
           }
           
           var childrenArg = (payload && payload.children) ? payload.children : undefined;
-          var result = pluginInstance.getTranslationCode(payload, childrenArg);
+          var contextArg = (payload && payload.context) ? payload.context : undefined;
+          var result = pluginInstance.getTranslationCode(payload, childrenArg, contextArg);
           return String(result);
           
         } catch (error) {

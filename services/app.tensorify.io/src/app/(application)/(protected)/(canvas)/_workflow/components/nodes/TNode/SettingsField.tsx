@@ -5,6 +5,7 @@ import { Textarea } from "@/app/_components/ui/textarea";
 import { Switch } from "@/app/_components/ui/switch";
 import { Checkbox } from "@/app/_components/ui/checkbox";
 import { Badge } from "@/app/_components/ui/badge";
+import { Button } from "@/app/_components/ui/button";
 import {
   Select,
   SelectContent,
@@ -12,11 +13,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/_components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/app/_components/ui/dropdown-menu";
 import { Slider } from "@/app/_components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/app/_components/ui/radio-group";
-import { AlertCircleIcon, InfoIcon } from "lucide-react";
+import { AlertCircleIcon, InfoIcon, Variable, ChevronDown } from "lucide-react";
 import { cn } from "@/app/_lib/utils";
 import type { SettingsFieldSchema as _SF } from "@tensorify.io/sdk/contracts";
+import { useUIEngine } from "@workflow/engine";
 export type SettingsFieldType = import("zod").infer<typeof _SF>;
 
 interface SettingsFieldProps {
@@ -24,6 +34,7 @@ interface SettingsFieldProps {
   value: any;
   onChange: (value: any) => void;
   allSettings: Record<string, any>;
+  nodeId: string;
 }
 
 export function SettingsField({
@@ -31,10 +42,24 @@ export function SettingsField({
   value,
   onChange,
   allSettings,
+  nodeId,
 }: SettingsFieldProps) {
   const [validationError, setValidationError] = React.useState<string>("");
   const [localValue, setLocalValue] = React.useState<any>(value);
   const debounceTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  // Get available variables from UIEngine
+  const engine = useUIEngine();
+  const availableVariables = React.useMemo(() => {
+    const variableDetails =
+      engine.availableVariableDetailsByNodeId[nodeId] || [];
+    return variableDetails.map((detail) => ({
+      name: detail.name,
+      type: detail.pluginType,
+      sourceNodeType: detail.sourceNodeType,
+      sourceNodeId: detail.sourceNodeId,
+    }));
+  }, [engine.availableVariableDetailsByNodeId, nodeId]);
 
   // Get the current value, falling back to default
   const currentValue = value !== undefined ? value : field.defaultValue;
@@ -222,17 +247,114 @@ export function SettingsField({
   // Don't render if conditionally hidden
   if (!shouldShow) return null;
 
+  // Variable Dropdown Component
+  // Check if the current value is a variable reference
+  const isVariableReference = React.useMemo(() => {
+    if (!currentValue || typeof currentValue !== 'string') return false;
+    return availableVariables.some(variable => variable.name === currentValue);
+  }, [currentValue, availableVariables]);
+
+  // Get variable details if current value is a variable reference
+  const referencedVariable = React.useMemo(() => {
+    if (!isVariableReference) return null;
+    return availableVariables.find(variable => variable.name === currentValue) || null;
+  }, [isVariableReference, currentValue, availableVariables]);
+
+  const VariableDropdown = () => {
+    if (availableVariables.length === 0) return null;
+
+    // Group variables by type for better organization
+    const variablesByType = availableVariables.reduce(
+      (acc, variable) => {
+        const type = variable.type || "unknown";
+        if (!acc[type]) acc[type] = [];
+        acc[type].push(variable);
+        return acc;
+      },
+      {} as Record<string, typeof availableVariables>
+    );
+
+    const handleVariableSelect = (variableName: string) => {
+      handleChange(variableName);
+    };
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="ml-2 h-9 px-2"
+            title="Select an upstream variable"
+          >
+            <Variable className="w-4 h-4 mr-1" />
+            <ChevronDown className="w-3 h-3" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-64">
+          <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
+            Available Variables ({availableVariables.length})
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+
+          {Object.entries(variablesByType).map(([type, variables]) => (
+            <div key={type}>
+              <DropdownMenuLabel className="text-xs text-muted-foreground capitalize">
+                {type.replace("_", " ")}
+              </DropdownMenuLabel>
+              {variables.map((variable) => (
+                <DropdownMenuItem
+                  key={`${variable.sourceNodeId}-${variable.name}`}
+                  onClick={() => handleVariableSelect(variable.name)}
+                  className="flex flex-col items-start py-2"
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <span className="font-medium text-sm">{variable.name}</span>
+                    <Badge variant="secondary" className="text-xs">
+                      {variable.type}
+                    </Badge>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    from{" "}
+                    {variable.sourceNodeType.replace("@tensorify/core/", "")}
+                  </span>
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+            </div>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
+
   const renderField = () => {
     switch (field.type) {
       case "input-text":
         return (
-          <Input
-            type="text"
-            value={localValue || ""}
-            onChange={(e) => handleChange(e.target.value)}
-            placeholder={field.placeholder}
-            className={cn(validationError && "border-destructive")}
-          />
+          <div className="flex items-center">
+            <div className="relative flex-1">
+              <Input
+                type="text"
+                value={localValue || ""}
+                onChange={(e) => handleChange(e.target.value)}
+                placeholder={field.placeholder}
+                className={cn(
+                  validationError && "border-destructive",
+                  isVariableReference && "border-blue-500 bg-blue-50/50 pr-8"
+                )}
+              />
+              {isVariableReference && (
+                <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                  <Badge variant="secondary" className="text-xs py-0 px-1">
+                    <Variable className="w-3 h-3 mr-1" />
+                    {referencedVariable?.type}
+                  </Badge>
+                </div>
+              )}
+            </div>
+            <VariableDropdown />
+          </div>
         );
 
       case "textarea":
@@ -250,32 +372,52 @@ export function SettingsField({
 
       case "input-number":
         return (
-          <Input
-            type="number"
-            value={
-              localValue !== undefined && localValue !== null ? localValue : ""
-            }
-            onChange={(e) => {
-              const val = e.target.value === "" ? "" : e.target.value;
-              handleChange(val);
-            }}
-            onBlur={(e) => {
-              // On blur, convert to number if valid
-              const stringVal = e.target.value;
-              if (stringVal === "") {
-                handleChange(undefined);
-              } else {
-                const numVal = Number(stringVal);
-                if (!isNaN(numVal)) {
-                  handleChange(numVal);
+          <div className="flex items-center">
+            <div className="relative flex-1">
+              <Input
+                type={isVariableReference ? "text" : "number"}
+                value={
+                  localValue !== undefined && localValue !== null
+                    ? localValue
+                    : ""
                 }
-              }
-            }}
-            placeholder={field.placeholder}
-            min={field.validation?.min}
-            max={field.validation?.max}
-            className={cn(validationError && "border-destructive")}
-          />
+                onChange={(e) => {
+                  const val = e.target.value === "" ? "" : e.target.value;
+                  handleChange(val);
+                }}
+                onBlur={(e) => {
+                  // On blur, convert to number if valid (only if not a variable reference)
+                  if (!isVariableReference) {
+                    const stringVal = e.target.value;
+                    if (stringVal === "") {
+                      handleChange(undefined);
+                    } else {
+                      const numVal = Number(stringVal);
+                      if (!isNaN(numVal)) {
+                        handleChange(numVal);
+                      }
+                    }
+                  }
+                }}
+                placeholder={field.placeholder}
+                min={!isVariableReference ? field.validation?.min : undefined}
+                max={!isVariableReference ? field.validation?.max : undefined}
+                className={cn(
+                  validationError && "border-destructive",
+                  isVariableReference && "border-blue-500 bg-blue-50/50 pr-8"
+                )}
+              />
+              {isVariableReference && (
+                <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                  <Badge variant="secondary" className="text-xs py-0 px-1">
+                    <Variable className="w-3 h-3 mr-1" />
+                    {referencedVariable?.type}
+                  </Badge>
+                </div>
+              )}
+            </div>
+            <VariableDropdown />
+          </div>
         );
 
       case "slider":

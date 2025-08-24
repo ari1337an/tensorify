@@ -75,18 +75,7 @@ export default class DataloaderPlugin extends TensorifyPlugin {
         },
       ],
 
-      outputHandles: [
-        NextNodeAsOutput,
-        {
-          id: "dataloader_out",
-          position: HandlePosition.RIGHT,
-          viewType: HandleViewType.DEFAULT,
-          label: "DataLoader",
-          edgeType: EdgeType.DEFAULT,
-          dataType: NodeType.DATALOADER,
-          description: "DataLoader output for use by other components",
-        },
-      ],
+      outputHandles: [NextNodeAsOutput],
 
       // Settings Configuration
       settingsFields: [

@@ -14,6 +14,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import "@workflow/style/flow.css";
+import "@workflow/style/proximity-connect.css";
 import { useTheme } from "next-themes";
 import { useCallback, useMemo, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
@@ -34,6 +35,7 @@ import {
   TooltipContent,
 } from "@/app/_components/ui/tooltip";
 import { useNodeValidation } from "@workflow/hooks/useNodeValidation";
+import { useProximityConnect } from "@workflow/hooks/useProximityConnect";
 
 // Store and Context
 import useWorkflowStore, {
@@ -58,6 +60,7 @@ import MissingPluginNode from "@workflow/components/nodes/MissingPluginNode";
 import LoadingPluginNode from "@workflow/components/nodes/LoadingPluginNode";
 import GlobalNodeSettingsDialog from "@workflow/components/GlobalNodeSettingsDialog";
 import CustomEdge from "@workflow/components/CustomEdge";
+import { ProximityConnectIndicator } from "@workflow/components/ProximityConnectIndicator";
 import defaultNodes from "@workflow/data/defaultNodes";
 
 // ID generator for nodes using crypto.randomUUID for better uniqueness
@@ -113,18 +116,77 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
     onDropSuccess,
   } = useDragDrop();
 
+  // Proximity connect functionality
+  const {
+    getClosestNode,
+    createProximityConnection,
+    addTemporaryEdge,
+    removeTemporaryEdges,
+    finalizeConnection,
+    updateProximityState,
+    proximityState,
+    MIN_DISTANCE,
+  } = useProximityConnect();
+
   // Get drag state management from store
   const setCurrentlyDraggedNodeId = useWorkflowStore(
     (state) => state.setCurrentlyDraggedNodeId
   );
 
   // Handle when node dragging starts
-  const handleNodeDragStart: OnNodeDrag = useCallback((event, node) => {
-    setCurrentlyDraggedNodeId(node.id);
-    console.log(`🎯 Started dragging node: ${node.id}`);
-  }, []);
+  const handleNodeDragStart: OnNodeDrag = useCallback(
+    (event, node) => {
+      setCurrentlyDraggedNodeId(node.id);
+      console.log(`🎯 Started dragging node: ${node.id}`);
+      // Remove any existing temporary edges when starting a new drag
+      removeTemporaryEdges();
+    },
+    [removeTemporaryEdges]
+  );
 
-  // Handle when a node is dropped (drag ends) - check if it overlaps with sequence nodes
+  // Handle proximity detection during dragging
+  const handleNodeDrag: OnNodeDrag = useCallback(
+    (event, draggedNode) => {
+      console.log("🎯 handleNodeDrag called for node:", draggedNode.id);
+      const workflowNode = draggedNode as WorkflowNode;
+
+      // Find the closest node within proximity threshold
+      const closestNode = getClosestNode(workflowNode);
+      console.log("🎯 closestNode found:", closestNode?.id || "none");
+
+      if (closestNode) {
+        // Create a proximity connection
+        const proximityConnection = createProximityConnection(
+          workflowNode,
+          closestNode
+        );
+
+        if (proximityConnection) {
+          // Show temporary edge to indicate potential connection
+          addTemporaryEdge(proximityConnection, workflowNode, closestNode);
+          updateProximityState(workflowNode, closestNode, true);
+          console.log(
+            `🔗 Proximity detected between ${workflowNode.id} and ${closestNode.id} (distance < ${MIN_DISTANCE}px)`
+          );
+        } else {
+          updateProximityState(workflowNode, closestNode, false);
+        }
+      } else {
+        // No close nodes found, remove temporary edges
+        removeTemporaryEdges();
+      }
+    },
+    [
+      getClosestNode,
+      createProximityConnection,
+      addTemporaryEdge,
+      removeTemporaryEdges,
+      updateProximityState,
+      MIN_DISTANCE,
+    ]
+  );
+
+  // Handle when a node is dropped (drag ends) - check proximity connections and sequence overlaps
   const handleNodeDragStop: OnNodeDrag = useCallback(
     (event, draggedNode) => {
       // Clean up drag state first
@@ -136,6 +198,36 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
         `🎯 Node type: ${draggedNode.type}, position:`,
         draggedNode.position
       );
+
+      // Handle proximity connections first
+      const workflowNode = draggedNode as WorkflowNode;
+      const closestNode = getClosestNode(workflowNode);
+
+      if (closestNode) {
+        const proximityConnection = createProximityConnection(
+          workflowNode,
+          closestNode
+        );
+
+        if (proximityConnection) {
+          const connectionCreated = finalizeConnection(proximityConnection);
+          if (connectionCreated) {
+            console.log(
+              `✅ Proximity connection created between ${workflowNode.id} and ${closestNode.id}`
+            );
+            // Show success toast for premium user experience
+            toast.success(
+              `Connected ${workflowNode.data?.label || workflowNode.id} to ${closestNode.data?.label || closestNode.id}`
+            );
+          }
+        }
+      } else {
+        // No proximity connection, just remove temporary edges
+        removeTemporaryEdges();
+      }
+
+      // Clear proximity state after drag ends
+      updateProximityState(null, null, false);
 
       // Get all nodes first
       const allNodes = useWorkflowStore.getState().nodes;
@@ -341,7 +433,14 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
 
       console.log(`🎯 No sequence overlap found for node ${draggedNode.id}`);
     },
-    [pluginManifests]
+    [
+      pluginManifests,
+      getClosestNode,
+      createProximityConnection,
+      finalizeConnection,
+      removeTemporaryEdges,
+      updateProximityState,
+    ]
   );
 
   // Node types registry - general approach: nested vs all others
@@ -628,6 +727,7 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
           })}
           onNodesChange={onNodesChange as any}
           onNodeDragStart={handleNodeDragStart}
+          onNodeDrag={handleNodeDrag}
           onNodeDragStop={handleNodeDragStop}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
@@ -668,6 +768,14 @@ function WorkflowCanvas({ workflow }: { workflow: Workflow }) {
 
           {/* Validation Alerts */}
           <ValidationAlert />
+
+          {/* Proximity Connect Visual Feedback */}
+          <ProximityConnectIndicator
+            draggedNode={proximityState.draggedNode}
+            targetNode={proximityState.targetNode}
+            isActive={proximityState.isActive}
+            minDistance={MIN_DISTANCE}
+          />
 
           {/* Minimap */}
           <div

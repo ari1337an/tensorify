@@ -1396,6 +1396,7 @@ export function ClassNodeSettings({
                               onChange={(e) =>
                                 updateConstructorItem(index, {
                                   codeProvider: {
+                                    handlePosition: "bottom",
                                     ...item.codeProvider,
                                     handleLabel: e.target.value,
                                   },
@@ -1412,6 +1413,7 @@ export function ClassNodeSettings({
                               onValueChange={(value: "top" | "bottom") =>
                                 updateConstructorItem(index, {
                                   codeProvider: {
+                                    handleLabel: "",
                                     ...item.codeProvider,
                                     handlePosition: value,
                                   },

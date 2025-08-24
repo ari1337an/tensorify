@@ -37,8 +37,10 @@ export default function MissingPluginNode(props: MissingPluginNodeProps) {
     useStore();
 
   // Extract plugin info from slug or node data
-  const pluginSlug =
-    missingPluginSlug || data.pluginId || props.type || "unknown-plugin";
+  const pluginSlug = (missingPluginSlug ||
+    data.pluginId ||
+    props.type ||
+    "unknown-plugin") as string;
   const pluginName = pluginSlug.includes("/")
     ? pluginSlug.split("/").pop()?.split(":")[0] || pluginSlug
     : pluginSlug;

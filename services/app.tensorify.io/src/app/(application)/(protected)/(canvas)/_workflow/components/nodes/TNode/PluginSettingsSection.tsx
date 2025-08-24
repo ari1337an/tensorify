@@ -141,6 +141,7 @@ export function PluginSettingsSection({
         value={pluginSettings[field.key]}
         onChange={(value) => onSettingsChange(field.key, value)}
         allSettings={pluginSettings}
+        nodeId={nodeId}
       />
     );
   };

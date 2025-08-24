@@ -22,6 +22,7 @@ import { Button } from "@/app/_components/ui/button";
 import { Input } from "@/app/_components/ui/input";
 import { Label } from "@/app/_components/ui/label";
 import { Separator } from "@/app/_components/ui/separator";
+import { Textarea } from "@/app/_components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -37,6 +38,8 @@ import {
   Trash2,
   Variable,
   Settings,
+  ClipboardIcon,
+  Wand2,
 } from "lucide-react";
 import { cn } from "@/app/_lib/utils";
 import useWorkflowStore, { NodeMode } from "../../../store/workflowStore";
@@ -68,6 +71,7 @@ export function ConstantsNodeSettings({
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(["node-mode", "constants-definition"])
   );
+  const [pasteInput, setPasteInput] = useState<string>("");
 
   // Debounced save
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -201,6 +205,115 @@ export function ConstantsNodeSettings({
         return parseFloat(value).toString();
       default:
         return value;
+    }
+  };
+
+  // Auto-detect type based on value
+  const detectType = (value: string): ConstantVariable["type"] => {
+    const trimmedValue = value.trim();
+
+    // Check if it's an integer
+    if (/^-?\d+$/.test(trimmedValue)) {
+      return "integer";
+    }
+
+    // Check if it's a float/double
+    if (
+      /^-?\d*\.\d+$/.test(trimmedValue) ||
+      /^-?\d+\.\d*$/.test(trimmedValue)
+    ) {
+      return "double";
+    }
+
+    // Check if it's a quoted string
+    if (
+      (trimmedValue.startsWith('"') && trimmedValue.endsWith('"')) ||
+      (trimmedValue.startsWith("'") && trimmedValue.endsWith("'"))
+    ) {
+      return "string";
+    }
+
+    // Default to string for everything else
+    return "string";
+  };
+
+  // Parse pasted constants from text
+  const parseConstants = (text: string): ConstantVariable[] => {
+    const lines = text.split("\n").filter((line) => line.trim() !== "");
+    const parsedConstants: ConstantVariable[] = [];
+
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+
+      // Skip empty lines and comments
+      if (
+        !trimmedLine ||
+        trimmedLine.startsWith("#") ||
+        trimmedLine.startsWith("//")
+      ) {
+        continue;
+      }
+
+      // Match various assignment patterns:
+      // BATCH_SIZE = 64
+      // LR = 0.01
+      // MODEL_NAME = "resnet18"
+      // const EPOCHS = 3
+      // let learning_rate = 0.001
+      const assignmentRegex =
+        /^(?:const\s+|let\s+|var\s+)?([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)$/;
+      const match = trimmedLine.match(assignmentRegex);
+
+      if (match) {
+        const [, name, valueStr] = match;
+        let value = valueStr.trim();
+
+        // Remove trailing semicolon if present
+        if (value.endsWith(";")) {
+          value = value.slice(0, -1).trim();
+        }
+
+        // Remove quotes for string values to store the raw value
+        let cleanValue = value;
+        if (
+          (value.startsWith('"') && value.endsWith('"')) ||
+          (value.startsWith("'") && value.endsWith("'"))
+        ) {
+          cleanValue = value.slice(1, -1);
+        }
+
+        const detectedType = detectType(value);
+
+        parsedConstants.push({
+          name: name.trim(),
+          value: cleanValue,
+          type: detectedType,
+          isEnabled: true,
+        });
+      }
+    }
+
+    return parsedConstants;
+  };
+
+  // Handle paste and parse
+  const handlePasteAndParse = () => {
+    if (!pasteInput.trim()) return;
+
+    const parsedConstants = parseConstants(pasteInput);
+    if (parsedConstants.length > 0) {
+      // Merge with existing constants, avoiding duplicates
+      const existingNames = new Set(constants.map((c) => c.name));
+      const newConstants = parsedConstants.filter(
+        (c) => !existingNames.has(c.name)
+      );
+
+      if (newConstants.length > 0) {
+        handleConstantsChange([...constants, ...newConstants]);
+      }
+
+      // Clear the paste input
+      setPasteInput("");
     }
   };
 
@@ -511,6 +624,60 @@ export function ConstantsNodeSettings({
                 <Plus className="w-4 h-4 mr-2" />
                 Add Constant
               </Button>
+
+              {/* Paste Constants Section */}
+              <div className="space-y-3 pt-2">
+                <Separator />
+                <div className="flex items-center space-x-2">
+                  <ClipboardIcon className="w-4 h-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">Paste Constants</Label>
+                </div>
+                <div className="space-y-2">
+                  <Textarea
+                    placeholder={`Paste your constants here, e.g.:
+BATCH_SIZE = 64
+LR = 0.01
+EPOCHS = 3
+MODEL_NAME = "resnet18"`}
+                    value={pasteInput}
+                    onChange={(e) => setPasteInput(e.target.value)}
+                    className="min-h-[100px] text-sm font-mono"
+                    rows={4}
+                  />
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      onClick={handlePasteAndParse}
+                      disabled={!pasteInput.trim()}
+                      size="sm"
+                      className="flex-1"
+                    >
+                      <Wand2 className="w-4 h-4 mr-2" />
+                      Parse & Add Constants
+                    </Button>
+                    {pasteInput.trim() && (
+                      <Button
+                        onClick={() => setPasteInput("")}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Clear
+                      </Button>
+                    )}
+                  </div>
+                  {pasteInput.trim() && (
+                    <div className="text-xs text-muted-foreground bg-muted/30 rounded-md p-2">
+                      <div className="font-medium mb-1">Supported formats:</div>
+                      <div className="space-y-1">
+                        • <code>VARIABLE_NAME = value</code>•{" "}
+                        <code>const VARIABLE_NAME = value</code>•{" "}
+                        <code>let variable_name = value</code>• Auto-detects
+                        types: integers, floats, strings • Ignores comments (#
+                        and //)
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {/* Generated Variables Preview */}
               {constants.filter((c) => c.isEnabled && c.name.trim() !== "")

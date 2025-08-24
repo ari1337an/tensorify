@@ -211,51 +211,6 @@ class PluginValidator {
         // Analyze source files for precise error locations
         await this.analyzeSourceFiles(errors, warnings);
 
-        // Check if this is a variable provider plugin that doesn't need prev/next handles
-        const pluginType = (this.manifestJson.pluginType || "").toLowerCase();
-        const isVariableProvider = ["dataset", "dataloader"].includes(
-          pluginType
-        );
-
-        if (!isVariableProvider) {
-          // For non-variable providers, validate prev/next handles
-          const inputHandles = this.manifestJson.inputHandles || [];
-          const outputHandles = this.manifestJson.outputHandles || [];
-
-          const hasPrev = inputHandles.some(
-            (h: any) =>
-              h.id === "prev" && h.position === "left" && h.required === true
-          );
-          const hasNext = outputHandles.some(
-            (h: any) => h.id === "next" && h.position === "right"
-          );
-
-          if (!hasPrev) {
-            const sourceFile = path.join(this.directory, "src/index.ts");
-            const handleError = await this.findInputHandleError(sourceFile);
-            errors.push({
-              type: "schema_error",
-              message: "Missing required 'prev' input handle",
-              file: handleError.file,
-              line: handleError.line,
-              code: handleError.code,
-              suggestion: handleError.suggestion,
-            });
-          }
-          if (!hasNext) {
-            const sourceFile = path.join(this.directory, "src/index.ts");
-            const handleError = await this.findOutputHandleError(sourceFile);
-            errors.push({
-              type: "schema_error",
-              message: "Missing required 'next' output handle",
-              file: handleError.file,
-              line: handleError.line,
-              code: handleError.code,
-              suggestion: handleError.suggestion,
-            });
-          }
-        }
-
         // Validate using SDK contracts (with flexible validation for variable providers)
         try {
           const { normalizeUiManifest } = await import(
@@ -312,6 +267,60 @@ class PluginValidator {
       } // Close the if (!hasSDKValidationError) block
 
       // These validations should always run regardless of SDK validation errors
+
+      // Check if this is a variable provider plugin that doesn't need prev/next handles
+      const pluginType = (this.manifestJson.pluginType || "").toLowerCase();
+
+      // Also check package.json for pluginType if not in manifest
+      let finalPluginType = pluginType;
+      if (!finalPluginType) {
+        const packageJsonPath = path.join(this.directory, "package.json");
+        if (fs.existsSync(packageJsonPath)) {
+          try {
+            const packageJson = JSON.parse(
+              fs.readFileSync(packageJsonPath, "utf-8")
+            );
+            finalPluginType = (packageJson.pluginType || "").toLowerCase();
+
+            // Also check tensorify-settings section
+            if (!finalPluginType && packageJson["tensorify-settings"]) {
+              finalPluginType = (
+                packageJson["tensorify-settings"].pluginType || ""
+              ).toLowerCase();
+            }
+          } catch (e) {
+            // Ignore package.json read errors
+          }
+        }
+      }
+
+      const isVariableProvider = [
+        "dataset",
+        "dataloader",
+        "optimizer",
+        "loss_function",
+        "metric",
+        "scheduler",
+        "regularizer",
+      ].includes(finalPluginType);
+
+      // For variable providers, remove any prev/next handle errors that may have been added
+      if (isVariableProvider) {
+        const prevNextErrors = [
+          "Missing required 'prev' input handle",
+          "Missing required 'next' output handle",
+          "Plugin must define an input handle with id 'prev' / output handle with id 'next'",
+        ];
+        const filteredErrors = errors.filter((error) => {
+          return !prevNextErrors.some((prevNextError) =>
+            error.message.includes(prevNextError)
+          );
+        });
+        if (filteredErrors.length !== errors.length) {
+          errors.length = 0;
+          errors.push(...filteredErrors);
+        }
+      }
 
       // Validate SDK version compatibility
       if (this.options.sdkVersion) {

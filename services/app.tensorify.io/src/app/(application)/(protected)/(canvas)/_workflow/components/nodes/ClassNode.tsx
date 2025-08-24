@@ -163,6 +163,7 @@ export default function ClassNode(props: NodeProps<WorkflowNode>) {
               viewType: HandleViewType.VERTICAL_BOX,
               edgeType: EdgeType.DEFAULT,
               dataType: "code",
+              required: false,
             });
           }
         });
@@ -291,7 +292,7 @@ export default function ClassNode(props: NodeProps<WorkflowNode>) {
                 viewType: HandleViewType.VERTICAL_BOX,
                 edgeType: EdgeType.DEFAULT,
                 dataType: "any",
-              };
+              } as OutputHandle;
             })
         );
       }
